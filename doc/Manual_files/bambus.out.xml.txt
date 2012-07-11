@@ -1,0 +1,510 @@
+<GROUPING>
+<SCAFFOLD ID = "scaff_18">
+<CONTIG ID = "contig_asm_10"
+  X = "0"
+  ORI = "BE"
+></CONTIG>
+<CONTIG ID = "contig_asm_2"
+  X = "5213"
+  ORI = "BE"
+></CONTIG>
+<CONTIG ID = "contig_asm_5"
+  X = "22162"
+  ORI = "BE"
+></CONTIG>
+<CONTIG ID = "contig_asm_1"
+  X = "28307"
+  ORI = "BE"
+></CONTIG>
+<CONTIG ID = "contig_asm_7"
+  X = "53330"
+  ORI = "BE"
+></CONTIG>
+<LINK ID = "ins_1932"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1865"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2128"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2219"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2148"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2242"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2244"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2363"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2438"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2449"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2456"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2481"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2482"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1924"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1952"
+  VALID = "LEN"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1962"
+  VALID = "LEN"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2055"
+  VALID = "LEN"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2469"
+  VALID = "LEN"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2487"
+  VALID = "LEN"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1947"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1971"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1973"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1985"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1994"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2187"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2515"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2447"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2448"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2384"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2489"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1959"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1894"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1898"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2195"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2414"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2420"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2352"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1830"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1854"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1954"
+  VALID = "LEN"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2430"
+  VALID = "LEN"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2007"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2167"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2184"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2431"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2294"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2298"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2392"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1801"
+  VALID = "LEN"
+  TAG = "T"
+></LINK>
+</SCAFFOLD>
+<SCAFFOLD ID = "scaff_16">
+<CONTIG ID = "contig_asm_8"
+  X = "0"
+  ORI = "BE"
+></CONTIG>
+<CONTIG ID = "contig_asm_4"
+  X = "19334"
+  ORI = "EB"
+></CONTIG>
+<CONTIG ID = "contig_asm_6"
+  X = "19334"
+  ORI = "BE"
+></CONTIG>
+<CONTIG ID = "contig_asm_13"
+  X = "36694"
+  ORI = "BE"
+></CONTIG>
+<CONTIG ID = "contig_asm_11"
+  X = "38251"
+  ORI = "BE"
+></CONTIG>
+<LINK ID = "ins_1872"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2112"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2223"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2156"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2243"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2336"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1819"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1886"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1986"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2023"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2044"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2221"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2085"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2089"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2321"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2180"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2408"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2190"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2518"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2458"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2531"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2479"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1822"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2499"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1847"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1928"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2366"
+  VALID = "LEN"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1966"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2101"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2249"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2402"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2261"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2196"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2442"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1978"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2140"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2322"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2407"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2361"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2457"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+</SCAFFOLD>
+<SCAFFOLD ID = "scaff_14">
+<CONTIG ID = "contig_asm_9"
+  X = "0"
+  ORI = "BE"
+></CONTIG>
+<CONTIG ID = "contig_asm_3"
+  X = "9649"
+  ORI = "BE"
+></CONTIG>
+<LINK ID = "ins_1976"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2010"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2018"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2208"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2228"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2235"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2319"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2323"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2288"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2292"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2452"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2540"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1902"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1841"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1923"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1892"
+  VALID = "LEN"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2308"
+  VALID = "LEN"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_2439"
+  VALID = "LEN"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1914"
+  VALID = "LEN"
+  TAG = "T"
+></LINK>
+</SCAFFOLD>
+<SCAFFOLD ID = "scaff_15">
+<CONTIG ID = "contig_asm_12"
+  X = "0"
+  ORI = "BE"
+></CONTIG>
+</SCAFFOLD>
+<SCAFFOLD ID = "scaff_17">
+<CONTIG ID = "contig_asm_22"
+  X = "0"
+  ORI = "BE"
+></CONTIG>
+</SCAFFOLD>
+<UNUSED>
+<LINK ID = "ins_2214"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+<LINK ID = "ins_1903"
+  VALID = "VALID"
+  TAG = "T"
+></LINK>
+</UNUSED>
+</GROUPING>

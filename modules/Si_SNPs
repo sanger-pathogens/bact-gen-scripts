@@ -1,0 +1,41 @@
+
+
+
+def snps_from_alignment(alignmentObject):
+	
+	SNPlocations=[]
+	
+	summary_align = AlignInfo.SummaryInfo(alignment)
+	
+	return
+	
+	print "Identifying SNP locations"
+	sys.stdout.flush()
+	
+	count=0
+	total=0.0
+	
+	for x in startinglocations:
+
+		count=count+1
+		if count==10000:
+			total=total+count
+			count=0
+			print "%.2f%% complete\r" % (100*(total/alignment.get_alignment_length())),
+			sys.stdout.flush()
+
+		
+		foundbases=[]
+		for record in alignment:
+			base=record.seq[x].upper()
+			
+			if base!='-' and base not in foundbases:# 
+				foundbases.append(base)
+			if len(foundbases)>1:
+				SNPlocations.append(x)
+				break
+	
+
+	print "100.00% complete\n"#Found %d SNP locations" % len(SNPlocations),
+	sys.stdout.flush()
+	return SNPlocations

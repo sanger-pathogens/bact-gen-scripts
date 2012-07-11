@@ -1,0 +1,37 @@
+Genome size:	5100000
+
+no. scaffolds:	335
+total scaffold size:	5155860
+min scaffold size:	155
+max scaffold size:	228793
+avg scaffold size:	15390.63
+N50 scaffold size:	68671
+
+total scaffold span:	5121857
+min scaffold span:	155
+max scaffold span:	231515
+avg scaffold span:	15289.13
+N50 scaffold span:	66191
+
+total # contigs:	732
+min # contigs:	1
+max # contigs:	100
+avg # contigs:	2.19
+
+no. valid links:	2304
+no. incorrect len. links:	2128
+no. incorrect ori. links:	1
+no. unchecked links:	233
+
+Library:	lib_69506
+no. valid links:	6
+no. incorrect len. links:	2
+no. incorrect ori. links:	
+no. unchecked links:	1
+
+Library:	lib_69507
+no. valid links:	2298
+no. incorrect len. links:	2126
+no. incorrect ori. links:	1
+no. unchecked links:	232
+

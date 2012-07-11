@@ -1,0 +1,59 @@
+FuzzyPath assembler for short reads
+
+(1) Down load the pipeline
+
+ftp://ftp.sanger.ac.uk/pub/zn1/fuzzypath/fuzzypath.tar
+
+or
+
+/nfs/disk69/ftp/pub/zn1/fuzzypath/fuzzypath.tar
+
+(2) To install the program
+
+tar xvf fuzzypath.tar
+./install.csh
+
+(3) To run the pipeline
+(a) Single end reads:
+./fuzzypath.csh -kmer 19 suis_20x1.fastq suis_20x1
+
+(b) Pair end reads:
+./fuzzypath.csh -kmer 19 -insert 180 suis_20x1.fastq suis_20x1
+
+here "180" is the mean insert size. FuzzyPath extends short
+reads to loner seuqences, which covere the genome at 15X by default. If you
+like higher coverage, use "-reads xxxxx" to have more reads:
+
+./fuzzypath.csh -kmer 19 -reads 20000 -insert 180 suis_20x1.fastq suis_20x1
+
+(4) The assembly file:
+suis_20x1.contigs.fa 
+
+(5) Type ./fuzzypath.csh for help
+
+================
+Read file format
+================
+The FuzzyPath pipeline is based upon the Sanger fastq file format,
+where quality values are correlated with Phred calculations. Quality 
+values in Solexa and Sanger formats are different, but the file format
+is very similar. The reads from Solexa machines are Solexa format. This 
+might tell you if your data is in Solexa format:
+
+"If the average quality value of the first 10 bases is more than, say
+60 or 70, this file must be in the Solexa/Illumina format."
+
+To convert Solexa fastq to Sanger fastq, please go to MAQ page and download 
+the maq
+
+http://maq.sourceforge.net/
+
+maq sol2sanger in.sol.fastq out.sanger.fastq
+
+If you are using ABI SOLiD files, make sure the read files are in line with 
+Sanger format as quality values are frequently used in the code to
+filter out base errors.
+
+Report to Zemin Ning ( zn1@sanger.ac.uk ) for any problems.
+
+Thank you for your interest in FuzzyPath.

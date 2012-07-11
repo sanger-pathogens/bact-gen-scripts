@@ -1,0 +1,87 @@
+mapping_pipeline.py
+
+This script will map fastq short reads against a reference fasta file using ssaha or bwa. The fasta can contain multiple contigs.
+It can then create a pseudosequence for each mapped fastq file (or pair of paired end files), align these pseudosequences and summarise the snp differences between them. It can also create an alignment of sites containing a snp and run a phylogenetic analysis using RAxML.
+
+To use the script requires a number of other installations:
+
+1) Biopython
+2) samtools
+3) Ssaha
+4) RAxML
+5) bwa
+6) samtools_pileup_2_pseudosequence.py and summarise_snps.py
+
+The last two scripts are included in the same ftp location as mapping_pipeline.py, and can be used independently:
+
+samtools_pileup_2_pseudosequence.py will create a pseudosequence from a sam file created by ssaha or bwa
+summarise_snps will create snp alignments, run RAxML and produce a summary of snps if given an alignment and the name of the reference sequence.
+
+Once all of the above are installed, their locations must be specified in each of the three python scripts. At the start of each script there is a tag saying
+
+####################
+# Set some globals #
+####################
+
+followed by a number of strings containing the locations of the appropriate software. e.g.
+
+SAMTOOLS_DIR=""
+MY_SCRIPTS_DIR="/home/scripts/"
+
+An empty location string means the software is installed globally.
+
+
+
+Usage of mapping_pipeline.py:
+
+
+mapping_pipeline.py [options] <list of fastq files>
+
+fastq files are required to end in _1.fastq (for forward reads) and _2.fastq (for reverse reads). Other than this suffix, the read pairs must be in the same location and have the same prefix name.
+
+To run a phylogenetic analysis and output any snp statistics you must select the create pseudosequence option (-d).
+
+
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+
+  Required Options:
+    -r FILE, --reference=FILE
+                        reference DNA sequence (in fasta or multi-fasta
+                        format)
+
+  Mapping Options:
+    -p PROGRAM, --program=PROGRAM
+                        Mapping program to use (choose from bwa or ssaha)
+                        [default= bwa]
+    -l INT, --length=INT
+                        Read length [default= 54]
+    -s, --single        reads are single ended (not paired)
+    -i INT, --maxinsert=INT
+                        maximum insert size [default= 400]
+    -j INT, --mininsert=INT
+                        minimum insert size [default= 100]
+    -q INT, --quality=INT
+                        Minimum mapping quality [default= 30]
+
+  Pseudosequence creation options:
+    -d, --dna           Create pseudosequences
+    -S INT, --SNPquality=INT
+                        Minimum site mapping quality for SNP calling [default=
+                        30]
+    -R FLOAT, --ratio=FLOAT
+                        SNP/site mapping quality ratio cutoff [default= 0.75]
+
+  Output options:
+    -o OUTPUT, --output=OUTPUT
+                        output file prefix
+    -a, --align         Create snp alignment file (in phylip format)
+    -P, --phylogeny     Run phylogeny with RAxML
+    -m MODEL, --model=MODEL
+                        Model of evolution to use. [Default= GTRGAMMA]
+    -b int, --bootstrap=int
+                        Number of bootstrap replicates (0 = do not run
+                        bootstrap). [Default= 100]
+
+If you have any questions, please email Simon Harris: sh16@sanger.ac.uk

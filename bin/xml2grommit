@@ -1,0 +1,394 @@
+#!/usr/local/bin/perl
+
+# $Id: xml2grommit.pl,v 1.12 2003/11/24 22:15:50 mpop Exp $
+
+# This wrapper converts an evidence file into grommitable input.
+#
+#  Copyright @ 2002, 2003 The Institute for Genomic Research (TIGR).  All
+#  rights reserved.
+
+use XML::Parser;
+use TIGR::Foundation;
+
+my $base = new TIGR::Foundation;
+
+if (! defined $base){
+    die("Bye, Bye!\n");
+}
+
+my $VERSION = '1.0 ($Revision: 1.12 $ )';
+$base->setVersionInfo($VERSION);
+
+my $MUMERR = 0.05; # mummer error in gap sizes
+
+my $HELPTEXT = qq~
+    xml2grommit.pl [-o outfile] [-c conffile] 
+                   [-oc grommitconf] [-l libinfo] [-dc defaultconf]
+                   [-i] <xmlfile>
+    ~;
+
+$base->setHelpInfo($HELPTEXT);
+
+my $infile;
+my $outfile = "newgrp.inp";
+my $conffile = "group.conf";
+my $outconf = "grommit.conf";
+my $outlibs = "libs.conf";
+my $defaultconf = "default.conf";
+
+my $err = $base->TIGR_GetOptions("i=s"  => \$infile,
+				 "o=s"  => \$outfile,
+				 "c=s"  => \$conffile,
+				 "oc=s" => \$outconf,
+				 "dc=s" => \$defaultconf,
+				 "l=s"  => \$outlibs);
+
+
+if (! defined $infile){
+    $infile = $ARGV[0];
+    if (! defined $infile){
+	$base->bail("You need to specify an input file.  See -h option");
+    }
+}
+
+my $xml = new XML::Parser(Style => 'Stream');
+
+if (! defined $xml){
+    $base->bail("Cannot create an XML parser");
+}
+
+my $uppercase = undef;
+my $libClass = 'A';
+my $inInsert;
+my $insId;
+my $conId;
+my %inserts;
+my %contigs;
+my %seqCtg;
+my %seqOri;
+my %seqLend;
+my %seqRend;
+my %libraries;
+my %insertLib;
+my %linkLib;
+my %links;
+my %linkSize;
+my %contigOri;
+my %confidence;
+my $inLink = 0;
+my $linkId;
+my $inLib = 0;
+my %libovlps;
+
+$xml->parsefile($infile);
+
+my %libClass;
+my %classLibs;
+
+open(LIB, ">$outlibs") ||
+    $base->bail("Cannot open lib file \"$outlibs\": $!");
+
+# assign classes to libraries
+while (my ($lib, $range) = each %libraries){
+    $base->logLocal("Assigning code $libClass to library $lib\n", 1);
+    print LIB "$libClass $lib\n";
+    $libClass{$lib} = $libClass; $libClass = chr(ord($libClass) + 1);
+}
+close(LIB);
+
+if (-r $conffile){
+    open(CONF, $conffile) || 
+	$base->bail("Cannot open conf file \"$conffile\" :$!");
+    while (<CONF>){
+	if (/^error (\w+) (\d*\.?\d*)/){
+	    $confidence{$1} = $2;
+	}
+	if (/^overlaps (\S+) (\w)/){
+	    $libovlps{$1} = $2;
+	}
+    }
+    close(CONF);
+}
+
+open(OUT, ">$outfile") || 
+    $base->bail("Cannot open output file \"$outfile\": $!");
+
+while (my ($ctg, $len) = each %contigs){
+    print OUT "contig $ctg $len\n";
+}
+
+my $linkNo = 0;
+while (my ($ins, $rds) = each %inserts){
+    my @rds = split(' ', $rds);
+    # check we have exactly two reads
+    if ($#rds != 1){
+	$base->logLocal(sprintf("skipping insert $ins due to incorrect reads: %d\n", $#rds + 1), 2);
+	next;
+    }
+
+    # and both hit different contigs
+    if ($seqCtg{$rds[0]} eq $seqCtg{$rds[1]}){
+	$base->logLocal("skipping insert $ins due to same contig reads\n", 2);
+	next;
+    }
+
+    if (! defined $seqCtg{$rds[0]}){
+	$base->logLocal("Cannot find contig for sequence $rds[0]\n", 2);
+	next;
+    }
+
+    if (! defined $seqCtg{$rds[1]}){
+	$base->logLocal("Cannot find contig for sequence $rds[1]\n", 2);
+	next;
+    }
+
+    # now we can compute a contig link
+
+    my $seqA = $rds[0];
+    my $seqB = $rds[1];
+
+    my $ctgA = $seqCtg{$seqA};
+    my $ctgB = $seqCtg{$seqB};
+
+    my $forwA = ($seqOri{$seqA} eq "BE") ? 1 : 0;
+    my $forwB = ($seqOri{$seqB} eq "EB") ? 1 : 0;
+
+    my $lenAdj = 0;
+
+    $lenAdj += ($forwA) ? $seqLend{$seqA} : -$seqRend{$seqA};
+    $lenAdj += ($forwB) ? -$seqRend{$seqB} : $seqLend{$seqB};
+
+    my ($minR, $maxR) = split(' ', $libraries{$insertLib{$ins}});
+
+    $base->logLocal("library $insertLib{$ins} has range $minR $maxR\n", 2);
+
+    $minR += $lenAdj; $maxR += $lenAdj;
+
+    $minR = int($minR);
+    $maxR = int($maxR);
+
+    $linkNo++;
+    my $ovlpcode = "N";
+    if (exists $libovlps{$insertLib{$ins}}){
+	$ovlpcode = $libovlps{$insertLib{$ins}};
+    }
+    print OUT "link $ins $ctgA ", (($forwA)? "BE" : "EB"),
+    " $ctgB ", (($forwB) ? "BE" : "EB"), " $libClass{$insertLib{$ins}} $minR $maxR $ovlpcode\n";
+}
+
+# here we handle links specified with the LINK tag
+while (my ($lnk, $ctgs) = each %links){
+    my @ctgs = split(' ', $ctgs);
+    if ($#ctgs != 1){
+	$base->logError("Link $lnk does not link 2 contigs", 1);
+	next;
+    }
+
+    my $range = $MUMERR;
+    if (exists $confidence{$linkLib{$lnk}}){
+	$range = $confidence{$linkLib{$lnk}};
+    }
+
+    $range = abs(int($range * $linkSize{$lnk}));
+    my $minLnk = $linkSize{$lnk} - $range;
+    my $maxLnk = $linkSize{$lnk} + $range;
+
+    if ($contigOri{"$lnk $ctgs[0]"} eq "BE"){
+	$minLnk += $contigs{$ctgs[0]};
+	$maxLnk += $contigs{$ctgs[0]};
+    }
+    if ($contigOri{"$lnk $ctgs[1]"} eq "EB"){
+	$minLnk += $contigs{$ctgs[1]};
+	$maxLnk += $contigs{$ctgs[1]};
+    }
+    
+    $minLnk = int($minLnk);
+    $maxLnk = int($maxLnk);
+    
+    my $ovlpcode = "Y";
+    if (exists $libovlps{$linkLib{$lnk}}){
+	$ovlpcode = $libovlps{$linkLib{$lnk}};
+    }
+
+    my $oriA = $contigOri{"$lnk $ctgs[0]"};
+    my $oriB = $contigOri{"$lnk $ctgs[1]"};
+    print OUT "link $lnk $ctgs[0] $oriA $ctgs[1] $oriB $libClass{$linkLib{$lnk}} $minLnk $maxLnk $ovlpcode\n";
+
+}
+
+close(OUT);
+
+open(CONFOUT, ">$outconf") ||
+    $base->bail("Cannot open output configuration \"$outconf\" : $!");
+
+# here we generate the configuration information required by grommit
+
+if (-r $conffile){ 
+    open(CONF, $conffile) || 
+	$base->bail("Cannot open conf file \"$conffile\" :$!");
+    while (<CONF>){
+	if (/^redundancy (\d+)/ ||
+	    /^mingroupsize/){
+	    print CONFOUT;
+	} elsif (/^priority redundancy (\d+) (\d+)/){
+	    print CONFOUT "priority redundancy $1 $2\n";
+	} elsif (/^priority (\S+) (\d+)/){ # translate libnames into lib classes
+	    if ($1 ne "ALL"){
+		if (exists $libClass{$1}){
+		    print CONFOUT "priority $libClass{$1} $2\n"; 
+		} else {
+		    print CONFOUT "priority " . $libClass{"lib_" . $1} . " $2\n";
+		}
+	    } else {
+		print CONFOUT "priority ALL $2\n";
+	    }
+	} elsif (/^redundancy (\S+) (\d+)/){
+	    if (exists $libClass{$1}){
+		print CONFOUT "redundancy $libClass{$1} $2\n"; 
+	    } else {
+		print CONFOUT "redundancy " . $libClass{"lib_" . $1} . " $2\n";
+	    }
+	}
+    }
+    close(CONF);
+} else {
+    print CONFOUT "\# Priorities\n";
+    while (my ($lib, $range) = each %libraries){
+	print CONFOUT "priority $libClass{$lib} 1\n";
+    }
+    print CONFOUT "\n\# Redundancies\n";
+    print CONFOUT "redundancy 2\n";
+    
+    print CONFOUT "\n\# min group size\n";
+    print CONFOUT "mingroupsize 0\n";
+}
+
+close(CONFOUT);
+
+open(DC, ">$defaultconf") || 
+    $base->bail("Cannot open default configuration file \"$defaultconf\" : $!");
+print DC "\# Priorities\n";
+while (my ($lib, $range) = each %libraries) {
+    print DC "priority $lib 1\n";
+}
+
+print DC "\n\# The following lines can be un-commented to specify certain\n";
+print DC "\# per-library settings \n";
+print DC "\n\# Redundancies\n";
+print DC "\# redundancy lib_some 1\n";
+print DC "\n\# allowed error\n";
+print DC "\# error MUMmer 0.5\n";
+print DC "\n\# overlaps allowed\n";
+print DC "\# overlaps MUMmer Y\n";
+
+print DC "\n\# Global redundancy\n";
+print DC "redundancy 2\n";
+print DC "\n\# min group size\n";
+print DC "mingroupsize 0\n";
+
+close(DC);
+
+
+exit(0);
+
+###############################
+# Functions
+###############################
+
+
+## XML functions ##
+sub StartDocument
+{
+    print STDERR "starting\n";
+}
+
+sub StartTag
+{
+    my $tag = $_[1];
+   
+    if (defined $uppercase){
+	$tag = uc($tag);
+	while (my ($k, $v) = each %_){
+	    $_{uc($k)} = $v;
+	}
+    }
+
+    if ($tag eq "EVIDENCE"){
+	
+    } elsif ($tag eq "evidence"){
+	$uppercase = 1;
+    } elsif ($tag eq "LIBRARY") {
+	$libId = $_{ID};
+	$libraries{$libId} = "$_{MIN} $_{MAX}";
+	$inLib = 1;
+    } elsif ($tag eq "INSERT"){
+	if (! $inLib){
+	    $base->bail("Cannot have insert outside of library");
+	}
+	$inInsert = 1;
+	$insId = $_{ID};
+	$inserts{$insId} = "";
+	$insertLib{$insId} = $libId;
+    } elsif ($tag eq "CONTIG"){
+	$conId = $_{ID};
+	if (! $inLink){
+	    $contigs{$conId} = $_{LEN};
+	} else {
+	    $contigOri{"$linkId $conId"} = $_{ORI};
+	    $links{$linkId} .= "$conId ";
+	}
+    } elsif ($tag eq "SEQUENCE"){
+	$id = $_{ID};
+	if ($inInsert){
+	    $inserts{$insId} .= "$id ";
+	} else { # we are in contigs
+	    $seqCtg{$id} = $conId;
+	    $seqOri{$id} = $_{ORI};
+	    $seqLend{$id} = $_{ASM_LEND};
+	    $seqRend{$id} = $_{ASM_REND};
+	}
+    } elsif ($tag eq "LINK"){
+#	if ($_{TYPE} eq "MUMmer" || $_{TYPE} eq "CA"){
+	    if (! exists $libraries{$_{TYPE}}){
+		$libraries{$_{TYPE}} = "0 0";
+	    }
+	    $linkId = $_{ID};
+	    $inLink = 1;
+	    $linkLib{$linkId} = $_{TYPE};
+	    $linkSize{$linkId} = $_{SIZE};
+#	} else {
+#	    $base->logError("Unknown link type \"$_{ID}\" ... skipping", 1);
+#	}
+    } else {
+	$base->logError("Unknown tag: $tag\n");
+    }
+}
+
+sub EndTag
+{
+    my $tag = $_[1];
+    if (defined $uppercase){
+	$tag = uc($tag);
+    }
+
+    if ($tag eq "INSERT"){
+	$inInsert = 0;
+    } elsif ($tag eq "LIBRARY"){
+	$inLib = 0;
+    } elsif ($tag eq "LINK"){
+	$inLink = 0;
+    }
+}
+
+sub Text
+{
+}
+
+sub pi
+{
+}
+
+sub EndDocument
+{
+    print STDERR "Done\n";
+}

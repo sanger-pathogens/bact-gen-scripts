@@ -1,0 +1,79 @@
+My Modules:
+
+
+Si_nexus
+
+Methods:
+
+	tree_to_string(treeObject, support_as_branchlengths=False,branchlengths_only=False,plain=True,plain_newick=False,ladderize=None)
+
+		Prints a tree as a string. Fixes float problem in Bio.Nexus.Trees.Tree.to_string
+		Code edited from BioPython
+
+	midpoint_root(treeobject=None)
+		
+		Roots a Biopython:Nexus:Tree object on the midpoint
+		Code edited from BioPython's root with outgroup
+		
+	parsimonious_SNP_reconstruction(treeObject, alignmentObject, locations=[], transformation="acctran")
+		
+		Function to parsimoneously reconstruct sites on a tree
+	
+	run_RAxML(alignmentObject, bootstrap=100, model="GTRGAMMA", cleanup=True)
+	
+		Runs a tree with RAxML using the options selected. Returns a tree object
+
+
+
+Si_general
+
+A few general functions that I use a lot
+
+Methods:
+
+	DoError(string="")
+	
+		Print an error message to the screen and exit
+		
+	
+
+
+Si_SeqIO
+
+A few functions to make biopython file handling easier
+
+Methods:
+
+	read_alignment(filename="")
+	
+		Will try to read an alignment file in all of the formats available in biopython starting with any clue in the file suffix
+	
+	write_embl_style_id(sequence, handle)
+	
+		Prints an embl ID line to filehandle using seqence to get the length
+	
+	write_embl_style_header(handle)
+	
+		Prints header rows to handle
+	
+	write_embl_style_sequence(sequence, handle)
+	
+		Prints sequence in embl sequence format to handle
+	
+	open_annotation(filename, sequence="")
+	
+		Will try to open filename in embl and genbank formats. If this fails it will try to fix the file to be in a embl format readable by biopython
+		
+		
+		
+Si_SNPs
+
+SNP-related functions
+
+Methods:
+
+	snps_locations_from_alignment(alignmentObject)
+		
+		Returns locations of SNPs in alignmentObject as a list
+	
+	

@@ -1,0 +1,111 @@
+#!/usr/local/bin/perl
+
+# $Id: catXML.pl,v 1.2 2003/02/24 17:33:00 mpop Exp $
+
+# This program combines multiple XML evidence files into a single one.
+#
+#  Copyright @ 2002, 2003, The Institute for Genomic Research (TIGR).  All
+#  rights reserved.
+
+use XML::Parser;
+use TIGR::Foundation;
+
+my $base = new TIGR::Foundation;
+
+if (! defined $base){
+    die("Bye, Bye!\n");
+}
+
+my $VERSION = '1.0 ($Revision: 1.2 $ )';
+$base->setVersionInfo($VERSION);
+
+my $HELPTEXT = qq~
+    catXML.pl -o outfile <xmlfiles>
+    ~;
+
+$base->setHelpInfo($HELPTEXT);
+
+my $outfile;
+
+my $err = $base->TIGR_GetOptions("o=s" => \$outfile);
+
+if (! defined $outfile){
+    $base->bail("You need to specify an output file.  See -h option");
+}
+
+if ($#ARGV< 0){
+    $base->bail("You must specify at least one input file.  See -h option");
+}
+
+open(OUT, ">$outfile") || $base->bail("Cannot open $outfile: $!");
+
+my $date =`date`; chomp $date;
+my $parms = join(' ', @ARGV);
+print OUT qq~<?xml version="1.0" ?>
+
+<EVIDENCE ID="project_1" 
+          DATE="$date" 
+          PROJECT="catXML" 
+          PARAMETERS="$parms"
+>
+    ~;
+
+my $xml = new XML::Parser(Style => 'Stream');
+
+if (! defined $xml){
+    $base->bail("Cannot create an XML parser");
+}
+
+for (my $f = 0; $f <= $#ARGV; $f++){
+    my $infile = $ARGV[$f];
+    $xml->parsefile($infile) || $base->bail("Parsing $infile failed");
+}
+
+print OUT "</EVIDENCE>\n";
+
+close(OUT);
+
+exit(0);
+
+###############################
+# Functions
+###############################
+
+
+## XML functions ##
+sub StartDocument
+{
+    print STDERR "starting\n";
+}
+
+sub StartTag
+{
+    my $tag = $_[1];
+   
+
+    if ($tag ne "EVIDENCE"){
+	print OUT $_;
+    }
+}
+
+sub EndTag
+{
+    my $tag = $_[1];
+    if ($tag ne "EVIDENCE"){
+	print OUT $_;
+    }
+}
+
+sub Text
+{
+    print OUT $_;
+}
+
+sub pi
+{
+}
+
+sub EndDocument
+{
+    print STDERR "Done\n";
+}

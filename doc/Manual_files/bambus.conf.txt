@@ -1,0 +1,24 @@
+priority lib_BAAA 1
+priority lib_BAAB 1
+priority lib_BAAC 1
+priority lib_BABA 1
+priority lib_BAAD 1
+priority lib_BABB 1
+priority lib_BAAE 1
+priority lib_BABC 1
+priority lib_BABD 1
+priority lib_BAAF 1
+priority lib_BABE 1
+priority lib_BAAG 1
+priority lib_BAAH 1
+priority lib_BABF 1
+priority lib_BABG 1
+priority lib_BABH 1
+priority lib_BABI 1
+priority MUMmer 2
+
+overlaps MUMmer N
+redundancy MUMmer 1
+error MUMmer 0.05
+redundancy 2
+mingroupsize 0

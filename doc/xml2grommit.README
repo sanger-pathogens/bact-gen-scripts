@@ -1,0 +1,40 @@
+Copyright @ 2002, 2003,  The Institute for Genomic Research (TIGR).  All
+rights reserved.
+
+Program: xml2grommit
+Author: Mihai Pop
+
+Xml2grommit parses the XML input file to generate input suitable for the
+main scaffolding engine "grommit".  While the XML input contains multiple 
+types of linking data, grommit only handles generic links between contigs,
+having the source entirely abstracted.  It is the job of xml2grommit to
+create these abstract links.
+
+The abstract linking information used by grommit entails the following
+parameters:
+- the pairing of contigs
+- their orientations (BE for forward and EB for reversed)
+- range of allowed distances between the beginnings of the contigs 
+(i.e. distance between base 1 of the two contigs)
+
+Currently the XML input may consist in two types of links between contigs:
+
+- Insert Links: implicitly defined by the pairing of reads belonging to 
+opposite ends of an insert.  If the reads belong to two different contigs
+the relationship implies a link between the two contigs.  Xml2grommit
+uses this information to compute an abstract link with the parameters
+specified above.  The bits of information required are: tiling of reads in 
+contigs (specified as asm_lend, asm_rend coordinates), pairing of reads
+in inserts, and insert membership to a genomic library (which defines the
+distance between the paired reads).
+
+- MUMmer Links: explicitly defined by the pairing of two contigs that map
+(through MUMmer) to neighboring regions of a reference genome.  The size
+of a MUMmer link represents the estimated gap between the two contigs in the 
+reference genome, specifically the distance between the adjacent ends.  To
+compute the abstract link size between the two contigs xml2grommit requires
+an additional parameter (passed through the configuration file) that defines
+the expected nucleotide-level difference between the two genomes.  This 
+parameter provides a range of sizes to the gap between the two contigs.
+
+

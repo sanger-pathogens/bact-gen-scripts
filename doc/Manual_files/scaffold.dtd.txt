@@ -1,0 +1,26 @@
+<!-- DTD for the Grouper scaffold file                             -->
+<!-- (c) 2001 The Institute for Genomic Research.                  -->
+
+<!ELEMENT GROUPING (SCAFFOLD*, UNUSED?)>
+
+<!ELEMENT SCAFFOLD (CONTIG+, LINK+)>
+<!ATTLIST SCAFFOLD
+                           ID           ID                    #REQUIRED
+>
+
+<!ELEMENT UNUSED (CONTIG*, LINK*)>
+
+<!ELEMENT CONTIG EMPTY>
+<!ATTLIST CONTIG
+                           ID           ID                    #REQUIRED
+                           ORI          (BE | EB)             #REQUIRED
+                           X            CDATA       "" 
+>
+
+<!ELEMENT LINK EMPTY>
+<!ATTLIST LINK
+                           ID           ID                    #REQUIRED
+                           VALID        (VALID | LEN | ORI | UNSEEN)
+                                                              #REQUIRED
+                           TAG          CDATA                 #REQUIRED
+>

@@ -1,0 +1,1067 @@
+>scaff_739 11 228793 231515
+contig_71291 EB
+contig_71998 BE
+contig_72041 BE
+contig_71999 BE
+contig_71344 BE
+contig_71294 EB
+contig_72083 BE
+contig_71701 BE
+contig_72000 BE
+contig_72084 BE
+contig_71718 EB
+>scaff_743 100 188056 76619
+contig_71197 EB
+contig_71193 BE
+contig_71195 EB
+contig_71189 EB
+contig_71179 EB
+contig_71187 BE
+contig_71345 EB
+contig_71349 BE
+contig_71351 BE
+contig_71202 BE
+contig_71206 BE
+contig_71208 BE
+contig_71212 BE
+contig_71313 BE
+contig_71214 BE
+contig_71216 BE
+contig_71431 EB
+contig_71317 BE
+contig_71228 EB
+contig_71220 BE
+contig_71224 BE
+contig_71362 EB
+contig_71364 EB
+contig_71469 EB
+contig_71423 EB
+contig_71397 BE
+contig_71401 BE
+contig_71360 BE
+contig_71467 EB
+contig_71305 EB
+contig_71537 EB
+contig_71421 EB
+contig_71407 BE
+contig_71405 BE
+contig_71409 EB
+contig_71411 BE
+contig_71415 BE
+contig_71507 BE
+contig_71419 BE
+contig_71368 BE
+contig_71427 BE
+contig_71295 EB
+contig_71429 EB
+contig_71150 EB
+contig_71370 BE
+contig_71535 BE
+contig_71297 BE
+contig_71299 BE
+contig_71148 EB
+contig_71381 EB
+contig_71146 EB
+contig_71328 BE
+contig_71324 BE
+contig_71144 EB
+contig_71340 BE
+contig_71377 EB
+contig_71375 EB
+contig_71330 BE
+contig_71332 EB
+contig_71311 EB
+contig_71334 BE
+contig_71134 EB
+contig_71132 EB
+contig_71126 EB
+contig_71130 BE
+contig_71120 EB
+contig_71164 BE
+contig_71269 EB
+contig_71170 BE
+contig_71218 EB
+contig_71255 EB
+contig_71248 EB
+contig_71253 EB
+contig_71251 EB
+contig_71154 BE
+contig_71222 BE
+contig_71273 BE
+contig_71271 BE
+contig_71275 EB
+contig_71279 BE
+contig_71277 BE
+contig_71244 EB
+contig_71246 EB
+contig_71711 BE
+contig_71236 EB
+contig_71281 BE
+contig_71168 EB
+contig_71385 BE
+contig_71162 EB
+contig_71387 BE
+contig_71160 BE
+contig_71158 EB
+contig_71166 BE
+contig_71152 EB
+contig_71172 BE
+contig_71174 EB
+contig_71288 BE
+contig_71156 BE
+contig_71307 BE
+contig_71309 BE
+>scaff_855 7 185453 186647
+contig_72071 EB
+contig_72070 EB
+contig_71654 EB
+contig_71990 EB
+contig_71465 BE
+contig_71735 BE
+contig_71199 BE
+>scaff_732 10 177544 180479
+contig_72080 EB
+contig_71787 EB
+contig_72153 EB
+contig_71649 BE
+contig_71608 EB
+contig_72079 EB
+contig_72055 BE
+contig_71665 BE
+contig_71991 BE
+contig_71257 EB
+>scaff_792 9 165922 167326
+contig_72113 EB
+contig_72039 BE
+contig_71604 EB
+contig_72176 EB
+contig_71477 BE
+contig_72054 BE
+contig_72161 EB
+contig_71337 BE
+contig_71490 EB
+>scaff_744 8 118509 119581
+contig_72005 BE
+contig_72042 BE
+contig_72107 EB
+contig_71503 EB
+contig_72006 BE
+contig_72007 BE
+contig_72106 EB
+contig_71455 BE
+>scaff_810 4 115873 117151
+contig_71534 BE
+contig_71727 EB
+contig_72120 BE
+contig_71785 EB
+>scaff_742 5 112252 113326
+contig_71985 BE
+contig_71528 EB
+contig_72178 BE
+contig_72003 BE
+contig_72004 BE
+>scaff_819 2 101843 102072
+contig_71596 EB
+contig_72128 BE
+>scaff_746 4 99951 100571
+contig_72008 BE
+contig_72111 EB
+contig_71487 EB
+contig_71485 EB
+>scaff_848 4 92728 93541
+contig_72139 BE
+contig_71609 BE
+contig_71986 BE
+contig_72140 BE
+>scaff_791 5 92570 93305
+contig_72150 BE
+contig_71988 BE
+contig_71517 EB
+contig_72037 BE
+contig_72038 BE
+>scaff_738 5 87696 88293
+contig_72082 BE
+contig_71495 EB
+contig_71996 BE
+contig_71997 BE
+contig_72040 BE
+>scaff_821 2 86969 87481
+contig_72169 BE
+contig_72056 BE
+>scaff_757 6 86476 88578
+contig_71483 EB
+contig_71389 BE
+contig_71504 BE
+contig_72016 BE
+contig_72175 BE
+contig_72160 BE
+>scaff_894 3 85250 85784
+contig_72094 BE
+contig_71772 EB
+contig_71762 EB
+>scaff_787 6 85210 85505
+contig_71461 EB
+contig_71462 BE
+contig_72045 BE
+contig_71444 BE
+contig_72108 BE
+contig_72159 BE
+>scaff_760 4 82440 82822
+contig_72144 EB
+contig_72018 BE
+contig_71566 BE
+contig_72171 EB
+>scaff_906 3 79015 79506
+contig_71464 EB
+contig_71522 EB
+contig_72174 BE
+>scaff_772 3 77745 77835
+contig_72101 BE
+contig_71446 EB
+contig_72156 BE
+>scaff_777 6 71808 74454
+contig_71555 BE
+contig_72051 BE
+contig_72164 BE
+contig_72031 BE
+contig_71728 BE
+contig_71755 BE
+>scaff_751 5 71421 72542
+contig_71336 BE
+contig_72089 BE
+contig_72010 BE
+contig_72011 BE
+contig_71588 EB
+>scaff_841 4 68671 69367
+contig_71722 BE
+contig_71713 EB
+contig_71372 EB
+contig_72136 BE
+>scaff_874 3 67958 68111
+contig_71383 EB
+contig_71577 BE
+contig_72155 BE
+>scaff_783 6 64971 66191
+contig_71600 BE
+contig_71601 BE
+contig_72052 BE
+contig_72129 BE
+contig_72033 BE
+contig_71680 EB
+>scaff_842 4 62460 62541
+contig_71754 EB
+contig_71439 BE
+contig_71512 BE
+contig_72137 BE
+>scaff_755 2 59526 60397
+contig_72014 BE
+contig_72015 BE
+>scaff_734 3 55726 56117
+contig_72167 BE
+contig_72168 BE
+contig_71992 BE
+>scaff_736 6 52570 47915
+contig_71994 BE
+contig_72173 EB
+contig_71390 BE
+contig_72112 BE
+contig_71562 BE
+contig_71563 BE
+>scaff_822 4 47376 48355
+contig_71498 BE
+contig_72147 BE
+contig_72057 BE
+contig_72148 BE
+>scaff_807 2 46778 47020
+contig_72172 BE
+contig_72049 BE
+>scaff_851 2 45550 45550
+contig_72149 BE
+contig_72067 BE
+>scaff_824 2 44498 45417
+contig_72143 BE
+contig_72058 BE
+>scaff_845 1 43837 43837
+contig_72138 BE
+>scaff_890 3 41257 41695
+contig_71496 BE
+contig_72165 BE
+contig_72166 BE
+>scaff_815 5 41220 41222
+contig_72124 BE
+contig_72125 BE
+contig_71544 EB
+contig_72126 BE
+contig_71686 EB
+>scaff_740 5 41031 41494
+contig_72088 EB
+contig_71456 EB
+contig_72001 BE
+contig_72002 BE
+contig_72087 EB
+>scaff_805 5 39570 40481
+contig_71505 BE
+contig_72047 BE
+contig_71491 BE
+contig_71659 BE
+contig_72048 BE
+>scaff_860 1 37804 37804
+contig_72145 BE
+>scaff_809 5 36111 36567
+contig_71533 BE
+contig_71520 BE
+contig_71178 BE
+contig_71766 EB
+contig_71983 BE
+>scaff_896 2 35282 35488
+contig_71384 BE
+contig_72095 BE
+>scaff_766 2 35192 35534
+contig_72025 BE
+contig_72026 BE
+>scaff_898 2 35053 35152
+contig_71633 BE
+contig_72097 BE
+>scaff_795 3 33610 33834
+contig_71500 EB
+contig_72162 BE
+contig_72115 BE
+>scaff_882 2 33115 33611
+contig_72092 EB
+contig_71359 BE
+>scaff_892 2 32485 32674
+contig_72093 BE
+contig_71480 EB
+>scaff_814 3 32316 33606
+contig_71698 EB
+contig_71605 EB
+contig_72123 BE
+>scaff_737 3 32273 32404
+contig_71995 BE
+contig_71613 EB
+contig_72141 BE
+>scaff_837 2 31657 31790
+contig_72062 BE
+contig_72179 EB
+>scaff_781 6 30660 31689
+contig_71595 EB
+contig_71653 BE
+contig_71683 EB
+contig_71612 BE
+contig_72032 BE
+contig_72127 BE
+>scaff_833 6 30384 32544
+contig_71638 EB
+contig_71637 BE
+contig_71716 EB
+contig_71540 EB
+contig_71644 EB
+contig_72133 BE
+>scaff_827 2 28971 28991
+contig_71258 BE
+contig_72081 BE
+>scaff_778 3 28318 28617
+contig_71575 EB
+contig_71452 BE
+contig_72104 BE
+>scaff_838 4 28221 28763
+contig_71666 EB
+contig_71458 EB
+contig_72135 BE
+contig_71773 EB
+>scaff_735 1 27990 27990
+contig_71993 BE
+>scaff_804 3 27755 27946
+contig_71524 EB
+contig_71511 BE
+contig_72119 BE
+>scaff_749 2 27218 27507
+contig_71356 BE
+contig_71138 BE
+>scaff_849 2 25727 26108
+contig_71338 BE
+contig_71989 EB
+>scaff_862 2 24725 25152
+contig_72073 BE
+contig_71771 BE
+>scaff_829 2 24716 24898
+contig_72130 BE
+contig_72163 BE
+>scaff_864 2 23959 24005
+contig_72152 BE
+contig_72074 BE
+>scaff_889 4 23858 25572
+contig_71476 BE
+contig_71290 BE
+contig_71661 BE
+contig_71703 BE
+>scaff_765 4 23492 24106
+contig_71629 EB
+contig_72024 BE
+contig_71543 BE
+contig_71506 BE
+>scaff_877 2 23457 23457
+contig_72085 BE
+contig_71732 EB
+>scaff_897 2 23374 23453
+contig_72096 BE
+contig_71482 EB
+>scaff_771 3 23229 24428
+contig_72099 BE
+contig_72100 BE
+contig_71472 BE
+>scaff_762 4 22563 23385
+contig_72064 EB
+contig_72020 BE
+contig_72021 BE
+contig_71707 EB
+>scaff_797 3 22515 22664
+contig_72043 BE
+contig_71463 EB
+contig_71578 EB
+>scaff_844 4 22298 22587
+contig_71355 BE
+contig_72065 BE
+contig_71122 EB
+contig_72091 BE
+>scaff_803 1 21839 21839
+contig_72046 BE
+>scaff_764 1 21775 21775
+contig_72023 BE
+>scaff_790 1 21498 21498
+contig_72109 BE
+>scaff_859 1 21133 21133
+contig_72072 BE
+>scaff_836 3 20842 22140
+contig_71651 BE
+contig_71650 EB
+contig_72134 BE
+>scaff_773 3 20704 19934
+contig_72102 BE
+contig_71551 BE
+contig_71553 EB
+>scaff_847 1 19714 19714
+contig_72066 BE
+>scaff_875 7 19036 19820
+contig_71445 EB
+contig_71643 BE
+contig_71558 EB
+contig_71618 EB
+contig_71714 EB
+contig_71658 EB
+contig_72157 BE
+>scaff_834 3 16998 17796
+contig_71484 EB
+contig_72060 BE
+contig_71691 EB
+>scaff_868 1 16887 16887
+contig_72077 BE
+>scaff_747 1 16452 16452
+contig_72009 BE
+>scaff_857 1 16450 16450
+contig_72142 BE
+>scaff_934 3 15613 16363
+contig_71738 EB
+contig_71621 BE
+contig_71582 EB
+>scaff_761 2 15062 15103
+contig_72019 BE
+contig_71565 EB
+>scaff_789 2 14945 15019
+contig_72036 BE
+contig_71729 BE
+>scaff_886 1 14375 14375
+contig_72090 BE
+>scaff_830 1 14351 14351
+contig_72131 BE
+>scaff_881 2 14291 14455
+contig_71285 BE
+contig_71545 BE
+>scaff_794 3 13745 14038
+contig_71585 BE
+contig_72110 BE
+contig_72114 BE
+>scaff_863 2 13544 13544
+contig_71775 BE
+contig_72146 BE
+>scaff_750 3 13276 14529
+contig_71702 EB
+contig_71139 BE
+contig_71478 BE
+>scaff_813 1 13020 13020
+contig_72050 BE
+>scaff_763 2 12992 12992
+contig_72022 BE
+contig_71550 EB
+>scaff_754 1 12956 12956
+contig_72013 BE
+>scaff_902 1 12803 12803
+contig_72170 BE
+>scaff_767 2 11752 11788
+contig_72116 BE
+contig_72027 BE
+>scaff_758 2 11571 11939
+contig_71435 BE
+contig_72017 BE
+>scaff_852 1 11454 11454
+contig_72068 BE
+>scaff_770 2 11380 11612
+contig_72029 BE
+contig_71610 BE
+>scaff_922 2 11358 11833
+contig_71556 EB
+contig_71607 BE
+>scaff_775 2 11126 11277
+contig_72122 BE
+contig_72030 BE
+>scaff_917 2 11046 11224
+contig_71529 BE
+contig_71481 BE
+>scaff_811 2 10922 11232
+contig_72121 BE
+contig_71689 BE
+>scaff_769 3 10205 10281
+contig_71560 BE
+contig_72028 BE
+contig_71723 BE
+>scaff_912 2 10020 10188
+contig_71539 EB
+contig_71521 BE
+>scaff_753 2 9992 10812
+contig_71339 EB
+contig_72012 BE
+>scaff_800 2 9761 9937
+contig_72044 BE
+contig_71617 EB
+>scaff_888 2 9158 9160
+contig_71981 EB
+contig_71436 BE
+>scaff_854 1 9118 9118
+contig_72069 BE
+>scaff_784 3 8806 9489
+contig_71631 EB
+contig_72053 BE
+contig_72034 BE
+>scaff_948 2 8655 9631
+contig_71987 BE
+contig_71715 BE
+>scaff_899 2 8493 8860
+contig_72098 BE
+contig_71685 EB
+>scaff_915 5 8017 9171
+contig_71525 BE
+contig_71527 EB
+contig_71688 BE
+contig_71720 BE
+contig_71719 EB
+>scaff_835 4 7979 9298
+contig_71494 BE
+contig_72061 BE
+contig_71584 EB
+contig_71567 EB
+>scaff_870 1 7757 7757
+contig_72151 BE
+>scaff_878 1 7532 7532
+contig_72158 BE
+>scaff_957 1 7102 7102
+contig_71583 BE
+>scaff_966 2 6994 6994
+contig_71744 BE
+contig_71591 BE
+>scaff_967 1 6994 6994
+contig_71592 BE
+>scaff_921 2 6986 7387
+contig_71982 BE
+contig_71531 BE
+>scaff_840 2 6824 6990
+contig_71660 EB
+contig_72063 BE
+>scaff_954 3 6792 7017
+contig_71734 BE
+contig_71587 BE
+contig_71724 BE
+>scaff_776 2 6561 6872
+contig_72103 BE
+contig_71574 BE
+>scaff_880 2 6503 6890
+contig_72086 BE
+contig_71750 EB
+>scaff_817 2 6280 6636
+contig_71557 BE
+contig_71250 BE
+>scaff_925 2 6253 6310
+contig_71396 EB
+contig_71395 BE
+>scaff_947 5 5697 3685
+contig_71569 BE
+contig_71112 EB
+contig_71114 BE
+contig_71108 BE
+contig_71116 BE
+>scaff_872 1 5535 5535
+contig_72154 BE
+>scaff_865 1 5494 5494
+contig_72075 BE
+>scaff_933 2 5467 5954
+contig_71622 EB
+contig_71620 BE
+>scaff_786 1 5318 5318
+contig_72035 BE
+>scaff_918 2 5233 6242
+contig_71457 BE
+contig_71546 EB
+>scaff_942 3 5155 5608
+contig_71677 BE
+contig_71676 BE
+contig_71708 BE
+>scaff_825 3 4976 5697
+contig_71760 EB
+contig_72059 BE
+contig_71581 BE
+>scaff_910 2 4867 5002
+contig_71664 EB
+contig_72177 BE
+>scaff_832 1 4845 4845
+contig_72132 BE
+>scaff_941 2 4656 4991
+contig_71632 BE
+contig_71641 EB
+>scaff_869 2 4615 5137
+contig_72078 BE
+contig_71548 BE
+>scaff_927 1 4353 4353
+contig_71611 BE
+>scaff_782 2 4268 4852
+contig_72105 BE
+contig_71625 EB
+>scaff_920 3 4226 4268
+contig_71706 BE
+contig_71599 BE
+contig_71602 BE
+>scaff_876 3 4138 4228
+contig_71284 BE
+contig_71283 BE
+contig_71768 EB
+>scaff_909 2 3941 3941
+contig_71449 BE
+contig_71448 BE
+>scaff_801 2 3853 4133
+contig_72117 BE
+contig_71615 BE
+>scaff_937 1 3834 3834
+contig_71559 BE
+>scaff_929 3 3709 4610
+contig_71697 BE
+contig_71542 BE
+contig_71541 BE
+>scaff_908 2 3559 3574
+contig_71657 BE
+contig_71447 BE
+>scaff_873 3 3323 3679
+contig_71466 BE
+contig_71354 BE
+contig_71353 BE
+>scaff_913 2 2878 3277
+contig_71523 BE
+contig_71573 BE
+>scaff_984 4 2827 3052
+contig_71825 BE
+contig_71827 EB
+contig_71777 EB
+contig_71779 EB
+>scaff_993 4 2791 2995
+contig_71906 BE
+contig_71904 BE
+contig_71886 EB
+contig_71884 BE
+>scaff_802 2 2778 2921
+contig_72118 BE
+contig_71733 BE
+>scaff_939 2 2754 2994
+contig_71700 BE
+contig_71669 EB
+>scaff_998 2 2384 3355
+contig_71694 EB
+contig_71692 BE
+>scaff_973 2 2344 2963
+contig_71742 BE
+contig_71743 BE
+>scaff_995 3 2314 4183
+contig_71908 BE
+contig_71874 EB
+contig_71910 EB
+>scaff_969 2 2294 2993
+contig_71668 BE
+contig_71667 BE
+>scaff_964 3 2172 2634
+contig_71813 EB
+contig_71811 BE
+contig_71809 BE
+>scaff_1025 2 1887 2974
+contig_71864 BE
+contig_71866 EB
+>scaff_867 1 1718 1718
+contig_72076 BE
+>scaff_994 2 1511 2656
+contig_71835 BE
+contig_71833 BE
+>scaff_1008 2 1500 2572
+contig_71848 BE
+contig_71850 EB
+>scaff_931 1 1469 1469
+contig_71471 BE
+>scaff_987 2 1467 2626
+contig_71829 BE
+contig_71831 BE
+>scaff_977 2 1456 2506
+contig_71819 BE
+contig_71852 EB
+>scaff_990 1 1430 1430
+contig_71687 BE
+>scaff_1006 2 1421 2551
+contig_71844 BE
+contig_71846 EB
+>scaff_1017 2 1419 2524
+contig_71856 BE
+contig_71858 EB
+>scaff_808 1 1385 1385
+contig_71176 BE
+>scaff_1029 2 1349 2514
+contig_71868 BE
+contig_71870 EB
+>scaff_999 2 1330 2525
+contig_71838 BE
+contig_71840 BE
+>scaff_1021 2 1286 2501
+contig_71860 BE
+contig_71862 EB
+>scaff_1004 1 1263 1263
+contig_71770 BE
+>scaff_930 1 1242 1242
+contig_71616 BE
+>scaff_981 1 1226 1226
+contig_71678 BE
+>scaff_1065 1 1211 1211
+contig_71984 BE
+>scaff_1033 2 1202 2512
+contig_71942 BE
+contig_71944 EB
+>scaff_788 1 1194 1194
+contig_71234 BE
+>scaff_953 1 1159 1159
+contig_71721 BE
+>scaff_816 1 1139 1139
+contig_71323 BE
+>scaff_820 1 1114 1114
+contig_71181 BE
+>scaff_1036 1 1104 1104
+contig_71947 BE
+>scaff_962 2 1088 2506
+contig_71805 BE
+contig_71807 EB
+>scaff_1035 1 1082 1082
+contig_71946 BE
+>scaff_928 1 1040 1040
+contig_71614 BE
+>scaff_1019 1 1035 1035
+contig_71930 BE
+>scaff_1031 1 1029 1029
+contig_71799 BE
+>scaff_997 1 1008 1008
+contig_71837 BE
+>scaff_982 1 1004 1004
+contig_71821 BE
+>scaff_961 1 991 991
+contig_71730 BE
+>scaff_1037 1 946 946
+contig_71876 BE
+>scaff_1013 1 935 935
+contig_71781 BE
+>scaff_903 1 925 925
+contig_71515 BE
+>scaff_963 1 900 900
+contig_71662 BE
+>scaff_968 1 879 879
+contig_71593 BE
+>scaff_988 1 867 867
+contig_71756 BE
+>scaff_914 1 866 866
+contig_71450 BE
+>scaff_1050 1 866 866
+contig_71890 BE
+>scaff_943 1 862 862
+contig_71635 BE
+>scaff_828 1 851 851
+contig_71259 BE
+>scaff_944 1 845 845
+contig_71709 BE
+>scaff_911 1 844 844
+contig_71379 BE
+>scaff_756 1 843 843
+contig_71140 BE
+>scaff_1066 1 840 840
+contig_71124 BE
+>scaff_979 1 839 839
+contig_71674 BE
+>scaff_780 1 835 835
+contig_71303 BE
+>scaff_793 1 834 834
+contig_71238 BE
+>scaff_856 1 829 829
+contig_71413 BE
+>scaff_1007 1 828 828
+contig_71918 BE
+>scaff_798 1 826 826
+contig_71242 BE
+>scaff_972 1 825 825
+contig_71815 BE
+>scaff_1003 1 822 822
+contig_71842 BE
+>scaff_741 1 808 808
+contig_71200 BE
+>scaff_1011 1 806 806
+contig_71924 BE
+>scaff_1040 1 797 797
+contig_71951 BE
+>scaff_818 1 796 796
+contig_71326 BE
+>scaff_956 1 790 790
+contig_71655 BE
+>scaff_1053 1 786 786
+contig_71967 BE
+>scaff_940 1 784 784
+contig_71704 BE
+>scaff_839 1 782 782
+contig_71261 BE
+>scaff_932 1 781 781
+contig_71474 BE
+>scaff_885 1 778 778
+contig_71433 BE
+>scaff_971 1 776 776
+contig_71740 BE
+>scaff_779 1 772 772
+contig_71230 BE
+>scaff_1000 1 772 772
+contig_71695 BE
+>scaff_900 1 771 771
+contig_71513 BE
+>scaff_905 1 769 769
+contig_71518 BE
+>scaff_1054 1 768 768
+contig_71894 BE
+>scaff_748 1 766 766
+contig_71136 BE
+>scaff_1026 1 764 764
+contig_71938 BE
+>scaff_799 1 755 755
+contig_71315 BE
+>scaff_883 1 754 754
+contig_71286 BE
+>scaff_891 1 754 754
+contig_71437 BE
+>scaff_858 1 753 753
+contig_71342 BE
+>scaff_895 1 749 749
+contig_71366 BE
+>scaff_774 1 746 746
+contig_71301 BE
+>scaff_980 1 745 745
+contig_71748 BE
+>scaff_1043 1 740 740
+contig_71882 BE
+>scaff_759 1 737 737
+contig_71142 BE
+>scaff_1056 1 735 735
+contig_71896 BE
+>scaff_879 1 728 728
+contig_71357 BE
+>scaff_901 1 726 726
+contig_71440 BE
+>scaff_952 1 726 726
+contig_71579 BE
+>scaff_752 1 723 723
+contig_71210 BE
+>scaff_919 1 720 720
+contig_71459 BE
+>scaff_733 1 718 718
+contig_71128 BE
+>scaff_745 1 717 717
+contig_71204 BE
+>scaff_938 1 713 713
+contig_71488 BE
+>scaff_768 1 711 711
+contig_71226 BE
+>scaff_1047 1 709 709
+contig_71888 BE
+>scaff_1038 1 708 708
+contig_71949 BE
+>scaff_992 1 704 704
+contig_71902 BE
+>scaff_823 1 694 694
+contig_71183 BE
+>scaff_959 1 694 694
+contig_71801 BE
+>scaff_1032 1 693 693
+contig_71940 BE
+>scaff_843 1 693 693
+contig_71263 BE
+>scaff_983 1 693 693
+contig_71823 BE
+>scaff_904 1 693 693
+contig_71442 BE
+>scaff_989 1 692 692
+contig_71758 BE
+>scaff_796 1 692 692
+contig_71240 BE
+>scaff_850 1 682 682
+contig_71265 BE
+>scaff_970 1 679 679
+contig_71597 BE
+>scaff_924 1 677 677
+contig_71393 BE
+>scaff_1064 1 673 673
+contig_71118 BE
+>scaff_991 1 673 673
+contig_71900 BE
+>scaff_785 1 672 672
+contig_71232 BE
+>scaff_831 1 670 670
+contig_71403 BE
+>scaff_866 1 669 669
+contig_71347 BE
+>scaff_1018 1 668 668
+contig_71789 BE
+>scaff_884 1 667 667
+contig_71501 BE
+>scaff_1023 1 664 664
+contig_71936 BE
+>scaff_946 1 661 661
+contig_71639 BE
+>scaff_996 1 659 659
+contig_71764 BE
+>scaff_1063 1 658 658
+contig_71110 BE
+>scaff_1049 1 657 657
+contig_71963 BE
+>scaff_950 1 656 656
+contig_71645 BE
+>scaff_887 1 653 653
+contig_71509 BE
+>scaff_871 1 649 649
+contig_71425 BE
+>scaff_1045 1 646 646
+contig_71957 BE
+>scaff_1028 1 645 645
+contig_71795 BE
+>scaff_826 1 644 644
+contig_71185 BE
+>scaff_945 1 632 632
+contig_71492 BE
+>scaff_1010 1 630 630
+contig_71922 BE
+>scaff_1059 1 625 625
+contig_71973 BE
+>scaff_861 1 624 624
+contig_71417 BE
+>scaff_949 1 617 617
+contig_71571 BE
+>scaff_1058 1 617 617
+contig_71971 BE
+>scaff_1061 1 615 615
+contig_71977 BE
+>scaff_1022 1 605 605
+contig_71934 BE
+>scaff_926 1 604 604
+contig_71399 BE
+>scaff_907 1 602 602
+contig_71373 BE
+>scaff_975 1 602 602
+contig_71817 BE
+>scaff_806 1 599 599
+contig_71319 BE
+>scaff_916 1 596 596
+contig_71453 BE
+>scaff_853 1 596 596
+contig_71267 BE
+>scaff_985 1 596 596
+contig_71752 BE
+>scaff_1014 1 595 595
+contig_71854 BE
+>scaff_1041 1 592 592
+contig_71880 BE
+>scaff_1052 1 588 588
+contig_71892 BE
+>scaff_936 1 586 586
+contig_71627 BE
+>scaff_955 1 579 579
+contig_71725 BE
+>scaff_1048 1 578 578
+contig_71961 BE
+>scaff_1039 1 578 578
+contig_71878 BE
+>scaff_958 1 577 577
+contig_71589 BE
+>scaff_1051 1 576 576
+contig_71965 BE
+>scaff_978 1 576 576
+contig_71746 BE
+>scaff_1016 1 576 576
+contig_71783 BE
+>scaff_812 1 571 571
+contig_71321 BE
+>scaff_923 1 564 564
+contig_71391 BE
+>scaff_846 1 562 562
+contig_71191 BE
+>scaff_1060 1 550 550
+contig_71975 BE
+>scaff_1062 1 549 549
+contig_71979 BE
+>scaff_976 1 542 542
+contig_71672 BE
+>scaff_986 1 540 540
+contig_71681 BE
+>scaff_935 1 535 535
+contig_71623 BE
+>scaff_1046 1 523 523
+contig_71959 BE
+>scaff_1012 1 506 506
+contig_71926 BE
+>scaff_893 1 497 497
+contig_71292 BE
+>scaff_1057 1 493 493
+contig_71898 BE
+>scaff_951 1 487 487
+contig_71647 BE
+>scaff_1042 1 466 466
+contig_71953 BE
+>scaff_1005 1 458 458
+contig_71916 BE
+>scaff_1002 1 430 430
+contig_71914 BE
+>scaff_965 1 422 422
+contig_71736 BE
+>scaff_974 1 382 382
+contig_71670 BE
+>scaff_1009 1 371 371
+contig_71920 BE
+>scaff_1015 1 362 362
+contig_71928 BE
+>scaff_1034 1 324 324
+contig_71872 BE
+>scaff_1020 1 323 323
+contig_71932 BE
+>scaff_1030 1 308 308
+contig_71797 BE
+>scaff_1055 1 246 246
+contig_71969 BE
+>scaff_1044 1 197 197
+contig_71955 BE
+>scaff_1024 1 188 188
+contig_71791 BE
+>scaff_960 1 174 174
+contig_71803 BE
+>scaff_1027 1 164 164
+contig_71793 BE
+>scaff_1001 1 155 155
+contig_71912 BE

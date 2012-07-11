@@ -1,0 +1,58 @@
+<!-- DTD for the Bambus evidence file                              -->
+<!-- (c) 2002 The Institute for Genomic Research.                  -->
+
+<!ELEMENT EVIDENCE ((CONTIG|DISTANCE|LINK)+)>
+<!ATTLIST EVIDENCE
+                           ID           ID                    #REQUIRED
+                           DATE         CDATA                
+                           PROJECT      CDATA
+                           PARAMETERS   CDATA
+>
+
+<!ELEMENT LIBRARY (INSERT+)>
+<!ATTLIST LIBRARY
+                           ID           ID                    #REQUIRED
+                           NAME         CDATA
+                           MIN          CDATA
+                           MAX          CDATA
+>
+
+<!ELEMENT INSERT (SEQUENCE, SEQUENCE)>
+<!ATTLIST INSERT
+                           ID           ID                    #REQUIRED
+                           NAME         CDATA
+>
+
+<!ELEMENT SEQUENCE EMPTY>
+<!ATTLIST SEQUENCE
+                           ID           ID                    #REQUIRED
+                           NAME         CDATA
+>
+
+<!ELEMENT CONTIG (SEQUENCE*)>
+<!ATTLIST CONTIG
+                           ID           CDATA                 #REQUIRED
+                           NAME         CDATA
+                           LEN          CDATA                 #REQUIRED
+>
+
+<!ELEMENT SEQUENCE EMPTY>
+<!ATTLIST SEQUENCE
+                           ID           IDREF                 #REQUIRED
+                           ORI          (BE | EB)             #REQUIRED
+                           ASM_LEND     CDATA                 #REQUIRED
+                           ASM_REND     CDATA                 #REQUIRED
+>
+
+<!ELEMENT LINK (CONTIG CONTIG)>
+<!ATTLIST LINK
+                           ID           ID                    #REQUIRED
+                           SIZE         CDATA                 #REQUIRED
+                           TYPE         CDATA       ""
+>
+
+<!ELEMENT CONTIG CDATA>
+<!ATTLIST CONTIG
+                           ID           IDREF                 #REQUIRED
+                           ORI          (BE | EB)             #REQUIRED
+>
