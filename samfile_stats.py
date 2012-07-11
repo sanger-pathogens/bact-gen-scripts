@@ -46,7 +46,7 @@ for samfilename in sys.argv[1:]:
 		
 		for ref in refs:
 			Totalchr[ref]=0
-			Pairedchr[ref]=0
+			Properpairchr[ref]=0
 			Mappedwithmatechr[ref]=0
 			Mappedchr[ref]=0
 			Mateondiffcontigchr[ref]=0
@@ -77,7 +77,7 @@ for samfilename in sys.argv[1:]:
 			if len(refs)>1:
 				Properpairchr[samfile.getrname(read.rname)]+=1
 		
-		if len(refs)>1 and read.rname!=read.mrnm:
+		if len(refs)>1 and read.rname!=read.mrnm and not read.mate_is_unmapped and not read.is_unmapped:
 			Mateondiffcontig+=1
 			Mateondiffcontigchr[samfile.getrname(read.rname)]+=1
 		

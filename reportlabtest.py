@@ -104,6 +104,7 @@ def main():
 	group.add_option("-c", "--columns", action="store", dest="columns", help="column(s) from metadata file to use for track name (comma separated list) [default=%default]", default="1")
 	group.add_option("-C", "--colourbycolumns", action="store", dest="colour_columns", help="column(s) from metadata file to use to colour track name and blocks next to name (comma separated list). If names are being shown, the first column will be used to colour names. All following columns will be added as coloured shapes as defined by the -z option. [default=%default]", default=False)
 	group.add_option("-r", "--parsimony_reconstruction", action="store", dest="transformation", help="Reconstruct colours across branches using parsimony. Select from acctran or deltran transformations [default=%default]", default=None, type="choice", choices=['acctran', 'deltran'])
+	group.add_option("-i", "--suffix", action="store", dest="suffix", help="suffix to remove from filenames", default="")
 	
 	parser.add_option_group(group)
 	
@@ -2499,7 +2500,13 @@ if __name__ == "__main__":
 			
 			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "bam"] or options.qualifier=="":
 				newtrack = Track()
-				name='.'.join(arg.split("/")[-1].split('.')[:-1])
+				if options.suffix != "":
+					namelen=len(arg.split("/")[-1])
+					name='.'.join(arg.split("/")[-1].split(options.suffix)[:-1])
+					if len(name)==namelen:
+						name='.'.join(arg.split("/")[-1].split('.')[:-1])
+				else:
+					name='.'.join(arg.split("/")[-1].split('.')[:-1])
 				if options.end!=-1:
 					newtrack.end=options.end
 				newtrack.beginning=options.beginning
