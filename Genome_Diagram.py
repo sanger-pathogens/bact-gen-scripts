@@ -577,58 +577,65 @@ def add_bcf_to_diagram(filename, track_number):
 				if inmapped==False:
 					colour=(230,230,230)
 					inmapped=True
-					start=BASEINFO["POS"]
+					start=int(BASEINFO["POS"])
 			elif SNP:
 				if inmapped:
-					end=BASEINFO["POS"]
+					end=int(BASEINFO["POS"])
 					feature = SeqFeature(FeatureLocation(start, end), strand=None)
 					inmapped=False
 					try: features.append((feature,colour))
 					except NameError: pass #print "here"
 				if INDEL and len(BASEINFO["ALT"])>len(BASEINFO["REF"]):
 					colour='6'
-					start=BASEINFO["POS"]
-					end=BASEINFO["POS"]
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])
 					feature = SeqFeature(FeatureLocation(start, end), strand=None)
 					try: features.append((feature,colour))
 					except NameError: pass #print "here"
 				elif INDEL and len(BASEINFO["ALT"])<len(BASEINFO["REF"]):
 					colour='1'
-					start=BASEINFO["POS"]
-					end=BASEINFO["POS"]+(len(BASEINFO["REF"])-len(BASEINFO["ALT"]))
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])+(len(BASEINFO["REF"])-len(BASEINFO["ALT"]))
+					feature = SeqFeature(FeatureLocation(start, end), strand=None)
+					try: features.append((feature,colour))
+					except NameError: pass #print "here"
+				elif SNP and BASEINFO["INFO"]["AF1"]<0.8 and BASEINFO["INFO"]["AF1"]>0.2:
+					colour='10'
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])
 					feature = SeqFeature(FeatureLocation(start, end), strand=None)
 					try: features.append((feature,colour))
 					except NameError: pass #print "here"
 				elif SNP and options.bcfvariants not in ["i", "I"] and BASEINFO["ALT"]=="A":
 					colour='3'
-					start=BASEINFO["POS"]
-					end=BASEINFO["POS"]
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])
 					feature = SeqFeature(FeatureLocation(start, end), strand=None)
 					try: features.append((feature,colour))
 					except NameError: pass #print "here"
 				elif SNP and options.bcfvariants not in ["i", "I"] and BASEINFO["ALT"]=="C":
 					colour='2'
-					start=BASEINFO["POS"]
-					end=BASEINFO["POS"]
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])
 					feature = SeqFeature(FeatureLocation(start, end), strand=None)
 					try: features.append((feature,colour))
 					except NameError: pass #print "here"
 				elif SNP and options.bcfvariants not in ["i", "I"] and BASEINFO["ALT"]=="G":
 					colour='4'
-					start=BASEINFO["POS"]
-					end=BASEINFO["POS"]
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])
 					feature = SeqFeature(FeatureLocation(start, end), strand=None)
 					try: features.append((feature,colour))
 					except NameError: pass #print "here"
 				elif SNP and options.bcfvariants not in ["i", "I"] and BASEINFO["ALT"]=="T":
 					colour='14'
-					start=BASEINFO["POS"]
-					end=BASEINFO["POS"]
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])
 					feature = SeqFeature(FeatureLocation(start, end), strand=None)
 					try: features.append((feature,colour))
 					except NameError: pass #print "here"
 		elif inmapped:
-			end=BASEINFO["POS"]
+			end=int(BASEINFO["POS"])
 			feature = SeqFeature(FeatureLocation(start, end), strand=None)
 			inmapped=False
 			try: features.append((feature,colour))

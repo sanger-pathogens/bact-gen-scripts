@@ -2636,7 +2636,13 @@ if __name__ == "__main__":
 					track_count+=1
 					
 					newtrack.scale=False
-					name='.'.join(arg.split("/")[-1].split('.')[:-1])
+					if options.suffix != "":
+						namelen=len(arg.split("/")[-1])
+						name='.'.join(arg.split("/")[-1].split(options.suffix)[:-1])
+						if len(name)==namelen:
+							name='.'.join(arg.split("/")[-1].split('.')[:-1])
+					else:
+						name='.'.join(arg.split("/")[-1].split('.')[:-1])
 					newtrack.name=name
 					x=1
 					while name in my_tracks:
@@ -2663,7 +2669,7 @@ if __name__ == "__main__":
 				
 				my_tracks[name]=newtrack
 			
-	
+
 	treenames=[]
 	tree_name_to_node={}
 	listnames=[]
@@ -2689,6 +2695,8 @@ if __name__ == "__main__":
 			
 			for terminal_node in treeterminals:
 				terminal=tree.node(terminal_node).data.taxon
+				terminal=terminal.strip("'")
+				terminal=terminal.strip('"')
 				treenames.append(terminal)
 				if not terminal in track_names:
 					track_count+=1
