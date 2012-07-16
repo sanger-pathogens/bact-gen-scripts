@@ -70,6 +70,7 @@ def main():
 	group.add_option("-o", "--output", action="store", dest="outputfile", help="output file name [default= %default]", type="string", metavar="FILE", default="test.pdf")
 	group.add_option("-O", "--orientation", action="store", choices=['landscape', 'portrait'], dest="orientation", help="page orientation [default= %default]", type="choice", default="landscape")
 	group.add_option("-p", "--pagesize", action="store", choices=['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'B0', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'LEGAL', 'LETTER', 'legal', 'letter'], dest="page", help="page size [default= %default]", type="choice", default="A4")
+	group.add_option("-P", "--npages", action="store", dest="npages", help="number of pages to  split picture over [default= %default]", type="int", default=1)
 	
 	parser.add_option_group(group)
 	
@@ -77,7 +78,7 @@ def main():
 	group = OptionGroup(parser, "Tree Output Options")
 	
 	group.add_option("-t", "--tree", action="store", dest="tree", help="tree file to align tab files to", default="")
-	group.add_option("-P", "--proportion", action="store", dest="treeproportion", help="Proportion of page to take up with the tree", default=0.3, type='float')
+	group.add_option("-2", "--proportion", action="store", dest="treeproportion", help="Proportion of page to take up with the tree", default=0.3, type='float')
 	group.add_option("-s", "--support", action="store_true", dest="tree_support", help="Scale tree branch widths by support (if present)", default=False)
 	group.add_option("-M", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root tree", default=False)
 	group.add_option("-L", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="page size [default= %default]", type="choice", default=None)
@@ -131,6 +132,10 @@ def main():
 	
 	group.add_option("-u", "--base_qual_filter", action="store", dest="base_qual_filter", help="Base quality filter for bam file mapping plots [default= %default]", default=0, type="float")
 	group.add_option("-U", "--mapping_qual_filter", action="store", dest="mapping_qual_filter", help="Mapping quality filter for bam file plots [default= %default]", default=0, type="float")
+	parser.add_option_group(group)
+	
+	group = OptionGroup(parser, "Bcf options")
+	group.add_option("-v", "--varianttype", action="store", dest="bcfvariants", choices=["a","A","i","I","s","S", "h", "H"], help="bcf variants to show. Letter code for types of variant to include: a/A=include all i/I:just indels, s/S:just SNPs, h/H just heterozygotous sites. Lower case means exclude non-variant sites, upper case means include them [default= %default]", default="A", type="choice")
 	parser.add_option_group(group)
 	
 	group = OptionGroup(parser, "Plot Options")
@@ -720,6 +725,277 @@ def add_ordered_tab_to_diagram(filename):
 
 
 
+###########################################
+# Function to add a bcf file to a diagram #
+###########################################
+
+
+def add_bcf_to_diagram(filename):		
+	
+	new_track = Track()
+	
+	features=[]
+	bcftoolssarg = shlex.split(BCFTOOLS_DIR+"bcftools view "+filename)
+
+	returnval = subprocess.Popen(bcftoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+	stdout, stderr  = returnval.communicate()
+	
+	if len(stderr)>0:
+		bcftoolssarg = shlex.split(OLD_BCFTOOLS_DIR+"bcftools view "+filename)
+		returnval = subprocess.Popen(bcftoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+		stdout, stderr  = returnval.communicate()
+
+		if len(stderr)>0:
+			print "Failed to open ", filename, "bcftools error:", stderr
+			sys.exit()
+	
+	
+	lines=stdout.split("\n")
+	
+	
+	inmapped=False
+	
+	for line in lines:
+	
+		#add filters here?
+		words=line.strip().split()
+		if len(words)==0:
+			continue
+		if words[0][0]=="#":
+			if words[0][1]!="#":
+				headings=words
+				headings[0]=headings[0][1:]
+			continue
+		
+		if len(words)!=len(headings):
+			print "words not equal to headings"
+			print headings
+			print words
+			sys.exit()
+		
+		BASEINFO={}
+		
+		for x, heading in enumerate(headings):
+#			if "ALT" in BASEINFO and BASEINFO["ALT"]==".":
+#				break
+			if heading=="INFO":
+				
+				BASEINFO[heading]={}
+				
+				try: info=words[x].split(";")
+				except StandardError:
+					print "Cannot split info string", words[x]
+					sys.exit()
+				for i in info:
+					
+					infotype=i.split("=")[0]
+					
+					if len(i.split("="))<2:
+						if infotype=="INDEL":
+							BASEINFO[heading][infotype]=True
+					else:
+						infodata=i.split("=")[1]
+						try: BASEINFO[heading][infotype]=float(infodata)
+						except StandardError:
+							try: BASEINFO[heading][infotype]=map(float,infodata.split(","))
+							except StandardError:
+								BASEINFO[heading][infotype]=infodata
+				
+				
+					
+			else:
+				try: BASEINFO[heading]=float(words[x])
+				except StandardError:
+					BASEINFO[heading]=words[x]
+				
+		
+		
+		#filter the call
+		keep=True
+		SNP=True
+		INDEL=False
+		if options.end>-1 and int(BASEINFO["POS"])>options.end:
+			break
+		if  int(BASEINFO["POS"])<options.beginning:
+			continue
+		if BASEINFO["ALT"]==".":
+			SNP=False
+			
+#			if options.bcfvariants not in ["A", "I", "S"]:
+#				continue
+		
+		
+		#Calculate the ref/alt ratios
+#		BASEINFO["INFO"]["DP4ratios"]={}
+#		if not "DP4" in BASEINFO["INFO"]:
+#			BASEINFO["INFO"]["DP4"]=[0,0,0,0]
+#			BASEINFO["INFO"]["DP4ratios"]["fref"]=0.0
+#			BASEINFO["INFO"]["DP4ratios"]["rref"]=0.0
+#			BASEINFO["INFO"]["DP4ratios"]["falt"]=0.0
+#			BASEINFO["INFO"]["DP4ratios"]["ralt"]=0.0
+#			BASEINFO["INFO"]["AF1"]=0
+#			BASEINFO["INFO"]["MQ"]=0
+#		elif "DP4" in BASEINFO["INFO"]:
+#			try: BASEINFO["INFO"]["DP4ratios"]["fref"]=float(BASEINFO["INFO"]["DP4"][0])/(BASEINFO["INFO"]["DP4"][0]+BASEINFO["INFO"]["DP4"][2])
+#			except ZeroDivisionError:
+#				BASEINFO["INFO"]["DP4ratios"]["fref"]=0.0
+#			try: BASEINFO["INFO"]["DP4ratios"]["rref"]=float(BASEINFO["INFO"]["DP4"][1])/(BASEINFO["INFO"]["DP4"][1]+BASEINFO["INFO"]["DP4"][3])
+#			except ZeroDivisionError:
+#				BASEINFO["INFO"]["DP4ratios"]["rref"]=0.0
+#			try: BASEINFO["INFO"]["DP4ratios"]["falt"]=float(BASEINFO["INFO"]["DP4"][2])/(BASEINFO["INFO"]["DP4"][0]+BASEINFO["INFO"]["DP4"][2])
+#			except ZeroDivisionError:
+#				BASEINFO["INFO"]["DP4ratios"]["falt"]=0.0
+#			try: BASEINFO["INFO"]["DP4ratios"]["ralt"]=float(BASEINFO["INFO"]["DP4"][3])/(BASEINFO["INFO"]["DP4"][1]+BASEINFO["INFO"]["DP4"][3])
+#			except ZeroDivisionError:
+#				BASEINFO["INFO"]["DP4ratios"]["ralt"]=0.0
+		
+	
+		
+		
+		
+#		if BASEINFO["QUAL"]<options.QUAL:
+#			#print options.QUAL, BASEINFO["QUAL"]
+#			keep=False
+#		elif  BASEINFO["INFO"]["MQ"]<options.MQUAL:
+#			#print options.MQUAL, BASEINFO["INFO"]["MQ"]
+#			keep=False
+#		elif not SNP and BASEINFO["INFO"]["DP4"][0]+BASEINFO["INFO"]["DP4"][1]<options.depth:
+#			keep=False
+#		elif not SNP and BASEINFO["INFO"]["DP4"][0]<options.stranddepth:
+#			keep=False
+#		elif not SNP and BASEINFO["INFO"]["DP4"][1]<options.stranddepth:
+#			keep=False
+#		elif not SNP and BASEINFO["INFO"]["DP4ratios"]["fref"]<options.ratio:
+#			keep=False
+#		elif not SNP and BASEINFO["INFO"]["DP4ratios"]["rref"]<options.ratio:
+#			keep=False
+#		elif SNP and BASEINFO["INFO"]["DP4"][2]+BASEINFO["INFO"]["DP4"][3]<options.depth:
+#			keep=False
+#		elif SNP and BASEINFO["INFO"]["DP4"][2]<options.stranddepth:
+#			keep=False
+#		elif SNP and BASEINFO["INFO"]["DP4"][3]<options.stranddepth:
+#			keep=False
+#		elif SNP and BASEINFO["INFO"]["DP4ratios"]["falt"]<options.ratio:
+#			keep=False
+#		elif SNP and BASEINFO["INFO"]["DP4ratios"]["ralt"]<options.ratio:
+#			keep=False
+#		elif BASEINFO["ALT"]=="." and BASEINFO["INFO"]["AF1"]>(1-options.AF1):
+#			keep=False
+#		elif BASEINFO["ALT"]!="." and BASEINFO["INFO"]["AF1"]<options.AF1:
+#			keep=False
+#		elif SNP and "PV4" in BASEINFO["INFO"]:
+#			if BASEINFO["INFO"]["PV4"][0]<=options.strand_bias:
+#				keep=False
+#			if BASEINFO["INFO"]["PV4"][1]<=options.baseq_bias:
+#				keep=False
+#			if BASEINFO["INFO"]["PV4"][2]<=options.mapping_bias:
+#				keep=False
+#			if BASEINFO["INFO"]["PV4"][3]<=options.tail_bias:
+#				keep=False
+			
+		
+		HETERO=False
+		#find hetrozygous SNP calls and INDELS
+		if len(BASEINFO["ALT"].split(","))>1:
+			HETERO=True
+#			keep=False
+		elif (len(BASEINFO["ALT"].split(",")[0])>1 or len(BASEINFO["REF"].split(",")[0])>1) and "INDEL" in BASEINFO['INFO']:
+			INDEL=True
+		elif "INDEL" in BASEINFO['INFO']:
+			keep=False
+		
+		if options.bcfvariants in ["s", "S"]:
+			INDEL=False
+		
+		if keep:
+			if not SNP and not INDEL:
+				if inmapped==False:
+					colour=colors.Color(230.0/255,230.0/255,230.0/255)
+					inmapped=True
+					start=int(BASEINFO["POS"])
+			elif SNP:
+				if inmapped:
+					end=int(BASEINFO["POS"])
+					#feature = SeqFeature(FeatureLocation(start, end), strand=None)
+					inmapped=False
+					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
+				if INDEL and options.bcfvariants not in ["h", "H"] and len(BASEINFO["ALT"])>len(BASEINFO["REF"]):
+					colour=translator.artemis_color("6")
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])
+					#feature = SeqFeature(FeatureLocation(start, end), strand=None)
+					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+					try: features.append((feature,colour))
+					except NameError: pass #print "here"
+				elif INDEL and options.bcfvariants not in ["h", "H"] and len(BASEINFO["ALT"])<len(BASEINFO["REF"]):
+					#colour='1'
+					colour=translator.artemis_color("1")
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])+(len(BASEINFO["REF"])-len(BASEINFO["ALT"]))
+					#feature = SeqFeature(FeatureLocation(start, end), strand=None)
+					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
+				elif SNP and options.bcfvariants not in ["i", "I"] and BASEINFO["INFO"]["AF1"]<0.8 and BASEINFO["INFO"]["AF1"]>0.2:
+#					colour='10'
+					colour=translator.artemis_color("10")
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])
+					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+#					feature = SeqFeature(FeatureLocation(start, end), strand=None)
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
+				elif SNP and options.bcfvariants not in ["i", "I", "h", "H"] and BASEINFO["ALT"]=="A":
+#					colour='3'
+					colour=translator.artemis_color("10")
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])
+					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+#					feature = SeqFeature(FeatureLocation(start, end), strand=None)
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
+				elif SNP and options.bcfvariants not in ["i", "I", "h", "H"] and BASEINFO["ALT"]=="C":
+					colour=translator.artemis_color("2")
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])
+					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+#					feature = SeqFeature(FeatureLocation(start, end), strand=None)
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
+				elif SNP and options.bcfvariants not in ["i", "I", "h", "H"] and BASEINFO["ALT"]=="G":
+					colour=translator.artemis_color("4")
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])
+					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+#					feature = SeqFeature(FeatureLocation(start, end), strand=None)
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
+				elif SNP and options.bcfvariants not in ["i", "I", "h", "H"] and BASEINFO["ALT"]=="T":
+					colour=translator.artemis_color("14")
+					start=int(BASEINFO["POS"])
+					end=int(BASEINFO["POS"])
+					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+#					feature = SeqFeature(FeatureLocation(start, end), strand=None)
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
+		elif inmapped:
+			end=int(BASEINFO["POS"])
+#			feature = SeqFeature(FeatureLocation(start, end), strand=None)
+			new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+			inmapped=False
+#			try: features.append((feature,colour))
+#			except NameError: pass #print "here"
+	
+
+	print len(new_track.features), "features found in", filename
+	
+	return new_track
+
+
 
 
 #############################
@@ -1252,7 +1528,9 @@ class Track:
 	
 	
 	def draw_name(self):
-		d.add(String(self.track_position[0]-(self.name_length+vertical_scaling_factor), self.track_position[1]-(self.name_size/3), self.name, textAnchor='start', fontSize=self.name_size, fontName='Helvetica'))
+		#d.add(String(self.track_position[0]-(self.name_length+vertical_scaling_factor), self.track_position[1]-(self.name_size/3), self.name, textAnchor='start', fontSize=self.name_size, fontName='Helvetica'))
+		
+		d.add(String(self.track_position[0]-(self.name_length), self.track_position[1]-(self.name_size/3), self.name, textAnchor='start', fontSize=self.name_size, fontName='Helvetica'))
 	
 	
 	def draw_scale(self):
@@ -2257,7 +2535,7 @@ if __name__ == "__main__":
 		print "Found nothing to draw"
 		sys.exit()
 	
-	d = Drawing(width, height)
+	
 	
 	
 	margin=0.5*inch
@@ -2496,7 +2774,7 @@ if __name__ == "__main__":
 		if arg.lower() in ["tree", "list"]:
 			input_order.append(arg.lower())
 			continue
-		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area","embl", "gb", "tab", "bam", "fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs"]:
+		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area","embl", "gb", "tab", "bam", "bcf", "fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs"]:
 			
 			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "bam"] or options.qualifier=="":
 				newtrack = Track()
@@ -2517,12 +2795,37 @@ if __name__ == "__main__":
 				newtrack.track_height=options.plotheight
 				newtrack.scale=False
 				newtrack.add_plot(arg, plot_type, options.fragments)
-			if arg.split('.')[-1].lower() in ["bam"]:
+			elif arg.split('.')[-1].lower() in ["bam"]:
 				track_count+=options.plotheight
 				plot_type=options.plottype
 				newtrack.track_height=options.plotheight
 				newtrack.scale=False
 				newtrack.add_bam_plot(arg, plot_type, options.fragments)
+			elif arg.split('.')[-1].lower() in ["bcf"]:
+				newtrack=add_bcf_to_diagram(arg)
+				newtrack.track_height=1
+				if options.end!=-1:
+					newtrack.end=options.end
+				newtrack.beginning=options.beginning
+				track_count+=1
+				
+				newtrack.scale=False
+				if options.suffix != "":
+					namelen=len(arg.split("/")[-1])
+					name='.'.join(arg.split("/")[-1].split(options.suffix)[:-1])
+					if len(name)==namelen:
+						name='.'.join(arg.split("/")[-1].split('.')[:-1])
+				else:
+					name='.'.join(arg.split("/")[-1].split('.')[:-1])
+				newtrack.name=name
+				x=1
+				while name in my_tracks:
+					name='.'.join(arg.split('.')[:-1])+"_"+str(x)
+					x+=1
+				if not newtrack.name in track_names:
+					track_names[newtrack.name]=[]
+				input_order.append(name)
+				my_tracks[name]=newtrack
 			elif arg.split('.')[-1].lower() in ["hist", "heat", "bar", "line", "area"]:
 				track_count+=options.plotheight
 				newtrack.track_height=options.plotheight
@@ -2538,7 +2841,7 @@ if __name__ == "__main__":
 				try:
 					emblrecord=open_annotation(arg)
 				except (StandardError, SimonError) as e:
-					print e.strerror
+					#print e.strerror
 					DoError("Cannot open annotation file "+arg+" please check the format")
 				name=emblrecord.name
 				while name in my_tracks:
@@ -2993,37 +3296,47 @@ if __name__ == "__main__":
 	
 	
 	#We can now start to print the tracks
+	c = Canvas(options.outputfile, pagesize=(width, height))
 	
-	for fragment in xrange(1, options.fragments+1):
+	pagelen=float(length)/options.npages
+	for page in xrange(options.npages):
+		if options.npages>1:
+			print "Printing page", page+1
+		else:
+			print "Printing figure"
+		d = Drawing(width, height)
+		for fragment in xrange(1, options.fragments+1):
+			
+			beginning=int(((float(pagelen)/options.fragments)*(fragment-1))+options.beginning)+(page*pagelen)
+			end=int(((float(pagelen)/options.fragments)*fragment)+options.beginning)+(page*pagelen)
+			#print beginning, end
+			for track in output_order:
+				
+				if not track in my_tracks or (my_tracks[track].is_key and fragment!=options.fragments):
+					continue
+				
+				my_tracks[track].beginning=beginning
+				my_tracks[track].end=end
+				
+				
+				
+				my_tracks[track].track_position[1]=margin+(((((options.fragments-fragment)*track_count)+my_tracks[track].track_number)*vertical_scaling_factor)+(my_tracks[track].track_height)/2)
+				
+				if options.greytracks:
+					my_tracks[track].greytrack=True
+				my_tracks[track].sort_features_by_length()
+				my_tracks[track].draw_track()
+			
+			if options.tree!="":
+				drawtree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3)
+				
 		
-		beginning=int(((float(length)/options.fragments)*(fragment-1))+options.beginning)
-		end=int(((float(length)/options.fragments)*fragment)+options.beginning)
 		
-		for track in output_order:
-			
-			if not track in my_tracks or (my_tracks[track].is_key and fragment!=options.fragments):
-				continue
-			
-			my_tracks[track].beginning=beginning
-			my_tracks[track].end=end
-			
-			
-			
-			my_tracks[track].track_position[1]=margin+(((((options.fragments-fragment)*track_count)+my_tracks[track].track_number)*vertical_scaling_factor)+(my_tracks[track].track_height)/2)
-			
-			if options.greytracks:
-				my_tracks[track].greytrack=True
-			my_tracks[track].sort_features_by_length()
-			my_tracks[track].draw_track()
-		
-		if options.tree!="":
-			drawtree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3)
-			
-	
-	
-	 
-	renderPDF.drawToFile(d, options.outputfile) 
-
+		 
+		renderPDF.draw(d, c, 0, 0)
+		c.showPage()
+	c.save()
+	print "Done"
 	
 	
 	

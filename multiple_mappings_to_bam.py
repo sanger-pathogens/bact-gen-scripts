@@ -662,40 +662,40 @@ if __name__ == "__main__":
 		print "\nError: No valid input files!"
 		sys.exit()
 	
-#	seq_records=[]
-#	
-#	for seq_record in SeqIO.parse(open(options.ref), "fasta"):
-#		seq_records.append(seq_record)
-#		
-#	
-#	
-#	if len(seq_records)==0:
-#		DoError("Cannot open reference fasta file!")
-#	else:
-#	
-#		SeqIO.write(seq_records, open(options.ref,"w"), "fasta")
-#		if options.incref:
-#			concatenated_seq=""
-#			
-#			contigs={}
-#			contigorder=[]
-#			for record in seq_records:
-#				contigorder.append(record.id)
-#				contigs[record.id]=str(record.seq)
-#			
-#			keys=contigs.keys()
-#			keys.sort()
-#			for contig in contigorder:
-#				concatenated_seq=concatenated_seq+contigs[contig]
-#				
-#			my_seq_record = SeqRecord(Seq(concatenated_seq))
-#			my_seq_record.id=options.ref.split("/")[-1].split(".")[0]
-#			my_seq_record.description="Reference"
-##			if options.pseudosequence:
-##				SeqIO.write([my_seq_record], open(options.output+".aln","w"), "fasta")
-#		
-#		else:
-#			os.system("rm "+options.output+".aln")
+	seq_records=[]
+	
+	for seq_record in SeqIO.parse(open(options.ref), "fasta"):
+		seq_records.append(seq_record)
+		
+	
+	if not options.human:
+		if len(seq_records)==0:
+			DoError("Cannot open reference fasta file!")
+		else:
+		
+			SeqIO.write(seq_records, open(options.ref,"w"), "fasta")
+			if options.incref:
+				concatenated_seq=""
+				
+				contigs={}
+				contigorder=[]
+				for record in seq_records:
+					contigorder.append(record.id)
+					contigs[record.id]=str(record.seq)
+				
+				keys=contigs.keys()
+				keys.sort()
+				for contig in contigorder:
+					concatenated_seq=concatenated_seq+contigs[contig]
+					
+				my_seq_record = SeqRecord(Seq(concatenated_seq))
+				my_seq_record.id=options.ref.split("/")[-1].split(".")[0]
+				my_seq_record.description="Reference"
+	#			if options.pseudosequence:
+	#				SeqIO.write([my_seq_record], open(options.output+".aln","w"), "fasta")
+			
+			else:
+				os.system("rm "+options.output+".aln")
 	
 	
 	#Running Ssaha or bwa where required
