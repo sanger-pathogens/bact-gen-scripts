@@ -132,13 +132,15 @@ if __name__ == "__main__":
 	alnlen=len(alignment[sequence.name])
 	seqcount=len(seqnames)
 	toremove=[]
-	
+	cutoff=1
+	if float(alnlen)/10>cutoff:
+		cutoff=float(alnlen)/10
 	for x in xrange(alnlen):
 		ncount=0.0
 		for seq in seqnames:
 			if alignment[seq][x] in gap_and_missing:
 				ncount+=1
-		if ncount>1:
+		if ncount>cutoff:
 			toremove.append(x)
 	
 	for x in toremove[::-1]:
@@ -245,6 +247,6 @@ if __name__ == "__main__":
 			if significant[taxon][taxonb]>maxnum:
 				maxnum=significant[taxon][taxonb]
 		outfile.close()
-		os.system("~/scripts/reportlabtest.py -t "+options.tree+" -m test.csv -C 2,3 -O portrait -M -L left -a 2 -o treeimages/"+taxon+"_"+str(maxnum)+".pdf")
+		os.system("~/scripts/reportlabtest.py -t "+options.tree+" -m test.csv -C 2,3 -O portrait -M -L left -a 2 -o "+taxon+"_"+str(maxnum)+".pdf")
 	sys.exit()
                                     
