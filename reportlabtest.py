@@ -1518,7 +1518,7 @@ class Track:
 		
 		datalines=stdout.split("\n")
 		
-		newplot.read_data(datalines, samtools=True, contiglocs=contiglocs)
+		newplot.read_data(datalines, samtools=True, contiglocs=contiglocs, totallength=totallength)
 		
 #		newplot.raw_data_to_data()
 
@@ -1982,11 +1982,11 @@ class Plot:
 		
 		if self.end!=-1 and self.beginning!=-1:
 			self.window_size=int(float((self.end-self.beginning))/self.number_of_windows)
-			
+		elif self.end==-1 and self.beginning!=-1:
+			self.window_size=int(float(maxdatalength-self.beginning)/self.number_of_windows)
 		else:
-			
 			self.window_size=int(float(maxdatalength)/self.number_of_windows)
-			
+		
 		if self.window_size<1:
 			self.window_size=1
 			
@@ -2001,7 +2001,7 @@ class Plot:
 		return datalines
 	
 	
-	def read_data(self, datalines, samtools=False,  contiglocs=[]):	
+	def read_data(self, datalines, samtools=False,  contiglocs=[], totallength=-1):	
 		
 		data=[[]]
 		if self.end==-1:
@@ -2009,6 +2009,11 @@ class Plot:
 		else:
 			endpos=self.end
 			self.circular=False
+		
+		if endpos<totallength:
+			totallength=endpos
+		elif endpos>totallength:	
+			endpos=totallength
 		
 		newplot=False
 		currpos=0
@@ -2028,11 +2033,11 @@ class Plot:
 				continue
 			else:
 				currpos+=1
-				if currpos>=endpos:
+				if currpos>endpos:
 					break
 			if newplot:
 				words=line.strip().split()
-				while float(words[0])>currpos and float(words[0])<endpos:
+				while float(words[0])>currpos and float(words[0])<=endpos:# and float(words[0])>=self.beginning:
 					for x in xrange(len(data)):
 						data[x].append(0.0)
 					currpos+=1
@@ -2042,10 +2047,10 @@ class Plot:
 					data[x].append(float(words[x+1]))
 			elif samtools:
 				words=line.strip().split()
-				while (float(words[1])+contiglocs[words[0]])>currpos and (float(words[1])+contiglocs[words[0]])<endpos:
+				while (float(words[1])+contiglocs[words[0]])>=currpos and (float(words[1])+contiglocs[words[0]])<=endpos:# and (float(words[1])+contiglocs[words[0]])>=self.beginning:
 					data[0].append(0.0)
 					currpos+=1
-				if (float(words[1])+contiglocs[words[0]])>=endpos:
+				if (float(words[1])+contiglocs[words[0]])>endpos:
 					break
 				data[0].append(float(words[2]))
 			else:
@@ -2053,6 +2058,11 @@ class Plot:
 				if float(words[0])>=endpos:
 					break
 				data[0].append(float(words[0]))
+		
+		while currpos<totallength:
+			for x in xrange(len(data)):
+				data[x].append(0)
+			currpos+=1
 		
 		if self.circular:
 			for datum in data:
@@ -2197,15 +2207,16 @@ class Plot:
 		
 		feature_width=float(datalength)/len(data[0])
 		
-		if self.min_yaxis!=float("Inf"):
-			valueMin = self.min_yaxis
-		else:
-			valueMin = min(map(max,self.data))
-		if self.max_yaxis!=float("-Inf"):
-			valueMax = self.max_yaxis 
-		else:
-			valueMax = max(map(max,self.data))
 		
+		
+		if options.plot_min!=float("Inf"):
+			valueMin = options.plot_min
+		else:
+			valueMin = min(data[0])
+		if options.plot_max!=float("Inf"):
+			valueMax = options.plot_max 
+		else:
+			valueMax = max(data[0])
 		
 #		self.legend=True
 #		if self.legend and len(self.labels)>0:
@@ -2328,15 +2339,25 @@ class Plot:
 		lp.xValueAxis.valueMin = self.beginning 
 		if self.end!=-1:
 			lp.xValueAxis.valueMax = self.end
-			
-		if self.min_yaxis!=float("Inf"):
-			lp.yValueAxis.valueMin = round_to_n(self.min_yaxis, 2)
+		
+		if options.plot_min!=float("Inf"):
+			lp.yValueAxis.valueMin = options.plot_min
 		else:
-			lp.yValueAxis.valueMin = round_to_n(min(map(min,self.data)), 2)
-		if self.max_yaxis!=float("-Inf"):
-			lp.yValueAxis.valueMax = round_to_n(self.max_yaxis, 2)
+			lp.yValueAxis.valueMin = float("Inf")
+			for datum in data:
+				datum_min= min(map(lambda x: x[1], datum))
+				if datum_min<lp.yValueAxis.valueMin:
+					lp.yValueAxis.valueMin=datum_min
+
+		if options.plot_max!=float("Inf"):
+			lp.yValueAxis.valueMax = options.plot_max
 		else:
-			lp.yValueAxis.valueMax = round_to_n(max(map(max,self.data)), 2)
+			lp.yValueAxis.valueMax = float("-Inf")
+			for datum in data:
+				datum_max= max(map(lambda x: x[1], datum))
+				if datum_max>lp.yValueAxis.valueMax:
+					lp.yValueAxis.valueMax=datum_max
+				
 			
 		
 		lp.yValueAxis.tickLeft=0
@@ -2427,16 +2448,19 @@ class Plot:
 		bc.barWidth=datalength/len(bc.data[0])
 		
 		bc.useAbsolute=1
-		
-		if self.min_yaxis!=float("Inf"):
-			bc.valueAxis.valueMin = round_to_n(self.min_yaxis, 2)
+		if options.plot_min!=float("Inf"):
+			bc.valueAxis.valueMin = options.plot_min
+#		if self.min_yaxis!=float("Inf"):
+#			bc.valueAxis.valueMin = round_to_n(self.min_yaxis, 2)
 		else:
-			bc.valueAxis.valueMin = round_to_n(min(map(min,self.data)), 2)
-		if self.max_yaxis!=float("-Inf"):
-			bc.valueAxis.valueMax = round_to_n(self.max_yaxis, 2)
+			bc.valueAxis.valueMin = round_to_n(min(map(min,data)), 2)
+		if options.plot_max!=float("Inf"):
+			bc.valueAxis.valueMax = options.plot_max
+#		elif len(self.data)==1:
+#			bc.valueAxis.valueMax = round_to_n(self.max_yaxis, 2)
 		else:
 			maxsum=0.0
-			for datum in self.data:
+			for datum in data:
 				maxsum+=max(datum)
 			bc.valueAxis.valueMax = round_to_n(maxsum, 2)
 			

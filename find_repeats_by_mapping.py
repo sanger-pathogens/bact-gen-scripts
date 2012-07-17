@@ -46,6 +46,8 @@ def get_user_options():
 	parser.add_option("-f", "--forwardfastq", action="store", dest="ffastq", help="Forward fastq file", default="")
 	parser.add_option("-R", "--reversefastq", action="store", dest="rfastq", help="Reverse fastq file", default="")
 	parser.add_option("-o", "--output", action="store", dest="output", help="Output file prefix", default="")
+	parser.add_option("-i", "--qid", action="store", dest="queryid", help="Identity required for mapping to the query (between 0 and 1) [default= %default]", default=0.99, type='float')
+	parser.add_option("-I", "--rid", action="store", dest="refid", help="Identity required for mapping reads back to the reference (between 0 and 1) [default= %default]", default=0.90, type='float')
 	parser.add_option("-d", "--distance", action="store", dest="distance", help="Remap reads to reference if they are within this distance (bp) from the end of the query sequence. 0=include all", default=250, type='float')	
 	
 	return parser.parse_args()
@@ -79,12 +81,16 @@ def check_input_validity(options, args):
 		DoError('Cannot find file '+options.rfastq)
 	if options.distance<0:
 		DoError('Distance options (-d) must be >=0')
+	if options.queryid<0 or options.queryid>1:
+		DoError('Query id must be between 0 and 1')
+	if options.refid<0 or options.refid>1:
+		DoError('Reference id must be between 0 and 1')
 		
 	
 	return
 
 
-def map_reads(freads="", rreads="", ref="", outputname="", maprepeats=False):
+def map_reads(freads="", rreads="", ref="", outputname="", maprepeats=False, percentid=0.9):
 	
 	if freads=="":
 		print "No reads given"
@@ -99,9 +105,9 @@ def map_reads(freads="", rreads="", ref="", outputname="", maprepeats=False):
 	os.system(SMALT_DIR+"smalt index -k 13 -s 1 "+ref+".index "+ref)
 	#map the reads to the reference
 	if maprepeats:
-		os.system(SMALT_DIR+"smalt map -y 0.9 -r 0 -f samsoft -o "+outputname+".sam "+ref+".index "+freads+" "+rreads)
+		os.system(SMALT_DIR+"smalt map -y "+str(percentid)+" -r 0 -f samsoft -o "+outputname+".sam "+ref+".index "+freads+" "+rreads)
 	else:
-		os.system(SMALT_DIR+"smalt map -y 0.9 -f samsoft -o "+outputname+".sam "+ref+".index "+freads+" "+rreads)
+		os.system(SMALT_DIR+"smalt map -y "+str(percentid)+" -f samsoft -o "+outputname+".sam "+ref+".index "+freads+" "+rreads)
 	os.system("samtools view -b -S -T "+ref+" -o "+outputname+".1.bam "+outputname+".sam")
 	os.system("samtools sort "+outputname+".1.bam "+outputname)
 	os.system("samtools index "+outputname+".bam")
@@ -237,7 +243,7 @@ if __name__ == "__main__":
 	chars = string.ascii_letters + string.digits
 	tmpname='tmp'+"".join(choice(chars) for x in range(randint(8, 10)))
 	#tmpname="tmpOPLFanZY"
-	map_reads(freads=options.ffastq, rreads=options.rfastq, ref=options.query, outputname=tmpname)
+	map_reads(freads=options.ffastq, rreads=options.rfastq, ref=options.query, outputname=tmpname, percentid=options.queryid)
 	
 	query_contigs=get_references(tmpname+".bam")
 	
@@ -245,7 +251,7 @@ if __name__ == "__main__":
 	
 	if readcount>0:
 		print readcount, "reads mapped to", options.query
-		map_reads(freads=tmpname+".fastq", rreads="", ref=options.ref, outputname=tmpname, maprepeats=True)
+		map_reads(freads=tmpname+".fastq", rreads="", ref=options.ref, outputname=tmpname, maprepeats=True, percentid=options.refid)
 		rename_reads(tmpname+".bam", options.output+".bam", contigs=query_contigs) 
 	else:
 		print "No reads mapped to", options.query
