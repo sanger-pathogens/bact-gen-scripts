@@ -7,13 +7,14 @@
 #------------------------------------------------------------------------------------
 # Import modules
 #------------------------------------------------------------------------------------
-import dendropy
-from fisher import pvalue
 import string, re
 import os, sys
+import dendropy
+sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.7/site-packages/fisher-0.1.4-py2.7-linux-x86_64.egg/', '/nfs/users/nfs_s/sh16/lib/python2.5/site-packages/fisher-0.1.4-py2.7-linux-x86_64.egg/', '/nfs/users/nfs_s/sh16/scripts/modules/']))
+from fisher import pvalue
 from optparse import OptionParser
 from Bio.Align import AlignInfo
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+#sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 from Si_general import *
 from Si_SeqIO import *
 
@@ -237,7 +238,7 @@ if __name__ == "__main__":
 	print
 	print "Taxon", "Number of significant comparisons"
 	for taxon in significant:
-		print taxon, len(significant[taxon])
+		
 		outfile=open("test.csv","w")
 		print >> outfile, "name,type,number:c:1:"+str(len(seqnames)-1)
 		print >> outfile, taxon+","+"1,"+"-"
@@ -247,6 +248,8 @@ if __name__ == "__main__":
 			if significant[taxon][taxonb]>maxnum:
 				maxnum=significant[taxon][taxonb]
 		outfile.close()
-		os.system("~/scripts/reportlabtest.py -t "+options.tree+" -m test.csv -C 2,3 -O portrait -M -L left -a 2 -o "+taxon+"_"+str(maxnum)+".pdf")
+		print taxon, maxnum
+		os.system("/nfs/users/nfs_s/sh16/scripts/reportlabtest.py -t "+options.tree+" -m test.csv -C 2,3 -O portrait -M -L left -a 2 -o "+taxon+"_"+str(maxnum)+".pdf")
+		os.system("rm -f  test.csv")
 	sys.exit()
                                     

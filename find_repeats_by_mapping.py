@@ -43,8 +43,8 @@ def get_user_options():
 	
 	parser.add_option("-q", "--query", action="store", dest="query", help="Query sequence to search for in your reference", default="", metavar="FILE")
 	parser.add_option("-r", "--reference", action="store", dest="ref", help="Reference sequence in which to find positions of query", default="", metavar="FILE")
-	parser.add_option("-f", "--forwardfastq", action="store", dest="ffastq", help="Forward fastq file", default="")
-	parser.add_option("-R", "--reversefastq", action="store", dest="rfastq", help="Reverse fastq file", default="")
+	parser.add_option("-f", "--forwardfastq", action="store", dest="ffastq", help="Forward fastq file (can be gzipped, but must end in .gz)", default="")
+	parser.add_option("-R", "--reversefastq", action="store", dest="rfastq", help="Reverse fastq file (can be gzipped, but must end in .gz)", default="")
 	parser.add_option("-o", "--output", action="store", dest="output", help="Output file prefix", default="")
 	parser.add_option("-i", "--qid", action="store", dest="queryid", help="Identity required for mapping to the query (between 0 and 1) [default= %default]", default=0.99, type='float')
 	parser.add_option("-I", "--rid", action="store", dest="refid", help="Identity required for mapping reads back to the reference (between 0 and 1) [default= %default]", default=0.90, type='float')
@@ -102,15 +102,19 @@ def map_reads(freads="", rreads="", ref="", outputname="", maprepeats=False, per
 		print "No output name given"
 	
 	#index the reference
-	os.system(SMALT_DIR+"smalt index -k 13 -s 1 "+ref+".index "+ref)
+	if not os.path.isfile(ref+".index.smi"):
+		os.system(SMALT_DIR+"smalt index -k 13 -s 1 "+ref+".index "+ref)
+	if not os.path.isfile(ref+".fai"):
+		os.system(SAMTOOLS_DIR+"samtools "+ref)
+	
 	#map the reads to the reference
 	if maprepeats:
 		os.system(SMALT_DIR+"smalt map -y "+str(percentid)+" -r 0 -f samsoft -o "+outputname+".sam "+ref+".index "+freads+" "+rreads)
 	else:
 		os.system(SMALT_DIR+"smalt map -y "+str(percentid)+" -f samsoft -o "+outputname+".sam "+ref+".index "+freads+" "+rreads)
-	os.system("samtools view -b -S -T "+ref+" -o "+outputname+".1.bam "+outputname+".sam")
-	os.system("samtools sort "+outputname+".1.bam "+outputname)
-	os.system("samtools index "+outputname+".bam")
+	os.system(SAMTOOLS_DIR+"samtools view -b -S -T "+ref+" -o "+outputname+".1.bam "+outputname+".sam")
+	os.system(SAMTOOLS_DIR+"samtools sort "+outputname+".1.bam "+outputname)
+	os.system(SAMTOOLS_DIR+"samtools index "+outputname+".bam")
 	os.system("rm -f "+outputname+".1.bam "+outputname+".sam")
 
 
@@ -133,8 +137,6 @@ def rename_reads(inbam, outbam, contigs=[]):
 	for contig in contigs:
 		myheader["RG"].append({"ID": contig, "SM": contig})
 	
-	print myheader
-	
 	try: outsamfile = pysam.Samfile( outbam, "wb", header=myheader )
 	except StandardError:
 		print "Could not create", outbam
@@ -153,7 +155,7 @@ def rename_reads(inbam, outbam, contigs=[]):
 	
 	insamfile.close()
 	outsamfile.close()
-	os.system("samtools index "+outbam)
+	os.system(SAMTOOLS_DIR+"samtools index "+outbam)
 
 #############################
 # Print read to output file #
@@ -242,6 +244,16 @@ if __name__ == "__main__":
 	#make random name for files
 	chars = string.ascii_letters + string.digits
 	tmpname='tmp'+"".join(choice(chars) for x in range(randint(8, 10)))
+	
+	if options.ffastq.split(".")[-1]=="gz":
+		print "Unzipping forward fastq file"
+		os.system("zcat "+options.ffastq+" > "+tmpname+"_1.fastq")
+		options.ffastq=tmpname+"_1.fastq"
+	if options.rfastq.split(".")[-1]=="gz":
+		print "Unzipping reverse fastq file"
+		os.system("zcat "+options.rfastq+" > "+tmpname+"_2.fastq")
+		options.rfastq=tmpname+"_2.fastq"
+	
 	#tmpname="tmpOPLFanZY"
 	map_reads(freads=options.ffastq, rreads=options.rfastq, ref=options.query, outputname=tmpname, percentid=options.queryid)
 	

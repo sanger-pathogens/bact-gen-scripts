@@ -1453,7 +1453,7 @@ class Track:
 		
 		newplot=Plot()
 		
-		newplot.number_of_windows=newplot.number_of_windows*fragments
+		newplot.number_of_windows=newplot.number_of_windows*(fragments*options.npages)
 		newplot.plot_type=plot_type
 		datalines=newplot.read_plot_from_file(filename)
 		
@@ -1496,7 +1496,7 @@ class Track:
 		
 		
 		newplot=Plot()
-		newplot.number_of_windows=newplot.number_of_windows*fragments
+		newplot.number_of_windows=newplot.number_of_windows*fragments*(options.npages)
 		newplot.plot_type=plot_type
 		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools depth -q "+str(options.base_qual_filter)+" -Q "+str(options.mapping_qual_filter)+" "+filename)
 		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -2262,7 +2262,10 @@ class Plot:
 
 
 		for i,datum in enumerate(data[0]):
-			value=float(datum-valueMin)/(valueMax-valueMin)
+			if valueMax-valueMin>0:
+				value=float(datum-valueMin)/(valueMax-valueMin)
+			else:
+				value=0.0
 			if value>1:
 				value=1.0
 			colour=colors.Color(value,0,1.0-value)
@@ -2798,7 +2801,7 @@ if __name__ == "__main__":
 		if arg.lower() in ["tree", "list"]:
 			input_order.append(arg.lower())
 			continue
-		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area","embl", "gb", "tab", "bam", "bcf", "fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs"]:
+		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area","embl", "gb", "gbk", "tab", "bam", "bcf", "fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs"]:
 			
 			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "bam"] or options.qualifier=="":
 				newtrack = Track()
@@ -2857,7 +2860,7 @@ if __name__ == "__main__":
 				
 				newtrack.scale=False
 				newtrack.add_plot(arg, plot_type, options.fragments)
-			elif arg.split('.')[-1].lower() in ["embl", "gb"]:
+			elif arg.split('.')[-1].lower() in ["embl", "gb", "gbk"]:
 				track_count+=options.emblheight
 				
 				newtrack = Track()

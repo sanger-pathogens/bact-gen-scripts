@@ -431,10 +431,11 @@ def open_annotation(filename, sequence="", quiet=False):
 					
 					IDline=line.split(";")
 					IDline=map(lambda x: x.strip(),IDline)
-					
+					print IDline
 					if len(IDline)>=7 and len(IDline[1].split())==2 and IDline[1].split()[0]=="SV" and IDline[2] in ["circular", "linear"] and IDline[4] in ["CON", "PAT", "EST", "GSS", "HTC", "HTG", "MGA", "WGS", "TPA", "STS", "STD"] and IDline[5] in ['PHG', 'ENV', 'FUN', 'HUM', 'INV', 'MAM', 'VRT', 'MUS', 'PLN', 'PRO', 'ROD', 'SYN', 'TGN', 'UNC', 'VRL'] and len(IDline[6].split())==2 and int(IDline[6].split()[0])==len(sequence) and IDline[6].split()[1][:2]=="BP":
 						newembl.append(line)
 					else:
+						print len(IDline)>=7, len(IDline[1].split())==2, IDline[1].split()[0]=="SV", IDline[2] in ["circular", "linear"], IDline[4] in ["CON", "PAT", "EST", "GSS", "HTC", "HTG", "MGA", "WGS", "TPA", "STS", "STD"], IDline[5] in ['PHG', 'ENV', 'FUN', 'HUM', 'INV', 'MAM', 'VRT', 'MUS', 'PLN', 'PRO', 'ROD', 'SYN', 'TGN', 'UNC', 'VRL'], len(IDline[6].split())==2, int(IDline[6].split()[0])==len(sequence), IDline[6].split()[1][:2]=="BP"
 						if not quiet:
 							print "Found invalid ID line. Will be replaced."
 						found_id_line=False
@@ -491,6 +492,9 @@ def open_annotation(filename, sequence="", quiet=False):
 				if not quiet:
 					print "Appending sequence"
 				write_embl_style_sequence(sequence, stringfile)
+			elif found_sequence==False and sequence!="":
+				if not quiet:
+					print "Failed to find sequence in file"
 				#stringfile, write_sequence(sequence, stringfile)
 			
 			stringfile.close()
