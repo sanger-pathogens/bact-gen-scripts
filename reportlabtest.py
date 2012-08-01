@@ -1268,9 +1268,9 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 
 
 				if options.names_as_shapes=="circle":
-					d.add(Circle(cx=block_xpos+block_length, cy=vertpos, r=(block_length/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
+					d.add(Circle(cx=block_xpos+block_length, cy=vertpos, r=(block_length/2), fillColor=name_colour, strokeColor=None, stroke=False, strokeWidth=0))
 				elif options.names_as_shapes in ["square", "rectangle", "auto"]:
-					d.add(Rect(block_xpos, vertpos-(vertical_scaling_factor/2), block_length, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
+					d.add(Rect(block_xpos, vertpos-(vertical_scaling_factor/2), block_length, vertical_scaling_factor, fillColor=name_colour, strokeColor=None, stroke=False, strokeWidth=0))
 						
 						
 						
@@ -1681,13 +1681,14 @@ class Track:
 		
 		for featurenum in featuresort[::-1]:
 			feature=self.scaled_features[featurenum[1]]
-			#if the feature is white, outline it in black so we can see it
-			if feature.strokecolour==colors.Color(1,1,1,1):
+			#if the feature is white, outline it in black so we can see it and outline features in black if selected in the options
+			if feature.strokecolour==colors.Color(1,1,1,1) or options.outline_features:
 				feature.strokecolour=colors.Color(0,0,0,1)
+			else:
+				feature.strokecolour=None
+				feature.strokeweight=0
 			
-			#outline features in black if selected in the options
-			if options.outline_features:
-				feature.strokecolour=colors.Color(0,0,0,1)
+			
 			
 			subfeaturesort=[]
 			for x, subfeature in enumerate(feature.feature_locations):
@@ -2260,16 +2261,34 @@ class Plot:
 			d.add(String(x+8+minlabelwidth+my_legend.width, my_legend.y, maxlabel, textAnchor='start', fontSize=self.legend_font_size, fontName=self.legend_font))
 			d.add(my_legend)
 
-
+		lastvalue=data[0][0]
+		draw_width=0.0
+		draw_start=0
 		for i,datum in enumerate(data[0]):
 			if valueMax-valueMin>0:
-				value=float(datum-valueMin)/(valueMax-valueMin)
+				value=round(float(datum-valueMin)/(valueMax-valueMin),2)
 			else:
 				value=0.0
 			if value>1:
 				value=1.0
-			colour=colors.Color(value,0,1.0-value)
-			d.add(Rect(x+(i*feature_width), y, feature_width, height, fillColor=colour, strokeColor=colour, strokeWidth=0))
+			if value!=lastvalue:
+				colour=colors.Color(lastvalue,0,1.0-lastvalue)
+				d.add(Rect(x+(draw_start*feature_width), y, draw_width+(feature_width/5), height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
+				
+#				myrect=Rect(x+(draw_start*feature_width), y, draw_width+1, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0)
+				
+#				print dir(myrect)
+#				sys.exit()
+				draw_width=0.0
+				draw_start=i
+				lastvalue=value
+			
+			draw_width+=feature_width
+			
+			
+		colour=colors.Color(value,0,1.0-value)
+		d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
+			
 #		if (((i+1)*feature_width)+x)<self.max_feature_length:
 #			d.add(Rect(x+((i+1)*feature_width), y, self.max_feature_length-(((i+1)*feature_width)+x), height, fillColor=colors.Color(0,0,1), strokeColor=colour, strokeWidth=0))
 	
