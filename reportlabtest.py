@@ -494,7 +494,7 @@ def add_sequence_file_to_diagram(fastarecord, name):
 # Function to add an embl file to a track #
 ###########################################
 
-def add_embl_to_diagram(record, incfeatures=["CDS", "feature", "tRNA", "rRNA"], emblfile=True, name=""):
+def add_embl_to_diagram(record, incfeatures=["CDS", "feature", "tRNA", "rRNA", "repeat_region"], emblfile=True, name=""):
 	
 	########################################
 	# Function to get a name for a feature #
@@ -550,6 +550,8 @@ def add_embl_to_diagram(record, incfeatures=["CDS", "feature", "tRNA", "rRNA"], 
 				colourline = "0"
 			elif feature.type.lower()=="trna":
 				colourline = "8"
+			elif feature.type.lower()=="repeat_region":
+				colourline = "9"
 			else:
 				colourline = "1"
 
@@ -598,7 +600,7 @@ def add_tab_to_diagram(filename):
 		print "Cannot find file", filename
 		sys.exit()
 	record.name=filename
-	track=add_embl_to_diagram(record, incfeatures=["i", "d", "li", "del", "snp", "misc_feature", "core", "CORE", "cds", "insertion", "deletion", "recombination", "feature", "blastn_hit", "fasta_record", "contig"], emblfile=False)
+	track=add_embl_to_diagram(record, incfeatures=["i", "d", "li", "del", "snp", "misc_feature", "core", "CORE", "cds", "insertion", "deletion", "recombination", "feature", "blastn_hit", "fasta_record", "contig", "repeat_region"], emblfile=False)
 	
 	return track
 
@@ -720,7 +722,7 @@ def add_ordered_tab_to_diagram(filename):
 		print "Cannot find file", filename
 		sys.exit()
 	record.name=filename
-	new_tracks=add_ordered_embl_to_diagram(record, incfeatures=["i", "d", "li", "del", "snp", "misc_feature", "core", "cds", "insertion", "deletion", "recombination", "feature", "blastn_hit", "fasta_record"], emblfile=False)
+	new_tracks=add_ordered_embl_to_diagram(record, incfeatures=["i", "d", "li", "del", "snp", "misc_feature", "core", "cds", "insertion", "deletion", "recombination", "feature", "blastn_hit", "fasta_record", "repeat_region"], emblfile=False)
 	return new_tracks
 
 
@@ -1472,7 +1474,8 @@ class Track:
 	
 	def add_bam_plot(self, filename, plot_type="line", fragments=1):
 		
-		
+		print "Calculating coverage for", filename
+		sys.stdout.flush()
 		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools view -H "+filename)
 		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	
@@ -1952,6 +1955,8 @@ class Plot:
 		self.label=""
 		self.primary_colour=colors.red
 		self.alternate_colour=colors.blue
+		#self.heat_colour="whiteblack"
+		self.heat_colour="bluered"
 		self.line_colours=[colors.red, colors.blue, colors.green, colors.black, colors.magenta, colors.cyan, colors.yellow]
 		self.strokeweight=0.5
 		self.raw_data=[]
@@ -2272,9 +2277,17 @@ class Plot:
 			if value>1:
 				value=1.0
 			if value!=lastvalue:
-				colour=colors.Color(lastvalue,0,1.0-lastvalue)
-				d.add(Rect(x+(draw_start*feature_width), y, draw_width+(feature_width/5), height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
-				
+				if self.heat_colour=="blackwhite":
+					colour=colors.Color(lastvalue,lastvalue,lastvalue)
+				elif self.heat_colour=="whiteblack":
+					colour=colors.Color(1.0-lastvalue,1.0-lastvalue,1.0-lastvalue)
+				elif self.heat_colour=="bluered":
+					colour=colors.Color(lastvalue,0,1.0-lastvalue)
+				elif self.heat_colour=="redblue":
+					colour=colors.Color(1.0-lastvalue,0,lastvalue)
+				if not (self.heat_colour=="whiteblack" and lastvalue==0) and not (self.heat_colour=="blackwhite" and lastvalue==1):
+					d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
+
 #				myrect=Rect(x+(draw_start*feature_width), y, draw_width+1, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0)
 				
 #				print dir(myrect)
@@ -2285,9 +2298,18 @@ class Plot:
 			
 			draw_width+=feature_width
 			
-			
-		colour=colors.Color(value,0,1.0-value)
-		d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
+		
+		if self.heat_colour=="blackwhite":
+			colour=colors.Color(value,value,value)
+		elif self.heat_colour=="whiteblack":
+			colour=colors.Color(1.0-value,1.0-value,1.0-value)
+		elif self.heat_colour=="bluered":
+			colour=colors.Color(value,0,1.0-value)
+		elif self.heat_colour=="redblue":
+			colour=colors.Color(1.0-value,0,value)
+		if not (self.heat_colour=="whiteblack" and value==0) and not (self.heat_colour=="blackwhite" and value==1):
+			d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
+		
 			
 #		if (((i+1)*feature_width)+x)<self.max_feature_length:
 #			d.add(Rect(x+((i+1)*feature_width), y, self.max_feature_length-(((i+1)*feature_width)+x), height, fillColor=colors.Color(0,0,1), strokeColor=colour, strokeWidth=0))
