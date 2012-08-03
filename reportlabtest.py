@@ -2010,19 +2010,20 @@ class Plot:
 	def read_data(self, datalines, samtools=False,  contiglocs=[], totallength=-1):	
 		
 		data=[[]]
-		if self.end==-1:
-			endpos="Inf"
+		if int(self.end)==-1:
+			endpos=float("Inf")
 		else:
 			endpos=self.end
 			self.circular=False
 		
 		if endpos<totallength:
 			totallength=endpos
-		elif endpos>totallength:	
+		elif totallength>0 and endpos>totallength:	
 			endpos=totallength
 		
 		newplot=False
 		currpos=0
+		
 		for line in datalines:
 			if len(line.strip())<1:
 				continue
