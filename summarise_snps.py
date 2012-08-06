@@ -452,30 +452,45 @@ def concatenate_CDS_sequences(record, sequence, ref):
 		if feature.strand==-1:
 			my_seq=my_seq.reverse_complement()
 			#print len(my_seq),
+		my_seq=str(my_seq)
 			
 		my_ref= Seq(sequences[ref][start : end+1])
 		if feature.strand==-1:
 			my_ref=my_ref.reverse_complement()
 			#print len(my_ref)
+		my_ref=str(my_ref)
 		
-		if not "-" in my_seq and not "-" in my_ref:	
-
-			if len(str(my_seq)) % 3 or len(str(my_ref)) % 3:
-				#print float(len(str(my_seq)))/3, float(len(str(my_ref))/3)
-				#print feature.location.start.position, feature.location.end.position, feature.location.end.position-feature.location.start.position
-				#print feature
-				#print feature.sub_features
+		
+		for base in xrange(len(my_ref)):
+			if my_ref[base]=="-" and my_seq[base]=="-":
+				continue
+			elif my_ref[base]=="-" or my_seq[base]=="-":
 				return
+
+		if len(str(my_seq.replace("-",""))) % 3 or len(str(my_ref.replace("-",""))) % 3:
+			#print float(len(str(my_seq)))/3, float(len(str(my_ref))/3)
+			#print feature.location.start.position, feature.location.end.position, feature.location.end.position-feature.location.start.position
+			#print feature
+			#print feature.sub_features
+			return
 				
-			concatenated_sequence.append(str(my_seq))
-			concatenated_ref.append(str(my_ref))
+
 			
-			if feature.strand==-1:
-				for x in range(end,start-1,-1):
-					CDSbasenumbers.append(x)
-			else:
-				for x in range(start, end+1):
-					CDSbasenumbers.append(x)
+		if feature.strand==-1:
+			for x, y in enumerate(range(end,start-1,-1)):
+				if my_ref[x]!="-":
+					CDSbasenumbers.append(y)
+		else:
+			for x, y in enumerate(range(start, end+1)):
+				if my_ref[x]!="-":
+					CDSbasenumbers.append(y)
+		
+		my_ref=my_ref.replace("-","")
+		my_seq=my_seq.replace("-","")
+		
+		
+		concatenated_sequence.append(my_seq)
+		concatenated_ref.append(my_ref)
 			
 	
 	def iterate_subfeatures(feature):
@@ -498,7 +513,7 @@ def concatenate_CDS_sequences(record, sequence, ref):
 		if feature.type=="CDS" and not "pseudo" in feature.qualifiers:
 			iterate_subfeatures(feature)
 		
-	
+#	print len(concatenated_sequence), len(concatenated_ref), len(CDSbasenumbers)
 	return ''.join(concatenated_sequence), ''.join(concatenated_ref), CDSbasenumbers
 
 
@@ -904,7 +919,7 @@ if __name__ == "__main__":
 			#N, S, dN, dS, pN, pS, varianceS, varianceN, z, (len(CDS)-gapcount), Nd, Sd
 			
 			if dnbydsstats[sequence][3]!=0:
-				print "%.2f" % (dnbydsstats[sequence][2]/dnbydsstats[sequence][3]), dnbydsstats[sequence][12]
+				print "dNdS = %.2f,  p-value = %.2f" % (dnbydsstats[sequence][2]/dnbydsstats[sequence][3], dnbydsstats[sequence][12])
 				#print >> dndsout, '\t'+str(dnbydsstats[sequence][2]/dnbydsstats[sequence][3]),
 				sys.stdout.flush()
 			else:
@@ -984,6 +999,7 @@ if __name__ == "__main__":
 				for y in ['A', 'C', 'G', 'T']:
 					strainsnpsummary[name][x][y]=0
 	
+
 	
 	
 	for x, j in enumerate(snplocations):
