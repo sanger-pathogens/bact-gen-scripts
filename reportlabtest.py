@@ -147,6 +147,7 @@ def main():
 	group.add_option("-Y", "--plot_max", action="store", dest="plot_min", help="Set a minimum value for plots", default="Inf", type="float")
 	group.add_option("-Z", "--log_plot", action="store_true", dest="log_plots", help="Show plots on a log scale (doesn't work yet)", default=False)
 	group.add_option("-w", "--heatmap_legend", action="store_true", dest="heat_legend", help="Show legend on heatmaps", default=False)
+	group.add_option("-3", "--heatmap_colour", default="bluered", choices=["redblue", "bluered", "blackwhite", "whiteblack"], type="choice", action="store", dest="heat_colour", help="Set the default plot type (for plots called plot or graph and bam files). Choose from "+", ".join(["redblue", "bluered", "blackwhite", "whiteblack"]))
 	
 	parser.add_option_group(group)
 	
@@ -1469,7 +1470,11 @@ class Track:
 		
 		newplot.read_data(datalines)
 		
+		if plot_type=="heat":
+			newplot.heat_colour=options.heat_colour
+		
 		self.plots.append(newplot)
+		
 	
 	
 	def add_bam_plot(self, filename, plot_type="line", fragments=1):
@@ -1501,6 +1506,8 @@ class Track:
 		newplot=Plot()
 		newplot.number_of_windows=newplot.number_of_windows*fragments*(options.npages)
 		newplot.plot_type=plot_type
+		if plot_type=="heat":
+			newplot.heat_colour=options.heat_colour
 		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools depth -q "+str(options.base_qual_filter)+" -Q "+str(options.mapping_qual_filter)+" "+filename)
 		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	

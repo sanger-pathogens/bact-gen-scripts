@@ -48,6 +48,7 @@ def tab_parser(handle, quiet=False):
 			if not line:
 				break
 				raise ValueError("Premature end of line during features table")
+
 			if line[:object.HEADER_WIDTH].rstrip() in object.SEQUENCE_HEADERS:
 				if object.debug : print "Found start of sequence"
 				break
@@ -61,7 +62,9 @@ def tab_parser(handle, quiet=False):
 			if line[2:object.FEATURE_QUALIFIER_INDENT].strip() == "":
 				print line[2:object.FEATURE_QUALIFIER_INDENT].strip()
 				raise ValueError("Expected a feature qualifier in line '%s'" % line)
-
+			if line.split()[0] in ["ID", "source"]:
+				line=object.handle.readline()
+				continue
 			if skip:
 				line = object.handle.readline()
 				while line[:object.FEATURE_QUALIFIER_INDENT] == object.FEATURE_QUALIFIER_SPACER:
@@ -71,8 +74,7 @@ def tab_parser(handle, quiet=False):
 				feature_key = line[2:object.FEATURE_QUALIFIER_INDENT].strip()
 				feature_lines = [line[object.FEATURE_QUALIFIER_INDENT:]]
 				line = object.handle.readline()
-				while line[:object.FEATURE_QUALIFIER_INDENT] == object.FEATURE_QUALIFIER_SPACER or line.rstrip() == "" : # cope with blank lines in the midst of a feature
-					
+				while line and (line[:object.FEATURE_QUALIFIER_INDENT] == object.FEATURE_QUALIFIER_SPACER or line.rstrip() == "" ): # cope with blank lines in the midst of a feature
 					feature_lines.append(line[object.FEATURE_QUALIFIER_INDENT:].rstrip())
 					line = object.handle.readline()
 					if len(line)==0:
