@@ -236,20 +236,24 @@ if __name__ == "__main__":
 #					print >> outfile, taxonb+","+"2"
 #					print >> outfile, taxonc+","+"2"
 	print
-	print "Taxon", "Number of significant comparisons"
-	for taxon in significant:
-		
-		outfile=open("test.csv","w")
-		print >> outfile, "name,type,number:c:1:"+str(len(seqnames)-1)
-		print >> outfile, taxon+","+"1,"+"-"
-		maxnum=0
-		for taxonb in significant[taxon]:
-			print >> outfile, taxonb+","+"-,"+str(significant[taxon][taxonb])
-			if significant[taxon][taxonb]>maxnum:
-				maxnum=significant[taxon][taxonb]
-		outfile.close()
-		print taxon, maxnum
-		os.system("/nfs/users/nfs_s/sh16/scripts/reportlabtest.py -t "+options.tree+" -m test.csv -C 2,3 -O portrait -M -L left -a 2 -o "+taxon+"_"+str(maxnum)+".pdf")
-		os.system("rm -f  test.csv")
+	logout=open("heterozygotes.log","w")
+	print >> logout, "Taxon", "Number of significant comparisons"
+	for taxon in seqnames:
+		if taxon in significant:
+			
+			outfile=open("test.csv","w")
+			print >> outfile, "name,type,number:c:1:"+str(len(seqnames)-1)
+			print >> outfile, taxon+","+"1,"+"-"
+			maxnum=0
+			for taxonb in significant[taxon]:
+				print >> outfile, taxonb+","+"-,"+str(significant[taxon][taxonb])
+				if significant[taxon][taxonb]>maxnum:
+					maxnum=significant[taxon][taxonb]
+			outfile.close()
+			print >> logout, taxon, float(maxnum)/(len(seqnames)-1)
+			os.system("/nfs/users/nfs_s/sh16/scripts/reportlabtest.py -t "+options.tree+" -m test.csv -C 2,3 -O portrait -M -L left -a 2 -o "+taxon+"_"+str(maxnum)+".pdf")
+			os.system("rm -f  test.csv")
+		else:
+			print >> logout, taxon, 0.0
 	sys.exit()
                                     

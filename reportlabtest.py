@@ -2729,9 +2729,6 @@ if __name__ == "__main__":
 				else:
 					newtrack.key_data=[["Key:", colors.Color(0, 0, 0)]]
 				words=colour_column_names[x].split(":")
-				print words
-				
-				print min(colourslist[x])
 				
 				if len(words)>1:
 					if words[1] in ["C", "c"]:
@@ -2783,7 +2780,7 @@ if __name__ == "__main__":
 					colour_dict[x][colourslist[x][0]]=(255, 0, 0)
 					colour_dict[x][colourslist[x][1]]=(0, 0, 255)
 				elif newtrack.datatype=="continuous":
-					print colourslist[x]
+					
 					for y, name in enumerate(colourslist[x]):
 						value=name
 						if value<newtrack.datamin:
