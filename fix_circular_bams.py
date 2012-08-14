@@ -157,20 +157,20 @@ if __name__ == "__main__":
 			if ((read.is_reverse and read.pos<insert) or (not read.is_reverse and (read.pos+read.rlen)>(lengths[read.rname]-insert))):
 				counts[refs[read.rname]]+=1
 		
-			if read.is_reverse and not read.mate_is_reverse and read.pos<insert and (read.mpos+read.rlen)>(lengths[read.rname]-insert):
-				read.is_proper_pair=True
-				read.isize=read.aend+(lengths[read.rname]-read.mpos)
-				isizes[read.qname.split("/")[0]]=read.isize
-				ccounts[refs[read.rname]]+=1
-				#print read.pos, read.mpos, read.is_proper_pair, read.insertsize
-			if read.mate_is_reverse and not read.is_reverse and read.mpos<insert and (read.pos+read.rlen)>(lengths[read.rname]-insert):
-				#why are there sometimes things here that aren't in isizes???
-				if read.qname.split("/")[0] in isizes:
+				if read.is_reverse and not read.mate_is_reverse and (read.mpos+read.rlen)>(lengths[read.rname]-insert):
 					read.is_proper_pair=True
-					read.isize=isizes[read.qname.split("/")[0]]
-				
+					read.isize=read.aend+(lengths[read.rname]-read.mpos)
+					isizes[read.qname.split("/")[0]]=read.isize
 					ccounts[refs[read.rname]]+=1
-				#print read.pos, read.mpos
+					#print read.pos, read.mpos, read.is_proper_pair, read.insertsize
+				if read.mate_is_reverse and not read.is_reverse and read.mpos<insert:
+					#why are there sometimes things here that aren't in isizes???
+					if read.qname.split("/")[0] in isizes:
+						read.is_proper_pair=True
+						read.isize=isizes[read.qname.split("/")[0]]
+					
+						ccounts[refs[read.rname]]+=1
+					#print read.pos, read.mpos
 
 				
 		output.write(read)
