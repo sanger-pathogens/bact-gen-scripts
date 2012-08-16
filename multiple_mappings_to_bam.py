@@ -6,7 +6,7 @@
 ##################
 
 import string, re
-import os, sys, getopt, random, math, time
+import os, sys, getopt, random, math, time, datetime
 from random import *
 from optparse import OptionParser, OptionGroup
 from Bio import SeqIO
@@ -23,10 +23,11 @@ SAMTOOLS_DIR=""
 BCFTOOLS_DIR=""
 SSAHA_DIR="/nfs/users/nfs_s/sh16/ssaha2_v2.5.1_x86_64/"
 BWA_DIR=""
-#SMALT_DIR="/software/pathogen/external/apps/usr/bin/smalt"
-SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.5.8/smalt_x86_64"
+
 #SMALT_DIR="smalt"
 MY_SCRIPTS_DIR="/nfs/users/nfs_s/sh16/scripts/"
+GATK_LOC="/software/vertres/bin-external/GenomeAnalysisTK-1.5-9-ga05a7f2/GenomeAnalysisTK.jar"
+JAVA_DIR="/software/jdk1.6.0_01/bin/"
 
 
 ##########################
@@ -57,6 +58,7 @@ def get_user_options():
 
 	group = OptionGroup(parser, "Mapping Options")
 	group.add_option("-p", "--program", action="store", type="choice", dest="program", choices=["bwa","ssaha", "smalt", "BWA","SSAHA", "SMALT"], help="Mapping program to use (choose from bwa, ssaha or smalt) [default= %default]", default="smalt")
+	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3 and latest (currently 0.6.3) [default= %default]", default="0.5.8")
 	group.add_option("-H", "--human", action="store_true", dest="human", help="Mapping against human (or other large euk)", default=False)
 	#group.add_option("-l", "--length", action="store", dest="readlength", help="Read length [default= %default]", default=54, type="int", metavar="INT")
 	group.add_option("-s", "--single", action="store_false", dest="pairedend", help="reads are single ended (not paired)", default=True)
@@ -78,6 +80,7 @@ def get_user_options():
 	group.add_option("-D", "--stranddepth", action="store", dest="stranddepth", help="Minimum number of reads matching SNP per strand [default= %default]", default=2, type="int")
 	group.add_option("-B", "--BAQ", action="store_false", dest="BAQ", help="Turn off samtools base alignment quality option (BAQ) ", default=True)
 	group.add_option("-c", "--circular", action="store_false", dest="circular", help="Contigs are not circular, so do not try to fix them", default=True)
+	group.add_option("-G", "--GATK", action="store_true", dest="GATK", help="Turn on GATK indel realignment (highly recommended). [Default= %default]", default=False)
 	#parser.add_option("-q", "--quality", action="store", dest="quality", help="Minimum base quality [default= %default]", default=120, type="int")
 	#group.add_option("-S", "--RMS", action="store", dest="RMS", help="Minimum root mean squared mapping quality [default= %default]", default=25, type="int")
 	#parser.add_option("-Q", "--strandquality", action="store", dest="strandquality", help="Minimum per strand base quality [default= %default]", default=60, type="int")
@@ -410,13 +413,17 @@ class SNPanalysis:
 		if self.pairedend:
 			if options.maprepeats:
 				print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
+				cmdline="map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
 			else:
 				print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
+				cmdline="map -y "+str(options.nomapid)+" -x -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
 		else:
 			if options.maprepeats:
 				print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
+				cmdline="map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
 			else:
 				print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
+				cmdline="map -y "+str(options.nomapid)+" -x -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
 		
 		
 		#produce the BAM file
@@ -428,7 +435,28 @@ class SNPanalysis:
 			print >> bashfile, "rm", self.runname+"/tmp1.bam"
 		else:
 			print >> bashfile, "mv", self.runname+"/tmp1.bam", self.runname+"/tmp.bam"
-
+		
+		if options.GATK:
+			print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/"+self.name+".bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools view -H -o ", self.runname+"/tmphead.sam", self.runname+"/"+self.name+".bam"
+			now = datetime.datetime.now()
+			print >> bashfile, 'echo "@RG\tID:'+self.name+'\tCN:Sanger\tDT:'+now.strftime("%d/%m/%Y")+'\tPG:SMALT\tPL:ILLUMINA\tSM:'+self.name+'" >>', self.runname+"/tmphead.sam"
+			print >> bashfile, "smaltversion=$( "+SMALT_DIR+" version  | grep Version | awk '{print $2}' )"
+			print >> bashfile, 'echo "@PG\tID:SMALT\tPN:SMALT\tCL:'+' '.join(map(str,cmdline))+'\tVN:$smaltversion" >>', self.runname+'/tmphead.sam'
+			print >> bashfile, SAMTOOLS_DIR+'samtools view -b -H -o', self.runname+'/tmphead.bam', self.runname+"/"+self.name+".bam"
+			print >> bashfile, SAMTOOLS_DIR+'samtools merge -h ', self.runname+'/tmphead.sam -r', self.runname+"/tmp1.bam", self.runname+"/"+self.name+".bam", self.runname+'/tmphead.bam'
+			print >> bashfile, SAMTOOLS_DIR+'samtools sort', self.runname+"/tmp1.bam", self.runname+"/tmpsort"
+			print >> bashfile, 'mv', self.runname+"/tmpsort.bam", self.runname+"/tmp1.bam"
+			print >> bashfile, SAMTOOLS_DIR+'samtools index', self.runname+"/tmp1.bam"
+			print >> bashfile, "cp", ref, self.runname+'/tmpref.fa'
+			if options.mem>0:
+				javamem=options.mem
+			else:
+				javamem=2
+			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T RealignerTargetCreator -o", self.runname+'/tmp.intervals'
+			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T IndelRealigner -targetIntervals", self.runname+'/tmp.intervals', "-o", self.runname+"/tmp.bam"
+			print >> bashfile, "rm", self.runname+"/tmp1.bam",  self.runname+"/tmpref.*", self.runname+"/tmp.intervals", self.runname+"/tmphead.*",  self.runname+"/tmp1.sam", self.runname+"/"+self.name+".bam"
+		
 		if options.plots:
 			#add header to sam file for making plots - no need. Can read bams too!
 
@@ -522,7 +550,14 @@ if __name__ == "__main__":
 	(options, args)=get_user_options()
 	#print options, args
 	check_input_validity(options, args)
-
+	
+	if options.version=="latest" or options.version=="0.6.3":
+		SMALT_DIR="/software/pathogen/external/apps/usr/bin/smalt"
+	elif options.version=="0.5.8":
+		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.5.8/smalt_x86_64"
+	else:
+		print "Unknown smalt version"
+		sys.exit()
 
 	print '\nChecking input files...'
 	sys.stdout.flush()

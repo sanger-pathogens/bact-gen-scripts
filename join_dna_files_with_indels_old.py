@@ -169,42 +169,32 @@ if __name__ == "__main__":
 	
 	#Deal with the deletions
 	
-	align_size=20
-	
-	for contig in Deletion_locations:
-		Deletion_locations[contig].sort()
-		Deletion_locations[contig].reverse()
-	
-	for contig in sequences:
-		if not contig in Deletion_locations:
+	for contig in sequences.keys():
+		if not Deletion_locations.has_key(contig):
 			continue
 		
 		for location in Deletion_locations[contig]:
-			#print location
+			
 			maxdellen=0
-			#lens=[]
 			for sequence in sequences[contig]:
 				if Deletions[contig][location].has_key(sequence):
 					if len(Deletions[contig][location][sequence])>maxdellen:	
 						maxdellen=len(Deletions[contig][location][sequence])
-						#lens.append(Deletions[contig][location][sequence])
 			
-			alignlen=maxdellen+align_size
+			alignlen=maxdellen+20
 			
-			if location>=align_size and location<=len(refseq[contig])-(align_size+1):
-				start=location-align_size
+			if location>=alignlen and location<=len(refseq[contig])-(alignlen+1):
+				start=location-20
 				end=location+alignlen
-			elif location<align_size:
+			elif location<alignlen:
 				start=0
-				end=location+alignlen
+				end=alignlen
 			else:
-				end=len(refseq[contig])
-				start=len(refseq[contig])-((align_size)+1)
-			
-#			print end-start, maxdellen, align_size, alignlen, lens 
+				end=len(refseq[contig])-1
+				start=len(refseq[contig])-((alignlen)+1)
+				
 			
 			tempseqs=[refseq[contig][start:end]]
-			
 			for sequence in sequences[contig]:
 				
 				tempseqs.append(sequences[contig][sequence][start:end])
@@ -213,28 +203,7 @@ if __name__ == "__main__":
 					
 					deletionlen=len(Deletions[contig][location][sequence])
 					#sequences[contig][sequence].seq=sequences[contig][sequence].seq[:location]+"-"*deletionlen+sequences[contig][sequence].seq[location+deletionlen:]
-					if start==0:
-						distfromstart=align_size-location
-						
-					else:
-						distfromstart=align_size
-					
-					startbit=tempseqs[-1].seq[:distfromstart+1].upper()
-					
-					
-					if distfromstart+deletionlen<len(tempseqs[-1].seq):
-						endbit=tempseqs[-1].seq[distfromstart+1+deletionlen:].upper()
-					else:
-						endbit=""
-					
-#					print tempseqs[-1].seq
-#					print Deletions[contig][location][sequence]
-#					print distfromstart, startbit, endbit, distfromstart+deletionlen, len(tempseqs[-1].seq)
-#					print tempseqs[-1].seq
-#			
-#					print startbit+"-"*deletionlen+endbit
-					
-					tempseqs[-1].seq=startbit+"-"*deletionlen+endbit
+					tempseqs[-1].seq=tempseqs[-1].seq[:21].upper()+"-"*deletionlen+tempseqs[-1].seq[21+deletionlen:]
 			
 
 			SeqIO.write(tempseqs, open(tmpname+".aln","w"), "fasta")
@@ -269,33 +238,32 @@ if __name__ == "__main__":
 					print "D", start, end, location, refseqnewlen, len(sequences[contig][name].seq)
 					sys.exit()
 					os.system("seaview "+tmpname+".aln")
-			
 	
 	
 	#sort the inserts
 	
 	
-	for contig in Insertion_locations:
+	for contig in Insertion_locations.keys():
 		Insertion_locations[contig].sort()
 		Insertion_locations[contig].reverse()
 
 	#Deal with the inserts (most complicated bit)
 	
-	for contig in sequences:
-		if not contig in Insertion_locations:
+	for contig in sequences.keys():
+		if not Insertion_locations.has_key(contig):
 			continue
 		
 		for location in Insertion_locations[contig]:
 			
-			if location>=align_size and location<=len(refseq[contig])-(align_size+1):
-				start=location-align_size
-				end=location+align_size
-			elif location<align_size:
+			if location>=20 and location<=len(refseq[contig])-21:
+				start=location-20
+				end=location+20
+			elif location<20:
 				start=0
-				end=align_size*2
+				end=40
 			else:
 				end=len(refseq[contig])-1
-				start=len(refseq[contig])-(align_size*2)+1
+				start=len(refseq[contig])-41
 			tempseqs=[refseq[contig][start:end]]
 #			tempseqs[-1].id=tmpname
 			
@@ -303,7 +271,7 @@ if __name__ == "__main__":
 				tempseqs.append(sequences[contig][sequence][start:end])
 				tempseqs[-1].id=sequence
 				if Insertions[contig][location].has_key(sequence):
-					tempseqs[-1].seq=tempseqs[-1].seq[:align_size+1]+Insertions[contig][location][sequence]+tempseqs[-1].seq[align_size+1:]
+					tempseqs[-1].seq=tempseqs[-1].seq[:21]+Insertions[contig][location][sequence]+tempseqs[-1].seq[21:]
 					
 			
 #			if options.muscle:
