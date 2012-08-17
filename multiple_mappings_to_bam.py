@@ -440,7 +440,8 @@ class SNPanalysis:
 			print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/"+self.name+".bam"
 			print >> bashfile, SAMTOOLS_DIR+"samtools view -H -o ", self.runname+"/tmphead.sam", self.runname+"/"+self.name+".bam"
 			now = datetime.datetime.now()
-			print >> bashfile, 'echo "@RG\tID:'+self.name+'\tCN:Sanger\tDT:'+now.strftime("%d/%m/%Y")+'\tPG:SMALT\tPL:ILLUMINA\tSM:'+self.name+'" >>', self.runname+"/tmphead.sam"
+			now = now.replace(microsecond=0)
+			print >> bashfile, 'echo "@RG\tID:'+self.name+'\tCN:Sanger\tDT:'+now.isoformat()+'\tPG:SMALT\tPL:ILLUMINA\tSM:'+self.name+'" >>', self.runname+"/tmphead.sam"
 			print >> bashfile, "smaltversion=$( "+SMALT_DIR+" version  | grep Version | awk '{print $2}' )"
 			print >> bashfile, 'echo "@PG\tID:SMALT\tPN:SMALT\tCL:'+' '.join(map(str,cmdline))+'\tVN:$smaltversion" >>', self.runname+'/tmphead.sam'
 			print >> bashfile, SAMTOOLS_DIR+'samtools view -b -H -o', self.runname+'/tmphead.bam', self.runname+"/"+self.name+".bam"
@@ -455,7 +456,7 @@ class SNPanalysis:
 				javamem=2
 			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T RealignerTargetCreator -o", self.runname+'/tmp.intervals'
 			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T IndelRealigner -targetIntervals", self.runname+'/tmp.intervals', "-o", self.runname+"/tmp.bam"
-			print >> bashfile, "rm", self.runname+"/tmp1.bam",  self.runname+"/tmpref.*", self.runname+"/tmp.intervals", self.runname+"/tmphead.*",  self.runname+"/tmp1.sam", self.runname+"/"+self.name+".bam"
+			print >> bashfile, "rm", self.runname+"/tmp1.bam", self.runname+"/tmp1.bam.bai",  self.runname+"/tmpref.*", self.runname+"/tmp.intervals", self.runname+"/tmphead.*",  self.runname+"/tmp1.sam", self.runname+"/"+self.name+".bam"
 		
 		if options.plots:
 			#add header to sam file for making plots - no need. Can read bams too!
