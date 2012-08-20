@@ -22,7 +22,7 @@ from numpy import mean, std, median
 #	
 #	return revcomp
 refseqs={}
-if sys.argv[1]=="-e":
+if sys.argv[1]=="-r":
 	doerrors=True
 	reflines=open(sys.argv[2]).read().split(">")[1:]
 	for ref in reflines:
@@ -54,13 +54,14 @@ for filename in sys.argv[filestart:]:
 	refs=samfile.references
 	lengths=samfile.lengths
 	
-	for x, ref in enumerate(refs):
-		if not ref in refseqs:
-			print "Error! Reference sequences in fasta and bam do not match"
-			sys.exit()
-		elif len(refseqs[ref])!=lengths[x]:
-			print "Error! Reference sequences in fasta and bam are not the same length"
-			sys.exit()
+	if doerrors:
+		for x, ref in enumerate(refs):
+			if not ref in refseqs:
+				print "Error! Reference sequences in fasta and bam do not match"
+				sys.exit()
+			elif len(refseqs[ref])!=lengths[x]:
+				print "Error! Reference sequences in fasta and bam are not the same length"
+				sys.exit()
 			
 	
 	refstats={}
@@ -164,45 +165,56 @@ for filename in sys.argv[filestart:]:
 	
 	
 	
+	
 	if not doerrors:
+		if total==0:
+			totaltoreport="-"
+		else:
+			totaltoreport=str(totallength/total)
 		if len(refs)>1:
-			if total==0:
-				totaltoreport="-"
-			else:
-				totaltoreport=str(totallength/total)
-			print "\t".join([filename, "All contigs", str(totreflen), str(total), totaltoreport, str(mapped), str(proper_pair), str(unmapped), str(chimera)])
-		for x, ref in enumerate(refs):
-			print "\t".join([filename, ref, str(lengths[x]), "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["proper_pair"]), "-", "-"])
+			refname="All contigs"
+		else:
+			refname=refs[0]
+		print "\t".join([filename, refname, str(totreflen), str(total), totaltoreport, str(mapped), str(proper_pair), str(unmapped), str(chimera)])
+		if len(refs)>1:
+			for x, ref in enumerate(refs):
+				print "\t".join([filename, ref, str(lengths[x]), "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["proper_pair"]), "-", "-"])
 	else:
+		
+			
+		if total==0:
+			totaltoreport="-"
+		else:
+			totaltoreport=str(totallength/total)
+		if mappedlen==0:
+			errorproportion="-"
+			insertproportion="-"
+			deletionproportion="-"
+		else:
+			errorproportion=str(errors/mappedlen)
+			insertproportion=str(insertions/mappedlen)
+			deletionproportion=str(deletions/mappedlen)
+		
 		if len(refs)>1:
-			
-			if total==0:
-				totaltoreport="-"
-			else:
-				totaltoreport=str(totallength/total)
-			if mappedlen==0:
-				errorproportion="-"
-				insertproportion="-"
-				deletionproportion="-"
-			else:
-				errorproportion=str(errors/mappedlen)
-				insertproportion=str(insertions/mappedlen)
-				deletionproportion=str(deletions/mappedlen)
+			refname="All contigs"
+		else:
+			refname=refs[0]
+		
+		print "\t".join([filename, refname, str(totreflen), str(total), totaltoreport, str(mapped), str(proper_pair), str(unmapped), str(chimera), str(errors), str(insertions), str(deletions), errorproportion, insertproportion, deletionproportion, str(totdepthstats[0]), str(totdepthstats[1]), str(totdepthstats[2]), str(totdepthstats[3])])
+		if len(refs)>1:
+			for x, ref in enumerate(refs):
 				
-			print "\t".join([filename, "All contigs", str(totreflen), str(total), totaltoreport, str(mapped), str(proper_pair), str(unmapped), str(chimera), str(errors), str(insertions), str(deletions), errorproportion, insertproportion, deletionproportion, str(totdepthstats[0]), str(totdepthstats[1]), str(totdepthstats[2]), str(totdepthstats[3])])
-		for x, ref in enumerate(refs):
-			
-			if refstats[ref]["mappedlen"]==0:
-				errorproportion="-"
-				insertproportion="-"
-				deletionproportion="-"
-			else:
-				errorproportion=str(refstats[ref]["errors"]/refstats[ref]["mappedlen"])
-				insertproportion=str(refstats[ref]["insertions"]/refstats[ref]["mappedlen"])
-				deletionproportion=str(refstats[ref]["deletions"]/refstats[ref]["mappedlen"])
+				if refstats[ref]["mappedlen"]==0:
+					errorproportion="-"
+					insertproportion="-"
+					deletionproportion="-"
+				else:
+					errorproportion=str(refstats[ref]["errors"]/refstats[ref]["mappedlen"])
+					insertproportion=str(refstats[ref]["insertions"]/refstats[ref]["mappedlen"])
+					deletionproportion=str(refstats[ref]["deletions"]/refstats[ref]["mappedlen"])
 		
 		
-			print "\t".join([filename, ref, str(lengths[x]), "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["proper_pair"]), "-", "-", str(refstats[ref]["errors"]), str(refstats[ref]["insertions"]), str(refstats[ref]["deletions"]), errorproportion, insertproportion, deletionproportion, str(depthstats[ref][0]), str(depthstats[ref][1]), str(depthstats[ref][2]), str(depthstats[ref][3])])
+				print "\t".join([filename, ref, str(lengths[x]), "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["proper_pair"]), "-", "-", str(refstats[ref]["errors"]), str(refstats[ref]["insertions"]), str(refstats[ref]["deletions"]), errorproportion, insertproportion, deletionproportion, str(depthstats[ref][0]), str(depthstats[ref][1]), str(depthstats[ref][2]), str(depthstats[ref][3])])
 #	if doerrors:
 #		print "Errors\tInsertions\tDeletions\tMapped bases"
 #		print str(errors), str(insertions), str(deletions)
