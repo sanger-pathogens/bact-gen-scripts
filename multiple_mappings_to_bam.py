@@ -429,6 +429,7 @@ class SNPanalysis:
 		#produce the BAM file
 		#print >> bashfile, SAMTOOLS_DIR+"samtools view -b -q "+str(options.mapq)+" -S", self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp.bam"
 		print >> bashfile, SAMTOOLS_DIR+"samtools view -b -S",self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
+		print >> bashfile, "rm", self.runname+"/tmp1.sam"
 		
 		if self.pairedend and options.circular:
 			print >> bashfile, MY_SCRIPTS_DIR+"fix_circular_bams.py -b", self.runname+"/tmp1.bam -o", self.runname+"/tmp"
@@ -446,6 +447,7 @@ class SNPanalysis:
 			print >> bashfile, 'echo "@PG\tID:SMALT\tPN:SMALT\tCL:'+' '.join(map(str,cmdline))+'\tVN:$smaltversion" >>', self.runname+'/tmphead.sam'
 			print >> bashfile, SAMTOOLS_DIR+'samtools view -b -H -o', self.runname+'/tmphead.bam', self.runname+"/"+self.name+".bam"
 			print >> bashfile, SAMTOOLS_DIR+'samtools merge -h ', self.runname+'/tmphead.sam -r', self.runname+"/tmp1.bam", self.runname+"/"+self.name+".bam", self.runname+'/tmphead.bam'
+			print >> bashfile, "rm", self.runname+"/"+self.name+".bam"
 			print >> bashfile, SAMTOOLS_DIR+'samtools sort', self.runname+"/tmp1.bam", self.runname+"/tmpsort"
 			print >> bashfile, 'mv', self.runname+"/tmpsort.bam", self.runname+"/tmp1.bam"
 			print >> bashfile, SAMTOOLS_DIR+'samtools index', self.runname+"/tmp1.bam"
@@ -456,7 +458,7 @@ class SNPanalysis:
 				javamem=2
 			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T RealignerTargetCreator -o", self.runname+'/tmp.intervals'
 			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T IndelRealigner -targetIntervals", self.runname+'/tmp.intervals', "-o", self.runname+"/tmp.bam"
-			print >> bashfile, "rm", self.runname+"/tmp1.bam", self.runname+"/tmp1.bam.bai",  self.runname+"/tmpref.*", self.runname+"/tmp.intervals", self.runname+"/tmphead.*",  self.runname+"/tmp1.sam", self.runname+"/"+self.name+".bam"
+			print >> bashfile, "rm", self.runname+"/tmp1.bam", self.runname+"/tmp1.bam.bai",  self.runname+"/tmpref.*", self.runname+"/tmp.intervals", self.runname+"/tmphead.*"
 		
 		if options.plots:
 			#add header to sam file for making plots - no need. Can read bams too!
@@ -817,7 +819,7 @@ if __name__ == "__main__":
 			if options.mem>0:
 				memkb=str(options.mem*1000000)
 				memmb=str(options.mem*1000)
-				os.system('echo \'bash ${LSB_JOBINDEX}'+tmpname+'_sbs.sh\' | bsub -R \'select[mem>'+memmb+'] rusage[mem='+memmb+']\' -q '+options.LSFQ+'  -J'+tmpname+'_'+options.program+'"[1-'+str(count)+']%'+str(options.nodes)+'"  -M '+memkb+' -o '+tmpname+options.program+'-%I.out -e '+tmpname+options.program+'-%I.err > '+tmpname+'jobid')# run all ssaha jobs in job array
+				os.system('echo \'bash ${LSB_JOBINDEX}'+tmpname+'_sbs.sh\' | bsub -R \'select[mem>'+memmb+'] rusage[mem='+memmb+']\' -q '+options.LSFQ+'  -J'+tmpname+'_'+options.program+'"[1-'+str(count)+']%'+str(options.nodes)+'"  -M '+memkb+' -o '+tmpname+options.program+'-%I.out -e '+tmpname+options.program+'-%I.err > '+tmpname+'jobid')# run all ssaha jobs in job array . add this to exclude a node: -R \'hname!=pcs4k\'
 			else:
 				os.system('echo \'bash ${LSB_JOBINDEX}'+tmpname+'_sbs.sh\' | bsub -q '+options.LSFQ+' -J'+tmpname+'_'+options.program+'"[1-'+str(count)+']%'+str(options.nodes)+'"" -o '+tmpname+options.program+'-%I.out -e '+tmpname+options.program+'-%I.err > '+tmpname+'jobid')
 			

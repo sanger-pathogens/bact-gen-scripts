@@ -276,9 +276,12 @@ if __name__ == "__main__":
 				
 					
 			else:
-				try: BASEINFO[heading]=float(words[x])
-				except StandardError:
+				if heading=="CHROM":
 					BASEINFO[heading]=words[x]
+				else:
+					try: BASEINFO[heading]=float(words[x])
+					except StandardError:
+						BASEINFO[heading]=words[x]
 		
 
 		count+=1

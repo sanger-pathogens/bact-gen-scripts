@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+SMALT_DIR=""
+SAMTOOLS_DIR=""
+
 ##################
 # Import modules #
 ##################
@@ -25,6 +28,8 @@ def get_user_options():
 	parser.add_option("-g", "--genes", action="store", dest="genes", help="multifasta containing genes to search for", default="", metavar="FILE")
 	parser.add_option("-b", "--bamfile", action="store", dest="bamfile", help="bamfile of mapped genes", default="", metavar="FILE")
 	parser.add_option("-o", "--output", action="store", dest="output", help="prefix for output files", default="", metavar="FILE")
+	parser.add_option("-f", "--forward", action="store", dest="forward", help="prefix for output files", default="", metavar="FILE")
+	parser.add_option("-r", "--reverse", action="store", dest="reverse", help="prefix for output files", default="", metavar="FILE")
 	parser.add_option("-i", "--id", action="store", dest="id", help="minimum id to report match (excluding clipping due to contig breaks) [default = %default]", default=0.9, type="float", metavar="float")
 	
 
@@ -158,15 +163,18 @@ for read in samfile:
         
         percentid=((float(len(read.seq))-(SNPs+adjustedcliplen))/len(read.seq))
         if percentid>=options.id:
-	        genes_present.append([read.qname, refs[read.tid], start, end, strand, len(read.seq), SNPs, insertions, deletions, clipped, inslength, dellength, cliplength, at_contig_break, 100*percentid, matchlength, matchpercent])
+	        genes_present.append([read.qname, refs[read.tid], start, end, strand, len(read.seq), SNPs, insertions, deletions, clipped, inslength, dellength, cliplength, at_contig_break, 100*percentid, matchlength, matchpercent, read.seq])
         
         #print filename, read.qname, len(read.seq), SNPs, insertions, deletions, clipped, inslength, dellength, cliplength
 
-
+#for gene in genes_present:
+#	print gene
 
 bestgene=genes_present[0]
 secondary_genes=[]
 outputlines=[]
+bestgene_sequences={}
+
 for gene in genes_present[1:]:
     
     #print gene
@@ -175,21 +183,24 @@ for gene in genes_present[1:]:
         if gene[2]<bestgene[3]:
             #print "overlap"
             if float(gene[6]+gene[7]+gene[8])/gene[5] < float(bestgene[6]+bestgene[7]+bestgene[8])/bestgene[5]:
-                secondary_genes.append(bestgene[0])
+                secondary_genes.append(';'.join(map(str, bestgene[:-1])))
                 bestgene=gene
             else:
-                secondary_genes.append(gene[0])
+                secondary_genes.append(';'.join(map(str, gene[:-1])))
         else:
             outputlines.append(bestgene+[', '.join(secondary_genes)])
+            bestgene_sequences[bestgene[0]]=bestgene[-1]
 	    #print outputlines
             bestgene=gene
             secondary_genes=[]
     else:
         outputlines.append(bestgene+[', '.join(secondary_genes)])
+        bestgene_sequences[bestgene[0]]=bestgene[-1]
         bestgene=gene
         secondary_genes=[]
 
 outputlines.append(bestgene+[', '.join(secondary_genes)])
+bestgene_sequences[bestgene[0]]=bestgene[-1]
 
 
 if options.output!="":
@@ -210,8 +221,27 @@ if options.output!="":
 		for x in xrange(line[0],line[1]):
 			print >> plotout, x, line[2]
 	plotout.close()
+	
+	if options.forward != "" and options.reverse!="":
+	
+		accout=open(options.output+"_accessory_hits.mfa", "w")
+		for gene in bestgene_sequences:
+			print >> accout, ">"+gene
+			print >> accout, bestgene_sequences[gene]
+		accout.close()
+		
+		os.system(SAMTOOLS_DIR+"samtools faidx "+options.output+"_accessory_hits.mfa")
+		os.system(SMALT_DIR+"smalt index -k 13 -s 1 "+options.output+"_accessory_hits.mfa.index "+options.output+"_accessory_hits.mfa")
+		os.system(SMALT_DIR+"smalt map -r 12345 -f samsoft -o "+options.output+".sam "+options.output+"_accessory_hits.mfa.index "+options.forward+" "+options.reverse)
+		os.system(SAMTOOLS_DIR+"samtools view -b -S "+options.output+".sam -t "+options.output+"_accessory_hits.mfa.fai > "+options.output+".1.bam")
+		os.system(SAMTOOLS_DIR+"samtools sort "+options.output+".1.bam "+options.output)
+		os.system(SAMTOOLS_DIR+"samtools index "+options.output+".bam")
+		os.system(SAMTOOLS_DIR+"~sh16/scripts/reportlabtest.py -d area -f 3 -Y 0 -l 1 "+options.output+".bam "+options.output+"_accessory_hits.mfa")
+	
     
 else:
 	print "\t".join(["gene", "contig", "start", "end", "strand", "length", "SNPs", "No. insertions", "No. deletions", "No. clipped regions", "total insertion length", "total deletion length", "clipped length", "No. contig breaks", "Percent id", "Match length", "Match length percent", "Overlapping secondary gene hits"])
 	for line in outputlines:
 		print '\t'.join(map(str,line))
+
+

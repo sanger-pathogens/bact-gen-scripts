@@ -96,7 +96,7 @@ if __name__ == "__main__":
 			print >> fastaout, ">"+name
 			print >> fastaout, nons[0]
 			#print name, len(nons[0])
-
+	fastaout.close()
 
 	os.system(SAMTOOLS_DIR+"samtools faidx "+options.output+"_no_Ns.fasta")
 	os.system(SMALT_DIR+"smalt index -k 13 -s 1 "+options.output+"_no_Ns.fasta.index "+options.output+"_no_Ns.fasta")
