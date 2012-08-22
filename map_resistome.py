@@ -36,8 +36,8 @@ def get_user_options():
 	
 
 	parser.add_option("-c", "--contigs", action="store", dest="contigs", help="multifasta containing contigs to search in", default="", metavar="FILE")
-#	parser.add_option("-f", "--forward", action="store", dest="forward", help="forward fasta file", default="", metavar="FILE")
-#	parser.add_option("-r", "--reverse", action="store", dest="reverse", help="reverse fasta file", default="", metavar="FILE")
+	parser.add_option("-f", "--forward", action="store", dest="forward", help="forward fastq file (may be zipped, but must end .gz)", default="", metavar="FILE")
+	parser.add_option("-r", "--reverse", action="store", dest="reverse", help="reverse fastq file (may be zipped, but must end .gz)", default="", metavar="FILE")
 	parser.add_option("-g", "--genes", action="store", dest="genes", help="multifasta containing genes to search for", default="", metavar="FILE")
 	parser.add_option("-o", "--output", action="store", dest="output", help="output prefix", default="", metavar="FILE")
 	parser.add_option("-i", "--id", action="store", dest="id", help="minimum id to report match (excluding clipping due to contig breaks) [default = %default]", default=0.9, type="float", metavar="float")
@@ -80,6 +80,20 @@ if __name__ == "__main__":
 	#print options, args
 	check_input_validity(options, args)
 	
+	try:
+		genesfile=open(options.genes, "rU").read()
+	except StandardError:
+		print "Could not open contigs file"
+		sys.exit()
+		
+	genes=set([])
+	for line in genesfile.split(">")[1:]:
+		bits=line.split("\n")
+		if bits[0].split()[0] in genes:
+			print "Error: your genes file contains more than one gene with the same name:", bits[0].split()[0]
+			sys.exit()
+		genes.add(bits[0].split()[0])
+	
 	
 	fastalines=open(options.contigs).read().split(">")
 	fastaout=open(options.output+"_no_Ns.fasta", "w")
@@ -105,4 +119,4 @@ if __name__ == "__main__":
 	os.system(SAMTOOLS_DIR+"samtools sort "+options.output+".1.bam "+options.output)
 	os.system(SAMTOOLS_DIR+"samtools index "+options.output+".bam")
 	os.system("rm -f "+options.output+".1.bam "+options.output+".sam ")#+options.output+"_no_Ns.fasta.fai "+options.output+"_no_Ns.fasta.index.*")
-	os.system("~sh16/scripts/filter_resistome.py -i "+str(options.id)+" -c "+options.output+"_no_Ns.fasta -b "+options.output+".bam -g "+options.genes+" -o "+options.output)
+	os.system("~sh16/scripts/filter_resistome.py -i "+str(options.id)+" -c "+options.output+"_no_Ns.fasta -b "+options.output+".bam -g "+options.genes+" -o "+options.output+" -f "+options.forward+" -r "+options.reverse)

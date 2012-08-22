@@ -148,6 +148,7 @@ def main():
 	group.add_option("-Z", "--log_plot", action="store_true", dest="log_plots", help="Show plots on a log scale (doesn't work yet)", default=False)
 	group.add_option("-w", "--heatmap_legend", action="store_true", dest="heat_legend", help="Show legend on heatmaps", default=False)
 	group.add_option("-3", "--heatmap_colour", default="bluered", choices=["redblue", "bluered", "blackwhite", "whiteblack"], type="choice", action="store", dest="heat_colour", help="Set the default plot type (for plots called plot or graph and bam files). Choose from "+", ".join(["redblue", "bluered", "blackwhite", "whiteblack"]))
+	group.add_option("-4", "--windows", action="store", dest="windows", help="Number of windows per line (be careful, making this value too high will make things very slow and memory intensive) [default= %default]", default=501, type="float")
 	
 	parser.add_option_group(group)
 	
@@ -1423,6 +1424,7 @@ class Track:
 		self.tick_mark_label_angle=45
 		self.minor_tick_marks=minor_tick_marks
 		self.minor_tick_mark_number=minor_tick_mark_number
+		self.feature_label_track_height=0
 		self.features=features[:]
 		self.scaled_features=features[:]
 		self.draw_feature_labels=False
@@ -1441,7 +1443,7 @@ class Track:
 		self.name=""
 		self.show_name=False
 		self.name_font="Helvetica"
-		self.name_size=10
+		self.name_size=12
 		self.name_length=0
 		self.is_key=False
 		self.key_data=[]
@@ -1972,7 +1974,7 @@ class Plot:
 		self.max_yaxis=float("-Inf")
 		self.min_yaxis=float("Inf")
 		self.window_size=1
-		self.number_of_windows=501
+		self.number_of_windows=options.windows
 		self.plot_type="line"
 		self.beginning=-1
 		self.end=-1
@@ -2959,8 +2961,9 @@ if __name__ == "__main__":
 					newtrack.end=options.end
 				newtrack.beginning=options.beginning
 				newtrack=add_sequence_file_to_diagram(fastarecord, name)
+				newtrack.scale=True
 				
-				newtrack.scale=False
+				newtrack.scale_position="middle"
 				newtrack.name=name
 				newtrack.track_height=options.emblheight
 				if options.labels>0:
@@ -3312,6 +3315,7 @@ if __name__ == "__main__":
 #			track_number+=1
 #			continue
 		track_height=my_tracks[track].track_height
+		label_height=my_tracks[track].feature_label_track_height
 		
 		my_tracks[track].track_draw_proportion=options.tracksize
 		my_tracks[track].track_height=track_height*vertical_scaling_factor
@@ -3335,7 +3339,7 @@ if __name__ == "__main__":
 				r,g,b=(0,0,0)
 				my_tracks[track].grey_track_colour=colors.Color(float(r)/255,float(g)/255,float(b)/255)
 		
-		track_number+=track_height
+		track_number+=track_height+label_height
 		
 
 

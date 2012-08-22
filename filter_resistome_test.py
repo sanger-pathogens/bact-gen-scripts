@@ -385,7 +385,7 @@ if options.output!="":
 		output.close()
 		
 		
-		os.system("gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile="+options.output+"_per_gene_SNP_plot.pdf "+' '.join(tmpfilelist))
+		os.system("gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile="+options.output+"_per_gene_SNP_plot.pdf "+' '.join(tmpfilelist[::-1]))
 		#os.system(SAMTOOLS_DIR+"~sh16/scripts/reportlabtest.py -H 4 -d area -4 "+str(maxseqlen)+" -O portrait -Y 0 -l 4 -o "+options.output+"_accessory_mapping_test.pdf "+' '.join(tmpfilelist[::-1]))
 		
 		os.system("rm -f "+' '.join(tmpfilelist))
@@ -394,7 +394,7 @@ if options.output!="":
 		
 		count=0
 		output=open(options.output+"_presence.plot", "w")
-		print >> output, "#BASE PRESENT"
+		print >> tmpout, "#BASE PRESENT"
 		for gene in geneorder:
 			if gene in genedepths:
 				for x in xrange(len(genedepths[gene])):
