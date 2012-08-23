@@ -1497,6 +1497,7 @@ class Track:
 		
 		contiglocs={}
 		totallength=0
+		
 		for line in headerlines:
 			words=line.split()
 			if len(words)==3 and words[0]=="@SQ" and len(words[1].split(":"))==2 and words[1].split(":")[0]=="SN" and len(words[2].split(":"))==2 and words[2].split(":")[0]=="LN":

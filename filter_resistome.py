@@ -3,6 +3,18 @@
 SMALT_DIR=""
 SAMTOOLS_DIR=""
 
+##################
+# Import modules #
+##################
+
+import os, sys, string
+from random import randint, choice
+from optparse import OptionParser
+import pysam
+from numpy import min, max, median, mean, std
+from scipy.stats import mannwhitneyu, ttest_ind
+from math import sqrt, pow
+
 ##############################################
 ## Function to reverse complement a sequence #
 ##############################################
@@ -20,15 +32,6 @@ def revcomp(sequence):
 	return revcomp
 
 
-##################
-# Import modules #
-##################
-
-import os, sys, string
-from random import randint, choice
-from optparse import OptionParser
-import pysam
-from numpy import min, max, median, mean, std
 
 ##############################
 # Get command line arguments #
@@ -414,7 +417,19 @@ if options.output!="":
 		print '\t'.join(['gene', 'min', 'max', 'median', 'mean', 'std'])
 		for gene in bestgeneorder:
 			print >> output, '\t'.join(map(str,[gene, min(genedepths[gene]), max(genedepths[gene]), median(genedepths[gene]), mean(genedepths[gene]), std(genedepths[gene])]))
+			
+			MLSTdata=genedepths[bestgeneorder[-7]]+genedepths[bestgeneorder[-6]]+genedepths[bestgeneorder[-5]]+genedepths[bestgeneorder[-4]]+genedepths[bestgeneorder[-3]]+genedepths[bestgeneorder[-2]]+genedepths[bestgeneorder[-1]]
+			
+			pooledsd=sqrt((((len(genedepths[gene])-1)*pow(std(genedepths[gene]),2))+((len(MLSTdata)-1)*pow(std(MLSTdata),2)))/(len(genedepths[gene])+len(MLSTdata)))
+			
+			print pooledsd
+			print (mean(genedepths[gene])-mean(genedepths[bestgeneorder[-1]]))/pooledsd
+			
 			print '\t'.join(map(str,[gene, min(genedepths[gene]), max(genedepths[gene]), median(genedepths[gene]), mean(genedepths[gene]), std(genedepths[gene])]))
+#			print mean(genedepths[gene]), std(genedepths[gene]), mean(genedepths[bestgeneorder[-4]]), std(genedepths[bestgeneorder[-4]]), mannwhitneyu(genedepths[gene], genedepths[bestgeneorder[-7]]+genedepths[bestgeneorder[-6]]+genedepths[bestgeneorder[-5]]+genedepths[bestgeneorder[-4]]+genedepths[bestgeneorder[-3]]+genedepths[bestgeneorder[-2]]+genedepths[bestgeneorder[-1]])
+#			print mean(genedepths[gene]), std(genedepths[gene]), mean(genedepths[bestgeneorder[-4]]), std(genedepths[bestgeneorder[-4]]), mannwhitneyu(numpy.array(genedepths[gene]), numpy.array(genedepths[bestgeneorder[-7]]+genedepths[bestgeneorder[-6]]+genedepths[bestgeneorder[-5]]+genedepths[bestgeneorder[-4]]+genedepths[bestgeneorder[-3]]+genedepths[bestgeneorder[-2]]+genedepths[bestgeneorder[-1]]))
+#			print mean(genedepths[gene]), std(genedepths[gene]), mean(genedepths[bestgeneorder[-4]]), std(genedepths[bestgeneorder[-4]]), ttest_ind(genedepths[gene], genedepths[bestgeneorder[-7]]+genedepths[bestgeneorder[-6]]+genedepths[bestgeneorder[-5]]+genedepths[bestgeneorder[-4]]+genedepths[bestgeneorder[-3]]+genedepths[bestgeneorder[-2]]+genedepths[bestgeneorder[-1]])
+			
     	output.close()
 else:
 	print "\t".join(["gene", "contig", "start", "end", "strand", "length", "SNPs", "No. insertions", "No. deletions", "No. clipped regions", "total insertion length", "total deletion length", "clipped length", "No. contig breaks", "Percent id", "Match length", "Match length percent", "Overlapping secondary gene hits"])
