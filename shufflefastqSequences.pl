@@ -5,6 +5,7 @@ $filenameA = $ARGV[0];
 $filenameB = $ARGV[1];
 $filenameOut = $ARGV[2];
 
+
 if ($filenameA =~ /\.gz$/){
 	open $FILEA, "gunzip -c $filenameA |" or die $!;
 }

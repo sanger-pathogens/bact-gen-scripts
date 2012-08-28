@@ -64,8 +64,10 @@ def get_user_options():
 	group.add_option("-s", "--single", action="store_false", dest="pairedend", help="reads are single ended (not paired)", default=True)
 	group.add_option("-i", "--maxinsert", action="store", dest="maxinsertsize", help="maximum insert size (ssaha and smalt only) [default= %default]", default=1000, type="int", metavar="INT")
 	group.add_option("-j", "--mininsert", action="store", dest="mininsertsize", help="minimum insert size (ssaha and smalt only) [default= %default]", default=50, type="int", metavar="INT")
+	group.add_option("-S", "--ssahaquality", action="store", dest="ssahaquality", help="minimum ssaha quality score while mapping (ssaha only) [default= %default]", default=30, type="int", metavar="INT")
 	group.add_option("-E", "--maprepeats", action="store_true", dest="maprepeats", help="randomly map repeats when using SMALT (default is to not map repeats)", default=False)
 	group.add_option("-z", "--nomapid", action="store", dest="nomapid", help="Minimum identity threshold to report a mapping Specified as a positive integer or proportion of read length (smalt only) [default= %default]", default=0, type="float", metavar="float")
+	group.add_option("-G", "--GATK", action="store_true", dest="GATK", help="Turn on GATK indel realignment (highly recommended). [Default= %default]", default=False)
 	
 	
 	parser.add_option_group(group)
@@ -80,7 +82,6 @@ def get_user_options():
 	group.add_option("-D", "--stranddepth", action="store", dest="stranddepth", help="Minimum number of reads matching SNP per strand [default= %default]", default=2, type="int")
 	group.add_option("-B", "--BAQ", action="store_false", dest="BAQ", help="Turn off samtools base alignment quality option (BAQ) ", default=True)
 	group.add_option("-c", "--circular", action="store_false", dest="circular", help="Contigs are not circular, so do not try to fix them", default=True)
-	group.add_option("-G", "--GATK", action="store_true", dest="GATK", help="Turn on GATK indel realignment (highly recommended). [Default= %default]", default=False)
 	#parser.add_option("-q", "--quality", action="store", dest="quality", help="Minimum base quality [default= %default]", default=120, type="int")
 	#group.add_option("-S", "--RMS", action="store", dest="RMS", help="Minimum root mean squared mapping quality [default= %default]", default=25, type="int")
 	#parser.add_option("-Q", "--strandquality", action="store", dest="strandquality", help="Minimum per strand base quality [default= %default]", default=60, type="int")
@@ -356,13 +357,13 @@ class SNPanalysis:
 		
 		#single end mapping
 		if not self.pairedend:
-			print >> bashfile, SSAHA_DIR+"ssaha2 -solexa -output sam_soft -outfile "+self.runname+"/tmp1.sam "+ref+" "+self.fastqdir+self.name+".fastq"
+			print >> bashfile, SSAHA_DIR+"ssaha2 -score "+str(options.ssahaquality)+" -kmer 13 -skip 2 -seeds 2 -score 12 -cmatch 9 -ckmer 6 -diff 0 -output sam_soft -outfile "+self.runname+"/tmp1.sam "+ref+" "+self.fastqdir+self.name+".fastq"
 						
 			
 		#paired end
 		else:
 			#print >> bashfile, SSAHA_DIR+"ssaha2 -solexa -score "+str(options.quality)+" -skip 2 -diff 0 -kmer 13 -outfile "+self.runname+"/tmp.sam -multi 12345 -pair "+str(options.mininsertsize)+","+str(options.maxinsertsize)+" -output sam_soft "+ref+" "+self.fastqdir+self.name+"_1.fastq "+self.fastqdir+self.name+"_2.fastq"
-			print >> bashfile, SSAHA_DIR+"ssaha2 -solexa -outfile "+self.runname+"/tmp1.sam -pair "+str(options.mininsertsize)+","+str(options.maxinsertsize)+" -output sam_soft "+ref+" "+self.fastqdir+self.name+"_1.fastq "+self.fastqdir+self.name+"_2.fastq"
+			print >> bashfile, SSAHA_DIR+"ssaha2 -score "+str(options.ssahaquality)+" -kmer 13 -skip 2 -seeds 2 -score 12 -cmatch 9 -ckmer 6 -diff 0 -outfile "+self.runname+"/tmp1.sam -pair "+str(options.mininsertsize)+","+str(options.maxinsertsize)+" -output sam_soft "+ref+" "+self.fastqdir+self.name+"_1.fastq "+self.fastqdir+self.name+"_2.fastq"
 		
 		#print >> bashfile, SAMTOOLS_DIR+"samtools view -b -q "+str(options.mapq)+" -S",self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp.bam"
 		print >> bashfile, SAMTOOLS_DIR+"samtools view -b -S",self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
@@ -824,6 +825,7 @@ if __name__ == "__main__":
 				os.system('echo \'bash ${LSB_JOBINDEX}'+tmpname+'_sbs.sh\' | bsub -q '+options.LSFQ+' -J'+tmpname+'_'+options.program+'"[1-'+str(count)+']%'+str(options.nodes)+'"" -o '+tmpname+options.program+'-%I.out -e '+tmpname+options.program+'-%I.err > '+tmpname+'jobid')
 			
 			jobid=open(tmpname+'jobid', "rU").read().split(">")[0].split("<")[1]
+			os.system('bsub -w \'ended('+tmpname+'_'+options.program+')\' \"bacct -e -l '+jobid+' > '+options.output+"_mapping_job_bacct.txt \"")
 			os.system('bsub -w \'ended('+tmpname+'_'+options.program+')\' \"bhist -l '+jobid+' > '+options.output+"_mapping_job_bhist.txt \"")
 			
 			if not options.dirty:

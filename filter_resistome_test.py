@@ -3,6 +3,18 @@
 SMALT_DIR=""
 SAMTOOLS_DIR=""
 
+##################
+# Import modules #
+##################
+
+import os, sys, string
+from random import randint, choice
+from optparse import OptionParser
+import pysam
+from numpy import min, max, median, mean, std
+from scipy.stats import mannwhitneyu, ttest_ind
+from math import sqrt, pow
+
 ##############################################
 ## Function to reverse complement a sequence #
 ##############################################
@@ -20,15 +32,6 @@ def revcomp(sequence):
 	return revcomp
 
 
-##################
-# Import modules #
-##################
-
-import os, sys, string
-from random import randint, choice
-from optparse import OptionParser
-import pysam
-from numpy import min, max, median, mean, std
 
 ##############################
 # Get command line arguments #
@@ -49,7 +52,9 @@ def get_user_options():
 	parser.add_option("-o", "--output", action="store", dest="output", help="prefix for output files", default="", metavar="FILE")
 	parser.add_option("-f", "--forward", action="store", dest="forward", help="forward fastq file (may be zipped, but must end .gz)", default="", metavar="FILE")
 	parser.add_option("-r", "--reverse", action="store", dest="reverse", help="reverse fastq file (may be zipped, but must end .gz)", default="", metavar="FILE")
-	parser.add_option("-i", "--id", action="store", dest="id", help="minimum id to report match (excluding clipping due to contig breaks) [default = %default]", default=0.9, type="float", metavar="float")
+	parser.add_option("-i", "--id", action="store", dest="id", help="minimum %id to report match (excluding clipping due to contig breaks) [default = %default]", default=90, type="float", metavar="float")
+	parser.add_option("-l", "--fragment_length", action="store", dest="fragmentlen", help="Minimum fragment length to report hit [default = %default]", default=50, type="int", metavar="int")
+	parser.add_option("-m", "--match_percent", action="store", dest="matchpercent", help="Minimum fragment length percent to take forward to mapping stage [default = %default]", default=90, type="float", metavar="float")
 	
 
 	return parser.parse_args()
@@ -71,12 +76,13 @@ except StandardError:
 	print "Could not open contigs file"
 	sys.exit()
 
-if options.id<0 or options.id>1:
+if options.id<0 or options.id>100:
 	print "percent id (-i) must be between 0 and 1"
 	sys.exit()
 
 contigs={}
-genes_present=[]
+
+
 for line in contigsfile.split(">")[1:]:
 	bits=line.split("\n")
 	contigs[bits[0].split()[0]]=''.join(bits[1:])
@@ -116,6 +122,19 @@ else:
 refs=samfile.references
 lengths=samfile.lengths
 
+genes_present={}
+for ref in refs:
+	genes_present[ref]=[]
+
+if len(genes_present)!=len(contigs):
+	print "bam file and contigs files contain different contigs - did map_resistome.py split contigs at Ns?"
+	sys.exit()
+
+for contig in contigs:
+	if not contig in genes_present:
+		print "bam file and contigs files contain different contigs - did map_resistome.py split contigs at Ns?"
+		sys.exit()	
+
 for read in samfile:
 	if read.is_unmapped:
             continue
@@ -139,7 +158,7 @@ for read in samfile:
             
             if cig[0]==0:
                 for x in range(0,cig[1]):
-                    if read.seq[readpos].upper()!=contigs[refs[read.tid]][refpos].upper():
+                    if read.seq[readpos].upper()!=contigs[samfile.getrname(read.rname)][refpos].upper():
                         SNPs+=1
                     readpos+=1
                     refpos+=1
@@ -166,40 +185,77 @@ for read in samfile:
                 print cig
         end=refpos
         
-        
-        adjustedcliplen=cliplength
-        at_contig_break=0
+        clipped_contig_length=float(len(read.seq))
+        contigcliplen=cliplength
+        left_contig_break=False
+        right_contig_break=False
         
         if lcliplen>start:
-        	adjustedcliplen=adjustedcliplen-(lcliplen-start)
-        	at_contig_break+=1
+        	contigcliplen=contigcliplen-(lcliplen-start)
+        	clipped_contig_length-=(lcliplen-start)
+        	left_contig_break=True
         elif (rcliplen+end)>lengths[read.tid]:
-        	adjustedcliplen=adjustedcliplen-((rcliplen+end)-lengths[read.tid])
-        	at_contig_break+=1
+        	contigcliplen=contigcliplen-((rcliplen+end)-lengths[read.tid])
+        	clipped_contig_length-=((rcliplen+end)-lengths[read.tid])
+        	right_contig_break=True
         
         matchlength=len(read.seq)-(cliplength)
         matchpercent=(float(matchlength)/len(read.seq))*100
         
-        percentid=((float(len(read.seq))-(SNPs+adjustedcliplen))/len(read.seq))
+        #contigpercentid=((float(len(read.seq))-(SNPs+contigcliplen))/(len(read.seq)-contigcliplen))*100
+        contigpercentid=((clipped_contig_length-(SNPs+contigcliplen))/clipped_contig_length)*100
+        percentid=((float(len(read.seq))-(SNPs+cliplength))/len(read.seq))*100
+        fragmentpercentid=((float(len(read.seq))-(SNPs+cliplength))/(len(read.seq)-cliplength))*100
+        if fragmentpercentid>100:
+        	print len(read.seq), SNPs, contigcliplen, cliplength
+                
 #        if read.is_reverse:
 #        	readseq=revcomp(read.seq)
 #        else:
 #        	readseq=read.seq
         
-        if percentid>=options.id:
-	        genes_present.append([read.qname, samfile.getrname(read.rname), start, end, strand, len(read.seq), SNPs, insertions, deletions, clipped, inslength, dellength, cliplength, at_contig_break, 100*percentid, matchlength, matchpercent, genes[read.qname]])
+        if contigpercentid>=(options.id) or (fragmentpercentid>=(options.id) and matchpercent>=options.matchpercent) or (fragmentpercentid>=(options.id) and matchlength>=options.fragmentlen):
+	        gene_info={'gene': read.qname, "contig": samfile.getrname(read.rname), "start": start, "end": end, "strand":strand, "length": len(read.seq), "SNPs":SNPs, "insertions": insertions, "deletions": deletions, "clipped": clipped, "inslength": inslength, "dellength": dellength, "cliplength": cliplength, "left_contig_break": left_contig_break, "right_contig_break": right_contig_break, "percentid": percentid, "matchlength": matchlength, "contigpercentid": contigpercentid, "matchpercent": matchpercent, "fragment": False, "sequence": genes[read.qname], "fragmentpercentid": fragmentpercentid}
+        
+	        if contigpercentid<(options.id) and matchpercent<options.matchpercent and matchlength>=options.fragmentlen:
+	        	gene_info["fragment"]=True
+        	
+	        genes_present[gene_info["contig"]].append(gene_info)
+#        else:
+#	    	print {'gene': read.qname, "contig": samfile.getrname(read.rname), "start": start, "end": end, "strand":strand, "length": len(read.seq), "SNPs":SNPs, "insertions": insertions, "deletions": deletions, "clipped": clipped, "inslength": inslength, "dellength": dellength, "cliplength": cliplength, "left_contig_break": left_contig_break, "right_contig_break": right_contig_break, "percentid": percentid, "matchlength": matchlength, "contigpercentid": contigpercentid, "matchpercent": matchpercent, "fragment": False, "sequence": genes[read.qname], "fragmentpercentid": fragmentpercentid}
+	        #genes_present.append([read.qname, samfile.getrname(read.rname), start, end, strand, len(read.seq), SNPs, insertions, deletions, clipped, inslength, dellength, cliplength, at_contig_break, 100*percentid, matchlength, matchpercent, False, genes[read.qname]])
+#	        
+#	    
+#	    else:
+#	    	genes_present.append([read.qname, samfile.getrname(read.rname), start, end, strand, len(read.seq), SNPs, insertions, deletions, clipped, inslength, dellength, cliplength, at_contig_break, 100*percentid, matchlength, matchpercent, True, genes[read.qname]])
         
         #print filename, read.qname, len(read.seq), SNPs, insertions, deletions, clipped, inslength, dellength, cliplength
 
-#for gene in genes_present:
-#	print gene
+for contig in genes_present:
+	for gene in genes_present[contig]:
+		print gene["gene"], gene["contig"], gene["start"], gene["end"], gene["strand"], gene["length"], gene["matchlength"], gene["SNPs"], gene["left_contig_break"], gene["right_contig_break"], gene["fragment"], gene["percentid"], gene["contigpercentid"], gene["fragmentpercentid"]
 
-bestgene=genes_present[0]
+
+
+for contig in genes_present:
+	for gene in genes_present[contig]:
+		sys.exit()
+
+
+
+
+
+
+
+sys.exit()
+bestgene=False
 secondary_genes=[]
 outputlines=[]
 bestgene_sequences={}
 
-for gene in genes_present[1:]:
+for gene in genes_present:
+    
+#    if not bestgene
     
     #print gene
 
@@ -385,7 +441,7 @@ if options.output!="":
 		output.close()
 		
 		
-		os.system("gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile="+options.output+"_per_gene_SNP_plot.pdf "+' '.join(tmpfilelist[::-1]))
+		os.system("gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile="+options.output+"_per_gene_SNP_plot.pdf "+' '.join(tmpfilelist))
 		#os.system(SAMTOOLS_DIR+"~sh16/scripts/reportlabtest.py -H 4 -d area -4 "+str(maxseqlen)+" -O portrait -Y 0 -l 4 -o "+options.output+"_accessory_mapping_test.pdf "+' '.join(tmpfilelist[::-1]))
 		
 		os.system("rm -f "+' '.join(tmpfilelist))
@@ -394,7 +450,7 @@ if options.output!="":
 		
 		count=0
 		output=open(options.output+"_presence.plot", "w")
-		print >> tmpout, "#BASE PRESENT"
+		print >> output, "#BASE PRESENT"
 		for gene in geneorder:
 			if gene in genedepths:
 				for x in xrange(len(genedepths[gene])):
@@ -414,7 +470,19 @@ if options.output!="":
 		print '\t'.join(['gene', 'min', 'max', 'median', 'mean', 'std'])
 		for gene in bestgeneorder:
 			print >> output, '\t'.join(map(str,[gene, min(genedepths[gene]), max(genedepths[gene]), median(genedepths[gene]), mean(genedepths[gene]), std(genedepths[gene])]))
+			
+			MLSTdata=genedepths[bestgeneorder[-7]]+genedepths[bestgeneorder[-6]]+genedepths[bestgeneorder[-5]]+genedepths[bestgeneorder[-4]]+genedepths[bestgeneorder[-3]]+genedepths[bestgeneorder[-2]]+genedepths[bestgeneorder[-1]]
+			
+			pooledsd=sqrt((((len(genedepths[gene])-1)*pow(std(genedepths[gene]),2))+((len(MLSTdata)-1)*pow(std(MLSTdata),2)))/(len(genedepths[gene])+len(MLSTdata)))
+			
+			print pooledsd
+			print (mean(genedepths[gene])-mean(genedepths[bestgeneorder[-1]]))/pooledsd
+			
 			print '\t'.join(map(str,[gene, min(genedepths[gene]), max(genedepths[gene]), median(genedepths[gene]), mean(genedepths[gene]), std(genedepths[gene])]))
+#			print mean(genedepths[gene]), std(genedepths[gene]), mean(genedepths[bestgeneorder[-4]]), std(genedepths[bestgeneorder[-4]]), mannwhitneyu(genedepths[gene], genedepths[bestgeneorder[-7]]+genedepths[bestgeneorder[-6]]+genedepths[bestgeneorder[-5]]+genedepths[bestgeneorder[-4]]+genedepths[bestgeneorder[-3]]+genedepths[bestgeneorder[-2]]+genedepths[bestgeneorder[-1]])
+#			print mean(genedepths[gene]), std(genedepths[gene]), mean(genedepths[bestgeneorder[-4]]), std(genedepths[bestgeneorder[-4]]), mannwhitneyu(numpy.array(genedepths[gene]), numpy.array(genedepths[bestgeneorder[-7]]+genedepths[bestgeneorder[-6]]+genedepths[bestgeneorder[-5]]+genedepths[bestgeneorder[-4]]+genedepths[bestgeneorder[-3]]+genedepths[bestgeneorder[-2]]+genedepths[bestgeneorder[-1]]))
+#			print mean(genedepths[gene]), std(genedepths[gene]), mean(genedepths[bestgeneorder[-4]]), std(genedepths[bestgeneorder[-4]]), ttest_ind(genedepths[gene], genedepths[bestgeneorder[-7]]+genedepths[bestgeneorder[-6]]+genedepths[bestgeneorder[-5]]+genedepths[bestgeneorder[-4]]+genedepths[bestgeneorder[-3]]+genedepths[bestgeneorder[-2]]+genedepths[bestgeneorder[-1]])
+			
     	output.close()
 else:
 	print "\t".join(["gene", "contig", "start", "end", "strand", "length", "SNPs", "No. insertions", "No. deletions", "No. clipped regions", "total insertion length", "total deletion length", "clipped length", "No. contig breaks", "Percent id", "Match length", "Match length percent", "Overlapping secondary gene hits"])

@@ -20,6 +20,7 @@ from Bio import AlignIO
 from Bio.Align import Generic
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 from Si_nexus import *
+from Si_SeqIO import *
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.7/site-packages/fisher-0.1.4-py2.7-linux-x86_64.egg']))
 #from scipy import stats
 import fisher
@@ -695,89 +696,95 @@ if __name__ == "__main__":
 	if options.embl!='':
 		
 		print "\nReading EMBL file(s)...",
-	
-		readok=False
+		
 		try:
-			record = SeqIO.read(open(options.embl), "embl")
-			
+			record = open_annotation(options.embl)
 		except StandardError:
-			print "\nCannot open annotation file as embl"
-		else:
-			readok=True
-		if readok==False:
-		
-			print "Trying to open file as genbank instead"
-		
-			try:
-				record = SeqIO.read(open(options.embl), "gb")
-			except StandardError:
-				print "Cannot open annotation file as genbank"
-				
-		if readok==False:
-			emblfile=open(options.embl, "rU")
-			found_id_line=False
-			found_header=False
-			found_sequence=False
-			newembl=[]
-			
-			for line in emblfile:
-				if len(line.split())>0:
-					if line.split()[0]=="ID":
-						found_id_line=True
-						if len(line.strip().split(";"))>=7 and int(line.strip().split(";")[6].split()[0])==len(sequences[options.ref]):
-							newembl.append(line)
-						else:
-							print "Found invalid ID line. Will be replaced."
-							found_id_line=False
-					elif line.split()[0]=="FH":
-						found_header=True
-						newembl.append(line)
-					elif line.split()[0]=="SQ":
-						found_sequence=True
-						newembl.append(line)
-					else:
-						newembl.append(line)
-			
-			emblfile.close()
-			
-			if found_id_line==False or found_header==False or found_sequence==False:
-				
-				print "Last try. Trying to convert file into readable embl format"
-				
-				chars = string.ascii_letters + string.digits
-				tmpname='tmp'+"".join(choice(chars) for x in range(randint(8, 10)))
-				stringfile = open(tmpname+".embl", "w")
-				
-				if options.gaps:
-					refseqforembl=sequences[options.ref].replace("-","")
-				else:
-					refseqforembl=sequences[options.ref]
-				print len(sequences[options.ref]), len(refseqforembl)
-				
-				if found_id_line==False:
-					print "Adding ID line"
-					print >> stringfile, embl_style_id(refseqforembl)
-				
-				if found_header==False:
-					print "Adding header line"
-					print >> stringfile, embl_style_header(refseqforembl)
-				
-				print >> stringfile, ''.join(newembl)
-				
-				if found_sequence==False:
-					print "Appending sequence"
-					print >> stringfile, embl_style_sequence(refseqforembl)
-				
-				stringfile.close()
-				
-				try:
-					record = SeqIO.read(open(tmpname+".embl"), "embl")
-					os.system("rm "+tmpname+".embl")
-				except StandardError:
-					os.system("rm "+tmpname+".embl")
-					DoError("Cannot read annotation file (is it in embl/genbank format?)")
-			else:
-				DoError("Cannot read annotation file (is it in embl/genbank format?)")
+			print "\nCannot open annotation file"
+			sys.exit()
+#		
+#		readok=False
+#		try:
+#			record = SeqIO.read(open(options.embl), "embl")
+#			
+#		except StandardError:
+#			print "\nCannot open annotation file as embl"
+#		else:
+#			readok=True
+#		if readok==False:
+#		
+#			print "Trying to open file as genbank instead"
+#		
+#			try:
+#				record = SeqIO.read(open(options.embl), "gb")
+#			except StandardError:
+#				print "Cannot open annotation file as genbank"
+#				
+#		if readok==False:
+#			emblfile=open(options.embl, "rU")
+#			found_id_line=False
+#			found_header=False
+#			found_sequence=False
+#			newembl=[]
+#			
+#			for line in emblfile:
+#				if len(line.split())>0:
+#					if line.split()[0]=="ID":
+#						found_id_line=True
+#						if len(line.strip().split(";"))>=7 and int(line.strip().split(";")[6].split()[0])==len(sequences[options.ref]):
+#							newembl.append(line)
+#						else:
+#							print "Found invalid ID line. Will be replaced."
+#							found_id_line=False
+#					elif line.split()[0]=="FH":
+#						found_header=True
+#						newembl.append(line)
+#					elif line.split()[0]=="SQ":
+#						found_sequence=True
+#						newembl.append(line)
+#					else:
+#						newembl.append(line)
+#			
+#			emblfile.close()
+#			
+#			if found_id_line==False or found_header==False or found_sequence==False:
+#				
+#				print "Last try. Trying to convert file into readable embl format"
+#				
+#				chars = string.ascii_letters + string.digits
+#				tmpname='tmp'+"".join(choice(chars) for x in range(randint(8, 10)))
+#				stringfile = open(tmpname+".embl", "w")
+#				
+#				if options.gaps:
+#					refseqforembl=sequences[options.ref].replace("-","")
+#				else:
+#					refseqforembl=sequences[options.ref]
+#				print len(sequences[options.ref]), len(refseqforembl)
+#				
+#				if found_id_line==False:
+#					print "Adding ID line"
+#					print >> stringfile, embl_style_id(refseqforembl)
+#				
+#				if found_header==False:
+#					print "Adding header line"
+#					print >> stringfile, embl_style_header(refseqforembl)
+#				
+#				print >> stringfile, ''.join(newembl)
+#				
+#				if found_sequence==False:
+#					print "Appending sequence"
+#					print >> stringfile, embl_style_sequence(refseqforembl)
+#				
+#				stringfile.close()
+#				
+#				try:
+#					record = SeqIO.read(open(tmpname+".embl"), "embl")
+#					os.system("rm "+tmpname+".embl")
+#				except StandardError:
+#					os.system("rm "+tmpname+".embl")
+#					DoError("Cannot read annotation file (is it in embl/genbank format?)")
+#			else:
+#				DoError("Cannot read annotation file (is it in embl/genbank format?)")
 
 		print "Done"
 		if len(record.seq)!=reflennogaps:
