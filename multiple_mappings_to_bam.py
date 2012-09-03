@@ -58,6 +58,7 @@ def get_user_options():
 
 	group = OptionGroup(parser, "Mapping Options")
 	group.add_option("-p", "--program", action="store", type="choice", dest="program", choices=["bwa","ssaha", "smalt", "BWA","SSAHA", "SMALT"], help="Mapping program to use (choose from bwa, ssaha or smalt) [default= %default]", default="smalt")
+	group.add_option("-1", "--nomap", action="store_false", dest="domapping", help="Do not remap data - only available when input is bam (default is to map)", default=True)
 	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3 and latest (currently 0.6.3) [default= %default]", default="0.5.8")
 	group.add_option("-H", "--human", action="store_true", dest="human", help="Mapping against human (or other large euk)", default=False)
 	#group.add_option("-l", "--length", action="store", dest="readlength", help="Read length [default= %default]", default=54, type="int", metavar="INT")
@@ -411,26 +412,30 @@ class SNPanalysis:
 		sys.stdout.flush()
 		
 		#Map the reads against the genome
-		if self.pairedend:
-			if options.maprepeats:
-				print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
-				cmdline="map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
+		if self.domapping:
+			if self.pairedend:
+				if options.maprepeats:
+					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
+					cmdline="map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
+				else:
+					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
+					cmdline="map -y "+str(options.nomapid)+" -x -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
 			else:
-				print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
-				cmdline="map -y "+str(options.nomapid)+" -x -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
+				if options.maprepeats:
+					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
+					cmdline="map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
+				else:
+					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
+					cmdline="map -y "+str(options.nomapid)+" -x -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
+			print >> bashfile, SAMTOOLS_DIR+"samtools view -b -S",self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
+			print >> bashfile, "rm", self.runname+"/tmp1.sam"
 		else:
-			if options.maprepeats:
-				print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
-				cmdline="map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
-			else:
-				print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
-				cmdline="map -y "+str(options.nomapid)+" -x -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
+			print >> bashfile, "cp ", self.bam, self.runname+"/tmp1.bam"
 		
 		
 		#produce the BAM file
 		#print >> bashfile, SAMTOOLS_DIR+"samtools view -b -q "+str(options.mapq)+" -S", self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp.bam"
-		print >> bashfile, SAMTOOLS_DIR+"samtools view -b -S",self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
-		print >> bashfile, "rm", self.runname+"/tmp1.sam"
+		
 		
 		if self.pairedend and options.circular:
 			print >> bashfile, MY_SCRIPTS_DIR+"fix_circular_bams.py -b", self.runname+"/tmp1.bam -o", self.runname+"/tmp"
@@ -588,6 +593,7 @@ if __name__ == "__main__":
 		if filetype not in ['.fastq','.bam',".gz"]:
 			print "WARNING: Input file name is not .fastq or .bam!"
 		
+		bam=""
 		originalfastqdir=''
 		if pool[-1]=='/':
 			pool=pool[:-1]
@@ -619,14 +625,18 @@ if __name__ == "__main__":
 			#ziplist.append(pool)
 			
 			
-			
+		
 		
 		elif pool.split('.')[-1]=="bam":
-			if not os.path.isdir(tmpname+"_unbammed"):
-				os.system("mkdir "+tmpname+"_unbammed")
-			bamlist['.'.join(pool.replace("#","_").split('/')[-1].split('.')[:-1])]=pool
 			
-			pool=tmpname+"_unbammed/"+'.'.join(pool.replace("#","_").split('/')[-1].split('.')[:-1])+".bam"
+			if options.domapping:
+				if not os.path.isdir(tmpname+"_unbammed"):
+					os.system("mkdir "+tmpname+"_unbammed")
+				bamlist['.'.join(pool.replace("#","_").split('/')[-1].split('.')[:-1])]=pool
+				
+				pool=tmpname+"_unbammed/"+'.'.join(pool.replace("#","_").split('/')[-1].split('.')[:-1])+".bam"
+			else:
+				bam=pool
 			
 	
 #		if not os.path.isfile(pool):
@@ -684,6 +694,12 @@ if __name__ == "__main__":
 		pools[count].fastqdir=fastqdir
 		pools[count].filetype=filetype
 		pools[count].pairedend=pairedend
+		if bam!="":
+			pools[count].domapping=False
+			pools[count].bam=bam
+			print "As you chose not to remap, using", bam, "as mapped data"
+		else:
+			pools[count].domapping=True
 #		the rest can be globals
 #		pools[count].quality=options.qualityoptions
 #		pools[count].mininsertsize=options.mininsertsize

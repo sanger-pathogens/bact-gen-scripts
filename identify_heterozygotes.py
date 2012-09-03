@@ -30,6 +30,7 @@ def main():
 
 	parser.add_option("-a", "--alignment", action="store", dest="alignment", help="alignment file name", default="", metavar="FILE")
 	parser.add_option("-t", "--tree", action="store", dest="tree", help="tree file name", default="", metavar="FILE")
+	parser.add_option("-p", "--proportion", action="store", dest="proportion", help="maximum proportion of Ns to allow in a column for it to be included in the test (i.e. ignore any sites with > than this proportion of Ns) [default=%default]", default=0.05, metavar="FILE")
 	
 	return parser.parse_args()
 
@@ -51,6 +52,8 @@ def check_input_validity(options, args):
 		DoError('No tree file selected!')
 	elif not os.path.isfile(options.tree):
 		DoError('Cannot find file '+options.tree+'!')
+	if options.proportion>1 or options.proportion<0:
+		DoError('Maximum proportion of Ns must be between 0 and 1!')
 
 gap_and_missing=set(["-", "N", "?"])
 missing_set=([ "N", "?"])
@@ -131,11 +134,15 @@ if __name__ == "__main__":
 			pairwise_distances[sequence.name]={}
 	
 	alnlen=len(alignment[sequence.name])
+	taxacount=len(alignment)
 	seqcount=len(seqnames)
 	toremove=[]
-	cutoff=1
-	if float(alnlen)/10>cutoff:
-		cutoff=float(alnlen)/10
+	cutoff=2
+	if float(taxacount)*options.proportion>cutoff:
+		cutoff=float(taxacount)*options.proportion
+	
+	print "Cutoff set at", cutoff	
+	
 	for x in xrange(alnlen):
 		ncount=0.0
 		for seq in seqnames:
@@ -144,10 +151,13 @@ if __name__ == "__main__":
 		if ncount>cutoff:
 			toremove.append(x)
 	
+	
+	
 	for x in toremove[::-1]:
 		for seq in seqnames:
 			alignment[seq]=alignment[seq][:x]+alignment[seq][x+1:]
 	alnlen=len(alignment[sequence.name])
+	
 	
 	for x, taxon in enumerate(seqnames):
 		pairwise_distances[taxon]={}
