@@ -376,6 +376,10 @@ def write_embl_style_sequence(sequence, handle):
 def open_annotation(filename, sequence="", quiet=False):
 	
 	sequence=str(sequence)
+	if sequence!="":
+		know_seq=True
+	else:
+		know_seq=False
 	
 	if not quiet:
 		print "Reading annotation file..."
@@ -423,6 +427,7 @@ def open_annotation(filename, sequence="", quiet=False):
 		found_id_line=False
 		found_header=False
 		found_sequence=False
+		made_change=False
 		newembl=[]
 		
 		for line in emblfile:
@@ -434,10 +439,10 @@ def open_annotation(filename, sequence="", quiet=False):
 					IDline=line.split(";")
 					IDline=map(lambda x: x.strip(),IDline)
 					print IDline
-					if len(IDline)>=7 and len(IDline[1].split())==2 and IDline[1].split()[0]=="SV" and IDline[2] in ["circular", "linear"] and IDline[4] in ["CON", "PAT", "EST", "GSS", "HTC", "HTG", "MGA", "WGS", "TPA", "STS", "STD"] and IDline[5] in ['PHG', 'ENV', 'FUN', 'HUM', 'INV', 'MAM', 'VRT', 'MUS', 'PLN', 'PRO', 'ROD', 'SYN', 'TGN', 'UNC', 'VRL'] and len(IDline[6].split())==2 and int(IDline[6].split()[0])==len(sequence) and IDline[6].split()[1][:2]=="BP":
+					if len(IDline)>=7 and len(IDline[1].split())==2 and IDline[1].split()[0]=="SV" and IDline[2] in ["circular", "linear"] and IDline[4] in ["CON", "PAT", "EST", "GSS", "HTC", "HTG", "MGA", "WGS", "TPA", "STS", "STD"] and IDline[5] in ['PHG', 'ENV', 'FUN', 'HUM', 'INV', 'MAM', 'VRT', 'MUS', 'PLN', 'PRO', 'ROD', 'SYN', 'TGN', 'UNC', 'VRL'] and len(IDline[6].split())==2 and (not know_seq or int(IDline[6].split()[0])==len(sequence)) and IDline[6].split()[1][:2]=="BP":
 						newembl.append(line)
 					else:
-						print len(IDline)>=7, len(IDline[1].split())==2, IDline[1].split()[0]=="SV", IDline[2] in ["circular", "linear"], IDline[4] in ["CON", "PAT", "EST", "GSS", "HTC", "HTG", "MGA", "WGS", "TPA", "STS", "STD"], IDline[5] in ['PHG', 'ENV', 'FUN', 'HUM', 'INV', 'MAM', 'VRT', 'MUS', 'PLN', 'PRO', 'ROD', 'SYN', 'TGN', 'UNC', 'VRL'], len(IDline[6].split())==2, int(IDline[6].split()[0])==len(sequence), IDline[6].split()[1][:2]=="BP"
+						#print len(IDline)>=7, len(IDline[1].split())==2, IDline[1].split()[0]=="SV", IDline[2] in ["circular", "linear"], IDline[4] in ["CON", "PAT", "EST", "GSS", "HTC", "HTG", "MGA", "WGS", "TPA", "STS", "STD"], IDline[5] in ['PHG', 'ENV', 'FUN', 'HUM', 'INV', 'MAM', 'VRT', 'MUS', 'PLN', 'PRO', 'ROD', 'SYN', 'TGN', 'UNC', 'VRL'], len(IDline[6].split())==2, (not know_seq or int(IDline[6].split()[0])==len(sequence)), IDline[6].split()[1][:2]=="BP"
 						if not quiet:
 							print "Found invalid ID line. Will be replaced."
 						found_id_line=False
@@ -451,6 +456,7 @@ def open_annotation(filename, sequence="", quiet=False):
 				elif line.split()[0]=="FT" and line.split()[1][0]=="/":
 					if len(line.split()[1].split("="))==1:
 						newembl.append(line+'="True"')
+						made_change=True
 					else:
 						newembl.append(line)
 				else:
@@ -463,9 +469,9 @@ def open_annotation(filename, sequence="", quiet=False):
 		
 		emblfile.close()
 		
-		print found_id_line, found_header, found_sequence
+		print found_id_line, found_header, found_sequence, made_change
 		
-		if found_id_line==False or found_header==False or found_sequence==False:
+		if found_id_line==False or found_header==False or found_sequence==False or made_change==True:
 			if not quiet:
 				print "Last try. Trying to convert file into readable embl format"
 			
@@ -515,7 +521,8 @@ def open_annotation(filename, sequence="", quiet=False):
 				
 				
 		else:
-			return None
+			raise SimonError("3")
+			
 	elif readok==False and sequence=="":
 		raise SimonError("2")
 

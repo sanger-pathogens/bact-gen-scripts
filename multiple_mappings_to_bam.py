@@ -408,11 +408,12 @@ class SNPanalysis:
 			print >> bashfile, "mv", self.runname+"/tmp1.bam", self.runname+"/tmp.bam"
 			
 	def runSMALT(self, ref, bashfile):	
-		print "\nRunning SMALT on "+self.name+'...',
-		sys.stdout.flush()
+		
 		
 		#Map the reads against the genome
 		if self.domapping:
+			print "\nRunning SMALT on "+self.name+'...',
+			sys.stdout.flush()
 			if self.pairedend:
 				if options.maprepeats:
 					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
@@ -449,8 +450,9 @@ class SNPanalysis:
 			now = datetime.datetime.now()
 			now = now.replace(microsecond=0)
 			print >> bashfile, 'echo "@RG\tID:'+self.name+'\tCN:Sanger\tDT:'+now.isoformat()+'\tPG:SMALT\tPL:ILLUMINA\tSM:'+self.name+'" >>', self.runname+"/tmphead.sam"
-			print >> bashfile, "smaltversion=$( "+SMALT_DIR+" version  | grep Version | awk '{print $2}' )"
-			print >> bashfile, 'echo "@PG\tID:SMALT\tPN:SMALT\tCL:'+' '.join(map(str,cmdline))+'\tVN:$smaltversion" >>', self.runname+'/tmphead.sam'
+			if self.domapping:
+				print >> bashfile, "smaltversion=$( "+SMALT_DIR+" version  | grep Version | awk '{print $2}' )"
+				print >> bashfile, 'echo "@PG\tID:SMALT\tPN:SMALT\tCL:'+' '.join(map(str,cmdline))+'\tVN:$smaltversion" >>', self.runname+'/tmphead.sam'
 			print >> bashfile, SAMTOOLS_DIR+'samtools view -b -H -o', self.runname+'/tmphead.bam', self.runname+"/"+self.name+".bam"
 			print >> bashfile, SAMTOOLS_DIR+'samtools merge -h ', self.runname+'/tmphead.sam -r', self.runname+"/tmp1.bam", self.runname+"/"+self.name+".bam", self.runname+'/tmphead.bam'
 			print >> bashfile, "rm", self.runname+"/"+self.name+".bam"
