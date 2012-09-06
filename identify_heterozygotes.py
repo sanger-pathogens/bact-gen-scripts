@@ -69,6 +69,7 @@ def chisquarepvalue(taxon,taxonb,taxonc):
 	diffnotN=0.0
 	samenotN=0.0
 	Ncount=0.0
+	diffNpositions=set([])
 	
 	for x in xrange(len(taxonseq)):
 		if taxonseq[x] in missing_set:
@@ -83,6 +84,7 @@ def chisquarepvalue(taxon,taxonb,taxonc):
 		elif taxonbseq[x]!=taxoncseq[x]:
 			if taxonseq[x] in missing_set:
 				diffN+=1
+				diffNpositions.add(x+1)
 			elif taxonseq[x]!="-":
 				diffnotN+=1
 	
@@ -91,7 +93,7 @@ def chisquarepvalue(taxon,taxonb,taxonc):
 #	if p.right_tail<(0.05/tot):
 #		print taxon, taxonb, taxonc, Ncount, sameN, diffN, samenotN, diffnotN, p
 #	print p.right_tail
-	return p.right_tail	
+	return p.right_tail	, diffNpositions
 
 
 
@@ -202,6 +204,8 @@ if __name__ == "__main__":
 #	print "\n"
 	
 	significant={}
+	Nlocsets={}
+	
 	for x, taxon in enumerate(seqnames):
 		print x+1, "\r",
 		sys.stdout.flush()
@@ -210,8 +214,15 @@ if __name__ == "__main__":
 			sys.stdout.flush()
 			for taxonc in seqnames[x+y+2:]:
 				if pairwise_distances[taxon][taxonb]+pairwise_distances[taxon][taxonc]<pairwise_distances[taxonb][taxonc]:
-					cspvalue=chisquarepvalue(taxon,taxonb,taxonc)
+					cspvalue, Nlocset=chisquarepvalue(taxon,taxonb,taxonc)
 					if cspvalue<(0.05/tot):
+						if not taxon in Nlocsets:
+							Nlocsets[taxon]={}
+						if not taxonb in Nlocsets[taxon]:
+							Nlocsets[taxon][taxonb]={}
+						if not taxonc in Nlocsets[taxon][taxonb]:
+							Nlocsets[taxon][taxonb][taxonc]=Nlocset
+					
 						if not taxon in significant:
 							significant[taxon]={}
 						if not taxonb in significant[taxon]:
@@ -221,8 +232,15 @@ if __name__ == "__main__":
 							significant[taxon][taxonc]=0
 						significant[taxon][taxonc]+=1
 				elif pairwise_distances[taxon][taxonb]+pairwise_distances[taxonb][taxonc]<pairwise_distances[taxon][taxonc]:
-					cspvalue=chisquarepvalue(taxonb,taxon,taxonc)
+					cspvalue, Nlocset=chisquarepvalue(taxonb,taxon,taxonc)
 					if cspvalue<(0.05/tot):
+						if not taxonb in Nlocsets:
+							Nlocsets[taxonb]={}
+						if not taxon in Nlocsets[taxonb]:
+							Nlocsets[taxonb][taxon]={}
+						if not taxonc in Nlocsets[taxonb][taxon]:
+							Nlocsets[taxonb][taxon][taxonc]=Nlocset
+							
 						if not taxonb in significant:
 							significant[taxonb]={}
 						if not taxon in significant[taxonb]:
@@ -232,8 +250,15 @@ if __name__ == "__main__":
 							significant[taxonb][taxonc]=0
 						significant[taxonb][taxonc]+=1
 				elif pairwise_distances[taxon][taxonc]+pairwise_distances[taxonb][taxonc]<pairwise_distances[taxon][taxonb]:
-					cspvalue=chisquarepvalue(taxonc,taxonb,taxon)
+					cspvalue, Nlocset=chisquarepvalue(taxonc,taxonb,taxon)
 					if cspvalue<(0.05/tot):
+						if not taxon in Nlocsets:
+							Nlocsets[taxonc]={}
+						if not taxonb in Nlocsets[taxonc]:
+							Nlocsets[taxonc][taxon]={}
+						if not taxonc in Nlocsets[taxonc][taxon]:
+							Nlocsets[taxonc][taxon][taxonb]=Nlocset
+							
 						if not taxonc in significant:
 							significant[taxonc]={}
 						if not taxonb in significant[taxonc]:
@@ -259,11 +284,30 @@ if __name__ == "__main__":
 				print >> outfile, taxonb+","+"-,"+str(significant[taxon][taxonb])
 				if significant[taxon][taxonb]>maxnum:
 					maxnum=significant[taxon][taxonb]
+
+				
 			outfile.close()
 			print >> logout, taxon, float(maxnum)/(len(seqnames)-1)
 			os.system("/nfs/users/nfs_s/sh16/scripts/reportlabtest.py -t "+options.tree+" -m test.csv -C 2,3 -O portrait -M -L left -a 2 -o "+taxon+"_"+str(maxnum)+".pdf")
 			os.system("rm -f  test.csv")
 		else:
 			print >> logout, taxon, 0.0
+	
+	
+	for taxon in Nlocsets:
+		Nlocs={}
+		for taxonb in Nlocsets[taxon]:
+			for taxonc in Nlocsets[taxon][taxonb]:
+				for base in Nlocsets[taxon][taxonb][taxonc]:
+					if not base in Nlocs:
+						Nlocs[base]=[]
+					Nlocs[base].append(' & '.join([taxonb,taxonc]))
+		tabout=open(taxon+"_Ns.tab", "w")
+		for Nloc in Nlocs:
+			print >> tabout, "FT   misc_feature    "+str(Nloc)
+			print >> tabout, 'FT                   /taxa="'+', '.join(Nlocs[Nloc])+'"'
+		tabout.close()
+				
+	
 	sys.exit()
                                     
