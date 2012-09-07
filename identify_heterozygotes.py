@@ -28,9 +28,10 @@ def main():
 	usage = "usage: %prog [options] args"
 	parser = OptionParser(usage=usage)
 
-	parser.add_option("-a", "--alignment", action="store", dest="alignment", help="alignment file name", default="", metavar="FILE")
+	parser.add_option("-a", "--alignment", action="store", dest="alignment", help="alignment file name. For the tab output to fit you need to give the entire alignment, not just SNP sites, which is faster.", default="", metavar="FILE")
 	parser.add_option("-t", "--tree", action="store", dest="tree", help="tree file name", default="", metavar="FILE")
-	parser.add_option("-p", "--proportion", action="store", dest="proportion", help="maximum proportion of Ns to allow in a column for it to be included in the test (i.e. ignore any sites with > than this proportion of Ns) [default=%default]", default=0.05, metavar="FILE")
+	parser.add_option("-p", "--proportion", action="store", dest="proportion", help="maximum proportion of Ns to allow in a column for it to be included in the test (i.e. ignore any sites with > than this proportion of Ns) [default=%default]", default=0.05)
+	parser.add_option("-r", "--reference", action="store", dest="reference", help="Name of reference in alignment", default="")
 	
 	return parser.parse_args()
 
@@ -54,6 +55,8 @@ def check_input_validity(options, args):
 		DoError('Cannot find file '+options.tree+'!')
 	if options.proportion>1 or options.proportion<0:
 		DoError('Maximum proportion of Ns must be between 0 and 1!')
+	if options.reference=="":
+		DoError('No reference selected!')
 
 gap_and_missing=set(["-", "N", "?"])
 missing_set=([ "N", "?"])
@@ -72,6 +75,8 @@ def chisquarepvalue(taxon,taxonb,taxonc):
 	diffNpositions=set([])
 	
 	for x in xrange(len(taxonseq)):
+		if x in toremove:
+			continue
 		if taxonseq[x] in missing_set:
 			Ncount+=1
 		if taxonbseq[x] in gap_and_missing or taxoncseq[x] in gap_and_missing:
@@ -79,13 +84,13 @@ def chisquarepvalue(taxon,taxonb,taxonc):
 		elif taxonbseq[x]==taxoncseq[x]:
 			if taxonseq[x] in missing_set:
 				sameN+=1
-			elif taxonseq[x]!="-":
+			elif taxonseq[x] not in missing_set:
 				samenotN+=1
 		elif taxonbseq[x]!=taxoncseq[x]:
 			if taxonseq[x] in missing_set:
 				diffN+=1
-				diffNpositions.add(x+1)
-			elif taxonseq[x]!="-":
+				diffNpositions.add(x)
+			elif taxonseq[x] not in missing_set:
 				diffnotN+=1
 	
 	#matrix=[[sameN, samenotN],[diffN, diffnotN]]
@@ -118,27 +123,154 @@ if __name__ == "__main__":
 	#Read the alignment file
 	
 	
-	try:
-		readalignment=read_alignment(options.alignment)
-	except StandardError:
-		DoError("Cannot open alignment file")
-
+	#first find the reference
+	reffound=False
+	refseq=[]
+	print "Finding reference in alignment"
+	for line in open(options.alignment, "rU"):
+		line=line.strip()
+		if len(line)>0 and line[0]==">":
+			if line.split()[0][1:]==options.reference:
+				reffound=True
+			elif reffound:
+				break
+		elif reffound:
+			refseq.append(''.join(line.split()))
+		
+	
+	if not reffound:
+		DoError("Cannot find reference in alignment")
+	else:
+		print "Reference found"
+	refseq=''.join(refseq).upper()
+	
+	print "Finding SNP sites"
+	SNPsites=set([])
+	seq=[]
+	
+	ok_bases=set(['A','G','C','T'])
+	
+	for line in open(options.alignment, "rU"):
+		line=line.strip()
+		if len(line)>0 and line[0]==">":
+			if line.split()[0][1:]==options.reference:
+				seq=[]
+				continue
+			seq=''.join(seq).upper()
+			if len(seq)==len(refseq):
+				for base in xrange(len(refseq)):
+					if base in SNPsites:
+						continue
+					if refseq[base]!=seq[base] and refseq[base] in ok_bases and seq[base] in ok_bases:
+						SNPsites.add(base)
+		
+			seq=[]
+		elif reffound:
+			seq.append(''.join(line.split()))
+	if line.split()[0][1:]!=options.reference:
+		seq=''.join(seq).upper()
+		if len(seq)==len(refseq):
+			for base in xrange(len(refseq)):
+				if base in SNPsites:
+					continue
+				if refseq[base]!=seq[base] and refseq[base] in ok_bases and seq[base] in ok_bases:
+					SNPsites.add(base)
+	
+	print "Found", len(SNPsites), "SNP sites"
+	
+	sorted_snps=list(SNPsites)
+	sorted_snps.sort()
 	seqnames=[]
 	
 	pairwise_distances={}
 	tot=0
 	
 	alignment={}
-	for sequence in readalignment:
-		alignment[sequence.name]=str(sequence.seq).upper()
-		if not sequence.name in seqnames:
-			seqnames.append(sequence.name)
-			pairwise_distances[sequence.name]={}
 	
-	alnlen=len(alignment[sequence.name])
+	refpos={}
+	
+	print "Extracting SNP sites and their positions in reference"
+	name=""
+	seq=[]
+	for line in open(options.alignment, "rU"):
+		line=line.strip()
+		if len(line)>0 and line[0]==">":
+			if name!="":
+				seqnames.append(name)
+				pairwise_distances[name]={}
+				seq=''.join(seq).upper()
+				snpseq=[]
+				for x in sorted_snps:
+					snpseq.append(seq[x])
+				
+				if name==options.reference:
+					count=0
+					SNPcount=0
+					for base in xrange(len(refseq)):
+						
+						if refseq[base]!="-":
+							count+=1
+						if base in SNPsites:
+							refpos[SNPcount]=count
+							SNPcount+=1
+
+				alignment[name]=''.join(snpseq)
+				seq=[]
+				
+			name=line.split()[0][1:]
+		elif reffound:
+			seq.append(''.join(line.split()))
+
+	if name!="":
+		seqnames.append(name)
+		pairwise_distances[name]={}
+		seq=''.join(seq).upper()
+		snpseq=[]
+		for x in sorted_snps:
+			snpseq.append(seq[x])
+		
+		if name==options.reference:
+			count=0
+			SNPcount=0
+			for base in xrange(len(refseq)):
+				
+				if refseq[base]!="-":
+					count+=1
+				if base in SNPsites:
+					refpos[SNPcount]=count
+					SNPcount+=1
+		alignment[name]=''.join(snpseq)
+
+	
+#	print alignment
+#	print seqnames
+#	print pairwise_distances
+#	print refpos
+#	sys.exit()	
+#	
+	
+	
+#	try:
+#		readalignment=read_alignment(options.alignment)
+#	except StandardError:
+#		DoError("Cannot open alignment file")
+#
+#	seqnames=[]
+#	
+#	pairwise_distances={}
+#	tot=0
+#	
+#	alignment={}
+#	for sequence in readalignment:
+#		alignment[sequence.name]=str(sequence.seq).upper()
+#		if not sequence.name in seqnames:
+#			seqnames.append(sequence.name)
+#			pairwise_distances[sequence.name]={}
+	
+	alnlen=len(alignment[name])
 	taxacount=len(alignment)
 	seqcount=len(seqnames)
-	toremove=[]
+	toremove=set([])
 	cutoff=2
 	if float(taxacount)*options.proportion>cutoff:
 		cutoff=float(taxacount)*options.proportion
@@ -151,15 +283,15 @@ if __name__ == "__main__":
 			if alignment[seq][x] in gap_and_missing:
 				ncount+=1
 		if ncount>cutoff:
-			toremove.append(x)
+			toremove.add(x)
 	
 	
 	
-	for x in toremove[::-1]:
-		for seq in seqnames:
-			alignment[seq]=alignment[seq][:x]+alignment[seq][x+1:]
-	alnlen=len(alignment[sequence.name])
-	
+#	for x in toremove[::-1]:
+#		for seq in seqnames:
+#			alignment[seq]=alignment[seq][:x]+alignment[seq][x+1:]
+#	alnlen=len(alignment[name])
+#	
 	
 	for x, taxon in enumerate(seqnames):
 		pairwise_distances[taxon]={}
@@ -187,6 +319,8 @@ if __name__ == "__main__":
 			if len(taxonseq)==len(taxonbseq):
 			
 				for y, base in enumerate(taxonseq):
+					if y in toremove:
+						continue
 					if base!=taxonbseq[y] and base not in gap_and_missing and taxonbseq[y] not in gap_and_missing:
 						count+=1
 						
@@ -301,10 +435,10 @@ if __name__ == "__main__":
 				for base in Nlocsets[taxon][taxonb][taxonc]:
 					if not base in Nlocs:
 						Nlocs[base]=[]
-					Nlocs[base].append(' & '.join([taxonb,taxonc]))
+					Nlocs[base].append('-'.join([taxonb,taxonc]))
 		tabout=open(taxon+"_Ns.tab", "w")
 		for Nloc in Nlocs:
-			print >> tabout, "FT   misc_feature    "+str(Nloc)
+			print >> tabout, "FT   misc_feature    "+str(refpos[Nloc])
 			print >> tabout, 'FT                   /taxa="'+', '.join(Nlocs[Nloc])+'"'
 		tabout.close()
 				
