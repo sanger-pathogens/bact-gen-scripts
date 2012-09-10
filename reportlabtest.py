@@ -2186,6 +2186,20 @@ class Plot:
 
 	def get_data_to_print(self):
 		
+		
+		if options.plot_min!=float("Inf"):
+			valueMin = options.plot_min
+		elif self.plot_type=="bar":
+			valueMin = min(self.data[0])
+		else:
+			valueMin = min(map(min,self.data))
+		if options.plot_max!=float("Inf"):
+			valueMax = options.plot_max 
+		elif self.plot_type=="bar":
+			valueMax = max(self.data[0])
+		else:
+			valueMax = max(map(max,self.data))
+		
 		printdata=[]
 		if self.plot_type in ["line", "area"]:
 			for x, data in enumerate(self.data):
@@ -2214,15 +2228,15 @@ class Plot:
 				printdata.append(currdata)
 				
 		if self.plot_type in ["line", "area"]:
-			return printdata
+			return printdata, valueMin, valueMax
 		elif self.plot_type in ["bar", "heat"]:
-			return printdata, end
+			return printdata, end, valueMin, valueMax
 			
 	
 	
 	def draw_heatmap(self, x, y, height, length):
 	
-		data, end=self.get_data_to_print()
+		data, end, valueMin, valueMax=self.get_data_to_print()
 				
 		datalength=length*(float(end-self.beginning)/(self.end-self.beginning))
 		
@@ -2230,14 +2244,7 @@ class Plot:
 		
 		
 		
-		if options.plot_min!=float("Inf"):
-			valueMin = options.plot_min
-		else:
-			valueMin = min(data[0])
-		if options.plot_max!=float("Inf"):
-			valueMax = options.plot_max 
-		else:
-			valueMax = max(data[0])
+		
 		
 #		self.legend=True
 #		if self.legend and len(self.labels)>0:
@@ -2332,7 +2339,7 @@ class Plot:
 	
 	def draw_line_plot(self, x, y, height, length):
 		
-		data=self.get_data_to_print()
+		data, valueMin, valueMax=self.get_data_to_print()
 		
 		if self.legend and len(self.labels)>0:
 			
@@ -2447,7 +2454,7 @@ class Plot:
 	
 	def draw_bar_plot(self, x, y, height, length):
 		
-		data, end=self.get_data_to_print()
+		data, end, valueMin, valueMax=self.get_data_to_print()
 		
 		if self.legend and len(self.labels)>0:
 			

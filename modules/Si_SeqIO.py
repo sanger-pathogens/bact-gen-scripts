@@ -307,10 +307,10 @@ def read_seq_file(filename, quiet=False):
 # Function to create an embl style ID line #
 ############################################
 
-def write_embl_style_id(seqlen, handle):
+def write_embl_style_id(seqlen, name, handle):
 	#print "ID   X00001; SV 1; linear; unassigned DNA; STD; UNC; "+str(len(sequence.strip()))+" BP.\nXX"
 	#print "ID   X00001; SV 1; circular; unassigned DNA; STD; UNC; "+str(seqlen)+" BP.\nXX\n"
-	handle.write("ID   X00001; SV 1; circular; unassigned DNA; STD; UNC; "+str(seqlen)+" BP.\nXX\n")
+	handle.write("ID   "+name+"; SV 1; circular; unassigned DNA; STD; UNC; "+str(seqlen)+" BP.\nXX\n")
 	
 	return
 
@@ -429,7 +429,7 @@ def open_annotation(filename, sequence="", quiet=False):
 		found_sequence=False
 		made_change=False
 		newembl=[]
-		
+		IDname="X00001"
 		for line in emblfile:
 			line=line.rstrip()
 			if len(line.split())>0:
@@ -439,7 +439,10 @@ def open_annotation(filename, sequence="", quiet=False):
 					IDline=line.split(";")
 					IDline=map(lambda x: x.strip(),IDline)
 					print IDline
-					if len(IDline)>=7 and len(IDline[1].split())==2 and IDline[1].split()[0]=="SV" and IDline[2] in ["circular", "linear"] and IDline[4] in ["CON", "PAT", "EST", "GSS", "HTC", "HTG", "MGA", "WGS", "TPA", "STS", "STD"] and IDline[5] in ['PHG', 'ENV', 'FUN', 'HUM', 'INV', 'MAM', 'VRT', 'MUS', 'PLN', 'PRO', 'ROD', 'SYN', 'TGN', 'UNC', 'VRL'] and len(IDline[6].split())==2 and (not know_seq or int(IDline[6].split()[0])==len(sequence)) and IDline[6].split()[1][:2]=="BP":
+					if len(IDline[0].split())==2 and IDline[0].split()[0]=="ID":
+						IDname=IDline[0].split()[1]
+						
+					if len(IDline)>=7 and len(IDline[0].split())==2 and IDline[0].split()[0]=="ID" and len(IDline[1].split())==2 and IDline[1].split()[0]=="SV" and IDline[2] in ["circular", "linear"] and IDline[4] in ["CON", "PAT", "EST", "GSS", "HTC", "HTG", "MGA", "WGS", "TPA", "STS", "STD"] and IDline[5] in ['PHG', 'ENV', 'FUN', 'HUM', 'INV', 'MAM', 'VRT', 'MUS', 'PLN', 'PRO', 'ROD', 'SYN', 'TGN', 'UNC', 'VRL'] and len(IDline[6].split())==2 and (not know_seq or int(IDline[6].split()[0])==len(sequence)) and IDline[6].split()[1][:2]=="BP":
 						newembl.append(line)
 					else:
 						#print len(IDline)>=7, len(IDline[1].split())==2, IDline[1].split()[0]=="SV", IDline[2] in ["circular", "linear"], IDline[4] in ["CON", "PAT", "EST", "GSS", "HTC", "HTG", "MGA", "WGS", "TPA", "STS", "STD"], IDline[5] in ['PHG', 'ENV', 'FUN', 'HUM', 'INV', 'MAM', 'VRT', 'MUS', 'PLN', 'PRO', 'ROD', 'SYN', 'TGN', 'UNC', 'VRL'], len(IDline[6].split())==2, (not know_seq or int(IDline[6].split()[0])==len(sequence)), IDline[6].split()[1][:2]=="BP"
@@ -483,9 +486,9 @@ def open_annotation(filename, sequence="", quiet=False):
 				if not quiet:
 					print "Adding ID line"
 				if found_sequence and seqlen!=0:
-					write_embl_style_id(seqlen, stringfile)
+					write_embl_style_id(seqlen, IDname, stringfile)
 				elif len(sequence)!=0:
-					write_embl_style_id(len(sequence.strip()), stringfile)
+					write_embl_style_id(len(sequence.strip()), IDname, stringfile)
 				else:
 					raise SimonError("Cannot ascertain sequence length")
 			

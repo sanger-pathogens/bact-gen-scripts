@@ -255,7 +255,7 @@ if __name__ == "__main__":
 		options.rfastq=tmpname+"_2.fastq"
 	
 	#tmpname="tmpOPLFanZY"
-	map_reads(freads=options.ffastq, rreads=options.rfastq, ref=options.query, outputname=tmpname, percentid=options.queryid)
+	map_reads(freads=options.ffastq, rreads=options.rfastq, ref=options.query, maprepeats=True, outputname=tmpname, percentid=options.queryid)
 	
 	query_contigs=get_references(tmpname+".bam")
 	
