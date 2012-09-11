@@ -601,7 +601,11 @@ if __name__ == "__main__":
 			pool=pool[:-1]
 		if len(pool.split('/'))>1:
 			originalfastqdir='/'.join(pool.split('/')[:-1])+'/'
-		
+		if "_nonhuman" in pool:
+			nonhumanpool="_nonhuman"
+			pool=pool.replace("_nonhuman","")
+		else:
+			nonhumanpool=""
 		
 		if pool.split('.')[-1]=="gz" and pool.split('.')[-2]=="fastq":
 			if not os.path.isdir(tmpname+"_unzipped"):
@@ -623,11 +627,11 @@ if __name__ == "__main__":
 				ziplist['.'.join(pool.split('/')[-1].split('.')[:-2])]=[pool]
 			
 			pool=tmpname+"_unzipped/"+'.'.join(pool.split('/')[-1].split('.')[:-1])
-
+			
 			#ziplist.append(pool)
 			
 			
-		
+			
 		
 		elif pool.split('.')[-1]=="bam":
 			
@@ -652,18 +656,18 @@ if __name__ == "__main__":
 		
 		
 		pool='.'.join(pool.split('/')[-1].split('.')[:-1])
-		pool=pool.replace("_nonhuman","")
+		
 
 		if options.pairedend and filetype!=".bam":
 			if pool[-2:]=='_1':
 				
-				if not os.path.isfile(originalfastqdir+pool[:-2]+"_2.fastq") and not os.path.isfile(originalfastqdir+pool[:-2]+"_2.fastq.gz"):
+				if not os.path.isfile(originalfastqdir+pool[:-2]+"_2"+nonhumanpool+".fastq") and not os.path.isfile(originalfastqdir+pool[:-2]+"_2"+nonhumanpool+".fastq.gz"):
 					print "File "+pool+"_2.fastq not found! Treating "+pool+" as unpaired..."
 					pairedend=False
 				else:
 					pool=pool[:-2]
 			elif pool[-2:]=='_2':
-				if not os.path.isfile(originalfastqdir+pool[:-2]+"_1.fastq") and not os.path.isfile(originalfastqdir+pool[:-2]+"_1.fastq.gz"):
+				if not os.path.isfile(originalfastqdir+pool[:-2]+"_1"+nonhumanpool+".fastq") and not os.path.isfile(originalfastqdir+pool[:-2]+"_1"+nonhumanpool+".fastq.gz"):
 					print "File "+pool+"_1.fastq not found! Treating "+pool+" as unpaired..."
 					pairedend=False
 				else:
@@ -672,7 +676,7 @@ if __name__ == "__main__":
 				print "Not a typical paired-end name format! Treating "+pool+" as unpaired..."
 				pairedend=False
 			
-
+		
 		name=pool
 
 		if options.diroutput=="":

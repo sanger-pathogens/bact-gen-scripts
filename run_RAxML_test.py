@@ -163,7 +163,7 @@ if __name__ == "__main__":
 	
 	
 	#Read the alignment file
-
+	
 	try:
 		alignment=read_alignment(options.alignment)
 	except StandardError:
@@ -191,10 +191,7 @@ if __name__ == "__main__":
 	#if the user only wants to analyse SNP sites
 	if options.SNPonly:
 		smallalignment = Generic.Alignment(Gapped(IUPAC.unambiguous_dna, "-"))
-		starttime=time.clock()
-		snplocs, consensus=snp_locations_from_alignment_fast(filteredalignment, set(["-", "N", "?", "X"]))
-		print time.clock()-starttime
-		sys.exit()
+		snplocs, consensus=snp_locations_from_alignment(filteredalignment, set(["-", "N", "?", "X"]))
 		
 		alignment = Generic.Alignment(Gapped(IUPAC.unambiguous_dna, "-"))
 		for seq in filteredalignment:
@@ -204,6 +201,12 @@ if __name__ == "__main__":
 			sequence=''.join(sequencelist)
 			smallalignment.add_sequence(seq.id, sequence)
 	
+	#MEM(AA+GAMMA)    = (n-2) * m * (80 * 8) bytes
+	#MEM(AA+CAT)           = (n-2) * m * (20 * 8) bytes
+	#MEM(DNA+GAMMA) = (n-2) * m * (16 * 8) bytes
+	#MEM(DNA+CAT)        = (n-2) * m * (4  * 8)  bytes
+	#1GB=1073741824 bytes
+	#1MB=1048576 bytes
 
 	
 	#remove any previous RAxML runs with this tempname (this should never happen)
@@ -326,7 +329,7 @@ if __name__ == "__main__":
 				print bsubcommand
 				os.system(bsubcommand+' | bsub -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\'')
 			else:
-				os.system('bsub -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\' RAxML -f b -t RAxML_result.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
+				os.system('bsub -M 2000000 -R \'select[mem>2000] rusage[mem=2000]\' -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\' RAxML -f b -t RAxML_result.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
 					
 	
 			#Clean up all temporary files created	

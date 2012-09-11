@@ -51,7 +51,7 @@ def main():
 	group = OptionGroup(parser, "Filtering Options")
 	group.add_option("-d", "--depth", action="store", dest="depth", help="Minimum number of reads matching SNP [default= %default]", default=4, type="int", metavar="int")
 	group.add_option("-D", "--stranddepth", action="store", dest="stranddepth", help="Minimum number of reads matching SNP per strand [default= %default]", default=2, type="int", metavar="int")
-	group.add_option("-r", "--ratio", action="store", dest="ratio", help="Minimum ratio of first to second base call [default= %default]", default=0.8, type="float", metavar="float")
+	group.add_option("-r", "--ratio", action="store", dest="ratio", help="Minimum ratio of first to second base call [default= %default]", default=0.95, type="float", metavar="float")
 	group.add_option("-R", "--qratio", action="store", dest="qratio", help="Minimum ratio of total depth that is good quality [default= %default]", default=0.5, type="float", metavar="float")
 	#are the three above options still necessary???
 	group.add_option("-q", "--QUAL", action="store", dest="QUAL", help="Minimum base quality [default= %default]", default=50.0, type="float", metavar="float")
@@ -358,10 +358,10 @@ if __name__ == "__main__":
 		ratmin="N"
 		ratmaj="N"
 		
-		if BASEINFO["QUAL"]<options.QUAL:
-			keep=False
-			basequalfail+=1
-			failedfilters.append("Q"+str(options.QUAL))
+#		if BASEINFO["QUAL"]<options.QUAL:
+#			keep=False
+#			basequalfail+=1
+#			failedfilters.append("Q"+str(options.QUAL))
 		if  BASEINFO["INFO"]["MQ"]<options.MQUAL:
 			keep=False
 			mapqualfail+=1
@@ -370,10 +370,10 @@ if __name__ == "__main__":
 			keep=False
 			depthfail+=1
 			failedfilters.append("D"+str(options.depth))
-		if not SNP and BASEINFO["INFO"]["DP4"][0]+BASEINFO["INFO"]["DP4"][1]<(options.qratio*BASEINFO["INFO"]["DP"]):
-			keep=False
-			qratiofail+=1
-			failedfilters.append("QRR"+str(options.qratio))
+#		if not SNP and BASEINFO["INFO"]["DP4"][0]+BASEINFO["INFO"]["DP4"][1]<(options.qratio*BASEINFO["INFO"]["DP"]):
+#			keep=False
+#			qratiofail+=1
+#			failedfilters.append("QRR"+str(options.qratio))
 		if not SNP and BASEINFO["INFO"]["DP4"][0]<options.stranddepth:
 			keep=False
 			fdepthfail+=1
@@ -386,10 +386,12 @@ if __name__ == "__main__":
 			ratfail=True
 			ratmin=BASEINFO["ALT"].split(",")[0]
 			ratmaj=BASEINFO["REF"].split(",")[0]
+			#print BASEINFO["POS"], ratmin, ratmaj
 		if SNP and BASEINFO["INFO"]["DP4ratio"]>(1.0-options.ratio):
 			ratfail=True
 			ratmin=BASEINFO["REF"].split(",")[0]
 			ratmaj=BASEINFO["ALT"].split(",")[0]
+			#print BASEINFO["POS"], ratmin, ratmaj
 #		if not SNP and BASEINFO["INFO"]["DP4ratios"]["fref"]<options.ratio:
 #			keep=False
 #			fratiofail+=1
@@ -403,11 +405,11 @@ if __name__ == "__main__":
 			keep=False
 			depthfail+=1
 			failedfilters.append("D"+str(options.depth))
-		if SNP and BASEINFO["INFO"]["DP4"][2]+BASEINFO["INFO"]["DP4"][3]<(options.qratio*BASEINFO["INFO"]["DP"]):
-			#print BASEINFO["POS"], "6"
-			keep=False
-			qratiofail+=1
-			failedfilters.append("QRA"+str(options.qratio))
+#		if SNP and BASEINFO["INFO"]["DP4"][2]+BASEINFO["INFO"]["DP4"][3]<(options.qratio*BASEINFO["INFO"]["DP"]):
+#			#print BASEINFO["POS"], "6"
+#			keep=False
+#			qratiofail+=1
+#			failedfilters.append("QRA"+str(options.qratio))
 		if SNP and BASEINFO["INFO"]["DP4"][2]<options.stranddepth:
 			#print BASEINFO["POS"], "7"
 			keep=False
@@ -524,20 +526,25 @@ if __name__ == "__main__":
 						addindel=[BASEINFO["CHROM"], int(BASEINFO["POS"]), "+", insertion]
 						#indels.append([BASEINFO["CHROM"], int(BASEINFO["POS"]), "+", insertion])
 					
-					
-				elif ratfail:
-					majcontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=ratmaj
-					mincontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=ratmin
-					mapped+=1
-					
-				else:
-					majcontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["ALT"][0]
-					mincontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["ALT"][0]
-					mapped+=1
+				elif not INDEL:	
+					if ratfail:
+						majcontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=ratmaj
+						mincontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=ratmin
+						#print ratmin, ratmaj, mincontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1], majcontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]
+						mapped+=1
+						
+					else:
+						majcontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["ALT"][0]
+						mincontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["ALT"][0]
+						mapped+=1
 				
 			elif not INDEL:
-				majcontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["REF"][0]
-				mincontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["REF"][0]
+				if ratfail:
+					majcontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=ratmaj
+					mincontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=ratmin
+				else:
+					majcontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["REF"][0]
+					mincontigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["REF"][0]
 				mapped+=1
 				snpline=0
 			print >> mapplot, int(BASEINFO["POS"])+contigstart[BASEINFO["CHROM"]], int(BASEINFO["INFO"]["DP"]), snpline
