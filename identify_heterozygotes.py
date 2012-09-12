@@ -386,7 +386,7 @@ if __name__ == "__main__":
 				elif pairwise_distances[taxon][taxonc]+pairwise_distances[taxonb][taxonc]<pairwise_distances[taxon][taxonb]:
 					cspvalue, Nlocset=chisquarepvalue(taxonc,taxonb,taxon)
 					if cspvalue<(0.05/tot):
-						if not taxon in Nlocsets:
+						if not taxonc in Nlocsets:
 							Nlocsets[taxonc]={}
 						if not taxonb in Nlocsets[taxonc]:
 							Nlocsets[taxonc][taxon]={}

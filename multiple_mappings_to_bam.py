@@ -544,7 +544,8 @@ class SNPanalysis:
 			#print >> bashfile, 'gzip -f '+self.runname+"/"+self.name+'.dna '+self.runname+"/"+self.name+'.mfa '+self.runname+"/"+self.name+'.pileup '+self.runname+"/"+self.name+'*.plot'
 		if options.plots:
 			print >> bashfile, 'gzip -f '+self.runname+"/"+self.name+'*.plot'
-		print >> bashfile, MY_SCRIPTS_DIR+'heterozygosity_plot.py -b', self.runname+"/"+self.name+".bcf -o", self.runname+"/"+self.name+"_contamination_plot.pdf", "-r", options.ratio, "-d", options.depth, "-D", options.stranddepth, "-q", options.quality
+		if not options.LSF:
+			print >> bashfile, MY_SCRIPTS_DIR+'heterozygosity_plot.py -b', self.runname+"/"+self.name+".bcf -o", self.runname+"/"+self.name+"_contamination_plot.pdf", "-r", options.ratio, "-d", options.depth, "-D", options.stranddepth, "-q", options.quality
 		
 	
 	
