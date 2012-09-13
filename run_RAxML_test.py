@@ -31,7 +31,8 @@ import time
 RAXML_DIR="/software/pathogen/external/applications/RAxML/RAxML-7.0.4/"
 
 
-
+gap_and_missing=set(["-", "N", "?"])
+missing_set=([ "N", "?"])
 
 
 
@@ -48,6 +49,7 @@ def main():
 	group = OptionGroup(parser, "General options")
 	group.add_option("-a", "--alignment", action="store", dest="alignment", help="Input alignment file name", default="", metavar="FILE")
 	group.add_option("-s", "--snpsonly", action="store_true", dest="SNPonly", help="Only analyse SNP sites", default=False)
+	parser.add_option("-p", "--proportion", action="store", dest="proportion", help="maximum proportion of Ns to allow in a column for it to be included in the analysis (i.e. ignore any sites with > than this proportion of Ns) [default=%default]", default=0.05)
 	group.add_option("-e", "--exclude", action="store", dest="exclude", help="Exclude sequences from analysis if they are less than INT% covered [Default= %default]", default=50, type="float", metavar="int")
 	group.add_option("-t", "--type", action="store", dest="analysistype", help="Data type (DNA or protein). [Choices = DNA, protein] [Default = %default]", default="DNA", type="choice", choices=["DNA","protein"])
 #	group.add_option("-d", "--dmodel", action="store", dest="dmodel", help="Model of evolution to use (for DNA anlysis). [Default= %default]", default="GTRGAMMA", type="choice", choices=["GTRGAMMA","GTR", "GTR", "GTR", "GTR"])
@@ -162,51 +164,151 @@ if __name__ == "__main__":
 	tmpname='tmp'+"".join(choice(chars) for x in range(randint(8, 10)))
 	
 	
-	#Read the alignment file
-	
-	try:
-		alignment=read_alignment(options.alignment)
-	except StandardError:
-		DoError("Cannot open alignment file")
-
-	#Remove sequences with too many unknown entries
-	print "Filtering sequences with less than", str(options.exclude)+"% coverage"
-	filteredalignment = Generic.Alignment(Gapped(IUPAC.unambiguous_dna, "-"))
-	alnlength=alignment.get_alignment_length()
-	
-	
-	for seq in alignment:
-		if len(str(seq.seq).replace("-","").replace("N",""))<(float(options.exclude)/100)*alnlength:
-			print "Excluding", seq.name, "with", str((float(len(str(seq.seq).replace("-","").replace("N","")))/alnlength)*100)+"% coverage"
-		else:
-			#print "Including", seq.name, "with", str((float(len(str(seq.seq).replace("-","").replace("N","")))/alnlength)*100)+"% coverage"
-			sequence=str(seq.seq)
-			filteredalignment.add_sequence(seq.id, sequence)
-		
-	
-	
-	
-	
+	alignment={}
 	
 	#if the user only wants to analyse SNP sites
 	if options.SNPonly:
-		smallalignment = Generic.Alignment(Gapped(IUPAC.unambiguous_dna, "-"))
-		snplocs, consensus=snp_locations_from_alignment(filteredalignment, set(["-", "N", "?", "X"]))
+		print "Finding SNP sites"
+		SNPsites=set([])
+		seq=[]
 		
-		alignment = Generic.Alignment(Gapped(IUPAC.unambiguous_dna, "-"))
-		for seq in filteredalignment:
-			sequencelist=[]
-			for loc in snplocs:
-				sequencelist.append(seq.seq[loc])
-			sequence=''.join(sequencelist)
-			smallalignment.add_sequence(seq.id, sequence)
+		ok_bases=set(['A','G','C','T'])
+		foundref=False
+		inrefseq=False
+		for line in open(options.alignment, "rU"):
+			line=line.strip()
+			if len(line)>0 and line[0]==">":
+				seq=''.join(seq).upper()
+				if not foundref:
+					refseq=seq
+					seq=[]
+					foundref=True
+					inrefseq=True
+					continue
+				if inrefseq:
+					refseq=seq
+					inrefseq=False
+					seq=[]
+					continue
+				if len(seq)==len(refseq):
+					for base in xrange(len(refseq)):
+						if base in SNPsites:
+							continue
+						if refseq[base]!=seq[base] and refseq[base] in ok_bases and seq[base] in ok_bases:
+							SNPsites.add(base)
+				else:
+					print len(seq), len(refseq)
+					print "Sequences are not all the same length"
+					sys.exit()
+			
+				seq=[]
+			elif foundref:
+				seq.append(''.join(line.split()))
+		
+		seq=''.join(seq).upper()
+		if len(seq)==len(refseq):
+			for base in xrange(len(refseq)):
+				if base in SNPsites:
+					continue
+				if refseq[base]!=seq[base] and refseq[base] in ok_bases and seq[base] in ok_bases:
+					SNPsites.add(base)
+		
+		print "Found", len(SNPsites), "SNP sites"
+		
+		sorted_snps=list(SNPsites)
+		sorted_snps.sort()
+		
+		
+		print "Extracting SNP sites"
+		name=""
+		seq=[]
+		for line in open(options.alignment, "rU"):
+			line=line.strip()
+			if len(line)>0 and line[0]==">":
+				if name!="":
+					seq=''.join(seq).upper()
+					snpseq=[]
+					for x in sorted_snps:
+						snpseq.append(seq[x])
 	
-	#MEM(AA+GAMMA)    = (n-2) * m * (80 * 8) bytes
-	#MEM(AA+CAT)           = (n-2) * m * (20 * 8) bytes
-	#MEM(DNA+GAMMA) = (n-2) * m * (16 * 8) bytes
-	#MEM(DNA+CAT)        = (n-2) * m * (4  * 8)  bytes
-	#1GB=1073741824 bytes
-	#1MB=1048576 bytes
+					alignment[name]=''.join(snpseq)
+					seq=[]
+					
+				name=line.split()[0][1:]
+			elif name!="":
+				seq.append(''.join(line.split()))
+
+		if name!="":
+			seq=''.join(seq).upper()
+			snpseq=[]
+			for x in sorted_snps:
+				snpseq.append(seq[x])
+			
+			alignment[name]=''.join(snpseq)
+			
+	else:		
+		print "Reading alignment"
+		name=""
+		seq=[]
+		for line in open(options.alignment, "rU"):
+			line=line.strip()
+			if len(line)>0 and line[0]==">":
+				if name!="":
+					alignment[name]=''.join(seq).upper()
+					seq=[]
+					
+				name=line.split()[0][1:]
+			elif name!="":
+				seq.append(''.join(line.split()))
+
+		if name!="":
+			
+			alignment[name]=''.join(seq).upper()
+
+	if name=="":
+		print "Found no sequences"
+		sys.exit()
+	
+	alnlen=len(alignment[name])
+	
+	print "Creating final alignment of", len(alignment), "taxa and",  alnlen, "sites"
+	
+	#Remove sequences with too many unknown entries
+	print "Filtering sequences with less than", str(options.exclude)+"% coverage"
+	
+	seqnames=[]
+	toremove=[]
+	for seq in alignment:
+		if len(alignment[seq].replace("-","").replace("N",""))<(float(options.exclude)/100)*alnlen:
+			print "Excluding", seq, "with", str((float(len(alignment[seq].replace("-","").replace("N","")))/alnlen)*100)+"% coverage"
+			toremove.append(seq)
+		else:
+			seqnames.append(seq)
+	
+	for seq in toremove:
+		del alignment[seq]
+	
+	taxacount=len(alignment)
+	
+	if options.proportion>0 and options.proportion<1:
+	
+		toremove=set([])
+		cutoff=2
+		if float(taxacount)*options.proportion>cutoff:
+			cutoff=float(taxacount)*options.proportion
+		
+		print "Filtering sites with greater than", cutoff, "Ns"
+		
+		for x in xrange(alnlen):
+			ncount=0.0
+			for seq in seqnames:
+				if alignment[seq][x] in gap_and_missing:
+					ncount+=1
+			if ncount>cutoff:
+				toremove.add(x)
+		print len(toremove), "bases will be removed"
+	else:
+		toremove=set([])
 
 	
 	#remove any previous RAxML runs with this tempname (this should never happen)
@@ -217,18 +319,52 @@ if __name__ == "__main__":
 
 	
 	#print alignment to phylip format
+	
+	print "Creating final alignment of", taxacount, "taxa and",  alnlen-len(toremove), "sites"
+	
 	output_handle=open(tmpname+".phy", "w")
 	
-	if options.SNPonly:
-		print >> output_handle, len(smallalignment), smallalignment.get_alignment_length()
-		for record in smallalignment:
-			print >> output_handle, record.id, record.seq
-	else:
-		print >> output_handle, len(filteredalignment), filteredalignment.get_alignment_length()
-		for record in filteredalignment:
-			print >> output_handle, record.id, record.seq
+	print >> output_handle, taxacount, alnlen-len(toremove)
+	for seq in alignment:
+		newseq=[]
+		for x, base in enumerate(alignment[seq]):
+			if not x in toremove:
+				newseq.append(base)
+		print >> output_handle, seq, ''.join(newseq)
+	
 	
 	output_handle.close()
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	
+	#MEM(AA+GAMMA)    = (n-2) * m * (80 * 8) bytes
+	#MEM(AA+CAT)           = (n-2) * m * (20 * 8) bytes
+	#MEM(DNA+GAMMA) = (n-2) * m * (16 * 8) bytes
+	#MEM(DNA+CAT)        = (n-2) * m * (4  * 8)  bytes
+	#1GB=1073741824 bytes
+	#1MB=1048576 bytes
+
+	
+	
 	
 	bsubcommand=["bsub"]
 	bsubcommand.append("-q "+options.queue)
