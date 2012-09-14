@@ -19,7 +19,7 @@ import tre
 
 
 def replace_ambiguity_codes(sequence):
-	codes={"A":"A", "C":"C", "G":"G", "T":"T", "R":"[AG]", "S":"[GC]", "B":"[CGT]", "Y":"[CT]", "W":"[AT]", "D":"[AGT]", "K":"[GT]", "N":"[ACGT]", "H":"[ACT]", "M":"[AC]", "V":"[ACG]"}
+	codes={"A":"A", "C":"C", "G":"G", "T":"T", "R":"[AG]", "S":"[GC]", "B":"[CGT]", "Y":"[CT]", "W":"[AT]", "D":"[AGT]", "K":"[GT]", "N":"[ACGT]", "H":"[ACT]", "M":"[AC]", "V":"[ACG]", "X": "[ACGT]"}
 	regexlist=[]
 	for base in sequence:
 		if not base in codes:

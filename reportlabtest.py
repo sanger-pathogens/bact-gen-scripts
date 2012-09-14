@@ -760,7 +760,7 @@ def add_bcf_to_diagram(filename):
 	
 	
 	inmapped=False
-	
+	lastbase=0
 	for line in lines:
 	
 		#add filters here?
@@ -910,8 +910,15 @@ def add_bcf_to_diagram(filename):
 		elif "INDEL" in BASEINFO['INFO']:
 			keep=False
 		
-		if options.bcfvariants in ["s", "S"]:
-			INDEL=False
+		if not "DP" in BASEINFO["INFO"] or int(BASEINFO["INFO"]["DP"])<1:
+			keep=False
+		
+		
+				
+		if inmapped and lastbase+1!=int(BASEINFO["POS"]):
+			inmapped=False
+			new_track.add_feature([(start,end+1)], fillcolour=colour, strokecolour=colour)
+		lastbase=int(BASEINFO["POS"])
 		
 		if keep:
 			if not SNP and not INDEL:
@@ -919,15 +926,15 @@ def add_bcf_to_diagram(filename):
 					colour=colors.Color(230.0/255,230.0/255,230.0/255)
 					inmapped=True
 					start=int(BASEINFO["POS"])
+				end=int(BASEINFO["POS"])
 			elif SNP:
 				if inmapped:
-					end=int(BASEINFO["POS"])
-					#feature = SeqFeature(FeatureLocation(start, end), strand=None)
 					inmapped=False
-					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+					new_track.add_feature([(start,end+1)], fillcolour=colour, strokecolour=colour)
+					
 #					try: features.append((feature,colour))
 #					except NameError: pass #print "here"
-				if INDEL and options.bcfvariants not in ["h", "H"] and len(BASEINFO["ALT"])>len(BASEINFO["REF"]):
+				if INDEL and options.bcfvariants not in ["S", "H", "i"] and len(BASEINFO["ALT"])>len(BASEINFO["REF"]):
 					colour=translator.artemis_color("6")
 					start=int(BASEINFO["POS"])
 					end=int(BASEINFO["POS"])
@@ -935,7 +942,7 @@ def add_bcf_to_diagram(filename):
 					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
 					try: features.append((feature,colour))
 					except NameError: pass #print "here"
-				elif INDEL and options.bcfvariants not in ["h", "H"] and len(BASEINFO["ALT"])<len(BASEINFO["REF"]):
+				elif INDEL and options.bcfvariants not in ["S", "H", "i"] and len(BASEINFO["ALT"])<len(BASEINFO["REF"]):
 					#colour='1'
 					colour=translator.artemis_color("1")
 					start=int(BASEINFO["POS"])
@@ -944,7 +951,7 @@ def add_bcf_to_diagram(filename):
 					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
 #					try: features.append((feature,colour))
 #					except NameError: pass #print "here"
-				elif SNP and options.bcfvariants not in ["i", "I"] and BASEINFO["INFO"]["AF1"]<0.8 and BASEINFO["INFO"]["AF1"]>0.2:
+				elif SNP and options.bcfvariants not in ["S", "I", "h"] and BASEINFO["INFO"]["AF1"]<0.8 and BASEINFO["INFO"]["AF1"]>0.2:
 #					colour='10'
 					colour=translator.artemis_color("10")
 					start=int(BASEINFO["POS"])
@@ -953,16 +960,16 @@ def add_bcf_to_diagram(filename):
 #					feature = SeqFeature(FeatureLocation(start, end), strand=None)
 #					try: features.append((feature,colour))
 #					except NameError: pass #print "here"
-				elif SNP and options.bcfvariants not in ["i", "I", "h", "H"] and BASEINFO["ALT"]=="A":
+				elif SNP and options.bcfvariants not in ["s", "I", "H"] and BASEINFO["ALT"]=="A":
 #					colour='3'
-					colour=translator.artemis_color("10")
+					colour=translator.artemis_color("3")
 					start=int(BASEINFO["POS"])
 					end=int(BASEINFO["POS"])
 					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
 #					feature = SeqFeature(FeatureLocation(start, end), strand=None)
 #					try: features.append((feature,colour))
 #					except NameError: pass #print "here"
-				elif SNP and options.bcfvariants not in ["i", "I", "h", "H"] and BASEINFO["ALT"]=="C":
+				elif SNP and options.bcfvariants not in ["s", "I", "H"] and BASEINFO["ALT"]=="C":
 					colour=translator.artemis_color("2")
 					start=int(BASEINFO["POS"])
 					end=int(BASEINFO["POS"])
@@ -970,7 +977,7 @@ def add_bcf_to_diagram(filename):
 #					feature = SeqFeature(FeatureLocation(start, end), strand=None)
 #					try: features.append((feature,colour))
 #					except NameError: pass #print "here"
-				elif SNP and options.bcfvariants not in ["i", "I", "h", "H"] and BASEINFO["ALT"]=="G":
+				elif SNP and options.bcfvariants not in ["s", "I", "H"] and BASEINFO["ALT"]=="G":
 					colour=translator.artemis_color("4")
 					start=int(BASEINFO["POS"])
 					end=int(BASEINFO["POS"])
@@ -978,7 +985,7 @@ def add_bcf_to_diagram(filename):
 #					feature = SeqFeature(FeatureLocation(start, end), strand=None)
 #					try: features.append((feature,colour))
 #					except NameError: pass #print "here"
-				elif SNP and options.bcfvariants not in ["i", "I", "h", "H"] and BASEINFO["ALT"]=="T":
+				elif SNP and options.bcfvariants not in ["s", "I", "H"] and BASEINFO["ALT"]=="T":
 					colour=translator.artemis_color("14")
 					start=int(BASEINFO["POS"])
 					end=int(BASEINFO["POS"])
@@ -987,12 +994,19 @@ def add_bcf_to_diagram(filename):
 #					try: features.append((feature,colour))
 #					except NameError: pass #print "here"
 		elif inmapped:
-			end=int(BASEINFO["POS"])
 #			feature = SeqFeature(FeatureLocation(start, end), strand=None)
-			new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+			new_track.add_feature([(start,end+1)], fillcolour=colour, strokecolour=colour)
 			inmapped=False
+			end=int(BASEINFO["POS"])
 #			try: features.append((feature,colour))
 #			except NameError: pass #print "here"
+	
+	if inmapped:
+#			feature = SeqFeature(FeatureLocation(start, end), strand=None)
+		new_track.add_feature([(start,end+1)], fillcolour=colour, strokecolour=colour)
+		inmapped=False
+		end=int(BASEINFO["POS"])
+
 	
 
 	print len(new_track.features), "features found in", filename
