@@ -224,7 +224,7 @@ if __name__ == "__main__":
 	
 	output_handle.close()
 	
-	bsubcommand=["bsub"]
+	bsubcommand=["bsub -o "+options.output+".bsubout -e "+options.output+".bsuberror"]
 	bsubcommand.append("-q "+options.queue)
 	if options.mem>0:
 		bsubcommand.append("-M "+str(options.mem)+'000000 -R \'select[mem>'+str(options.mem)+'000] rusage[mem='+str(options.mem)+'000]\'')
