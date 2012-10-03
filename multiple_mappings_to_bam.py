@@ -59,7 +59,7 @@ def get_user_options():
 	group = OptionGroup(parser, "Mapping Options")
 	group.add_option("-p", "--program", action="store", type="choice", dest="program", choices=["bwa","ssaha", "smalt", "BWA","SSAHA", "SMALT"], help="Mapping program to use (choose from bwa, ssaha or smalt) [default= %default]", default="smalt")
 	group.add_option("-1", "--nomap", action="store_false", dest="domapping", help="Do not remap data - only available when input is bam (default is to map)", default=True)
-	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3 and latest (currently 0.6.3) [default= %default]", default="0.5.8")
+	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3", "0.6.4"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3, 0.6.4 and latest (currently 0.6.4) [default= %default]", default="0.5.8")
 	group.add_option("-H", "--human", action="store_true", dest="human", help="Mapping against human (or other large euk)", default=False)
 	#group.add_option("-l", "--length", action="store", dest="readlength", help="Read length [default= %default]", default=54, type="int", metavar="INT")
 	group.add_option("-s", "--single", action="store_false", dest="pairedend", help="reads are single ended (not paired)", default=True)
@@ -563,8 +563,10 @@ if __name__ == "__main__":
 	#print options, args
 	check_input_validity(options, args)
 	
-	if options.version=="latest" or options.version=="0.6.3":
-		SMALT_DIR="/software/pathogen/external/apps/usr/bin/smalt"
+	if options.version=="latest" or options.version=="0.6.4":
+		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.4/smalt_i686"
+	elif options.version=="0.6.3":
+		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.3/smalt_i686"
 	elif options.version=="0.5.8":
 		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.5.8/smalt_x86_64"
 	else:

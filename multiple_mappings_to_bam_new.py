@@ -59,7 +59,7 @@ def get_user_options():
 	group = OptionGroup(parser, "Mapping Options")
 	group.add_option("-p", "--program", action="store", type="choice", dest="program", choices=["bwa","ssaha", "smalt", "BWA","SSAHA", "SMALT"], help="Mapping program to use (choose from bwa, ssaha or smalt) [default= %default]", default="smalt")
 	group.add_option("-1", "--nomap", action="store_false", dest="domapping", help="Do not remap data - only available when input is bam (default is to map)", default=True)
-	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3 and latest (currently 0.6.3) [default= %default]", default="0.5.8")
+	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3", "0.6.4"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3, 0.6.4 and latest (currently 0.6.4) [default= %default]", default="0.5.8")
 	group.add_option("-H", "--human", action="store_true", dest="human", help="Mapping against human (or other large euk)", default=False)
 	#group.add_option("-l", "--length", action="store", dest="readlength", help="Read length [default= %default]", default=54, type="int", metavar="INT")
 	group.add_option("-s", "--single", action="store_false", dest="pairedend", help="reads are single ended (not paired)", default=True)
@@ -560,7 +560,7 @@ class SNPanalysis:
 		#if options.pseudosequence==True:
 		#print MY_SCRIPTS_DIR+"samtools_pileup_2_pseudosequence.py -p", self.runname+"/"+self.name+".pileup", "-b", self.runname+"/"+self.name+".bam", "-r", options.ratio, "-q", options.snpquality, "-o", self.runname+"/"+self.name
 		if options.pseudosequence:
-			print >> bashfile, MY_SCRIPTS_DIR+"bcf_2_pseudosequence.py -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
+			print >> bashfile, MY_SCRIPTS_DIR+"bcf_2_pseudosequence_new_noindels.py -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
 			#print >> bashfile, 'cat '+self.runname+"/"+self.name+'.dna >> '+options.output+".aln"
 			#print >> bashfile, 'gzip -f '+self.runname+"/"+self.name+'.dna '+self.runname+"/"+self.name+'.mfa '+self.runname+"/"+self.name+'.pileup '+self.runname+"/"+self.name+'*.plot'
 		if options.plots:
@@ -584,13 +584,16 @@ if __name__ == "__main__":
 	#print options, args
 	check_input_validity(options, args)
 	
-	if options.version=="latest" or options.version=="0.6.3":
-		SMALT_DIR="/software/pathogen/external/apps/usr/bin/smalt"
-	elif options.version=="0.5.8":
-		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.5.8/smalt_x86_64"
-	else:
-		print "Unknown smalt version"
-		sys.exit()
+	if options.version=="latest" or options.version=="0.6.4":
+                SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.4/smalt_i686"
+        elif options.version=="0.6.3":
+                SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.3/smalt_i686"
+        elif options.version=="0.5.8":
+                SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.5.8/smalt_x86_64"
+        else:
+                print "Unknown smalt version"
+                sys.exit()
+
 
 	print '\nChecking input files...'
 	sys.stdout.flush()
