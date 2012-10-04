@@ -841,7 +841,7 @@ if __name__ == "__main__":
 		for pool in pools:	
 			argstring.append(pool.runname+"/"+pool.name+".mfa")
 		if options.indels:
-			joinstring=MY_SCRIPTS_DIR+"join_dna_files_with_indels.py -r "+options.ref+" -o "+options.output+".aln "+' '.join(argstring) #*_ssaha/*_test.mfa
+			joinstring=MY_SCRIPTS_DIR+"join_dna_files_with_indels_newb.py -r "+options.ref+" -o "+options.output+".aln "+' '.join(argstring) #*_ssaha/*_test.mfa
 		else:
 			if not options.incref:
 				joinstring="'cat "+' '.join(argstring)+" > "+options.output+".aln'"

@@ -22,7 +22,7 @@ SMALT_DIR=""
 MY_SCRIPTS_DIR="/nfs/users/nfs_s/sh16/scripts/"
 BREAKDANCER_DIR="/nfs/users/nfs_s/sh16/breakdancer-1.1_2011_02_21/"
 #PINDEL_DIR="/nfs/users/nfs_s/sh16/pindel/trunk/"
-PINDEL_DIR="/nfs/users/nfs_s/sh16/pindel024p/"
+PINDEL_DIR="/nfs/users/nfs_s/sh16/pindel024t/"
 DINDEL_DIR="/nfs/users/nfs_s/sh16/dindel/binaries/"
 DINDEL_SCRIPTS_DIR="/nfs/users/nfs_s/sh16/dindel/dindel-1.01-python/"
 
