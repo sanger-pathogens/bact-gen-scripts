@@ -329,18 +329,18 @@ if __name__ == "__main__":
 		tree=midpoint_root(tree)
 	
 
-#	colour_nodes_by_splitting(tree)
-#		
-#	#colour_nodes_by_tree_distances(tree, ladderize=None)
-#	#print a file with the node colours in RGB
-#	handle=open(prefix+"_node_colours.csv", "w")
-#	print_node_colours(tree, handle)
-#	handle.close()
-#	handle=open(prefix+"_recombination_key.tre","w")
-#	print >> handle, tree_to_figtree_string(tree, False, False, False, False, ladderize=None)
-#		
-#	handle.close()
-#	sys.exit()
+	colour_nodes_by_splitting(tree)
+		
+	#colour_nodes_by_tree_distances(tree, ladderize=None)
+	#print a file with the node colours in RGB
+	handle=open(prefix+"_node_colours.csv", "w")
+	print_node_colours(tree, handle)
+	handle.close()
+	handle=open(prefix+"_recombination_key.tre","w")
+	print >> handle, tree_to_figtree_string(tree, False, False, False, False, ladderize=None)
+		
+	handle.close()
+	sys.exit()
 
 	if options.outgroup!="None":
 	

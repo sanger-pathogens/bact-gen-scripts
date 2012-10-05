@@ -533,13 +533,15 @@ def colour_nodes_by_splitting(treeObject):
 			colour_remaining_daughters(colournum,d)
 		data=treeObject.node(n).get_data()
 		#data.comment={}
+		if data.comment==None:
+			data.comment={}
 		data.comment["colour"]=number_to_colours(colournum)
 		treeObject.node(n).set_data(data)
 	
 	
 	def split_colours(node, colourrange):
 		daughters=treeObject.node(node).get_succ()
-		#print node, daughters
+		print node, daughters
 		if len(daughters)>0:
 			nodebrlens=get_downstream_total_branch_lengths(treeObject, node)
 			daughter1brlens=get_downstream_total_branch_lengths(treeObject, daughters[0])
@@ -608,7 +610,8 @@ def colour_nodes_by_splitting(treeObject):
 			else:	
 				nodecolour=colourrange[0]+(colourrangelength*d1proportion)+((colourrangelength-((colourrangelength*d1proportion)+(colourrangelength*d2proportion)))/2)
 			data=treeObject.node(node).get_data()
-			#data.comment={}
+			if data.comment==None:
+				data.comment={}
 			data.comment["colour"]=number_to_colours(nodecolour)
 			treeObject.node(node).set_data(data)
 #			if len(daughters)==3:
@@ -640,7 +643,7 @@ def colour_nodes_by_splitting(treeObject):
 def print_node_colours(treeObject, handle):
 	
 	def print_node_colour(node):
-		#print node
+		print node
 		colour=treeObject.node(node).data.comment["colour"]
 		if treeObject.is_terminal(node):
 			printlist=[str(node), ' '.join([treeObject.node(node).data.taxon, str(int(colour[0])), str(int(colour[1])), str(int(colour[2]))]), str(RGBToHTMLColor(colour))]
