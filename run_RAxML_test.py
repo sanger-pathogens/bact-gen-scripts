@@ -106,7 +106,7 @@ def check_input_validity(options, args):
 		DoError('exclude percentage must be >=0 and <100')
 	
 	if options.number<1 or options.number>=100:
-		DoError('number of alternative ML truns must be >=1 and <100')
+		DoError('number of alternative ML runs must be >=1 and <100')
 #	elif options.number>1:
 #		options.bootstrap=0
 	
