@@ -127,6 +127,11 @@ if __name__ == "__main__":
 	if options.error:
 		estring="-e "+options.error
 	
+	for x in xrange(len(args)):
+		args[x]=args[x].replace("(","\(")
+		args[x]=args[x].replace(")","\)")
+		args[x]=args[x].replace(" ","\ ")
+	
 	if options.restart:
 		bsubstring="bresume"
 		arguments=args[0]
