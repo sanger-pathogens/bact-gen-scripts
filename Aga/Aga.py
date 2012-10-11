@@ -221,9 +221,9 @@ if __name__ == "__main__":
 	
 
 	if options.mapping:
-		os.system("~sh16/scripts/multiple_mappings_to_bam_new.py -z 0.95 -p smalt -X -r "+core_file+" "+' '.join(args)+' > '+tmpname+'jobstring')
+		os.system("~sh16/scripts/multiple_mappings_to_bam.py -z 0.95 -p smalt -v latest -G -X -r "+core_file+" "+' '.join(args)+' > '+tmpname+'jobstring')
 		
-		jobnum=open(tmpname+'jobstring', "rU").readlines()[-3].split(">")[0].split("<")[1]
+		jobnum=open(tmpname+'jobstring', "rU").readlines()[-5].split(">")[0].split("<")[1]
 		
 		
 		print "Mapping reads against reference"
