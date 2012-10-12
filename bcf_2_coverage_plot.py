@@ -117,11 +117,9 @@ if __name__ == "__main__":
 					print "Cannot split info string", words[x]
 					sys.exit()
 				for i in info:
-					if len(i.split("="))<2:
-						if infotype=="INDEL":
-							indel=True
+					if i=="INDEL":
+						indel=True
 					infotype=i.split("=")[0]
-					
 					if infotype=="DP":
 						coverage=int(i.split("=")[1])
 		if indel:
