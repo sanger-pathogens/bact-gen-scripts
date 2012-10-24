@@ -564,9 +564,9 @@ if __name__ == "__main__":
 	check_input_validity(options, args)
 	
 	if options.version=="latest" or options.version=="0.6.4":
-		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.4/smalt_i686"
+		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.4/smalt_x86_64"
 	elif options.version=="0.6.3":
-		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.3/smalt_i686"
+		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.3/smalt_x86_64"
 	elif options.version=="0.5.8":
 		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.5.8/smalt_x86_64"
 	else:
@@ -840,6 +840,7 @@ if __name__ == "__main__":
 			summarystring=summarystring+" -p -l -b "+str(options.bootstrap)
 		
 	print
+	sys.stdout.flush()
 	if options.LSF==True:
 		if count>0:
 			if options.mem>0:
@@ -850,6 +851,8 @@ if __name__ == "__main__":
 				os.system('echo \'bash ${LSB_JOBINDEX}'+tmpname+'_sbs.sh\' | bsub -q '+options.LSFQ+' -J'+tmpname+'_'+options.program+'"[1-'+str(count)+']%'+str(options.nodes)+'"" -o '+tmpname+options.program+'-%I.out -e '+tmpname+options.program+'-%I.err > '+tmpname+'jobid')
 			
 			jobid=open(tmpname+'jobid', "rU").read().split(">")[0].split("<")[1]
+			print "jobid <"+str(jobid)+"> submitted"
+			sys.stdout.flush()
 			os.system('bsub -w \'ended('+tmpname+'_'+options.program+')\' \"bacct -e -l '+jobid+' > '+options.output+"_mapping_job_bacct.txt \"")
 			os.system('bsub -w \'ended('+tmpname+'_'+options.program+')\' \"bhist -l '+jobid+' > '+options.output+"_mapping_job_bhist.txt \"")
 			

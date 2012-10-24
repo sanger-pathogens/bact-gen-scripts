@@ -585,9 +585,9 @@ if __name__ == "__main__":
 	check_input_validity(options, args)
 	
 	if options.version=="latest" or options.version=="0.6.4":
-                SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.4/smalt_i686"
+                SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.4/smalt_x86_64"
         elif options.version=="0.6.3":
-                SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.3/smalt_i686"
+                SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.3/smalt_x86_64"
         elif options.version=="0.5.8":
                 SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.5.8/smalt_x86_64"
         else:

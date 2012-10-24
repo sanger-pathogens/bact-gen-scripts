@@ -221,9 +221,9 @@ if __name__ == "__main__":
 	
 
 	if options.mapping:
-		os.system("~sh16/scripts/multiple_mappings_to_bam.py -z 0.95 -p smalt -v latest -G -X -r "+core_file+" "+' '.join(args)+' > '+tmpname+'jobstring')
+		os.system("~sh16/scripts/multiple_mappings_to_bam.py -M 2 -z 0.9 -p smalt -v latest -G -X -r "+core_file+" "+' '.join(args)+' > '+tmpname+'jobstring')
 		
-		jobnum=open(tmpname+'jobstring', "rU").readlines()[-5].split(">")[0].split("<")[1]
+		jobnum=open(tmpname+'jobstring', "rU").readlines()[-4].split(">")[0].split("<")[1]
 		
 		
 		print "Mapping reads against reference"
@@ -244,6 +244,10 @@ if __name__ == "__main__":
 			run=int(bjobsstring.split()[6])
 			exited=int(bjobsstring.split()[7])
 			todo=run+pend
+		
+		if exited>0:
+			print exited, "jobs exited without finishing"
+			sys.exit()
 	
 	
 	

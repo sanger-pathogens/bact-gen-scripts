@@ -110,15 +110,30 @@ if __name__ == "__main__":
 	refpileups={}
 	for x, ref in enumerate(refs):
 		depths=[]
+		lastcolumn=-1
+		zerocount=0
 		for pileupcolumn in samfile.pileup(ref):
+			
+			while pileupcolumn.pos!=lastcolumn+1:
+				#print lastcolumn, pileupcolumn.pos
+				depths.append(0)
+				lastcolumn+=1
+				zerocount+=1
 			depths.append(pileupcolumn.n)
+			lastcolumn=pileupcolumn.pos
+		
+		while lastcolumn+1<lengths[x]:
+			depths.append(0)
+			lastcolumn+=1
+			zerocount+=1
+		
 		refpileups[ref]={}
 		refpileups[ref]["mean"]=mean(depths)
 		refpileups[ref]["median"]=median(depths)
 		refpileups[ref]["std"]=std(depths)
 		refpileups[ref]["min"]=min(depths)
 		refpileups[ref]["max"]=max(depths)
-		refpileups[ref]["mapped%"]=(float(len(depths))/lengths[x])*100
+		refpileups[ref]["mapped%"]=(float(len(depths)-zerocount)/lengths[x])*100
 		if refpileups[ref]["mapped%"]!=100:
 			refpileups[ref]["min"]=0
 		else:
