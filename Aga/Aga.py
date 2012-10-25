@@ -221,7 +221,7 @@ if __name__ == "__main__":
 	
 
 	if options.mapping:
-		os.system("~sh16/scripts/multiple_mappings_to_bam.py -M 2 -z 0.9 -p smalt -v latest -G -X -r "+core_file+" "+' '.join(args)+' > '+tmpname+'jobstring')
+		os.system("~sh16/scripts/multiple_mappings_to_bam.py -M 2 -z 0.9 -p smalt -v latest -X -r "+core_file+" "+' '.join(args)+' > '+tmpname+'jobstring')
 		
 		jobnum=open(tmpname+'jobstring', "rU").readlines()[-4].split(">")[0].split("<")[1]
 		
@@ -365,9 +365,9 @@ if __name__ == "__main__":
 		
 	#final mapping of all isolates against ref+accessory
 	if options.embl!="":
-		os.system("~sh16/scripts/multiple_mappings_to_bam.py -p smalt -O pan_genome -E -f -x -r "+options.prefix+"_pan_genome.fasta -e "+options.embl+" "+' '.join(args)+' '+refname+'_[12].fastq')
+		os.system("~sh16/scripts/multiple_mappings_to_bam.py -p smalt -v latest -G -O pan_genome -E -f -x -r "+options.prefix+"_pan_genome.fasta -e "+options.embl+" "+' '.join(args)+' '+refname+'_[12].fastq')
 	else:
-		os.system("~sh16/scripts/multiple_mappings_to_bam.py -p smalt -O pan_genome -E -f -x -r "+options.prefix+"_pan_genome.fasta "+' '.join(args)+' '+refname+'_[12].fastq')
+		os.system("~sh16/scripts/multiple_mappings_to_bam.py -p smalt -v latest -G -O pan_genome -E -f -x -r "+options.prefix+"_pan_genome.fasta "+' '.join(args)+' '+refname+'_[12].fastq')
 	
 	
 	

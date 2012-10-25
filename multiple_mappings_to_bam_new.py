@@ -460,6 +460,7 @@ class SNPanalysis:
 			print >> bashfile, 'mv', self.runname+"/tmpsort.bam", self.runname+"/tmp1.bam"
 			print >> bashfile, SAMTOOLS_DIR+'samtools index', self.runname+"/tmp1.bam"
 			print >> bashfile, "cp", ref, self.runname+'/tmpref.fa'
+			print >> bashfile, SAMTOOLS_DIR+'samtools faidx', self.runname+"/tmpref.fa"
 			if options.mem>0:
 				javamem=options.mem
 			else:
