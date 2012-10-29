@@ -315,7 +315,7 @@ if __name__ == "__main__":
 
 		os.system("samtools faidx "+acc_file)
 		os.system("smalt index -k 13 -s 1 "+acc_file+".index "+acc_file)
-		os.system("smalt map -v latest -y 0.9 -r "+str(randrange(1,99999))+" -f samsoft -o "+tmpname+".sam "+acc_file+".index "+tmpname+"_1.fastq "+tmpname+"_2.fastq")
+		os.system("smalt map -y 0.9 -r "+str(randrange(1,99999))+" -f samsoft -o "+tmpname+".sam "+acc_file+".index "+tmpname+"_1.fastq "+tmpname+"_2.fastq")
 		os.system("samtools view -b -S "+tmpname+".sam -t "+acc_file+".fai > "+tmpname+".1.bam")
 		os.system("samtools sort "+tmpname+".1.bam "+tmpname)
 		os.system("samtools index "+tmpname+".bam")
@@ -332,7 +332,7 @@ if __name__ == "__main__":
 				contiglist.append(words[0])
 				
 		contigstats.close()
-		sys.exit()
+
 		if len(contiglist)>0:
 			contigstring=','.join(contiglist)
 			print contigstring
