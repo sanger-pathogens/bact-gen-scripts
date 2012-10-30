@@ -261,7 +261,10 @@ if __name__ == "__main__":
 			continue
 		donefolders.append(folder)
 		
-		os.system("~sh16/scripts/Aga/bam_filter.py -t notpaired -b "+folder+"_SMALT/"+folder+".bam -o "+folder+"_SMALT/"+folder+"_unmapped")
+		if options.mapping or (not os.path.isfile(folder+"_SMALT/"+folder+"_unmapped_1.fastq") and not os.path.isfile(folder+"_SMALT/"+folder+"_unmapped_1.fastq.gz")) or (not os.path.isfile(folder+"_SMALT/"+folder+"_unmapped_2.fastq") and not os.path.isfile(folder+"_SMALT/"+folder+"_unmapped_2.fastq.gz")):
+			print "Identifying reads not in proper pairs for", folder
+			sys.stdout.flush()
+			os.system("~sh16/scripts/Aga/bam_filter.py -t atleastoneunmapped -b "+folder+"_SMALT/"+folder+".bam -o "+folder+"_SMALT/"+folder+"_unmapped")
 
 		contigdepths=os.popen("~sh16/scripts/Aga/contig_stats.py -b "+folder+"_SMALT/"+folder+".bam -H" )#.readlines()
 		totlen=0.0
@@ -272,7 +275,8 @@ if __name__ == "__main__":
 			totdepth+=float(words[1])*float(words[2])
 
 		exp=totdepth/totlen
-		
+		print folder, "mean depth =", exp
+		sys.stdout.flush()
 		depths.append([exp, folder])
 
 		contigdepths.close()
@@ -305,7 +309,7 @@ if __name__ == "__main__":
 		
 		if os.path.isfile(folder+"_SMALT/"+folder+"_unmapped_1.fastq") and os.path.isfile(folder+"_SMALT/"+folder+"_unmapped_2.fastq"):
 			os.system("cp "+folder+"_SMALT/"+folder+"_unmapped_1.fastq "+tmpname+"_1.fastq")
-			os.system("cp "+folder+"_SMALT/"+folder+"_unmapped_1.fastq "+tmpname+"_2.fastq")
+			os.system("cp "+folder+"_SMALT/"+folder+"_unmapped_2.fastq "+tmpname+"_2.fastq")
 		else:
 			print "Cannot find "+folder+"_SMALT/"+folder+"_unmapped.fastq"
 			sys.exit()
@@ -315,7 +319,7 @@ if __name__ == "__main__":
 
 		os.system("samtools faidx "+acc_file)
 		os.system("smalt index -k 13 -s 1 "+acc_file+".index "+acc_file)
-		os.system("smalt map -v latest -y 0.9 -r "+str(randrange(1,99999))+" -f samsoft -o "+tmpname+".sam "+acc_file+".index "+tmpname+"_1.fastq "+tmpname+"_2.fastq")
+		os.system("smalt map -y 0.9 -r "+str(randrange(1,99999))+" -f samsoft -o "+tmpname+".sam "+acc_file+".index "+tmpname+"_1.fastq "+tmpname+"_2.fastq")
 		os.system("samtools view -b -S "+tmpname+".sam -t "+acc_file+".fai > "+tmpname+".1.bam")
 		os.system("samtools sort "+tmpname+".1.bam "+tmpname)
 		os.system("samtools index "+tmpname+".bam")
@@ -332,13 +336,14 @@ if __name__ == "__main__":
 				contiglist.append(words[0])
 				
 		contigstats.close()
-		sys.exit()
+		print "Keeping all reads that map to", contiglist
+		
 		if len(contiglist)>0:
 			contigstring=','.join(contiglist)
 			print contigstring
 			os.system("~sh16/scripts/Aga/bam_filter.py -t aga -c "+contigstring+" -b "+tmpname+".bam -o "+tmpname+"_unmapped")
 		else:
-			os.system("~sh16/scripts/Aga/bam_filter.py -t notpaired -b "+tmpname+".bam -o "+tmpname+"_unmapped")
+			os.system("~sh16/scripts/Aga/bam_filter.py -t atleastoneunmapped -b "+tmpname+".bam -o "+tmpname+"_unmapped")
 			
 		
 		

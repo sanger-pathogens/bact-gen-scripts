@@ -46,7 +46,7 @@ def main():
 	parser.add_option("-b", "--bam", action="store", dest="bam", help="input file in sam or bam format (must have suffix .sam or .bam)", default="", metavar="FILE")
 	parser.add_option("-o", "--output", action="store", dest="output", help="output prefix for file name(s)", default="", metavar="FILE")
 	parser.add_option("-f", "--format", type="choice", dest="fileformat", choices=["fasta","fastq","pairedfastq","sam","bam"], action="store", help="output file format (sam, bam, fastq, pairedfastq, or fasta) [default=%default]", default="pairedfastq", metavar="FORMAT")
-	parser.add_option("-t", "--type", action="store", type="choice", dest="outputtype", choices=["aga", "bothunmapped", "oneunmapped","mapped", "paired", "all","contigs", "minusdup", "notpaired", "unmappedmateofmapped"], help="reads to output (aga, all, mapped, paired, notpaired, oneunmapped, bothunmapped, minusdup or contigs). Note 1: for pairedfastq output, mapped includes all reads where one of the pair is mapped. paired includes only those reads where the reads are in a proper pair. For other output formats the mapped option will only print the individual mapped reads and paired requires the reads to be mapped in proper pairs. Note 2: the contigs option requires the -c option to be set (see below). [default=%default]", default="oneunmapped", metavar="FILE")
+	parser.add_option("-t", "--type", action="store", type="choice", dest="outputtype", choices=["aga", "bothunmapped", "oneunmapped", "atleastoneunmapped", "mapped", "paired", "all","contigs", "minusdup", "notpaired", "unmappedmateofmapped"], help="reads to output (aga, all, mapped, paired, notpaired, oneunmapped, atleastoneunmapped, bothunmapped, minusdup or contigs). Note 1: for pairedfastq output, mapped includes all reads where one of the pair is mapped. paired includes only those reads where the reads are in a proper pair. For other output formats the mapped option will only print the individual mapped reads and paired requires the reads to be mapped in proper pairs. Note 2: the contigs option requires the -c option to be set (see below). [default=%default]", default="oneunmapped", metavar="FILE")
 	parser.add_option("-c", "--contigs", action="store", dest="contigs", help="comma separated list of contigs for which mapped reads should be output. Note there should be no whitespace within the list", default="")
 	
 	
@@ -180,10 +180,13 @@ if __name__ == "__main__":
 	refs=samfile.references
 	lengths=samfile.lengths
 			
-	
+	if options.outputtype=="contigs" or options.outputtype=="aga":
+		use_contigs=True
+	else:
+		use_contigs=False
 	
 	#if the contigs option has been chosen, check that the contigs specified are in the sam header
-	if options.outputtype=="contigs":
+	if use_contigs:
 		for contig in options.contiglist:
 			if not contig in refs:
 				options.contiglist.remove(contig)
@@ -196,7 +199,7 @@ if __name__ == "__main__":
 		print "Adding sam headers"
 		newrefs=[]
 		newlengths=[]
-		if options.outputtype=="contigs":
+		if use_contigs:
 			
 			for x, ref in enumerate(refs):
 				if ref in options.contiglist:
@@ -268,7 +271,7 @@ if __name__ == "__main__":
 		elif options.outputtype=="unmappedmateofmapped" and read.is_unmapped and not read.mate_is_unmapped:
 			printread=True
 			
-		elif read.is_unmapped and read.mate_is_unmapped and options.outputtype=="bothunmapped":
+		elif (read.is_unmapped and read.mate_is_unmapped) and (options.outputtype=="bothunmapped" or options.outputtype=="aga" or options.outputtype=="atleastoneunmapped"):
 			if options.fileformat=="pairedfastq":
 				if readname in firstofpair:
 					printread=True
@@ -277,7 +280,7 @@ if __name__ == "__main__":
 			else:
 				printread=True
 		
-		elif (read.is_unmapped or read.mate_is_unmapped) and options.outputtype=="oneunmapped":
+		elif (read.is_unmapped or read.mate_is_unmapped) and (options.outputtype=="oneunmapped" or options.outputtype=="aga" or options.outputtype=="atleastoneunmapped"):
 			if options.fileformat=="pairedfastq":
 				if readname in firstofpair:
 					printread=True
@@ -286,7 +289,7 @@ if __name__ == "__main__":
 			else:
 				printread=True
 			
-		elif not read.is_unmapped and (options.outputtype=="mapped" or (options.outputtype=="contigs" and refs[read.rname] in options.contiglist) ):
+		elif not read.is_unmapped and (options.outputtype=="mapped" or (use_contigs and refs[read.rname] in options.contiglist) ):
 			if options.fileformat=="pairedfastq":
 				if not read.mate_is_unmapped and read.mrnm==read.rname:
 					if readname in firstofpair:
@@ -296,7 +299,7 @@ if __name__ == "__main__":
 			else:
 				printread=True
 
-		elif not read.is_proper_pair and (options.outputtype=="notpaired" or options.outputtype=="aga"):
+		elif not read.is_proper_pair and options.outputtype=="notpaired":
 			if options.fileformat=="pairedfastq":
 				if readname in firstofpair:
 					printread=True
@@ -305,7 +308,7 @@ if __name__ == "__main__":
 			else:
 				printread=True
 				
-		elif read.is_proper_pair and (options.outputtype=="paired" or (options.outputtype=="contigs" and refs[read.rname] in options.contiglist)):
+		elif read.is_proper_pair and (options.outputtype=="paired" or (use_contigs and refs[read.rname] in options.contiglist)):
 			if options.fileformat=="pairedfastq":
 				if not read.mate_is_unmapped and read.mrnm==read.rname:
 					if readname in firstofpair:

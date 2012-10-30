@@ -38,6 +38,7 @@ from reportlab.graphics.charts.barcharts import VerticalBarChart
 from reportlab.graphics.widgets.grids import ShadedRect
 from reportlab.graphics.widgets.signsandsymbols import ArrowOne
 from reportlab.graphics import renderPDF
+import pysam
 #on my laptop
 #SAMTOOLS_DIR="/Users/sh16/Applications/samtools-0.1.18/"
 #BCFTOOLS_DIR="/Users/sh16/Applications/samtools-0.1.18/bcftools/"
@@ -1497,26 +1498,39 @@ class Track:
 		
 		print "Calculating coverage for", filename
 		sys.stdout.flush()
-		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools view -H "+filename)
-		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	
-		stdout, stderr  = returnval.communicate()
-	
-		if len(stderr)>0:
-			print "Failed to open ", filename, "samtools error:", stderr
-			return
-
+#		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools view -H "+filename)
+#		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#	
+#		stdout, stderr  = returnval.communicate()
+#	
+#		if len(stderr)>0:
+#			print "Failed to open ", filename, "samtools error:", stderr
+#			return
+#
+#		
+#		headerlines=stdout.split("\n")
 		
-		headerlines=stdout.split("\n")
+		try:
+			samfile = pysam.Samfile( filename, "rb" )
+		except StandardError:
+			print 'Failed to open '+filename+'. Is it in bam format?'
+			return
+		
+		refs=samfile.references
+		lengths=samfile.lengths
 		
 		contiglocs={}
 		totallength=0
 		
-		for line in headerlines:
-			words=line.split()
-			if len(words)==3 and words[0]=="@SQ" and len(words[1].split(":"))==2 and words[1].split(":")[0]=="SN" and len(words[2].split(":"))==2 and words[2].split(":")[0]=="LN":
-				contiglocs[words[1].split(":")[1]]=totallength
-				totallength+=int(words[2].split(":")[1])
+		for x, ref in enumerate(refs):
+			contiglocs[ref]=totallength
+			totallength+=lengths[x]
+		
+#		for line in headerlines:
+#			words=line.split()
+#			if len(words)==3 and words[0]=="@SQ" and len(words[1].split(":"))==2 and words[1].split(":")[0]=="SN" and len(words[2].split(":"))==2 and words[2].split(":")[0]=="LN":
+#				contiglocs[words[1].split(":")[1]]=totallength
+#				totallength+=int(words[2].split(":")[1])
 				
 		
 		
@@ -1525,27 +1539,78 @@ class Track:
 		newplot.plot_type=plot_type
 		if plot_type=="heat":
 			newplot.heat_colour=options.heat_colour
-		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools depth -q "+str(options.base_qual_filter)+" -Q "+str(options.mapping_qual_filter)+" "+filename)
-		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	
-		stdout, stderr  = returnval.communicate()
-	
-		if len(stderr)>0:
-			print "Failed to open ", filename, "samtools error:", stderr
-			return
 		
+		poscount=0
+		for x, ref in enumerate(refs):
+			print ref
+			if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+				depths=[["#BASE", "High_quality_coverage", "Low_quality_Coverage"]]
+			else:
+				depths=[["#BASE", "Coverage"]]	
+			
+			lastcolumn=-1
+			zerocount=0
+			for pileupcolumn in samfile.pileup(ref):
+				
+				while pileupcolumn.pos!=lastcolumn+1:
+					#print lastcolumn, pileupcolumn.pos
+					poscount+=1
+					if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+						depths.append([str(poscount), "0", "0"])
+					else:
+						depths.append([str(poscount), "0"])
+					lastcolumn+=1
+					zerocount+=1
+				poscount+=1
+				if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+					#print str(pileupcolumn)
+					filtered_depth=0
+					for pileupread in pileupcolumn.pileups:
+						#print pileupread.alignment
+						q=ord(pileupread.alignment.qual[pileupread.qpos])-33
+						Q=pileupread.alignment.mapq
+						#print q, Q, options.base_qual_filter, options.mapping_qual_filter
+						if q>=options.base_qual_filter and Q>=options.mapping_qual_filter:
+							filtered_depth+=1
+					depths.append([str(poscount), str(filtered_depth), str(pileupcolumn.n-filtered_depth)])
+					#sys.exit()
+				else:
+					depths.append([str(poscount), str(pileupcolumn.n)])
+				lastcolumn=pileupcolumn.pos
+			
+			while lastcolumn+1<lengths[x]:
+				poscount+=1
+				if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+					depths.append([str(poscount), "0", "0"])
+				else:
+					depths.append([str(poscount), "0"])
+				lastcolumn+=1
+				zerocount+=1
+	
 		
+#		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools depth -q "+str(options.base_qual_filter)+" -Q "+str(options.mapping_qual_filter)+" "+filename)
+#		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#	
+#		stdout, stderr  = returnval.communicate()
+#	
+#		if len(stderr)>0:
+#			print "Failed to open ", filename, "samtools error:", stderr
+#			return
+#		
+#		
 		newplot.beginning=self.beginning
 		if self.end==-1:
 			if len(newplot.raw_data)>0:
 				newplot.end=len(newplot.raw_data[0])
 		else:
 			newplot.end=self.end
-
+#
+#		
+#		datalines=stdout.split("\n")
+		depth_data= map(" ".join,depths)
 		
-		datalines=stdout.split("\n")
-		
-		newplot.read_data(datalines, samtools=True, contiglocs=contiglocs, totallength=totallength)
+		#newplot.read_data(depths, samtools=True, contiglocs=contiglocs, totallength=totallength)
+		newplot.read_data(depth_data)
 		
 #		newplot.raw_data_to_data()
 
