@@ -1541,13 +1541,12 @@ class Track:
 			newplot.heat_colour=options.heat_colour
 		
 		poscount=0
+		if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+			depths=[["#BASE", "High_Quality_Coverage", "Low_Quality_Coverage"]]
+		else:
+			depths=[["#BASE", "Coverage"]]	
 		for x, ref in enumerate(refs):
 			print ref
-			if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
-				depths=[["#BASE", "High_quality_coverage", "Low_quality_Coverage"]]
-			else:
-				depths=[["#BASE", "Coverage"]]	
-			
 			lastcolumn=-1
 			zerocount=0
 			for pileupcolumn in samfile.pileup(ref):
@@ -1586,7 +1585,7 @@ class Track:
 					depths.append([str(poscount), "0"])
 				lastcolumn+=1
 				zerocount+=1
-	
+			#print len(depths)
 		
 #		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools depth -q "+str(options.base_qual_filter)+" -Q "+str(options.mapping_qual_filter)+" "+filename)
 #		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

@@ -371,9 +371,9 @@ if __name__ == "__main__":
 		
 	#final mapping of all isolates against ref+accessory
 	if options.embl!="":
-		os.system("~sh16/scripts/multiple_mappings_to_bam.py -p smalt -v latest -G -O pan_genome -E -f -x -r "+options.prefix+"_pan_genome.fasta -e "+options.embl+" "+' '.join(args)+' '+refname+'_[12].fastq')
+		os.system("~sh16/scripts/multiple_mappings_to_bam.py -p smalt -v latest -G -O "+options.prefix+" -E -f -x -r "+options.prefix+"_pan_genome.fasta -e "+options.embl+" "+' '.join(args)+' '+refname+'_[12].fastq')
 	else:
-		os.system("~sh16/scripts/multiple_mappings_to_bam.py -p smalt -v latest -G -O pan_genome -E -f -x -r "+options.prefix+"_pan_genome.fasta "+' '.join(args)+' '+refname+'_[12].fastq')
+		os.system("~sh16/scripts/multiple_mappings_to_bam.py -p smalt -v latest -G -O "+options.prefix+" -E -f -x -r "+options.prefix+"_pan_genome.fasta "+' '.join(args)+' '+refname+'_[12].fastq')
 	
 	
 	
