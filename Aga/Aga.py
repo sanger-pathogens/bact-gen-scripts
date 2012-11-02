@@ -332,10 +332,11 @@ if __name__ == "__main__":
 		for contigstat in contigstats:
 			words=contigstat.strip().split()
 			print words
-			if float(words[7])<80 or float(words[2])<(0.2*strains[0]):
+			if float(words[7])<90 or float(words[2])<(0.2*strains[0]):
 				contiglist.append(words[0])
 				
 		contigstats.close()
+		
 		print "Keeping all reads that map to", contiglist
 		
 		if len(contiglist)>0:
@@ -347,18 +348,52 @@ if __name__ == "__main__":
 			
 		
 		
-		os.system('~sh16/scripts/iterative_assembler.py -L 500 -n 0 -f '+tmpname+"_unmapped_1.fastq -r "+tmpname+"_unmapped_2.fastq -o "+folder+"_contigs.mfa")
+		#os.system('~sh16/scripts/iterative_assembler.py -L 500 -n 0 -f '+tmpname+"_unmapped_1.fastq -r "+tmpname+"_unmapped_2.fastq -o "+folder+"_contigs.mfa")
+		os.system('~sh16/scripts/velvet_assembly.sh -p -n -i 300 -e '+str(exp)+' -f '+tmpname+"_unmapped_1.fastq -r "+tmpname+"_unmapped_2.fastq -s "+folder+".fastq")
+		os.system("rm -rf "+tmpname+".fasta "+folder+"_contigs.mfa")
+		os.system("cp "+folder+"_velvet/contigs.fa "+folder+"_contigs.mfa")
+		os.system("rm -rf "+folder+"_velvet")
+		os.system("cat "+core_file+" "+acc_file+" > "+tmpname+".fasta")
+		os.system("~sh16/scripts/fasta2fastq_shredder.py "+tmpname+".fasta "+tmpname+" 76 3 l 250")
+		os.system("rm -rf "+tmpname+".fasta")
+		os.system("smalt index -k 13 -s 1 "+folder+"_contigs.mfa.index "+folder+"_contigs.mfa")
+		os.system("smalt map -r "+str(randrange(1,99999))+" -f samsoft -o "+tmpname+".sam "+folder+"_contigs.mfa.index "+tmpname+"_1.fastq "+tmpname+"_2.fastq")
+		os.system("samtools view -b -o "+tmpname+".bam -t "+folder+"_contigs.mfa -S "+tmpname+".sam")
+		os.system("samtools sort "+tmpname+".bam "+tmpname+"_sort")
+		os.system("samtools index "+tmpname+"_sort.bam")
 		
-
-		os.system("cat "+folder+"_contigs.mfa >> "+acc_file)
-		os.system("~sh16/scripts/Contig_summary.py "+folder+"_contigs.mfa "+acc_file)
-		filter_repeats(acc_file, tmpname)
+		os.system("~sh16/scripts/Contig_summary.py "+folder+"_contigs.mfa")
+		os.system("~sh16/scripts/Contig_summary.py "+acc_file)
+		
+		contigstats=os.popen("~sh16/scripts/Aga/contig_stats.py -b "+tmpname+"_sort.bam -H" )#.readlines()
+		os.system("rm -rf "+tmpname+".[sb]am")
+		contiglist=[]
+		
+		for contigstat in contigstats:
+			words=contigstat.strip().split()
+			print words
+			if float(words[7])<90 or float(words[2])<(0.2*strains[0]):
+				contiglist.append(words[0])
+				
+		contigstats.close()
+		output=open(tmpname+".fasta", "w")
+		lines=open(folder+"_contigs.mfa", "rU").read().split(">")[1:]
+		for line in lines:
+			seqname=line.split("\n")[0].split()[0]
+			seq=''.join(line.split("\n")[1:])
+			if seqname in contiglist and len(seq)>500:
+				print >> output, ">"+seqname
+				print >> output, ''.join(line.split("\n")[1:])
+		output.close()
+		os.system("cat "+tmpname+".fasta >> "+acc_file)
+#		os.system("~sh16/scripts/Contig_summary.py "+folder+"_contigs.mfa "+acc_file)
+#		filter_repeats(acc_file, tmpname)
 		os.system("~sh16/scripts/Contig_summary.py "+acc_file)
 	
 	
 	os.system("mv "+acc_file+" "+options.prefix+"_accessory_genome.fasta")	
 	os.system("cat "+core_file+" "+options.prefix+"_accessory_genome.fasta > "+options.prefix+"_pan_genome.fasta")
-	filter_repeats(options.prefix+"_pan_genome.fasta", tmpname)
+	#filter_repeats(options.prefix+"_pan_genome.fasta", tmpname)
 	os.system("rm -rf "+tmpname+"*")
 	
 	#Make pseudofastq for reference
@@ -367,7 +402,7 @@ if __name__ == "__main__":
 	else:
 		refname=tmpname
 	
-	os.system("~sh16/scripts/fasta2fastq_shredder.py "+options.ref+" "+refname+" 76 3 c 200")
+	os.system("~sh16/scripts/fasta2fastq_shredder.py "+options.ref+" "+refname+" 76 3 c 250")
 		
 	#final mapping of all isolates against ref+accessory
 	if options.embl!="":

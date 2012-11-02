@@ -294,8 +294,8 @@ echo kmer=$KMER expected coverage=$expcov coverage cutoff=$covcutoff  >> $logfil
 echo Running final run with kmer of $KMER, expected coverage of $expcov and coverage cutoff of $covcutoff
 
 if [ "$PAIRED" -eq "1" ]
-	echo ${velvet_dir}velvetg ${fastq%.fastq}_velvet -ins_length $INSERT -scaffolding $SCAFFOLD -exp_cov $expcov -cov_cutoff $covcutoff $OTHERS
-	then ${velvet_dir}velvetg ${fastq%.fastq}_velvet -ins_length $INSERT -scaffolding $SCAFFOLD -exp_cov $expcov -cov_cutoff $covcutoff $OTHERS > ${fastq%.fastq}_velvet.log
+	then echo ${velvet_dir}velvetg ${fastq%.fastq}_velvet -ins_length $INSERT -scaffolding $SCAFFOLD -exp_cov $expcov -cov_cutoff $covcutoff $OTHERS
+	${velvet_dir}velvetg ${fastq%.fastq}_velvet -ins_length $INSERT -scaffolding $SCAFFOLD -exp_cov $expcov -cov_cutoff $covcutoff $OTHERS > ${fastq%.fastq}_velvet.log
 else echo ${velvet_dir}velvetg ${fastq%.fastq}_velvet -exp_cov $expcov -cov_cutoff $covcutoff $OTHERS
 ${velvet_dir}velvetg ${fastq%.fastq}_velvet -exp_cov $expcov -cov_cutoff $covcutoff $OTHERS > ${fastq%.fastq}_velvet.log
 fi
