@@ -1,18 +1,44 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
+use strict;
 
-$filenameA = $ARGV[0];
-$filenameOut = $ARGV[1];
 
-open $FILEA, "< $filenameA";
+if (@ARGV != 1) {
+    print "$0 fastq.gz|fastq\n" ; 
+	exit ;
+}
 
-open $OUTFILE, "> $filenameOut";
 
-while(<$FILEA>) {
-	$_ =~ s/\@/\>/g;
-	print $OUTFILE $_;
-	$_ = <$FILEA>;
-	print $OUTFILE $_; 
-	$_ = <$FILEA>;
-	$_ = <$FILEA>;
+
+if ( $ARGV[0] =~ /.gz/ ) {
+    open (IN, "zcat $ARGV[0] | ") or die "can not open $ARGV[0]\n" ;
+}
+else {
+    open (IN , "$ARGV[0]") or die "can not open $ARGV[0]\n" ;
+}
+
+open my $out, ">" , "$ARGV[0].fasta" or die "oops\n" ;
+open my $out2, ">" , "$ARGV[0].fasta.qual" or die "oops\n" ;
+
+while (<IN>)
+{
+  	if (/^@(\S+)/) {
+		print $out ">$1\n" ;
+		print $out2 ">$1\n" ;
+
+		my $read = <IN> ;
+		print $out "$read" ;
+		$read = <IN> ;
+		#print "+\n" ;
+		$read = <IN> ;
+		#print "$read" ;
+
+		chomp($read) ;
+		my @read_quals = split "" , $read ;
+		my @read_quals_converted = map( ord($_) - 33 , @read_quals) ;
+		print $out2 "@read_quals_converted\n" ;
+
+	}
 
 }
+
+

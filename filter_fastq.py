@@ -23,7 +23,7 @@ def main():
 
 	group = OptionGroup(parser, "Input Options")
 
-	group.add_option("-f", "--forward", action="store", dest="forward", help="forward fastq file", default=False)
+	group.add_option("-f", "--forward", action="store", dest="forward", help="forward fastq file (for single end, just use this)", default=False)
 	group.add_option("-r", "--reverse", action="store", dest="reverse", help="reverse fastq file", default=False)
 	parser.add_option_group(group)
 	
@@ -45,13 +45,13 @@ def main():
 
 def check_input_options(options, args):
 
-
+	single=False
 	if not options.forward or not os.path.isfile(options.forward):
 		print "Cannot find file", options.forward
 		sys.exit()
 	if not options.reverse or not os.path.isfile(options.reverse):
 		print "Cannot find file",options.reverse
-		sys.exit()
+		single=True
 
 	if options.database and not os.path.isfile(options.database):
 		print "Cannot find file", options.database
@@ -70,7 +70,7 @@ def check_input_options(options, args):
 			DoError("Invalid read GC cutoff. Must start with a (above) or b (below) followed by a float")
 
 
-
+	return single
 
 
     
@@ -129,8 +129,9 @@ def remove_unmapping_reads(samfilename):
 	
 	
 	outputf=open(samfilename.split(".")[0]+"_1_unmapped.fastq", "w")
-	outputr=open(samfilename.split(".")[0]+"_2_unmapped.fastq", "w")
-		
+	if not single:
+		outputr=open(samfilename.split(".")[0]+"_2_unmapped.fastq", "w")
+			
 		
 	reads_iter=samfile
 	
@@ -162,7 +163,8 @@ def remove_unmapping_reads(samfilename):
 			if toprint:
 				
 				bamline2fastq(read, "1", outputf)
-				bamline2fastq(mate, "2", outputr)
+				if not single:
+					bamline2fastq(mate, "2", outputr)
 					
 				addedcount+=1
 		
@@ -186,10 +188,9 @@ if __name__ == "__main__":
 		io_method = cStringIO.StringIO
 
 
-
 	(options, args) = main()
 	
-	check_input_options(options, args)
+	single=check_input_options(options, args)
 	
 	
 	forward=options.forward
@@ -211,14 +212,15 @@ if __name__ == "__main__":
 		os.system("zcat "+currforwardfilename+" > "+tmpname+"_1.fastq")
 		currforwardfilename=tmpname+"_1.fastq"
 		todelete=todelete+currforwardfilename+" "
-	if currreversefilename.split(".")[-1]=="gz":
-		print "Unzipping", currreversefilename, "to", tmpname+"_2.fastq"
-		os.system("zcat "+currreversefilename+" > "+tmpname+"_2.fastq")
-		currreversefilename=tmpname+"_2.fastq"
-		todelete=todelete+currreversefilename+" "
+	if not single:
+		if currreversefilename.split(".")[-1]=="gz":
+			print "Unzipping", currreversefilename, "to", tmpname+"_2.fastq"
+			os.system("zcat "+currreversefilename+" > "+tmpname+"_2.fastq")
+			currreversefilename=tmpname+"_2.fastq"
+			todelete=todelete+currreversefilename+" "
 	
 	
-	if db!="" and os.path.isfile(db):
+	if not single and  db!="" and os.path.isfile(db):
 		print "Mapping reads vs", db
 		os.system("cp "+db+" "+tmpname+"_db.fasta")
 		os.system("bwa index "+tmpname+"_db.fasta")
@@ -245,13 +247,16 @@ if __name__ == "__main__":
 	filter_fastq(currforwardfilename, reversefile=currreversefilename, shuffled=False, quality_cutoff=options.quality_cutoff, length_cutoff=options.length_cutoff, GCcutoff=options.gcfilter)
 	
 	currforwardfilename='.'.join(currforwardfilename.split(".")[:-1])+"_filtered."+currforwardfilename.split(".")[-1]
-	currreversefilename='.'.join(currreversefilename.split(".")[:-1])+"_filtered."+currreversefilename.split(".")[-1]
+	if not single:
+		currreversefilename='.'.join(currreversefilename.split(".")[:-1])+"_filtered."+currreversefilename.split(".")[-1]
 	
 	if todelete!="":
 		os.system("rm -f "+todelete)
 	
-	os.system("mv "+currforwardfilename+" "+options.outputname+"_1.fastq")
-	os.system("mv "+currreversefilename+" "+options.outputname+"_2.fastq")
-	
+	if single:
+		os.system("mv "+currforwardfilename+" "+options.outputname+".fastq")
+	else:
+		os.system("mv "+currforwardfilename+" "+options.outputname+"_1.fastq")
+		os.system("mv "+currreversefilename+" "+options.outputname+"_2.fastq")
 
 	print "Done"

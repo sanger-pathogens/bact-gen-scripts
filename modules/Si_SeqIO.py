@@ -661,11 +661,23 @@ def filter_fastq(forwardfile, reversefile=False, shuffled=False, quality_cutoff=
 			check_read(linesr)
 			
 			check_pairs(linesf,linesr)
-		
-		toremove=trim_read(linesf)
+		if quality_cutoff>0:
+			toremove=trim_read(linesf)
+		else:
+			if len(linesf[1])<length_cutoff:
+				print len(linesf[1])
+				toremove=True
+			else:
+				toremove=False
 		
 		if not toremove and (reversefile or shuffled):
-			toremove=trim_read(linesr)
+			if quality_cutoff>0:
+				toremove=trim_read(linesr)
+			else:
+				if len(linesr[1])<length_cutoff:
+					toremove=True
+				else:
+					toremove=False
 		
 		if not toremove and GCcutoff:
 			highgc=GC_check(linesf, GCcutoff)
