@@ -372,7 +372,7 @@ if __name__ == "__main__":
 		for contigstat in contigstats:
 			words=contigstat.strip().split()
 			print words
-			if float(words[7])<90 or float(words[2])<(0.2*strains[0]):
+			if float(words[7])<90:# or float(words[2])<(0.2*strains[0]):
 				contiglist.append(words[0])
 				
 		contigstats.close()
