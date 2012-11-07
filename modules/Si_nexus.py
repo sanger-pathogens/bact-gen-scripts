@@ -662,7 +662,7 @@ def print_node_colours(treeObject, handle):
 ###############################################################################################
 
 
-def tree_to_string(treeObject, support_as_branchlengths=False,branchlengths_only=False,plain=True,plain_newick=False,ladderize=None, collapse=False, cutoff=0.0, treename=False, comments=False):
+def tree_to_string(treeObject, support_as_branchlengths=False,branchlengths_only=False,plain=True,plain_newick=False,ladderize=None, collapse=False, cutoff=0.0, treename=False, comments=False, node_names=False):
 	
 	"""Return a paup compatible tree line.
 	
@@ -676,22 +676,28 @@ def tree_to_string(treeObject, support_as_branchlengths=False,branchlengths_only
 	treeObject.branchlengths_only=branchlengths_only
 	treeObject.plain=plain
 	
+	if node_names:
+		comments=True
 	
-	def get_comments_line(data):
+	def get_comments_line(data, terminal=False):
 		commentlist=[]
-		if data.comment!=None and type(data.comment) is dict:
-			for commenttype in data.comment:
-				if type(data.comment[commenttype]) in [list, tuple]:
-					commentlist.append("[&colour="+' '.join(map(str,data.comment[commenttype]))+"]")
-				elif type(data.comment[commenttype]) in [str, int]:
-					commentlist.append("[&colour="+str(data.comment[commenttype])+"]")
+		if node_names:
+			if not terminal and data.taxon!=None:
+				return data.taxon
+		else:
+			if data.comment!=None and type(data.comment) is dict:
+				for commenttype in data.comment:
+					if type(data.comment[commenttype]) in [list, tuple]:
+						commentlist.append("[&colour="+' '.join(map(str,data.comment[commenttype]))+"]")
+					elif type(data.comment[commenttype]) in [str, int]:
+						commentlist.append("[&colour="+str(data.comment[commenttype])+"]")
 		
 		return ''.join(commentlist)
 	
 	def make_info_string(data,terminal=False):
 		"""Creates nicely formatted support/branchlengths."""
 		if comments:
-			commentsline=get_comments_line(data)
+			commentsline=get_comments_line(data, terminal=terminal)
 		else:
 			commentsline=''
 		# CHECK FORMATTING

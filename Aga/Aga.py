@@ -282,7 +282,7 @@ if __name__ == "__main__":
 		contigdepths.close()
 	
 	depths.sort()
-	depths.reverse()
+	#depths.reverse()
 
 
 	for strains in depths:

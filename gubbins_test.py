@@ -1264,6 +1264,7 @@ def add_node_names_to_tree(tree, pamltree):
 		for taxon in downstreamtaxa:
 			downstreamnamelist.append(taxon.split("_")[1])
 		
+		print node, nodename, downstreamnamelist
 		downstreamnamelist.sort()
 		paml_node_names[' '.join(downstreamnamelist)]=nodename
 		daughters=pamltree.node(node).get_succ()
@@ -1271,6 +1272,8 @@ def add_node_names_to_tree(tree, pamltree):
 			get_paml_nodes(daughter)
 	
 	get_paml_nodes(pamltree.root)
+
+	print paml_node_names
 	
 	
 	def add_nodenames_to_tree(node):
@@ -1283,9 +1286,12 @@ def add_node_names_to_tree(tree, pamltree):
 			downstreamnamelist.append(taxon)
 		
 		downstreamnamelist.sort()
+		print node, downstreamnamelist, paml_node_names[' '.join(downstreamnamelist)]
 		daughters=tree.node(node).get_succ()
 		node_data=tree.node(node).get_data()
+		print node_data.taxon
 		node_data.taxon=paml_node_names[' '.join(downstreamnamelist)]
+		print node_data.taxon
 		tree.node(node).set_data(node_data)
 		for daughter in daughters:
 			add_nodenames_to_tree(daughter)
@@ -1357,41 +1363,43 @@ if __name__ == "__main__":
 		
 		
 		
-		
-		
-		#create newalignment from edited alignment for making the tree
-		
-		newalignment=Alignment(Gapped(IUPAC.unambiguous_dna))
-		for record in alignment:
-			newalignment.add_sequence(str(record.id),  str(editablealignment[record.id]))
-			editablealignment[record.id]=record.seq
-	
-		#locate sites with a SNP
-		
-		if iteration==1:
-			SNPlocations, gaplocations=Find_SNP_and_gap_locations(newalignment)
-		else:
-			SNPlocations=Find_SNP_locations(newalignment, AllSNPlocations)
-			gaplocations=Allgaplocations.copy()
-
-		
-		
-		#create alignment of just the SNP sites
-		if options.wholedata:
-			SNPalignment=newalignment
-		else:
-			SNPalignment=Create_SNP_alignment(newalignment, SNPlocations)
-		
-		#print a phylip file of the SNP alignment
-		
+#		
+#		
+#		#create newalignment from edited alignment for making the tree
+#		
+#		newalignment=Alignment(Gapped(IUPAC.unambiguous_dna))
+#		for record in alignment:
+#			newalignment.add_sequence(str(record.id),  str(editablealignment[record.id]))
+#			editablealignment[record.id]=record.seq
+#	
+#		#locate sites with a SNP
+#		
+#		if iteration==1:
+#			SNPlocations, gaplocations=Find_SNP_and_gap_locations(newalignment)
+#		else:
+#			SNPlocations=Find_SNP_locations(newalignment, AllSNPlocations)
+#			gaplocations=Allgaplocations.copy()
+#
+#		
+#		
+#		#create alignment of just the SNP sites
+#		if options.wholedata:
+#			SNPalignment=newalignment
+#		else:
+#			SNPalignment=Create_SNP_alignment(newalignment, SNPlocations)
+#		
+#		#print a phylip file of the SNP alignment
+#		
 		sequencenames={}
 		convertnameback={}
 		seqnametoindex={}
-		
-		handle = open("SNPS_"+prefix+".phy", "w")
-		handleb = open(prefix+"_iteration"+str(iteration)+".aln", "w")	
-		print >> handle, len(SNPalignment), SNPalignment.get_alignment_length()
+#		
+#		handle = open("SNPS_"+prefix+".phy", "w")
+#		handleb = open(prefix+"_iteration"+str(iteration)+".aln", "w")	
+		SNPalignment=read_alignment(prefix+"_iteration"+str(iteration)+".aln")
+#		print >> handle, len(SNPalignment), SNPalignment.get_alignment_length()
 		count=1
+		print SNPalignment
 		for record in SNPalignment:
 	
 			name="seq"+str(count)
@@ -1399,69 +1407,72 @@ if __name__ == "__main__":
 			sequencenames[name]=record.id
 			convertnameback[record.id]=name
 			seqnametoindex[name]=count-1
-			
-			print >> handle, name+"  "+record.seq
-			print >> handleb, ">"+record.id
-			print >> handleb, record.seq
-	# add this back in to split the alignment into blocks of 60 bases
-	#		for f in range(0,len(record.seq),60):
-	#			if f+60< len(record.seq):
-	#				print >> handle, record.seq[f:f+60]
-	#			else:
-	#				print >> handle, record.seq[f:]
-				
-			count=count+1
-		handle.close()
-		handleb.close()
-		
-		
-		#the first time, make a copy of the SNP alignment file to be used in all future iterations of the PAML analyses
-		
-		if iteration==1:
-			os.system("cp SNPS_"+prefix+".phy AllSNPS_"+prefix+".phy")
-			AllSNPlocations=list(SNPlocations)
-			Allgaplocations=gaplocations.copy()
-			if options.maxiterations>1:
-				treedistances=open(prefix+"_treedistances.txt", "w")
-				if options.geodesic:
-					print >> treedistances, "Tree1,Tree2,Recomb SNPs in 1,Recomb SNPs in 2,Recomb SNPs in both,RF,GD,Tree1 RAxML -ll, Tree2 RAxML -ll"
-				else:
-					print >> treedistances, "Tree1,Tree2,Recomb SNPs in 1,Recomb SNPs in 2,Recomb SNPs in both,RF,Tree1 RAxML -ll, Tree2 RAxML -ll"
-		
-				
-		
-		
-		#run tree
-		
-		if (options.runtree or options.tree=="") or iteration>1:
-			
-			if os.path.isfile("RAxML_info.SNPS_"+prefix):
-				print "Removing old RAxML files"
-				os.system("rm RAxML_*.SNPS_"+prefix)
-				sys.stdout.flush()
-				
-			print "Running tree with RAxML"
-			sys.stdout.flush()
-			os.system("/software/pathogen/external/applications/RAxML/RAxML-7.0.4/raxmlHPC -f d -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
-			
-			os.system("mv RAxML_result."+"SNPS_"+prefix+" "+prefix+"_Initial.tre")
-			options.tree=prefix+"_Initial.tre"
-			
-			#extract stats from raxml output files
-			
-			treestats=os.popen('grep "Inference\[0\]" RAxML_info.SNPS_'+prefix).read()
-			
-			alpha=float(treestats.split(":")[2].split()[0])
+			count+=1
 
-			treestats=os.popen('grep "Likelihood" RAxML_info.SNPS_'+prefix).read()
-			
-			negloglike=float(treestats.strip().split(":")[1].replace("-",""))
-
-			print "RAxML -log likelihood =", negloglike
-		else:
-			alpha=options.alpha
-			negloglike="Unknown"
-	
+		print sequencenames
+#			
+#			print >> handle, name+"  "+record.seq
+#			print >> handleb, ">"+record.id
+#			print >> handleb, record.seq
+#	# add this back in to split the alignment into blocks of 60 bases
+#	#		for f in range(0,len(record.seq),60):
+#	#			if f+60< len(record.seq):
+#	#				print >> handle, record.seq[f:f+60]
+#	#			else:
+#	#				print >> handle, record.seq[f:]
+#				
+#			count=count+1
+#		handle.close()
+#		handleb.close()
+#		
+#		
+#		#the first time, make a copy of the SNP alignment file to be used in all future iterations of the PAML analyses
+#		
+#		if iteration==1:
+#			os.system("cp SNPS_"+prefix+".phy AllSNPS_"+prefix+".phy")
+#			AllSNPlocations=list(SNPlocations)
+#			Allgaplocations=gaplocations.copy()
+#			if options.maxiterations>1:
+#				treedistances=open(prefix+"_treedistances.txt", "w")
+#				if options.geodesic:
+#					print >> treedistances, "Tree1,Tree2,Recomb SNPs in 1,Recomb SNPs in 2,Recomb SNPs in both,RF,GD,Tree1 RAxML -ll, Tree2 RAxML -ll"
+#				else:
+#					print >> treedistances, "Tree1,Tree2,Recomb SNPs in 1,Recomb SNPs in 2,Recomb SNPs in both,RF,Tree1 RAxML -ll, Tree2 RAxML -ll"
+#		
+#				
+#		
+#		
+#		#run tree
+#		
+#		if (options.runtree or options.tree=="") or iteration>1:
+#			
+#			if os.path.isfile("RAxML_info.SNPS_"+prefix):
+#				print "Removing old RAxML files"
+#				os.system("rm RAxML_*.SNPS_"+prefix)
+#				sys.stdout.flush()
+#				
+#			print "Running tree with RAxML"
+#			sys.stdout.flush()
+#			os.system("/software/pathogen/external/applications/RAxML/RAxML-7.0.4/raxmlHPC -f d -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
+#			
+#			os.system("mv RAxML_result."+"SNPS_"+prefix+" "+prefix+"_Initial.tre")
+#			options.tree=prefix+"_Initial.tre"
+#			
+#			#extract stats from raxml output files
+#			
+#			treestats=os.popen('grep "Inference\[0\]" RAxML_info.SNPS_'+prefix).read()
+#			
+#			alpha=float(treestats.split(":")[2].split()[0])
+#
+#			treestats=os.popen('grep "Likelihood" RAxML_info.SNPS_'+prefix).read()
+#			
+#			negloglike=float(treestats.strip().split(":")[1].replace("-",""))
+#
+#			print "RAxML -log likelihood =", negloglike
+#		else:
+#			alpha=options.alpha
+#			negloglike="Unknown"
+#	
 		#Read tree file
 		
 		print "Reading tree file"
@@ -1508,93 +1519,92 @@ if __name__ == "__main__":
 			tree.node(daughters[1]).set_data(daughter2_data)
 	
 		newtree=tree
-#		treestring=tree_to_string(tree, support_as_branchlengths=False,branchlengths_only=True,plain=False,plain_newick=False,collapse=True, cutoff=1.0/(len(SNPlocations)+1), treename=False, comments=False, node_names=True)
-		treestring=tree_to_string(tree, False, True, True, True,collapse=True, cutoff=1.0/(len(SNPlocations)+1))
-		
-		for name in sequencenames.keys():
-			treestring=treestring.replace(name+":", sequencenames[name]+":")
-		handle = open(prefix+"_iteration"+str(iteration)+".tre", "w")
-		print >> handle, treestring+";"
-		handle.close()
-		
-		#print treestring.replace(sequencenames[name]+":", name+":")
-		
-		
-#		print oldtree
-#		print newtree
-	
-		
-		if iteration>1:
-			os.system("cat "+prefix+"_iteration"+str(iteration)+".tre "+prefix+"_iteration"+str(iteration-1)+".tre | sed 's/:0.0;/;/g' > tmptrees.tre")
-			
-			os.system('~sh16/hashRF/hashrf tmptrees.tre 2 > rfout.tmp')
-			try:
-				rfout=open('rfout.tmp', 'rU').readlines()
-				rf=float(rfout[11].split()[1])
-			except IOError:
-				rf="err"
-			if options.geodesic:
-				os.system('java -jar ~sh16/geodemaps/geodeMAPS.jar -o gdout.tmp tmptrees.tre >  /dev/null 2>&1')
-				try:
-					gdout=open('gdout.tmp', 'rU').readlines()
-					gd=float(gdout[0].split()[2])
-				except IOError:
-					gd="err"
-				print >> treedistances, ","+str(rf)+","+str(gd)+","+str(oldloglike)+","+str(negloglike)
-				os.system("rm tmptrees.tre gdout.tmp rfout.tmp")
-			else:
-				print >> treedistances, ","+str(rf)+","+str(oldloglike)+","+str(negloglike)
-				os.system("rm tmptrees.tre rfout.tmp")
-				treedistances.flush()
-			if int(rf)==0:
-				break
-	
-		if oldtree.is_identical(newtree):
-			break
-		
-		oldloglike=negloglike
-		
-		treestring=tree.to_string(False, True, True, True)
-		for name in sequencenames.keys():
-			treestring=treestring.replace(sequencenames[name]+":", name+":")
-		handle = open(prefix+".tre", "w")
-		print >> handle, treestring+";"
-		handle.close()
-			
-		
-		#If we have chosen to run paml
-		
-		if options.runpaml and (not options.usepreviouspamlrun or iteration>1):
-			
-			#create baseml control file for paml
-			
-			print "Running PAML to reconstruct ancestral states"
-			sys.stdout.flush()
-		
-			create_baseml_control_file("AllSNPS_"+prefix+".phy", prefix+".tre", alpha)
-			
-			#run paml
-			
-			os.system("/nfs/users/nfs_m/mh10/software/paml41/bin/baseml > "+prefix+"temp.tmp")
-
-		elif options.usepreviouspamlrun:
-			print "Using previous paml run"
-		
-		#remove spaces from rst alignment (necessary to allow easier reading of tree and ancestral sequences
-		
-		os.system("sed 's/node #//g' rst > rstnew")
-		os.system('grep -a -v "^$" rstnew > rstnew2')
-		
-		#extract the tree with all nodes numbered from PAML rst output file
-		
-		print "Reading PAML tree"
-		sys.stdout.flush()
-
-		negloglikefile=os.popen("tail -n 1 rub")
-
-		negloglike=negloglikefile.read().strip().split()[1]
-
-		print "PAML -log likelihood =", negloglike
+#		treestring=tree_to_string(tree, False, True, True, True,collapse=True, cutoff=1.0/(len(SNPlocations)+1))
+#		
+#		for name in sequencenames.keys():
+#			treestring=treestring.replace(name+":", sequencenames[name]+":")
+#		handle = open(prefix+"_iteration"+str(iteration)+".tre", "w")
+#		print >> handle, treestring+";"
+#		handle.close()
+#		
+#		#print treestring.replace(sequencenames[name]+":", name+":")
+#		
+#		
+##		print oldtree
+##		print newtree
+#	
+#		
+#		if iteration>1:
+#			os.system("cat "+prefix+"_iteration"+str(iteration)+".tre "+prefix+"_iteration"+str(iteration-1)+".tre | sed 's/:0.0;/;/g' > tmptrees.tre")
+#			
+#			os.system('~sh16/hashRF/hashrf tmptrees.tre 2 > rfout.tmp')
+#			try:
+#				rfout=open('rfout.tmp', 'rU').readlines()
+#				rf=float(rfout[11].split()[1])
+#			except IOError:
+#				rf="err"
+#			if options.geodesic:
+#				os.system('java -jar ~sh16/geodemaps/geodeMAPS.jar -o gdout.tmp tmptrees.tre >  /dev/null 2>&1')
+#				try:
+#					gdout=open('gdout.tmp', 'rU').readlines()
+#					gd=float(gdout[0].split()[2])
+#				except IOError:
+#					gd="err"
+#				print >> treedistances, ","+str(rf)+","+str(gd)+","+str(oldloglike)+","+str(negloglike)
+#				os.system("rm tmptrees.tre gdout.tmp rfout.tmp")
+#			else:
+#				print >> treedistances, ","+str(rf)+","+str(oldloglike)+","+str(negloglike)
+#				os.system("rm tmptrees.tre rfout.tmp")
+#				treedistances.flush()
+#			if int(rf)==0:
+#				break
+#	
+#		if oldtree.is_identical(newtree):
+#			break
+#		
+#		oldloglike=negloglike
+#		
+#		treestring=tree.to_string(False, True, True, True)
+#		for name in sequencenames.keys():
+#			treestring=treestring.replace(sequencenames[name]+":", name+":")
+#		handle = open(prefix+".tre", "w")
+#		print >> handle, treestring+";"
+#		handle.close()
+#			
+#		
+#		#If we have chosen to run paml
+#		
+#		if options.runpaml and (not options.usepreviouspamlrun or iteration>1):
+#			
+#			#create baseml control file for paml
+#			
+#			print "Running PAML to reconstruct ancestral states"
+#			sys.stdout.flush()
+#		
+#			create_baseml_control_file("AllSNPS_"+prefix+".phy", prefix+".tre", alpha)
+#			
+#			#run paml
+#			
+#			os.system("/nfs/users/nfs_m/mh10/software/paml41/bin/baseml > "+prefix+"temp.tmp")
+#
+#		elif options.usepreviouspamlrun:
+#			print "Using previous paml run"
+#		
+#		#remove spaces from rst alignment (necessary to allow easier reading of tree and ancestral sequences
+#		
+#		os.system("sed 's/node #//g' rst > rstnew")
+#		os.system('grep -a -v "^$" rstnew > rstnew2')
+#		
+#		#extract the tree with all nodes numbered from PAML rst output file
+#		
+#		print "Reading PAML tree"
+#		sys.stdout.flush()
+#
+#		negloglikefile=os.popen("tail -n 1 rub")
+#
+#		negloglike=negloglikefile.read().strip().split()[1]
+#
+#		print "PAML -log likelihood =", negloglike
 		
 		pamltreefile=os.popen('grep -a -A 1 "tree with node labels for Rod Page\'s TreeView" rstnew | tail -n 1')
 		
@@ -1609,11 +1619,22 @@ if __name__ == "__main__":
 		
 		pamltree.branchlength2support()
 		
-		tree=add_node_names_to_tree(tree, pamltree)
-		
 		#get the root node number from the paml tree (I think this might always be 0)
 		
 		rootnode=pamltree.root
+		
+		
+		tree.display()
+		pamltree.display()
+		
+		tree=add_node_names_to_tree(tree, pamltree)
+		
+		tree.display()
+		treestring=tree_to_string(tree, support_as_branchlengths=False,branchlengths_only=True,plain=False,plain_newick=False,ladderize=None, collapse=False, cutoff=0.0, treename=False, comments=False, node_names=True)
+		for name in sequencenames.keys():
+			treestring=treestring.replace(name+":", sequencenames[name]+":")
+		print treestring
+		sys.exit()
 		
 		#extract alignment PAML rst output file
 		
@@ -1658,6 +1679,8 @@ if __name__ == "__main__":
 		snplocout.close()
 		snptabout.close()
 		tabout.close()
+		
+
 		
 			
 		all_in1butnot2=0
@@ -1721,26 +1744,23 @@ if __name__ == "__main__":
 		treedistances.close()
 	
 	#print final tree
-	#tree=add_node_names_to_tree(tree, pamltree)
-		
-	#tree.display()
-	treestring=tree_to_string(tree, support_as_branchlengths=False,branchlengths_only=True,plain=False,plain_newick=False,ladderize=None, collapse=False, cutoff=0.0, treename=False, comments=False, node_names=True)
-	#treestring=tree.to_string(False, True, True, True)
+	
+	treestring=tree.to_string(False, True, True, True)
 	for name in sequencenames.keys():
 		treestring=treestring.replace(name+":", sequencenames[name]+":")
 	
 	
-	handle = open(prefix+"_Final.tre", "w")
-	print >> handle, treestring+";"
-	handle.close()
+#	handle = open(prefix+"_Final.tre", "w")
+#	print >> handle, treestring+";"
+#	handle.close()
 
-#	os.system("mv "+prefix+"_iteration"+str(iteration)+".tre "+prefix+"_Final.tre")
+	os.system("mv "+prefix+"_iteration"+str(iteration)+".tre "+prefix+"_Final.tre")
 	if options.reference=="":
 		os.system("~sh16/scripts/Genome_Diagram.py -q taxa -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+prefix+"_rec.tab")
 	else:
 		os.system("~sh16/scripts/Genome_Diagram.py -q taxa -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+options.reference+" "+prefix+"_rec.tab")
 	
-	os.system("rm "+prefix+"temp.tmp baseml.ctl rst rst1 2base.t mlb lnf rub rstnew rstnew2 RAxML_*.SNPS_"+prefix+" "+prefix+".tre SNPS_"+prefix+".phy")
+	#os.system("rm "+prefix+"temp.tmp baseml.ctl rst rst1 2base.t mlb lnf rub rstnew rstnew2 RAxML_*.SNPS_"+prefix+" "+prefix+".tre SNPS_"+prefix+".phy")
 	
 	
 	if options.bootstrap:
