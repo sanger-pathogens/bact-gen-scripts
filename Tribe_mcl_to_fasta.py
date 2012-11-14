@@ -4,11 +4,11 @@ import os, sys, getopt, random, math
 
 
 if (len (sys.argv)!=3 and len (sys.argv)!=4) or '-h' in sys.argv[1:]:
-	print "MUMmer_tiling_to_tab.py <tribemcl cluster file> <contig fasta file> <outfile prefix>"
+	print "Ortho_mcl_to_fasta.py <orthomcl cluster file> <contig fasta file> <outfile prefix>"
 	sys.exit()
 
-prefix='tribemcl'
-tribefile=sys.argv[1]	
+prefix='orthomcl'
+orthofile=sys.argv[1]	
 contigfile=sys.argv[2]
 if len(sys.argv)==4:
 	prefix=sys.argv[3]
@@ -24,7 +24,7 @@ for line in lines:
 	if not straincount.has_key(words[0].split('_')[1]):
 		straincount[words[0].split('_')[1]]=[0]
 
-lines=open(tribefile, "rU").readlines()
+lines=open(orthofile, "rU").readlines()
 
 curblock='0'
 curcluster={}
