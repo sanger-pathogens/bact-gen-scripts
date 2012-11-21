@@ -607,7 +607,9 @@ if __name__ == "__main__":
 		indels[indelnum]["info"]["info"]="from pindel"
 		for i in words[7].split(";"):
 			bits=i.split("=")
-			if bits[0] in ["END", "SVLEN"]:
+			if bits[0]=="END":
+				indels[indelnum]["info"][bits[0]]=int(bits[1])+1
+			elif bits[0]=="SVLEN":
 				indels[indelnum]["info"][bits[0]]=int(bits[1])
 			else:
 				indels[indelnum]["info"][bits[0]]=bits[1]
