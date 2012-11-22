@@ -49,7 +49,7 @@ def main():
 	group = OptionGroup(parser, "General options")
 	group.add_option("-a", "--alignment", action="store", dest="alignment", help="Input alignment file name", default="", metavar="FILE")
 	group.add_option("-s", "--snpsonly", action="store_true", dest="SNPonly", help="Only analyse SNP sites", default=False)
-	group.add_option("-p", "--proportion", action="store", dest="proportion", help="maximum proportion of Ns to allow in a column for it to be included in the analysis (i.e. ignore any sites with > than this proportion of Ns). 1=do not exclude any sites due to Ns. [default=%default]", default=1.0)
+	group.add_option("-p", "--proportion", action="store", dest="proportion", help="maximum proportion of Ns to allow in a column for it to be included in the analysis (i.e. ignore any sites with > than this proportion of Ns). 1=do not exclude any sites due to Ns. [default=%default]", type="float", default=1.0)
 	group.add_option("-e", "--exclude", action="store", dest="exclude", help="Exclude sequences from analysis if they are less than INT% covered [Default= %default]", default=50, type="float", metavar="int")
 	group.add_option("-t", "--type", action="store", dest="analysistype", help="Data type (DNA or protein). [Choices = DNA, protein] [Default = %default]", default="DNA", type="choice", choices=["DNA","protein"])
 #	group.add_option("-d", "--dmodel", action="store", dest="dmodel", help="Model of evolution to use (for DNA anlysis). [Default= %default]", default="GTRGAMMA", type="choice", choices=["GTRGAMMA","GTR", "GTR", "GTR", "GTR"])

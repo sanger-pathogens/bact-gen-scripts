@@ -84,7 +84,7 @@ def read_dendropy_tree(treefile):
 		
 #		print dir(dendropy.tree_source_iter), dendropy.tree_source_iter.func_globals
 #		sys.exit()
-		
+
 		for tree in dendropy.tree_source_iter(stream=open(treefile, "rU"), schema="nexus",  extract_comment_metadata=True, tree_offset=options.burnin):#ignore_missing_node_info=True,
 			
 			subsamplecount-=1
@@ -181,8 +181,19 @@ def read_dendropy_tree(treefile):
 			else:
 				pylab.savefig(options.output+"_state_changes_plot."+options.format)
 		
-		
-
+			output=open(options.output+'_data.csv', "w")
+			outlist=["Tree number"]
+			for from_state in all_states:
+				for to_state in all_states:
+					outlist.append(from_state.replace('"','')+'->'+to_state.replace('"',''))
+			
+			print >> output, ','.join(outlist)
+			for x in xrange(len(data[0])):
+				outlist=[str(x+1)]
+				for y in xrange(len(data)):
+					outlist.append(str(data[y][x]))
+				print >> output, ','.join(outlist)
+			output.close()
 			
 				
 		sys.exit()

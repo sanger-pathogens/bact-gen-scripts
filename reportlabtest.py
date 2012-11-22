@@ -147,7 +147,7 @@ def main():
 	group.add_option("-y", "--plot_min", action="store", dest="plot_max", help="Set a maximum value for plots", default="Inf", type="float")
 	group.add_option("-Y", "--plot_max", action="store", dest="plot_min", help="Set a minimum value for plots", default="Inf", type="float")
 	group.add_option("-Z", "--log_plot", action="store_true", dest="log_plots", help="Show plots on a log scale (doesn't work yet)", default=False)
-	group.add_option("-w", "--heatmap_legend", action="store_true", dest="heat_legend", help="Show legend on heatmaps", default=False)
+	group.add_option("-w", "--plot_scales", action="store_true", dest="plot_scales", help="Show legend on heatmaps", default=False)
 	group.add_option("-3", "--heatmap_colour", default="bluered", choices=["redblue", "bluered", "blackwhite", "whiteblack"], type="choice", action="store", dest="heat_colour", help="Set the default plot type (for plots called plot or graph and bam files). Choose from "+", ".join(["redblue", "bluered", "blackwhite", "whiteblack"]))
 	group.add_option("-4", "--windows", action="store", dest="windows", help="Number of windows per line (be careful, making this value too high will make things very slow and memory intensive) [default= %default]", default=501, type="float")
 	
@@ -1339,7 +1339,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	fontsize=vertical_scaling_factor
 	if fontsize>12:
 		fontsize=12
-	
+	name_offset=fontsize
 	if options.taxon_names:
 		while get_max_name_width(name_offset, fontsize)+name_offset>treewidth/3:
 			fontsize-=0.2
@@ -2322,11 +2322,9 @@ class Plot:
 		
 		
 		
-		
-		
 #		self.legend=True
 #		if self.legend and len(self.labels)>0:
-		if self.legend and options.heat_legend:
+		if self.legend and options.plot_scales:
 			
 			if self.autolegend:
 				self.legend_font_size=float(height)/6
@@ -2418,7 +2416,8 @@ class Plot:
 	def draw_line_plot(self, x, y, height, length):
 		
 		data, valueMin, valueMax=self.get_data_to_print()
-		
+		if height<30:
+			self.legend=False
 		if self.legend and len(self.labels)>0:
 			
 			if self.autolegend:
@@ -2479,6 +2478,8 @@ class Plot:
 		
 		lp.joinedLines = 1
 		lp.xValueAxis.visibleLabels=0
+		if not options.plot_scales:
+			lp.yValueAxis.visibleLabels=0
 		lp.xValueAxis.visibleTicks=0
 		lp.xValueAxis.valueMin = self.beginning 
 		if self.end!=-1:
@@ -2584,6 +2585,8 @@ class Plot:
 		
 		bc.categoryAxis.visibleLabels=0
 		bc.categoryAxis.visibleTicks=0
+		if not options.plot_scales:
+			bc.valueAxis.visibleLabels=0
 		bc.categoryAxis.style = 'stacked'
 		bc.groupSpacing = 0
 		bc.barSpacing = 0
@@ -2799,7 +2802,7 @@ if __name__ == "__main__":
 							allcolourslist.append(colour_column_entry)
 						namecolours[words[0].strip()][x]=colour_column_entry
 				
-
+		found_keys=[]
 		if len(colour_columns)>0:
 			
 			for x, colour_column in enumerate(colour_columns):
@@ -2809,9 +2812,9 @@ if __name__ == "__main__":
 				if options.end!=-1:
 					newtrack.end=options.end
 				newtrack.beginning=options.beginning
-				track_count+=8
+				
 		#		newtrack.track_number=track_number
-				newtrack.track_height=8
+				newtrack.track_height=5
 				newtrack.scale=False
 				newtrack.name="metadata_key"+str(x)
 				metadata_keylist.append("metadata_key"+str(x))
@@ -2929,10 +2932,10 @@ if __name__ == "__main__":
 							newtrack.key_data.append([name, colors.Color(float(red)/255, float(green)/255, float(blue)/255)])
 					
 					
-					
-							
-				my_tracks["metadata_key"+str(x)]=newtrack
-	
+				if not colour_column_names[x].split(":")[0] in found_keys:
+					track_count+=5	
+					my_tracks["metadata_key"+str(x)]=newtrack
+					found_keys.append(colour_column_names[x].split(":")[0])
 	
 	
 	for arg in args[::-1]:
