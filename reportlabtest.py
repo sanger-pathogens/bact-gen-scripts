@@ -142,7 +142,7 @@ def main():
 	group = OptionGroup(parser, "Plot Options")
 	
 	group.add_option("-H", "--plotheight", action="store", dest="plotheight", help="Relative track height of plot tracks to other tracks [default= %default]", default=2, metavar="int", type="int")
-	group.add_option("-d", "--default_plot_type", choices=["hist", "heat", "bar", "line", "area"], type="choice", action="store", dest="plottype", help="Set the default plot type (for plots called plot or graph and bam files). Choose from "+", ".join(["hist", "heat", "bar", "line", "area"])+" [default= %default]", default="line")
+	group.add_option("-d", "--default_plot_type", choices=["hist", "heat", "bar", "line", "area", "stackedarea"], type="choice", action="store", dest="plottype", help="Set the default plot type (for plots called plot or graph and bam files). Choose from "+", ".join(["hist", "heat", "bar", "line", "area", "stackedarea"])+" [default= %default]", default="line")
 	group.add_option("-X", "--scale_plots", action="store_true", dest="scale_plots_same", help="Use the same max and min scale for all plots", default=False)
 	group.add_option("-y", "--plot_min", action="store", dest="plot_max", help="Set a maximum value for plots", default="Inf", type="float")
 	group.add_option("-Y", "--plot_max", action="store", dest="plot_min", help="Set a minimum value for plots", default="Inf", type="float")
@@ -1384,7 +1384,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 		max_name_width+=block_length
 		
 	
-	treewidth-=(max_name_width+(fontsize/2))
+	treewidth-=(max_name_width+(fontsize/2)+5)
 #	treewidth-=xoffset
 	
 	if options.log_branches:
@@ -1475,6 +1475,8 @@ class Track:
 		
 		newplot.number_of_windows=newplot.number_of_windows*(fragments*options.npages)
 		newplot.plot_type=plot_type
+		if plot_type=="stackedarea":
+			newplot.transparency=1.0
 		datalines=newplot.read_plot_from_file(filename)
 		
 		newplot.beginning=self.beginning
@@ -2142,8 +2144,11 @@ class Plot:
 					currpos+=1
 				if float(words[0])>=endpos:
 					break
+				sumtot=0.0
 				for x in xrange(len(data)):
-					data[x].append(float(words[x+1]))
+					data[x].append(float(words[x+1])+sumtot)
+					if self.plot_type=="stackedarea":
+						sumtot+=float(words[x+1])
 			elif samtools:
 				words=line.strip().split()
 				while (float(words[1])+contiglocs[words[0]])>=currpos and (float(words[1])+contiglocs[words[0]])<=endpos:# and (float(words[1])+contiglocs[words[0]])>=self.beginning:
@@ -2173,7 +2178,7 @@ class Plot:
 		self.calculate_windowsize(data)
 		
 		
-		if len(data)>1 and self.reorder_data:# and self.plot_type=="area" :
+		if len(data)>1 and self.reorder_data:# and self.plot_type!="stackedarea" :
 			data_order=[]
 			datameans=[]
 			for x, datum in enumerate(data):
@@ -2192,7 +2197,6 @@ class Plot:
 		else:
 			data_order=xrange(len(data))
 		
-		
 		self.data=[]
 		self.xdata=[]
 		
@@ -2207,7 +2211,7 @@ class Plot:
 				end=self.end
 #			self.window_size=3
 #			print self.end
-			if self.plot_type in ["line", "area"]:
+			if self.plot_type in ["line", "area", "stackedarea"]:
 				for y in xrange(0,len(data[x]),self.window_size):
 					
 					windowstart=int(y-floor((self.window_size-1)/2))
@@ -2279,7 +2283,7 @@ class Plot:
 			valueMax = max(map(max,self.data))
 		
 		printdata=[]
-		if self.plot_type in ["line", "area"]:
+		if self.plot_type in ["line", "area", "stackedarea"]:
 			for x, data in enumerate(self.data):
 				currdata=[]
 				for y, datum in enumerate(data):
@@ -2305,7 +2309,7 @@ class Plot:
 						end=self.xdata[x][y]
 				printdata.append(currdata)
 				
-		if self.plot_type in ["line", "area"]:
+		if self.plot_type in ["line", "area", "stackedarea"]:
 			return printdata, valueMin, valueMax
 		elif self.plot_type in ["bar", "heat"]:
 			return printdata, end, valueMin, valueMax
@@ -2418,6 +2422,8 @@ class Plot:
 		data, valueMin, valueMax=self.get_data_to_print()
 		if height<30:
 			self.legend=False
+			
+		
 		if self.legend and len(self.labels)>0:
 			
 			if self.autolegend:
@@ -2435,14 +2441,20 @@ class Plot:
 			legend.x = x
 			if self.plot_type=="line":
 				legend.y = y-(self.legend_font_size)
-			elif self.plot_type=="area":
+			elif self.plot_type in ["area", "stackedarea"]:
 				legend.y = y-(self.legend_font_size/2)
 			legend.strokeWidth=self.strokeweight
 			legend.alignment='right'
 			legend.fontName=self.legend_font
 			legend.fontSize=self.legend_font_size
 			legend.boxAnchor="nw"
-			legend.colorNamePairs  = [(self.line_colours[i], self.labels[i]) for i in xrange(len(data))]
+			if self.plot_type=="stackedarea":
+				legend.colorNamePairs  = []
+				for i in xrange(len(data)):
+					legend.colorNamePairs.append((self.line_colours[i], self.labels[len(data)-(i+1)]))
+					#lp.lines[i].strokeColor=self.line_colours[len(lp.data)-(j+1)]
+			else:
+				legend.colorNamePairs  = [(self.line_colours[i], self.labels[i]) for i in xrange(len(data))]
 			
 			maxlabelwidth=0
 			for label in self.labels:
@@ -2456,7 +2468,7 @@ class Plot:
 			if self.plot_type=="line":
 				legend.dy=self.strokeweight
 				legend.dx=10
-			elif self.plot_type=="area":
+			elif self.plot_type in ["area", "stackedarea"]:
 				legend.dy=self.legend_font_size
 				legend.dx=self.legend_font_size
 			legend.swdy=legend.dy/2
@@ -2516,14 +2528,22 @@ class Plot:
 #		print lp.yValueAxis.scale(0)
 		
 #		lp.yValueAxis.valueSteps=[lp.yValueAxis.valueMin, lp.yValueAxis.valueMax]
-		
+		if self.plot_type=="stackedarea":
+			for i in xrange(len(self.line_colours)):
+				self.line_colours[i].alpha=1.0
 		for i in xrange(len(lp.data)):
 			j=i
 			while j>=len(self.line_colours):
 				j-=len(self.line_colours)
-			lp.lines[i].strokeColor=self.line_colours[j]
+			if self.plot_type=="stackedarea":
+				if j>len(self.line_colours):
+					lp.lines[i].strokeColor=self.line_colours[len(self.line_colours)-(j+1)]
+				else:
+					lp.lines[i].strokeColor=self.line_colours[len(lp.data)-(j+1)]
+			else:
+				lp.lines[i].strokeColor=self.line_colours[j]
 			lp.lines[i].strokeWidth=self.strokeweight
-		if self.plot_type=="area":
+		if self.plot_type in ["area", "stackedarea"]:
 			for i in xrange(len(lp.data)):
 				lp.data[i].append((lp.data[i][-1][0], lp.yValueAxis.valueMin))
 			lp._inFill=True
@@ -2636,7 +2656,7 @@ class Plot:
 	
 	def draw_plot(self, x, y, height, length):
 #		self.raw_data_to_data(self)
-		if self.plot_type in ["line", "area"]:
+		if self.plot_type in ["line", "area", "stackedarea"]:
 			self.draw_line_plot(x, y, height, length)
 		elif self.plot_type=="heat":
 			self.draw_heatmap(x, y, height, length)
@@ -2942,9 +2962,9 @@ if __name__ == "__main__":
 		if arg.lower() in ["tree", "list"]:
 			input_order.append(arg.lower())
 			continue
-		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area","embl", "gb", "gbk", "tab", "bam", "bcf", "fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs"]:
+		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea","embl", "gb", "gbk", "tab", "bam", "bcf", "fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs"]:
 			
-			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "bam"] or options.qualifier=="":
+			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea", "bam"] or options.qualifier=="":
 				newtrack = Track()
 				if options.suffix != "":
 					namelen=len(arg.split("/")[-1])
@@ -2994,7 +3014,7 @@ if __name__ == "__main__":
 					track_names[newtrack.name]=[]
 				input_order.append(name)
 				my_tracks[name]=newtrack
-			elif arg.split('.')[-1].lower() in ["hist", "heat", "bar", "line", "area"]:
+			elif arg.split('.')[-1].lower() in ["hist", "heat", "bar", "line", "area", "stackedarea"]:
 				track_count+=options.plotheight
 				newtrack.track_height=options.plotheight
 				plot_type=arg.split('.')[-1].lower()
@@ -3126,7 +3146,7 @@ if __name__ == "__main__":
 					my_tracks[name]=newtrack
 				
 			
-			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "bam"]:# or (arg.split('.')[-1].lower()=="tab" and options.qualifier==""):
+			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea", "bam"]:# or (arg.split('.')[-1].lower()=="tab" and options.qualifier==""):
 				newtrack.name=name
 				x=1
 				while name in my_tracks:
