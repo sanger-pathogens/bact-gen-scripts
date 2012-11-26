@@ -1256,13 +1256,12 @@ def add_node_names_to_tree(tree, pamltree):
 			nodename=str(int(pamltree.node(node).get_data().support))		
 		else:
 			return
-		
-		
-		
+
 		downstreamtaxa=pamltree.get_taxa(node)
 		downstreamnamelist=[]
 		for taxon in downstreamtaxa:
 			downstreamnamelist.append(taxon.split("_")[1])
+			print downstreamnamelist
 		
 		downstreamnamelist.sort()
 		paml_node_names[' '.join(downstreamnamelist)]=nodename
