@@ -2853,23 +2853,23 @@ if __name__ == "__main__":
 								newtrack.datamin=float(words[2])
 							except StandardError:
 								try:
-									newtrack.datamin=min(colourslist[x])
+									newtrack.datamin=min(map(float,colourslist[x]))
 								except StandardError:
 									newtrack.datatype="discrete"
 							try:
 								newtrack.datamax=float(words[3])
 							except StandardError:
 								try:
-									newtrack.datamax=max(colourslist[x])
+									newtrack.datamax=max(map(float,colourslist[x]))
 								except StandardError:
 									newtrack.datatype="discrete"
 						else:
 							try:
-								newtrack.datamin=min(colourslist[x])
+								newtrack.datamin=min(map(float,colourslist[x]))
 							except StandardError:
 								newtrack.datatype="discrete"
 							try:
-								newtrack.datamax=max(colourslist[x])
+								newtrack.datamax=max(map(float,colourslist[x]))
 							except StandardError:
 								newtrack.datatype="discrete"
 					elif words[1] in ["D", "d"]:
@@ -2879,7 +2879,15 @@ if __name__ == "__main__":
 				else:
 					newtrack.datatype="discrete"
 				
-				colourslist[x].sort()
+				try:
+					colourslist[x]=map(float,colourslist[x])
+					colourslist[x].sort()
+				except StandardError:
+					try:
+						colourslist[x]=map(int,colourslist[x])
+						colourslist[x].sort()
+					except StandardError:
+						colourslist[x].sort()
 				
 				if "" in colourslist[x]:
 					colour_dict[x][""]=(0,0,0)
@@ -2899,9 +2907,10 @@ if __name__ == "__main__":
 					for y, name in enumerate(colourslist[x]):
 						value=name
 						if value<newtrack.datamin:
-							value-newtrack.datamin
+							value=newtrack.datamin
 						elif value>newtrack.datamax:
 							value=newtrack.datamax
+					
 						proportion=((float(value)-newtrack.datamin)/((newtrack.datamax-newtrack.datamin)))*255
 						
 						
