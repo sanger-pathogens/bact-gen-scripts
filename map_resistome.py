@@ -103,9 +103,10 @@ if __name__ == "__main__":
 		nons=sequence.replace("n"," ").replace("N"," ").split()
 		if len(nons)>1:
 			for x, seq in enumerate(nons):
-				print >> fastaout, ">"+name+"_part"+str(x+1)
-				print >> fastaout, nons[x]
-				#print name+"_part"+str(x+1), len(nons[x])
+				if len(nons[x])>13:#remove contigs smaller than has length - will dies in smalt otherwise
+					print >> fastaout, ">"+name+"_part"+str(x+1)
+					print >> fastaout, nons[x]
+					#print name+"_part"+str(x+1), len(nons[x])
 		else:
 			print >> fastaout, ">"+name
 			print >> fastaout, nons[0]

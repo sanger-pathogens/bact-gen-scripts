@@ -2811,7 +2811,10 @@ if __name__ == "__main__":
 						try:
 							colour_column_entry=int(words[column-1].strip())
 						except ValueError:
-							colour_column_entry=words[column-1].strip()
+							try:
+								colour_column_entry=float(words[column-1].strip())
+							except ValueError:
+								colour_column_entry=words[column-1].strip()
 						
 						if colour_column_entry in ["", "-"]:
 							continue
@@ -2879,15 +2882,17 @@ if __name__ == "__main__":
 				else:
 					newtrack.datatype="discrete"
 				
-				try:
-					colourslist[x]=map(float,colourslist[x])
-					colourslist[x].sort()
-				except StandardError:
-					try:
-						colourslist[x]=map(int,colourslist[x])
-						colourslist[x].sort()
-					except StandardError:
-						colourslist[x].sort()
+#				try:
+#					colourslist[x]=map(float,colourslist[x])
+#					colourslist[x].sort()
+#				except StandardError:
+#					try:
+#						colourslist[x]=map(int,colourslist[x])
+#						colourslist[x].sort()
+#					except StandardError:
+#						colourslist[x].sort()
+				
+				colourslist[x].sort()
 				
 				if "" in colourslist[x]:
 					colour_dict[x][""]=(0,0,0)

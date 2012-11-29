@@ -260,7 +260,7 @@ for gene in genes_present:
     #print gene
 
     if gene[1]==bestgene[1]:
-        if gene[2]<bestgene[3]:
+        if (bestgene[3]-gene[2])>(bestgene[5]*0.5) or (bestgene[3]-gene[2])>(gene[5]*0.5):
             #print "overlap"
             if float(gene[6]+gene[7]+gene[8])/gene[5] < float(bestgene[6]+bestgene[7]+bestgene[8])/bestgene[5]:
                 secondary_genes.append(';'.join(map(str, bestgene[:-1])))
