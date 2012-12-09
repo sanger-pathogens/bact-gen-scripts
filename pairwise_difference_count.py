@@ -78,7 +78,7 @@ if __name__ == "__main__":
 	
 	for x, taxon in enumerate(seqnames):
 		taxonseq=""
-		print x+1
+#		print x+1
 		for sequence in alignment:
 			if sequence.name==taxon:
 				taxonseq=str(sequence.seq).upper()
