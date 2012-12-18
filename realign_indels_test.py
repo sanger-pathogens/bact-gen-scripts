@@ -65,6 +65,7 @@ def get_user_options():
 	parser.add_option("-r", "--reference", action="store", dest="ref", help="Reference DNA sequence (in fasta or multi-fasta format)", default="", metavar="FILE")
 	parser.add_option("-b", "--bam", action="store", dest="bam", help="Input bam file", default="")
 	parser.add_option("-B", "--bcf", action="store", dest="bcf", help="Input bcf/vcf file", default="")
+	parser.add_option("-i", "--iselements", action="store", dest="iselements", help="Input bam is element file", default="")
 	parser.add_option("-v", "--vcf", action="store_true", dest="vcf", help="variant file is in vcf format", default=False)
 	parser.add_option("-o", "--output", action="store", dest="output", help="Output file prefix", default="")
 	parser.add_option("-t", "--tempname", action="store", dest="tmpname", help="Prefix for temporary files", default="")
@@ -414,54 +415,190 @@ if __name__ == "__main__":
 	
 	#get the maximum read length
 	
-	print "Extracting read mapping information"
-	sys.stdout.flush()
-	
-	try: samfile = pysam.Samfile( options.bam, "rb" )
-	except StandardError:
-		print tmpname+".bam not a bam file"
-		sys.exit() 
-		
-	maxrlen=0
-	insertsizes=[]
-		
-	for read in samfile:
-		if read.rlen>maxrlen:
-			maxrlen=read.rlen
-		if read.tlen>0 and read.tlen<1000:
-			insertsizes.append(read.tlen)
-		elif read.tlen<0 and read.tlen>-1000:
-			insertsizes.append(read.tlen*-1)
-	
-	meaninsert=mean(insertsizes)
-	medianinsert=median(insertsizes)
-	stdinsert=std(insertsizes)
-	print "Max read length =", maxrlen
-	print "Mean insert size =", meaninsert
-	print "Median insert size =", medianinsert
-	print "Insert size standard deviation =", stdinsert
-	
-	depths=[]
-	
-	for pileupcolumn in samfile.pileup():
-		depths.append(pileupcolumn.n)
-		
-	meandepth=mean(depths)
-	mediandepth=median(depths)
-	stddepth=std(depths)
-	
-	print "Mean read depth =", meandepth
-	print "Median read depth =", mediandepth
-	print "Read depth standard deviation =", stddepth	
-		
-	samfile.close()
-	
-	
-	sys.stdout.flush()
+#	print "Extracting read mapping information"
+#	sys.stdout.flush()
+#	
+#	try: samfile = pysam.Samfile( options.bam, "rb" )
+#	except StandardError:
+#		print tmpname+".bam not a bam file"
+#		sys.exit() 
+#		
+#	maxrlen=0
+#	insertsizes=[]
+#		
+#	for read in samfile:
+#		if read.rlen>maxrlen:
+#			maxrlen=read.rlen
+#		if read.tlen>0 and read.tlen<1000:
+#			insertsizes.append(read.tlen)
+#		elif read.tlen<0 and read.tlen>-1000:
+#			insertsizes.append(read.tlen*-1)
+#	
+#	meaninsert=mean(insertsizes)
+#	medianinsert=median(insertsizes)
+#	stdinsert=std(insertsizes)
+#	print "Max read length =", maxrlen
+#	print "Mean insert size =", meaninsert
+#	print "Median insert size =", medianinsert
+#	print "Insert size standard deviation =", stdinsert
+#	
+#	depths=[]
+#	
+#	for pileupcolumn in samfile.pileup():
+#		depths.append(pileupcolumn.n)
+#		
+#	meandepth=mean(depths)
+#	mediandepth=median(depths)
+#	stddepth=std(depths)
+#	
+#	print "Mean read depth =", meandepth
+#	print "Median read depth =", mediandepth
+#	print "Read depth standard deviation =", stddepth	
+#		
+#	samfile.close()
+#	
+#	
+#	sys.stdout.flush()
 	
 	
 	indels={}
 	indelnum=0
+	
+	
+	
+	
+	
+	
+	if options.iselements!="":
+		try: samfile = pysam.Samfile( options.iselements, "rb" )
+		except StandardError:
+			print bamfile+" not a bam file"
+			sys.exit()
+		coverage={}
+		for read in samfile:
+			
+			ISname=read.qname.split("_")[-2]
+			direction=read.qname.split("_")[-1]
+			if not read.tid in coverage:
+				coverage[read.tid]={}
+			
+			toadd=[]
+			
+			pos=read.pos
+			for cig in read.cigar:
+				if cig[0]==0:
+					for x in xrange(0,cig[1]):
+						toadd.append(pos)
+						pos+=1
+				elif cig[0]==2:
+					for x in xrange(0,cig[1]):
+						pos+=1
+			#print read.pos, read.cigar, toadd	
+			
+			if read.is_reverse and direction=="R":
+				status="forward"
+				for pos in toadd:
+					if not pos in coverage[read.tid]:
+						coverage[read.tid][pos]={}
+					if not ISname in coverage[read.tid][pos]:
+						coverage[read.tid][pos][ISname]={}
+					if not "elementforward" in coverage[read.tid][pos][ISname]:
+						coverage[read.tid][pos][ISname]["elementforward"]={}
+					if not "readreverse" in coverage[read.tid][pos][ISname]["elementforward"]:
+						coverage[read.tid][pos][ISname]["elementforward"]["readreverse"]=0
+					coverage[read.tid][pos][ISname]["elementforward"]["readreverse"]+=1
+			elif read.is_reverse and direction=="F":
+				status="reverse"
+				for pos in toadd:
+					if not pos in coverage[read.tid]:
+						coverage[read.tid][pos]={}
+					if not ISname in coverage[read.tid][pos]:
+						coverage[read.tid][pos][ISname]={}
+					if not "elementreverse" in coverage[read.tid][pos][ISname]:
+						coverage[read.tid][pos][ISname]["elementreverse"]={}
+					if not "readreverse" in coverage[read.tid][pos][ISname]["elementreverse"]:
+						coverage[read.tid][pos][ISname]["elementreverse"]["readreverse"]=0
+					coverage[read.tid][pos][ISname]["elementreverse"]["readreverse"]+=1
+			elif not read.is_reverse and direction=="F":
+				status="forward"
+				for pos in toadd:
+					if not pos in coverage[read.tid]:
+						coverage[read.tid][pos]={}
+					if not ISname in coverage[read.tid][pos]:
+						coverage[read.tid][pos][ISname]={}
+					if not "elementforward" in coverage[read.tid][pos][ISname]:
+						coverage[read.tid][pos][ISname]["elementforward"]={}
+					if not "readforward" in coverage[read.tid][pos][ISname]["elementforward"]:
+						coverage[read.tid][pos][ISname]["elementforward"]["readforward"]=0
+					coverage[read.tid][pos][ISname]["elementforward"]["readforward"]+=1
+					coverage[read.tid][pos][ISname]["elementforward"]["readforward"]+=1
+			elif not read.is_reverse and direction=="R":
+				status="reverse"
+				for pos in toadd:
+					if not pos in coverage[read.tid]:
+						coverage[read.tid][pos]={}
+					if not ISname in coverage[read.tid][pos]:
+						coverage[read.tid][pos][ISname]={}
+					if not "elementreverse" in coverage[read.tid][pos][ISname]:
+						coverage[read.tid][pos][ISname]["elementreverse"]={}
+					if not "readforward" in coverage[read.tid][pos][ISname]["elementreverse"]:
+						coverage[read.tid][pos][ISname]["elementreverse"]["readforward"]=0
+					coverage[read.tid][pos][ISname]["elementreverse"]["readforward"]+=1
+					coverage[read.tid][pos][ISname]["elementreverse"]["readforward"]+=1
+			#print ISname, direction, read.is_reverse, status
+	
+	tidlist=coverage.keys()
+	for tid in tidlist:
+		poslist=coverage[tid].keys()
+		for pos in poslist:
+			elementlist=coverage[tid][pos].keys()
+			for element in elementlist:
+				eldrnlist=coverage[tid][pos][element].keys()
+				for eldrn in eldrnlist:
+					#print coverage[tid][pos][element][eldrn].keys()
+					if not "readforward" in  coverage[tid][pos][element][eldrn] or not "readreverse" in coverage[tid][pos][element][eldrn]:
+						del coverage[tid][pos][element][eldrn]
+				if len(coverage[tid][pos][element].keys())==0:
+					del coverage[tid][pos][element]
+			if len(coverage[tid][pos].keys())==0:
+				del coverage[tid][pos]
+		if len(coverage[tid].keys())==0:
+			del coverage[tid]
+	
+	overlaps=[]
+	for tid in coverage:
+		for pos in coverage[tid]:
+			for element in coverage[tid][pos]:
+				for eldrn in coverage[tid][pos][element]:
+					if not "readforward" in  coverage[tid][pos][element][eldrn] or not "readreverse" in coverage[tid][pos][element][eldrn]:
+						continue
+					else:
+						count=coverage[tid][pos][element][eldrn]["readforward"]+coverage[tid][pos][element][eldrn]["readreverse"]
+						overlaps.append([element, eldrn, tid, pos, count])
+					
+	overlaps.sort()
+	possibleinserts=[]
+	currinsert=[]
+	prevoverlap=[]
+	for overlap in overlaps:
+		if prevoverlap==[]:
+			prevoverlap=overlap
+			continue
+		if not (overlap[0]==prevoverlap[0] and overlap[3]==prevoverlap[3]+1 and overlap[2]==prevoverlap[2] and overlap[1]==prevoverlap[1]):
+			possibleinserts.append(currinsert)
+			currinsert=[]
+			
+		currinsert.append(overlap)
+		prevoverlap=overlap
+	possibleinserts.append(currinsert)
+	
+	
+	
+	sys.exit()
+	
+	
+	
+	
 	
 	
 	if options.bcf!="":
@@ -587,6 +724,30 @@ if __name__ == "__main__":
 				#print indels[indelnum]['ref'], indels[indelnum]['alt'], indels[indelnum]['start'], indels[indelnum]['info']['END']
 				
 		bcffile.close()
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	#print len(indels)
 	
@@ -1075,6 +1236,7 @@ if __name__ == "__main__":
 		
 		
 		if indel.has_key("awins"):
+			print indel["awins"]>indel["rwins"], float(indel["awins"]), (indel["awins"]+indel["rwins"]), options.proportion, indel["awins"]+indel["rwins"]+indel["draws"], options.depth,
 			if indel["awins"]>indel["rwins"] and (options.proportion==0 or (float(indel["awins"])/(indel["awins"]+indel["rwins"]))>=options.proportion) and (indel["awins"]+indel["rwins"]+indel["draws"]>options.depth):
 				if indel["info"]["SVTYPE"]=="DEL" and indel["info"]["END"]-indel["start"]>10:
 					print "del", 
@@ -1086,7 +1248,7 @@ if __name__ == "__main__":
 					except StandardError:
 						print tmpname+".bam not a bam file"
 						sys.exit()
-					lastcolumn=-1
+					lastcolumn=indel["start"]-1
 					cov_list=[]
 					for pileupcolumn in samfile.pileup(indel["chrom"], start=indel["start"], end=indel["info"]["END"], truncate=True):
 						while pileupcolumn.pos!=lastcolumn+1:
