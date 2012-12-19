@@ -83,7 +83,7 @@ if __name__ == "__main__":
 	try:
 		genesfile=open(options.genes, "rU").read()
 	except StandardError:
-		print "Could not open contigs file"
+		print "Could not open genes file"
 		sys.exit()
 		
 	genes=set([])
