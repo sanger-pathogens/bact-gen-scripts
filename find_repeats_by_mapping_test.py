@@ -304,18 +304,18 @@ if __name__ == "__main__":
 	#make random name for files
 	chars = string.ascii_letters + string.digits
 	tmpname='tmp'+"".join(choice(chars) for x in range(randint(8, 10)))
-	tmpname="tmpOPLFanZY"
-#	if options.ffastq.split(".")[-1]=="gz":
-#		print "Unzipping forward fastq file"
-#		os.system("zcat "+options.ffastq+" > "+tmpname+"_1.fastq")
-#		options.ffastq=tmpname+"_1.fastq"
-#	if options.rfastq.split(".")[-1]=="gz":
-#		print "Unzipping reverse fastq file"
-#		os.system("zcat "+options.rfastq+" > "+tmpname+"_2.fastq")
-#		options.rfastq=tmpname+"_2.fastq"
+#	tmpname="tmpOPLFanZY"
+	if options.ffastq.split(".")[-1]=="gz":
+		print "Unzipping forward fastq file"
+		os.system("zcat "+options.ffastq+" > "+tmpname+"_1.fastq")
+		options.ffastq=tmpname+"_1.fastq"
+	if options.rfastq.split(".")[-1]=="gz":
+		print "Unzipping reverse fastq file"
+		os.system("zcat "+options.rfastq+" > "+tmpname+"_2.fastq")
+		options.rfastq=tmpname+"_2.fastq"
 	
 	
-	#map_reads(freads=options.ffastq, rreads=options.rfastq, ref=options.query, maprepeats=True, outputname=tmpname, percentid=options.queryid)
+	map_reads(freads=options.ffastq, rreads=options.rfastq, ref=options.query, maprepeats=True, outputname=tmpname, percentid=options.queryid)
 	
 	query_contigs=get_references(tmpname+".bam")
 	

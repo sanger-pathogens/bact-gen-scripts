@@ -65,7 +65,8 @@ def get_user_options():
 	parser.add_option("-r", "--reference", action="store", dest="ref", help="Reference DNA sequence (in fasta or multi-fasta format)", default="", metavar="FILE")
 	parser.add_option("-b", "--bam", action="store", dest="bam", help="Input bam file", default="")
 	parser.add_option("-B", "--bcf", action="store", dest="bcf", help="Input bcf/vcf file", default="")
-	parser.add_option("-i", "--iselements", action="store", dest="iselements", help="Input bam is element file", default="")
+	parser.add_option("-i", "--isbam", action="store", dest="iselements", help="Input bam IS element file", default="")
+	parser.add_option("-I", "--issequence", action="store", dest="ISfasta", help="Input fasta file of IS element file", default="")
 	parser.add_option("-v", "--vcf", action="store_true", dest="vcf", help="variant file is in vcf format", default=False)
 	parser.add_option("-o", "--output", action="store", dest="output", help="Output file prefix", default="")
 	parser.add_option("-t", "--tempname", action="store", dest="tmpname", help="Prefix for temporary files", default="")
@@ -406,59 +407,81 @@ if __name__ == "__main__":
 	
 	sequences={}
 	altsequences={}
-	reffile=open(options.ref, "rU")
+	try:
+		reffile=open(options.ref, "rU")
+	except StandardError:
+		print "Could not open reference sequence file"
+		sys.exit()
 	lines=reffile.read().split('>')[1:]
 	for line in lines:
 		words=line.strip().split('\n')
 		sequences[words[0].split()[0]]=''.join(words[1:]).upper()
 	reffile.close()
 	
+	
+	
+	
+	
+	ISsequences={}
+	if options.ISfasta!="":
+		print "Reading IS element sequences"
+		try:
+			ISfile=open(options.ISfasta, "rU")
+		except StandardError:
+			print "Could not open IS sequence file"
+			sys.exit()
+		lines=ISfile.read().split('>')[1:]
+		for line in lines:
+			words=line.strip().split('\n')
+			ISsequences[words[0].split()[0]]=''.join(words[1:]).upper()
+		ISfile.close()
+	
 	#get the maximum read length
 	
-#	print "Extracting read mapping information"
-#	sys.stdout.flush()
-#	
-#	try: samfile = pysam.Samfile( options.bam, "rb" )
-#	except StandardError:
-#		print tmpname+".bam not a bam file"
-#		sys.exit() 
-#		
-#	maxrlen=0
-#	insertsizes=[]
-#		
-#	for read in samfile:
-#		if read.rlen>maxrlen:
-#			maxrlen=read.rlen
-#		if read.tlen>0 and read.tlen<1000:
-#			insertsizes.append(read.tlen)
-#		elif read.tlen<0 and read.tlen>-1000:
-#			insertsizes.append(read.tlen*-1)
-#	
-#	meaninsert=mean(insertsizes)
-#	medianinsert=median(insertsizes)
-#	stdinsert=std(insertsizes)
-#	print "Max read length =", maxrlen
-#	print "Mean insert size =", meaninsert
-#	print "Median insert size =", medianinsert
-#	print "Insert size standard deviation =", stdinsert
-#	
-#	depths=[]
-#	
-#	for pileupcolumn in samfile.pileup():
-#		depths.append(pileupcolumn.n)
-#		
-#	meandepth=mean(depths)
-#	mediandepth=median(depths)
-#	stddepth=std(depths)
-#	
-#	print "Mean read depth =", meandepth
-#	print "Median read depth =", mediandepth
-#	print "Read depth standard deviation =", stddepth	
-#		
-#	samfile.close()
-#	
-#	
-#	sys.stdout.flush()
+	print "Extracting read mapping information"
+	sys.stdout.flush()
+	
+	try: samfile = pysam.Samfile( options.bam, "rb" )
+	except StandardError:
+		print tmpname+".bam not a bam file"
+		sys.exit() 
+		
+	maxrlen=0
+	insertsizes=[]
+		
+	for read in samfile:
+		if read.rlen>maxrlen:
+			maxrlen=read.rlen
+		if read.tlen>0 and read.tlen<1000:
+			insertsizes.append(read.tlen)
+		elif read.tlen<0 and read.tlen>-1000:
+			insertsizes.append(read.tlen*-1)
+	
+	meaninsert=mean(insertsizes)
+	medianinsert=median(insertsizes)
+	stdinsert=std(insertsizes)
+	print "Max read length =", maxrlen
+	print "Mean insert size =", meaninsert
+	print "Median insert size =", medianinsert
+	print "Insert size standard deviation =", stdinsert
+	
+	depths=[]
+	
+	for pileupcolumn in samfile.pileup():
+		depths.append(pileupcolumn.n)
+		
+	meandepth=mean(depths)
+	mediandepth=median(depths)
+	stddepth=std(depths)
+	
+	print "Mean read depth =", meandepth
+	print "Median read depth =", mediandepth
+	print "Read depth standard deviation =", stddepth	
+		
+	samfile.close()
+	
+	
+	sys.stdout.flush()
 	
 	
 	indels={}
@@ -469,7 +492,7 @@ if __name__ == "__main__":
 	
 	
 	
-	if options.iselements!="":
+	if options.iselements!="" and len(ISsequences)>0:
 		try: samfile = pysam.Samfile( options.iselements, "rb" )
 		except StandardError:
 			print bamfile+" not a bam file"
@@ -547,54 +570,86 @@ if __name__ == "__main__":
 					coverage[read.tid][pos][ISname]["elementreverse"]["readforward"]+=1
 			#print ISname, direction, read.is_reverse, status
 	
-	tidlist=coverage.keys()
-	for tid in tidlist:
-		poslist=coverage[tid].keys()
-		for pos in poslist:
-			elementlist=coverage[tid][pos].keys()
-			for element in elementlist:
-				eldrnlist=coverage[tid][pos][element].keys()
-				for eldrn in eldrnlist:
-					#print coverage[tid][pos][element][eldrn].keys()
-					if not "readforward" in  coverage[tid][pos][element][eldrn] or not "readreverse" in coverage[tid][pos][element][eldrn]:
-						del coverage[tid][pos][element][eldrn]
-				if len(coverage[tid][pos][element].keys())==0:
-					del coverage[tid][pos][element]
-			if len(coverage[tid][pos].keys())==0:
-				del coverage[tid][pos]
-		if len(coverage[tid].keys())==0:
-			del coverage[tid]
-	
-	overlaps=[]
-	for tid in coverage:
-		for pos in coverage[tid]:
-			for element in coverage[tid][pos]:
-				for eldrn in coverage[tid][pos][element]:
-					if not "readforward" in  coverage[tid][pos][element][eldrn] or not "readreverse" in coverage[tid][pos][element][eldrn]:
-						continue
-					else:
-						count=coverage[tid][pos][element][eldrn]["readforward"]+coverage[tid][pos][element][eldrn]["readreverse"]
-						overlaps.append([element, eldrn, tid, pos, count])
-					
-	overlaps.sort()
-	possibleinserts=[]
-	currinsert=[]
-	prevoverlap=[]
-	for overlap in overlaps:
-		if prevoverlap==[]:
+		tidlist=coverage.keys()
+		for tid in tidlist:
+			poslist=coverage[tid].keys()
+			for pos in poslist:
+				elementlist=coverage[tid][pos].keys()
+				for element in elementlist:
+					eldrnlist=coverage[tid][pos][element].keys()
+					for eldrn in eldrnlist:
+						#print coverage[tid][pos][element][eldrn].keys()
+						if not "readforward" in  coverage[tid][pos][element][eldrn] or not "readreverse" in coverage[tid][pos][element][eldrn]:
+							del coverage[tid][pos][element][eldrn]
+					if len(coverage[tid][pos][element].keys())==0:
+						del coverage[tid][pos][element]
+				if len(coverage[tid][pos].keys())==0:
+					del coverage[tid][pos]
+			if len(coverage[tid].keys())==0:
+				del coverage[tid]
+		
+		overlaps=[]
+		for tid in coverage:
+			for pos in coverage[tid]:
+				for element in coverage[tid][pos]:
+					for eldrn in coverage[tid][pos][element]:
+						if not "readforward" in  coverage[tid][pos][element][eldrn] or not "readreverse" in coverage[tid][pos][element][eldrn]:
+							continue
+						else:
+							count=coverage[tid][pos][element][eldrn]["readforward"]+coverage[tid][pos][element][eldrn]["readreverse"]
+							overlaps.append([element, eldrn, samfile.getrname(tid), pos, count])
+						
+		overlaps.sort()
+		possibleinserts=[]
+		currinsert=[]
+		prevoverlap=[]
+		for overlap in overlaps:
+			if prevoverlap==[]:
+				prevoverlap=overlap
+				continue
+			if not (overlap[0]==prevoverlap[0] and overlap[3]==prevoverlap[3]+1 and overlap[2]==prevoverlap[2] and overlap[1]==prevoverlap[1]):
+				possibleinserts.append(currinsert)
+				currinsert=[]
+				
+			currinsert.append(overlap)
 			prevoverlap=overlap
-			continue
-		if not (overlap[0]==prevoverlap[0] and overlap[3]==prevoverlap[3]+1 and overlap[2]==prevoverlap[2] and overlap[1]==prevoverlap[1]):
-			possibleinserts.append(currinsert)
-			currinsert=[]
+		possibleinserts.append(currinsert)
+		
+		for possibleinsert in  possibleinserts:
+			print possibleinsert
+			indelnum+=1
+			indels[indelnum]={}
+			indels[indelnum]["info"]={}
+			indels[indelnum]["chrom"]=possibleinsert[0][2]
+			indels[indelnum]['start']=possibleinsert[-1][3]+1
+			indels[indelnum]['info']['END']=possibleinsert[-1][3]+2
+			indels[indelnum]["info"]["SVTYPE"]="INS"
+			indels[indelnum]["info"]["info"]="from ISscan: "+possibleinsert[0][0]
+			indels[indelnum]['ref']=sequences[indels[indelnum]["chrom"]][indels[indelnum]['start']-1]
+			if possibleinsert[0][1]=="elementforward":
+				indels[indelnum]['alt']=sequences[indels[indelnum]["chrom"]][possibleinsert[-1][3]-1]+ISsequences[possibleinsert[0][0]]+sequences[indels[indelnum]["chrom"]][possibleinsert[0][3]-1:possibleinsert[-1][3]+1]
+			else:
+				indels[indelnum]['alt']=sequences[indels[indelnum]["chrom"]][possibleinsert[-1][3]-1]+revcomp(ISsequences[possibleinsert[0][0]])+sequences[indels[indelnum]["chrom"]][possibleinsert[0][3]-1:possibleinsert[-1][3]+1]
+			indels[indelnum]["info"]["SVLEN"]=len(indels[indelnum]['alt'])-len(indels[indelnum]['ref'])
+				
 			
-		currinsert.append(overlap)
-		prevoverlap=overlap
-	possibleinserts.append(currinsert)
+			
+			
+			print indels[indelnum]
+		
+#		indels[indelnum]['alt']=BASEINFO["ALT"].split(",")[0][0].upper()+altseq
+#		indels[indelnum]['ref']=BASEINFO["REF"].split(",")[0][0].upper()+refseq
+#		indels[indelnum]['start']=int(BASEINFO["POS"])
+#		indels[indelnum]['info']['END']=int(BASEINFO["POS"]+len(indels[indelnum]['ref']))
+#		indels[indelnum]["info"]["SVLEN"]=len(indels[indelnum]['alt'])-len(indels[indelnum]['ref'])
+#		if indels[indelnum]["info"]["SVLEN"]>0:
+#			indels[indelnum]["info"]["SVTYPE"]="INS"
+#		else:
+#			indels[indelnum]["info"]["SVTYPE"]="DEL"
+#		indels[indelnum]["chrom"]=BASEINFO["CHROM"]
+#		indels[indelnum]["info"]["info"]="from bcf"
 	
-	
-	
-	sys.exit()
+	#sys.exit()
 	
 	
 	
@@ -1195,6 +1250,13 @@ if __name__ == "__main__":
 				contigs[sequence]=sequences[sequence]
 		output.close()
 		
+		
+		
+		
+		
+		
+		
+#		sys.exit()
 		#map the reads
 		map_reads(freads=tmpname+"_1.fastq", rreads=tmpname+"_2.fastq", ref=tmpname+".alt.dna")
 		
@@ -1236,32 +1298,32 @@ if __name__ == "__main__":
 		
 		
 		if indel.has_key("awins"):
-			print indel["awins"]>indel["rwins"], float(indel["awins"]), (indel["awins"]+indel["rwins"]), options.proportion, indel["awins"]+indel["rwins"]+indel["draws"], options.depth,
+			#print indel["awins"]>indel["rwins"], float(indel["awins"]), (indel["awins"]+indel["rwins"]), options.proportion, indel["awins"]+indel["rwins"]+indel["draws"], options.depth,
 			if indel["awins"]>indel["rwins"] and (options.proportion==0 or (float(indel["awins"])/(indel["awins"]+indel["rwins"]))>=options.proportion) and (indel["awins"]+indel["rwins"]+indel["draws"]>options.depth):
-				if indel["info"]["SVTYPE"]=="DEL" and indel["info"]["END"]-indel["start"]>10:
-					print "del", 
-					
-					#os.system(SAMTOOLS_DIR+"samtools view -b -o "+tmpname+".bam "+options.bam+" '"+indel["chrom"]+":"+str(int(indel["start"]))+"-"+str(int(indel["info"]["END"]))+"'")
-		
-					
-					try: samfile = pysam.Samfile( options.bam, "rb" )
-					except StandardError:
-						print tmpname+".bam not a bam file"
-						sys.exit()
-					lastcolumn=indel["start"]-1
-					cov_list=[]
-					for pileupcolumn in samfile.pileup(indel["chrom"], start=indel["start"], end=indel["info"]["END"], truncate=True):
-						while pileupcolumn.pos!=lastcolumn+1:
-							cov_list.append(0)
-							lastcolumn+=1
-						cov_list.append(pileupcolumn.n)
-						lastcolumn=pileupcolumn.pos
-					print max(cov_list), mean(cov_list), median(cov_list),
-					
-					
-#					for read in samfile:
-#						regionreads.add(read.qname)
-					samfile.close()
+#				if indel["info"]["SVTYPE"]=="DEL" and indel["info"]["END"]-indel["start"]>10:
+#					#print "del", 
+#					
+#					#os.system(SAMTOOLS_DIR+"samtools view -b -o "+tmpname+".bam "+options.bam+" '"+indel["chrom"]+":"+str(int(indel["start"]))+"-"+str(int(indel["info"]["END"]))+"'")
+#		
+#					
+#					try: samfile = pysam.Samfile( options.bam, "rb" )
+#					except StandardError:
+#						print tmpname+".bam not a bam file"
+#						sys.exit()
+#					lastcolumn=indel["start"]-1
+#					cov_list=[]
+#					for pileupcolumn in samfile.pileup(indel["chrom"], start=indel["start"], end=indel["info"]["END"], truncate=True):
+#						while pileupcolumn.pos!=lastcolumn+1:
+#							cov_list.append(0)
+#							lastcolumn+=1
+#						cov_list.append(pileupcolumn.n)
+#						lastcolumn=pileupcolumn.pos
+#					#print max(cov_list), mean(cov_list), median(cov_list),
+#					
+#					
+##					for read in samfile:
+##						regionreads.add(read.qname)
+#					samfile.close()
 					#sys.exit()
 					
 				print "...Accepted"
