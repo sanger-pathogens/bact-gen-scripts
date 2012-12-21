@@ -629,7 +629,7 @@ if __name__ == "__main__":
 			if possibleinsert[0][1]=="elementforward":
 				indels[indelnum]['alt']=sequences[indels[indelnum]["chrom"]][possibleinsert[-1][3]-1]+ISsequences[possibleinsert[0][0]]+sequences[indels[indelnum]["chrom"]][possibleinsert[0][3]-1:possibleinsert[-1][3]+1]
 			else:
-				indels[indelnum]['alt']=sequences[indels[indelnum]["chrom"]][possibleinsert[-1][3]-1]+revcomp(ISsequences[possibleinsert[0][0]])+sequences[indels[indelnum]["chrom"]][possibleinsert[0][3]-1:possibleinsert[-1][3]+1]
+				indels[indelnum]['alt']=sequences[indels[indelnum]["chrom"]][possibleinsert[-1][3]]+revcomp(ISsequences[possibleinsert[0][0]])+sequences[indels[indelnum]["chrom"]][possibleinsert[0][3]-1:possibleinsert[-1][3]+1]
 			indels[indelnum]["info"]["SVLEN"]=len(indels[indelnum]['alt'])-len(indels[indelnum]['ref'])
 				
 			
@@ -1091,9 +1091,9 @@ if __name__ == "__main__":
 #					print indels[indel]["start"]
 				newindel["info"]["SVLEN"]=len(newindel["alt"])-len(newindel["ref"])
 				toadd.append(newindel)
+			
 	
 	
-
 	for indel in toremove:
 		del indels[indel]
 
@@ -1197,7 +1197,9 @@ if __name__ == "__main__":
 	
 	for indelpos in indelpositions:
 		indel=indels[indelpos[1]]
-		
+#		if not indel["info"]["info"]=="from ISscan: is6110":
+#			toremove.add(indelpos[1])
+#			continue
 		#first extract reads around the indel
 		if (int(indel["info"]["SVLEN"])>0 and int(indel["info"]["SVLEN"])<maxrlen) or int(indel["info"]["SVLEN"])*-1<maxrlen:
 			os.system(SAMTOOLS_DIR+"samtools view -b -o "+tmpname+".bam "+options.bam+" '"+indel["chrom"]+":"+str(int(indel["start"])-100)+"-"+str(int(indel["info"]["END"])+100)+"'")
@@ -1346,7 +1348,7 @@ if __name__ == "__main__":
 		removedindels.append(indels[indel])
 		del indels[indel]
 	
-	
+	#print indels
 	indelpositions=[]
 	
 	for indel in indels:
