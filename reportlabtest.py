@@ -70,7 +70,8 @@ def main():
 	
 	group.add_option("-o", "--output", action="store", dest="outputfile", help="output file name [default= %default]", type="string", metavar="FILE", default="test.pdf")
 	group.add_option("-O", "--orientation", action="store", choices=['landscape', 'portrait'], dest="orientation", help="page orientation [default= %default]", type="choice", default="landscape")
-	group.add_option("-p", "--pagesize", action="store", choices=['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'B0', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'LEGAL', 'LETTER', 'legal', 'letter'], dest="page", help="page size [default= %default]", type="choice", default="A4")
+	group.add_option("-p", "--pagesize", action="store", choices=['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'B0', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'LEGAL', 'LETTER', 'legal', 'letter', 'custom'], dest="page", help="page size [default= %default]", type="choice", default="A4")
+	group.add_option("-5", "--custompagesize", action="store", dest="custompage", help="custom page size. Must be in the form of x,y in mm. Only applicable with the custom -p option", default="")
 	group.add_option("-P", "--npages", action="store", dest="npages", help="number of pages to  split picture over [default= %default]", type="int", default=1)
 	
 	parser.add_option_group(group)
@@ -2709,8 +2710,21 @@ if __name__ == "__main__":
 		options.fragment_separation=0
 		options.fragment_separation=int(options.fragment_separation)
 	
+	if options.page=="custom":
+		try:
+			xy=map(float,options.custompage.split(","))
+			if len(xy)!=2:
+				print "Custom page size option format must be x,y"
+				sys.exit()
+			pagesize=(float(xy[0]), float(xy[1]))
+		except StandardError:
+			print "Invalid custom page size option (-5)"
+			sys.exit()
+	else:
+		pagesize=pagesizeconverter[options.page]
 	
-	pagesize=pagesizeconverter[options.page]
+#	print pagesize
+#	sys.exit()
 	
 	#options.plottype="line"
 	
