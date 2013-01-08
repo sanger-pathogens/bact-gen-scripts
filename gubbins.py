@@ -1608,7 +1608,7 @@ if __name__ == "__main__":
 		
 		pamltree.branchlength2support()
 		
-		tree=add_node_names_to_tree(tree, pamltree)
+		#tree=add_node_names_to_tree(tree, pamltree)
 		
 		#get the root node number from the paml tree (I think this might always be 0)
 		
