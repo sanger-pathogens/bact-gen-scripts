@@ -44,6 +44,7 @@ if __name__ == "__main__":
 	tree = Trees.Tree(tree_string, rooted=True)
 	
 	treestring=tree_to_string(tree, False, True, True, True,collapse=True, cutoff=options.cutoff)
+	#(treeObject, support_as_branchlengths=False,branchlengths_only=False,plain=True,plain_newick=False,ladderize=None)
 	
 	handle = open(options.outfile, "w")
 	print >> handle, treestring+";"

@@ -703,22 +703,51 @@ def tree_to_string(treeObject, support_as_branchlengths=False,branchlengths_only
 		# CHECK FORMATTING
 		if treeObject.plain: # plain tree only. That's easy.
 			return ''
+		
 		elif treeObject.support_as_branchlengths: # support as branchlengths (eg. PAUP), ignore actual branchlengths
+			
 			if terminal: # terminal branches have 100% support
-				return '%s:%s' % (commentsline, str(treeObject.max_support))
+				if collapse and treeObject.max_support<cutoff:
+					brlength=0.0
+				else:
+					brlength=treeObject.max_support
+				return '%s:%s' % (commentsline, str(brlength))
 			else:
-				return '%s:%s' % (commentsline, str(data.support))
+				if collapse and data.support<cutoff:
+					brlength=0.0
+				else:
+					brlength=data.support
+				return '%s:%s' % (commentsline, str(brlength))
 		elif treeObject.branchlengths_only: # write only branchlengths, ignore support
-			return '%s:%s' % (commentsline, str(data.branchlength))
+			if collapse and data.branchlength<cutoff:
+				brlength=0.0
+			else:
+				brlength=data.branchlength
+			return '%s:%s' % (commentsline, str(brlength))
 		else: # write suport and branchlengths (e.g. .con tree of mrbayes)
 			
 			if terminal:
-				return '%s:%s' % (commentsline, str(data.branchlength))
+				if data.branchlength is not None:
+					if collapse and data.branchlength<cutoff:
+						brlength=0.0
+					else:
+						brlength=data.branchlength
+					return '%s:%s' % (commentsline, str(brlength))
+				else:
+					return '%s:0' % (commentsline)
 			else:
 				if data.branchlength is not None and data.support is not None: # we have blen and suppport
-					return '%s%s:%s' % (commentsline, str(data.support),str(data.branchlength))
+					if collapse and data.branchlength<cutoff:
+						brlength=0.0
+					else:
+						brlength=data.branchlength
+					return '%s%s:%s' % (commentsline, str(data.support),str(brlength))
 				elif data.branchlength is not None: # we have only blen
-					return '%s0:%s' % (commentsline, str(data.branchlength))
+					if collapse and data.branchlength<cutoff:
+						brlength=0.0
+					else:
+						brlength=data.branchlength
+					return '%s0:%s' % (commentsline, str(brlength))
 				elif data.support is not None: # we have only support
 					#return ':0'
 					return '%s%s:0' % (commentsline, str(data.support))
@@ -772,12 +801,19 @@ def tree_to_string(treeObject, support_as_branchlengths=False,branchlengths_only
 				return '(%s)%s' % (','.join(subtrees),make_info_string(treeObject.node(node).data))
 			elif treeObject.node(node).data.branchlength is None or treeObject.node(node).data.branchlength>cutoff:
 				
-				partstring="".join(["("]*(len(newsubtrees)-1))
+				#partstring="".join(["("]*(len(newsubtrees)-1))
+				partstring="("
 				partstring=partstring+newsubtrees[0]+','
-				
+				print newsubtrees
 				for newsubtree in newsubtrees[1:]:
-					partstring=partstring+newsubtree+"):0.0,"
-				partstring=":".join(partstring.split(":")[:-1])
+					partstring=partstring+newsubtree+","
+				if partstring[-1]==",":
+					partstring=partstring[:-1]
+				#partstring=":".join(partstring.split(":")[:-1])
+				
+				partstring=partstring+")"
+				print partstring
+#				sys.exit()
 				#print '%s%s' % (partstring,make_info_string(treeObject.node(node).data))
 				return '%s%s' % (partstring,make_info_string(treeObject.node(node).data))
 			else:
