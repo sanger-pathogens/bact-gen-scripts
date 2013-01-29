@@ -1338,6 +1338,22 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 		return max_width
 	
 	
+	def draw_column_label(xpox, ypos, fontsize, column_label):
+		
+		mylabel=Label()
+		
+		mylabel.setText(column_label)
+		
+		mylabel.angle=45
+		mylabel.fontName="Helvetica"
+		mylabel.fontSize=fontsize
+		mylabel.x=xpox
+		mylabel.y=ypos
+		mylabel.boxAnchor="sw"
+		#Axis.setPosition(self.track_position[0], self.track_position[1]+(self.track_height/2), self.track_length)
+		d.add(mylabel)
+	
+	
 	
 #	vertical_scaling_factor=float(treeheight)/(treeObject.count_terminals(node=treeObject.root)+2)
 	fontsize=vertical_scaling_factor
@@ -1355,7 +1371,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	
 	block_length=0
 	if len(colour_dict)>0:
-		max_total_name_length=(float(treewidth)/2)
+		max_total_name_length=(float(treewidth)/4)*3
 		
 		max_total_block_length=(max_total_name_length-max_name_width)
 		
@@ -1381,14 +1397,18 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 			else:
 				block_length=max_block_length
 		
-		
+	gubbins_length=0.0
 	for x in range(colblockstart,len(colour_dict)):
 		if x>0:
 			max_name_width+=vertical_scaling_factor
-		max_name_width+=block_length
+			gubbins_length+=vertical_scaling_factor
 		
-	
+		max_name_width+=block_length
+		gubbins_length+=block_length
+		
+	print treewidth
 	treewidth-=(max_name_width+(fontsize/2)+5)
+	print treewidth
 #	treewidth-=xoffset
 	
 	if options.log_branches:
@@ -1405,6 +1425,28 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	
 	if not options.show_branchlengths:
 		draw_scale()
+	
+	if fontsize>6:
+		labelfontsize=fontsize
+	else:
+		labelfontsize=6
+	
+	if options.aligntaxa==2:
+		column_name_x_pos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
+		column_name_y_pos=treeObject.node(treeObject.get_terminals()[0]).data.comment["vertpos"]+yoffset+(vertical_scaling_factor/2)
+		colpos=0
+		if options.taxon_names:
+			
+			draw_column_label(treewidth+xoffset+((max_name_width-gubbins_length)/2), column_name_y_pos, labelfontsize, colour_column_names[0])
+		
+			colpos=1
+		for x in xrange(colpos,len(colour_column_names)):
+			
+			draw_column_label(column_name_x_pos+(block_length/2), column_name_y_pos, labelfontsize, colour_column_names[x])
+			column_name_x_pos += block_length
+			column_name_x_pos += vertical_scaling_factor
+			
+		
 	
 	return
 
@@ -2806,6 +2848,9 @@ if __name__ == "__main__":
 		if len(colour_columns)>0:
 			colour_column_names=[]
 			for column in colour_columns:
+				if column<1:
+					print "column numbers must be positive and greater than zero"
+					sys.exit()
 				colourslist.append([])
 				if len(lines[0].strip().split(","))>=column:
 					colour_column_names.append(lines[0].strip().split(",")[column-1])
