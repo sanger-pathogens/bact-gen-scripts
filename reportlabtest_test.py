@@ -7,11 +7,12 @@
 import string, re
 import os, sys
 import random
-from math import sqrt, pow, log
+from math import sqrt, pow, log, floor
 from numpy import repeat, convolve, mean, median
 from optparse import OptionParser, OptionGroup
 from Bio.Nexus import Trees, Nodes
 import shlex, subprocess
+from colorsys import hsv_to_rgb
 #on my laptop
 #sys.path.extend(map(os.path.abspath, ['/Users/sh16/Documents/scripts/modules/']))
 #on pcs4
@@ -38,6 +39,7 @@ from reportlab.graphics.charts.barcharts import VerticalBarChart
 from reportlab.graphics.widgets.grids import ShadedRect
 from reportlab.graphics.widgets.signsandsymbols import ArrowOne
 from reportlab.graphics import renderPDF
+import pysam
 #on my laptop
 #SAMTOOLS_DIR="/Users/sh16/Applications/samtools-0.1.18/"
 #BCFTOOLS_DIR="/Users/sh16/Applications/samtools-0.1.18/bcftools/"
@@ -69,9 +71,9 @@ def main():
 	
 	group.add_option("-o", "--output", action="store", dest="outputfile", help="output file name [default= %default]", type="string", metavar="FILE", default="test.pdf")
 	group.add_option("-O", "--orientation", action="store", choices=['landscape', 'portrait'], dest="orientation", help="page orientation [default= %default]", type="choice", default="landscape")
-	group.add_option("-p", "--pagesize", action="store", choices=['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'B0', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'LEGAL', 'LETTER', 'legal', 'letter'], dest="page", help="page size [default= %default]", type="choice", default="A4")
+	group.add_option("-p", "--pagesize", action="store", choices=['A0', 'A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'B0', 'B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'LEGAL', 'LETTER', 'legal', 'letter', 'custom'], dest="page", help="page size [default= %default]", type="choice", default="A4")
+	group.add_option("-5", "--custompagesize", action="store", dest="custompage", help="custom page size. Must be in the form of x,y in mm. Only applicable with the custom -p option", default="")
 	group.add_option("-P", "--npages", action="store", dest="npages", help="number of pages to  split picture over [default= %default]", type="int", default=1)
-	group.add_option("-r", "--reference", action="store", dest="reference", help="Optional reference file. This file is used to give the program information about the reference used for variation calling or plot making. It will not be shown. If you want the refernce shown, include it again as an argument in the command line. The reference file can be in multi-fasta or sam format. This file is particulalry important if you are using a bcf file mapped against multiple contigs. Without a reference the program will not know how long each contig is, leading to mis-drawing in some cases.", type="string", metavar="FILE", default="")
 	
 	parser.add_option_group(group)
 	
@@ -81,11 +83,11 @@ def main():
 	group.add_option("-t", "--tree", action="store", dest="tree", help="tree file to align tab files to", default="")
 	group.add_option("-2", "--proportion", action="store", dest="treeproportion", help="Proportion of page to take up with the tree", default=0.3, type='float')
 	group.add_option("-s", "--support", action="store_true", dest="tree_support", help="Scale tree branch widths by support (if present)", default=False)
+	group.add_option("-6", "--brlens", action="store_true", dest="show_branchlengths", help="Label branches with branchlengths", default=False)
 	group.add_option("-M", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root tree", default=False)
 	group.add_option("-L", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="page size [default= %default]", type="choice", default=None)
 	group.add_option("-z", "--names_as_shapes", action="store", choices=['circle', 'square', 'rectangle', 'auto'], dest="names_as_shapes", help="Use shapes rather than taxon names in tree (choose from circle) [default= %default]", type="choice", default="auto")
 	group.add_option("-1", "--logbranches", action="store_true", dest="log_branches", help="page size [default= %default]", default=False)
-	
 	
 	parser.add_option_group(group)
 	
@@ -105,7 +107,7 @@ def main():
 	group.add_option("-m", "--metadata", action="store", dest="metadata", help="metadata file in csv format. Note that this file must have a header row ontaining titles for each column", default="")
 	group.add_option("-c", "--columns", action="store", dest="columns", help="column(s) from metadata file to use for track name (comma separated list) [default=%default]", default="1")
 	group.add_option("-C", "--colourbycolumns", action="store", dest="colour_columns", help="column(s) from metadata file to use to colour track name and blocks next to name (comma separated list). If names are being shown, the first column will be used to colour names. All following columns will be added as coloured shapes as defined by the -z option. [default=%default]", default=False)
-	group.add_option("-R", "--parsimony_reconstruction", action="store", dest="transformation", help="Reconstruct colours across branches using parsimony. Select from acctran or deltran transformations [default=%default]", default=None, type="choice", choices=['acctran', 'deltran'])
+	group.add_option("-r", "--parsimony_reconstruction", action="store", dest="transformation", help="Reconstruct colours across branches using parsimony. Select from acctran or deltran transformations [default=%default]", default=None, type="choice", choices=['acctran', 'deltran'])
 	group.add_option("-i", "--suffix", action="store", dest="suffix", help="suffix to remove from filenames", default="")
 	
 	parser.add_option_group(group)
@@ -142,13 +144,13 @@ def main():
 	group = OptionGroup(parser, "Plot Options")
 	
 	group.add_option("-H", "--plotheight", action="store", dest="plotheight", help="Relative track height of plot tracks to other tracks [default= %default]", default=2, metavar="int", type="int")
-	group.add_option("-d", "--default_plot_type", choices=["hist", "heat", "bar", "line", "area"], type="choice", action="store", dest="plottype", help="Set the default plot type (for plots called plot or graph and bam files). Choose from "+", ".join(["hist", "heat", "bar", "line", "area"])+" [default= %default]", default="line")
+	group.add_option("-d", "--default_plot_type", choices=["hist", "heat", "bar", "line", "area", "stackedarea"], type="choice", action="store", dest="plottype", help="Set the default plot type (for plots called plot or graph and bam files). Choose from "+", ".join(["hist", "heat", "bar", "line", "area", "stackedarea"])+" [default= %default]", default="line")
 	group.add_option("-X", "--scale_plots", action="store_true", dest="scale_plots_same", help="Use the same max and min scale for all plots", default=False)
 	group.add_option("-y", "--plot_min", action="store", dest="plot_max", help="Set a maximum value for plots", default="Inf", type="float")
 	group.add_option("-Y", "--plot_max", action="store", dest="plot_min", help="Set a minimum value for plots", default="Inf", type="float")
 	group.add_option("-Z", "--log_plot", action="store_true", dest="log_plots", help="Show plots on a log scale (doesn't work yet)", default=False)
-	group.add_option("-w", "--heatmap_legend", action="store_true", dest="heat_legend", help="Show legend on heatmaps", default=False)
-	group.add_option("-3", "--heatmap_colour", default="bluered", choices=["redblue", "bluered", "blackwhite", "whiteblack", "blackred", "blackblue"], type="choice", action="store", dest="heat_colour", help="Set the default plot type (for plots called plot or graph and bam files). Choose from "+", ".join(["redblue", "bluered", "blackwhite", "whiteblack", "blackred", "blackblue"]))
+	group.add_option("-w", "--plot_scales", action="store_true", dest="plot_scales", help="Show legend on heatmaps", default=False)
+	group.add_option("-3", "--heatmap_colour", default="bluered", choices=["redblue", "bluered", "blackwhite", "whiteblack"], type="choice", action="store", dest="heat_colour", help="Set the default plot type (for plots called plot or graph and bam files). Choose from "+", ".join(["redblue", "bluered", "blackwhite", "whiteblack"]))
 	group.add_option("-4", "--windows", action="store", dest="windows", help="Number of windows per line (be careful, making this value too high will make things very slow and memory intensive) [default= %default]", default=501, type="float")
 	
 	parser.add_option_group(group)
@@ -160,13 +162,6 @@ def main():
 ###############################################
 # Check the command line options are sensible #
 ###############################################
-
-
-
-
-
-
-
 
 
 #######################################################################
@@ -761,7 +756,6 @@ def add_bcf_to_diagram(filename):
 	
 	
 	inmapped=False
-	lastref=""
 	lastbase=0
 	for line in lines:
 	
@@ -818,11 +812,6 @@ def add_bcf_to_diagram(filename):
 				
 		
 		
-		
-		
-		if options.reference and BASEINFO["CHROM"] in referenceinfo:
-			BASEINFO["POS"]=BASEINFO["POS"]+referenceinfo[BASEINFO["CHROM"]]["start"]
-		
 		#filter the call
 		keep=True
 		SNP=True
@@ -833,6 +822,78 @@ def add_bcf_to_diagram(filename):
 			continue
 		if BASEINFO["ALT"]==".":
 			SNP=False
+			
+#			if options.bcfvariants not in ["A", "I", "S"]:
+#				continue
+		
+		
+		#Calculate the ref/alt ratios
+#		BASEINFO["INFO"]["DP4ratios"]={}
+#		if not "DP4" in BASEINFO["INFO"]:
+#			BASEINFO["INFO"]["DP4"]=[0,0,0,0]
+#			BASEINFO["INFO"]["DP4ratios"]["fref"]=0.0
+#			BASEINFO["INFO"]["DP4ratios"]["rref"]=0.0
+#			BASEINFO["INFO"]["DP4ratios"]["falt"]=0.0
+#			BASEINFO["INFO"]["DP4ratios"]["ralt"]=0.0
+#			BASEINFO["INFO"]["AF1"]=0
+#			BASEINFO["INFO"]["MQ"]=0
+#		elif "DP4" in BASEINFO["INFO"]:
+#			try: BASEINFO["INFO"]["DP4ratios"]["fref"]=float(BASEINFO["INFO"]["DP4"][0])/(BASEINFO["INFO"]["DP4"][0]+BASEINFO["INFO"]["DP4"][2])
+#			except ZeroDivisionError:
+#				BASEINFO["INFO"]["DP4ratios"]["fref"]=0.0
+#			try: BASEINFO["INFO"]["DP4ratios"]["rref"]=float(BASEINFO["INFO"]["DP4"][1])/(BASEINFO["INFO"]["DP4"][1]+BASEINFO["INFO"]["DP4"][3])
+#			except ZeroDivisionError:
+#				BASEINFO["INFO"]["DP4ratios"]["rref"]=0.0
+#			try: BASEINFO["INFO"]["DP4ratios"]["falt"]=float(BASEINFO["INFO"]["DP4"][2])/(BASEINFO["INFO"]["DP4"][0]+BASEINFO["INFO"]["DP4"][2])
+#			except ZeroDivisionError:
+#				BASEINFO["INFO"]["DP4ratios"]["falt"]=0.0
+#			try: BASEINFO["INFO"]["DP4ratios"]["ralt"]=float(BASEINFO["INFO"]["DP4"][3])/(BASEINFO["INFO"]["DP4"][1]+BASEINFO["INFO"]["DP4"][3])
+#			except ZeroDivisionError:
+#				BASEINFO["INFO"]["DP4ratios"]["ralt"]=0.0
+		
+	
+		
+		
+		
+#		if BASEINFO["QUAL"]<options.QUAL:
+#			#print options.QUAL, BASEINFO["QUAL"]
+#			keep=False
+#		elif  BASEINFO["INFO"]["MQ"]<options.MQUAL:
+#			#print options.MQUAL, BASEINFO["INFO"]["MQ"]
+#			keep=False
+#		elif not SNP and BASEINFO["INFO"]["DP4"][0]+BASEINFO["INFO"]["DP4"][1]<options.depth:
+#			keep=False
+#		elif not SNP and BASEINFO["INFO"]["DP4"][0]<options.stranddepth:
+#			keep=False
+#		elif not SNP and BASEINFO["INFO"]["DP4"][1]<options.stranddepth:
+#			keep=False
+#		elif not SNP and BASEINFO["INFO"]["DP4ratios"]["fref"]<options.ratio:
+#			keep=False
+#		elif not SNP and BASEINFO["INFO"]["DP4ratios"]["rref"]<options.ratio:
+#			keep=False
+#		elif SNP and BASEINFO["INFO"]["DP4"][2]+BASEINFO["INFO"]["DP4"][3]<options.depth:
+#			keep=False
+#		elif SNP and BASEINFO["INFO"]["DP4"][2]<options.stranddepth:
+#			keep=False
+#		elif SNP and BASEINFO["INFO"]["DP4"][3]<options.stranddepth:
+#			keep=False
+#		elif SNP and BASEINFO["INFO"]["DP4ratios"]["falt"]<options.ratio:
+#			keep=False
+#		elif SNP and BASEINFO["INFO"]["DP4ratios"]["ralt"]<options.ratio:
+#			keep=False
+#		elif BASEINFO["ALT"]=="." and BASEINFO["INFO"]["AF1"]>(1-options.AF1):
+#			keep=False
+#		elif BASEINFO["ALT"]!="." and BASEINFO["INFO"]["AF1"]<options.AF1:
+#			keep=False
+#		elif SNP and "PV4" in BASEINFO["INFO"]:
+#			if BASEINFO["INFO"]["PV4"][0]<=options.strand_bias:
+#				keep=False
+#			if BASEINFO["INFO"]["PV4"][1]<=options.baseq_bias:
+#				keep=False
+#			if BASEINFO["INFO"]["PV4"][2]<=options.mapping_bias:
+#				keep=False
+#			if BASEINFO["INFO"]["PV4"][3]<=options.tail_bias:
+#				keep=False
 			
 		
 		HETERO=False
@@ -849,11 +910,11 @@ def add_bcf_to_diagram(filename):
 			keep=False
 		
 		
-		if inmapped and (lastbase+1!=int(BASEINFO["POS"]) or BASEINFO["CHROM"]!=lastref):
+				
+		if inmapped and lastbase+1!=int(BASEINFO["POS"]):
 			inmapped=False
 			new_track.add_feature([(start,end+1)], fillcolour=colour, strokecolour=colour)
 		lastbase=int(BASEINFO["POS"])
-		lastref=BASEINFO["CHROM"]
 		
 		if keep:
 			if not SNP and not INDEL:
@@ -867,10 +928,13 @@ def add_bcf_to_diagram(filename):
 					inmapped=False
 					new_track.add_feature([(start,end+1)], fillcolour=colour, strokecolour=colour)
 					
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
 				if INDEL and options.bcfvariants not in ["S", "H", "i"] and len(BASEINFO["ALT"])>len(BASEINFO["REF"]):
 					colour=translator.artemis_color("6")
 					start=int(BASEINFO["POS"])
 					end=int(BASEINFO["POS"])
+					#feature = SeqFeature(FeatureLocation(start, end), strand=None)
 					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
 					try: features.append((feature,colour))
 					except NameError: pass #print "here"
@@ -879,40 +943,62 @@ def add_bcf_to_diagram(filename):
 					colour=translator.artemis_color("1")
 					start=int(BASEINFO["POS"])
 					end=int(BASEINFO["POS"])+(len(BASEINFO["REF"])-len(BASEINFO["ALT"]))
+					#feature = SeqFeature(FeatureLocation(start, end), strand=None)
 					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
 				elif SNP and options.bcfvariants not in ["S", "I", "h"] and BASEINFO["INFO"]["AF1"]<0.8 and BASEINFO["INFO"]["AF1"]>0.2:
 #					colour='10'
 					colour=translator.artemis_color("10")
 					start=int(BASEINFO["POS"])
 					end=int(BASEINFO["POS"])
 					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+#					feature = SeqFeature(FeatureLocation(start, end), strand=None)
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
 				elif SNP and options.bcfvariants not in ["s", "I", "H"] and BASEINFO["ALT"]=="A":
 #					colour='3'
 					colour=translator.artemis_color("3")
 					start=int(BASEINFO["POS"])
 					end=int(BASEINFO["POS"])
 					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+#					feature = SeqFeature(FeatureLocation(start, end), strand=None)
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
 				elif SNP and options.bcfvariants not in ["s", "I", "H"] and BASEINFO["ALT"]=="C":
 					colour=translator.artemis_color("2")
 					start=int(BASEINFO["POS"])
 					end=int(BASEINFO["POS"])
 					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+#					feature = SeqFeature(FeatureLocation(start, end), strand=None)
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
 				elif SNP and options.bcfvariants not in ["s", "I", "H"] and BASEINFO["ALT"]=="G":
 					colour=translator.artemis_color("4")
 					start=int(BASEINFO["POS"])
 					end=int(BASEINFO["POS"])
 					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+#					feature = SeqFeature(FeatureLocation(start, end), strand=None)
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
 				elif SNP and options.bcfvariants not in ["s", "I", "H"] and BASEINFO["ALT"]=="T":
 					colour=translator.artemis_color("14")
 					start=int(BASEINFO["POS"])
 					end=int(BASEINFO["POS"])
 					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
+#					feature = SeqFeature(FeatureLocation(start, end), strand=None)
+#					try: features.append((feature,colour))
+#					except NameError: pass #print "here"
 		elif inmapped:
+#			feature = SeqFeature(FeatureLocation(start, end), strand=None)
 			new_track.add_feature([(start,end+1)], fillcolour=colour, strokecolour=colour)
 			inmapped=False
 			end=int(BASEINFO["POS"])
+#			try: features.append((feature,colour))
+#			except NameError: pass #print "here"
 	
 	if inmapped:
+#			feature = SeqFeature(FeatureLocation(start, end), strand=None)
 		new_track.add_feature([(start,end+1)], fillcolour=colour, strokecolour=colour)
 		inmapped=False
 		end=int(BASEINFO["POS"])
@@ -1107,6 +1193,9 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 			branchlength=linewidth
 		d.add(Line(horizontalpos-(linewidth/2), vertpos, (horizontalpos-(linewidth/2))+branchlength, vertpos, strokeWidth=linewidth, strokeColor=branch_colour))
 		
+		if options.show_branchlengths and treeObject.node(node).data.branchlength>0:
+			d.add(String((horizontalpos-(linewidth/2))+(branchlength/2), vertpos+linewidth, str(treeObject.node(node).data.branchlength).rstrip('0').rstrip('.'), textAnchor='middle', fontSize=fontsize*0.9, fillColor='black', fontName='Helvetica'))
+		
 		
 		if node!=treeObject.root:
 	
@@ -1243,12 +1332,28 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 		return max_width
 	
 	
+	def draw_column_label(xpox, ypos, fontsize, column_label):
+		
+		mylabel=Label()
+		
+		mylabel.setText(column_label.split(":")[0])
+		
+		mylabel.angle=45
+		mylabel.fontName="Helvetica"
+		mylabel.fontSize=fontsize
+		mylabel.x=xpox
+		mylabel.y=ypos
+		mylabel.boxAnchor="sw"
+		#Axis.setPosition(self.track_position[0], self.track_position[1]+(self.track_height/2), self.track_length)
+		d.add(mylabel)
+	
+	
 	
 #	vertical_scaling_factor=float(treeheight)/(treeObject.count_terminals(node=treeObject.root)+2)
 	fontsize=vertical_scaling_factor
 	if fontsize>12:
 		fontsize=12
-	
+	name_offset=fontsize
 	if options.taxon_names:
 		while get_max_name_width(name_offset, fontsize)+name_offset>treewidth/3:
 			fontsize-=0.2
@@ -1260,7 +1365,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	
 	block_length=0
 	if len(colour_dict)>0:
-		max_total_name_length=(float(treewidth)/2)
+		max_total_name_length=(float(treewidth)/4)*3
 		
 		max_total_block_length=(max_total_name_length-max_name_width)
 		
@@ -1286,14 +1391,18 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 			else:
 				block_length=max_block_length
 		
-		
+	gubbins_length=0.0
 	for x in range(colblockstart,len(colour_dict)):
 		if x>0:
 			max_name_width+=vertical_scaling_factor
+			gubbins_length+=vertical_scaling_factor
+		
 		max_name_width+=block_length
+		gubbins_length+=block_length
 		
 	
-	treewidth-=(max_name_width+(fontsize/2))
+	treewidth-=(max_name_width+(fontsize/2)+5)
+	
 #	treewidth-=xoffset
 	
 	if options.log_branches:
@@ -1308,7 +1417,35 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	
 	treebase=treeObject.node(treeObject.get_terminals()[-1]).data.comment["vertpos"]+yoffset
 	
-	draw_scale()
+	if not options.show_branchlengths:
+		draw_scale()
+	
+	if fontsize>6:
+		labelfontsize=fontsize
+	else:
+		labelfontsize=6
+	
+	
+	try:
+		if colour_column_names:
+			if options.aligntaxa==2:
+				column_name_x_pos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
+				column_name_y_pos=treeObject.node(treeObject.get_terminals()[0]).data.comment["vertpos"]+yoffset+(vertical_scaling_factor/2)
+				colpos=0
+				if options.taxon_names:
+					
+					draw_column_label(treewidth+xoffset+((max_name_width-gubbins_length)/2), column_name_y_pos, labelfontsize, colour_column_names[0])
+				
+					colpos=1
+				for x in xrange(colpos,len(colour_column_names)):
+					
+					draw_column_label(column_name_x_pos+(block_length/2), column_name_y_pos, labelfontsize, colour_column_names[x])
+					column_name_x_pos += block_length
+					column_name_x_pos += vertical_scaling_factor
+	except NameError:
+		pass
+			
+		
 	
 	return
 
@@ -1384,6 +1521,8 @@ class Track:
 		
 		newplot.number_of_windows=newplot.number_of_windows*(fragments*options.npages)
 		newplot.plot_type=plot_type
+		if plot_type=="stackedarea":
+			newplot.transparency=1.0
 		datalines=newplot.read_plot_from_file(filename)
 		
 		newplot.beginning=self.beginning
@@ -1407,26 +1546,39 @@ class Track:
 		
 		print "Calculating coverage for", filename
 		sys.stdout.flush()
-		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools view -H "+filename)
-		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	
-		stdout, stderr  = returnval.communicate()
-	
-		if len(stderr)>0:
-			print "Failed to open ", filename, "samtools error:", stderr
-			return
-
+#		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools view -H "+filename)
+#		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#	
+#		stdout, stderr  = returnval.communicate()
+#	
+#		if len(stderr)>0:
+#			print "Failed to open ", filename, "samtools error:", stderr
+#			return
+#
+#		
+#		headerlines=stdout.split("\n")
 		
-		headerlines=stdout.split("\n")
+		try:
+			samfile = pysam.Samfile( filename, "rb" )
+		except StandardError:
+			print 'Failed to open '+filename+'. Is it in bam format?'
+			return
+		
+		refs=samfile.references
+		lengths=samfile.lengths
 		
 		contiglocs={}
 		totallength=0
 		
-		for line in headerlines:
-			words=line.split()
-			if len(words)==3 and words[0]=="@SQ" and len(words[1].split(":"))==2 and words[1].split(":")[0]=="SN" and len(words[2].split(":"))==2 and words[2].split(":")[0]=="LN":
-				contiglocs[words[1].split(":")[1]]=totallength
-				totallength+=int(words[2].split(":")[1])
+		for x, ref in enumerate(refs):
+			contiglocs[ref]=totallength
+			totallength+=lengths[x]
+		
+#		for line in headerlines:
+#			words=line.split()
+#			if len(words)==3 and words[0]=="@SQ" and len(words[1].split(":"))==2 and words[1].split(":")[0]=="SN" and len(words[2].split(":"))==2 and words[2].split(":")[0]=="LN":
+#				contiglocs[words[1].split(":")[1]]=totallength
+#				totallength+=int(words[2].split(":")[1])
 				
 		
 		
@@ -1435,27 +1587,77 @@ class Track:
 		newplot.plot_type=plot_type
 		if plot_type=="heat":
 			newplot.heat_colour=options.heat_colour
-		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools depth -q "+str(options.base_qual_filter)+" -Q "+str(options.mapping_qual_filter)+" "+filename)
-		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	
-		stdout, stderr  = returnval.communicate()
-	
-		if len(stderr)>0:
-			print "Failed to open ", filename, "samtools error:", stderr
-			return
 		
+		poscount=0
+		if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+			depths=[["#BASE", "High_Quality_Coverage", "Low_Quality_Coverage"]]
+		else:
+			depths=[["#BASE", "Coverage"]]	
+		for x, ref in enumerate(refs):
+			print ref
+			lastcolumn=-1
+			zerocount=0
+			for pileupcolumn in samfile.pileup(ref):
+				
+				while pileupcolumn.pos!=lastcolumn+1:
+					#print lastcolumn, pileupcolumn.pos
+					poscount+=1
+					if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+						depths.append([str(poscount), "0", "0"])
+					else:
+						depths.append([str(poscount), "0"])
+					lastcolumn+=1
+					zerocount+=1
+				poscount+=1
+				if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+					#print str(pileupcolumn)
+					filtered_depth=0
+					for pileupread in pileupcolumn.pileups:
+						#print pileupread.alignment
+						q=ord(pileupread.alignment.qual[pileupread.qpos])-33
+						Q=pileupread.alignment.mapq
+						#print q, Q, options.base_qual_filter, options.mapping_qual_filter
+						if q>=options.base_qual_filter and Q>=options.mapping_qual_filter:
+							filtered_depth+=1
+					depths.append([str(poscount), str(filtered_depth), str(pileupcolumn.n-filtered_depth)])
+					#sys.exit()
+				else:
+					depths.append([str(poscount), str(pileupcolumn.n)])
+				lastcolumn=pileupcolumn.pos
+			
+			while lastcolumn+1<lengths[x]:
+				poscount+=1
+				if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+					depths.append([str(poscount), "0", "0"])
+				else:
+					depths.append([str(poscount), "0"])
+				lastcolumn+=1
+				zerocount+=1
+			#print len(depths)
 		
+#		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools depth -q "+str(options.base_qual_filter)+" -Q "+str(options.mapping_qual_filter)+" "+filename)
+#		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#	
+#		stdout, stderr  = returnval.communicate()
+#	
+#		if len(stderr)>0:
+#			print "Failed to open ", filename, "samtools error:", stderr
+#			return
+#		
+#		
 		newplot.beginning=self.beginning
 		if self.end==-1:
 			if len(newplot.raw_data)>0:
 				newplot.end=len(newplot.raw_data[0])
 		else:
 			newplot.end=self.end
-
+#
+#		
+#		datalines=stdout.split("\n")
+		depth_data= map(" ".join,depths)
 		
-		datalines=stdout.split("\n")
-		
-		newplot.read_data(datalines, samtools=True, contiglocs=contiglocs, totallength=totallength)
+		#newplot.read_data(depths, samtools=True, contiglocs=contiglocs, totallength=totallength)
+		newplot.read_data(depth_data)
 		
 #		newplot.raw_data_to_data()
 
@@ -1988,8 +2190,11 @@ class Plot:
 					currpos+=1
 				if float(words[0])>=endpos:
 					break
+				sumtot=0.0
 				for x in xrange(len(data)):
-					data[x].append(float(words[x+1]))
+					data[x].append(float(words[x+1])+sumtot)
+					if self.plot_type=="stackedarea":
+						sumtot+=float(words[x+1])
 			elif samtools:
 				words=line.strip().split()
 				while (float(words[1])+contiglocs[words[0]])>=currpos and (float(words[1])+contiglocs[words[0]])<=endpos:# and (float(words[1])+contiglocs[words[0]])>=self.beginning:
@@ -2019,7 +2224,7 @@ class Plot:
 		self.calculate_windowsize(data)
 		
 		
-		if len(data)>1 and self.reorder_data:# and self.plot_type=="area" :
+		if len(data)>1 and self.reorder_data:# and self.plot_type!="stackedarea" :
 			data_order=[]
 			datameans=[]
 			for x, datum in enumerate(data):
@@ -2038,7 +2243,6 @@ class Plot:
 		else:
 			data_order=xrange(len(data))
 		
-		
 		self.data=[]
 		self.xdata=[]
 		
@@ -2053,7 +2257,7 @@ class Plot:
 				end=self.end
 #			self.window_size=3
 #			print self.end
-			if self.plot_type in ["line", "area"]:
+			if self.plot_type in ["line", "area", "stackedarea"]:
 				for y in xrange(0,len(data[x]),self.window_size):
 					
 					windowstart=int(y-floor((self.window_size-1)/2))
@@ -2125,7 +2329,7 @@ class Plot:
 			valueMax = max(map(max,self.data))
 		
 		printdata=[]
-		if self.plot_type in ["line", "area"]:
+		if self.plot_type in ["line", "area", "stackedarea"]:
 			for x, data in enumerate(self.data):
 				currdata=[]
 				for y, datum in enumerate(data):
@@ -2151,7 +2355,7 @@ class Plot:
 						end=self.xdata[x][y]
 				printdata.append(currdata)
 				
-		if self.plot_type in ["line", "area"]:
+		if self.plot_type in ["line", "area", "stackedarea"]:
 			return printdata, valueMin, valueMax
 		elif self.plot_type in ["bar", "heat"]:
 			return printdata, end, valueMin, valueMax
@@ -2168,11 +2372,9 @@ class Plot:
 		
 		
 		
-		
-		
 #		self.legend=True
 #		if self.legend and len(self.labels)>0:
-		if self.legend and options.heat_legend:
+		if self.legend and options.plot_scales:
 			
 			if self.autolegend:
 				self.legend_font_size=float(height)/6
@@ -2227,10 +2429,6 @@ class Plot:
 					colour=colors.Color(lastvalue,lastvalue,lastvalue)
 				elif self.heat_colour=="whiteblack":
 					colour=colors.Color(1.0-lastvalue,1.0-lastvalue,1.0-lastvalue)
-				elif self.heat_colour=="blackred":
-					colour=colors.Color(lastvalue,0,0)
-				elif self.heat_colour=="blackblue":
-					colour=colors.Color(0,0,lastvalue)
 				elif self.heat_colour=="bluered":
 					colour=colors.Color(lastvalue,0,1.0-lastvalue)
 				elif self.heat_colour=="redblue":
@@ -2253,10 +2451,6 @@ class Plot:
 			colour=colors.Color(value,value,value)
 		elif self.heat_colour=="whiteblack":
 			colour=colors.Color(1.0-value,1.0-value,1.0-value)
-		elif self.heat_colour=="blackred":
-			colour=colors.Color(value,0,0)
-		elif self.heat_colour=="blackblue":
-			colour=colors.Color(0,0,value)
 		elif self.heat_colour=="bluered":
 			colour=colors.Color(value,0,1.0-value)
 		elif self.heat_colour=="redblue":
@@ -2272,6 +2466,9 @@ class Plot:
 	def draw_line_plot(self, x, y, height, length):
 		
 		data, valueMin, valueMax=self.get_data_to_print()
+		if height<30:
+			self.legend=False
+			
 		
 		if self.legend and len(self.labels)>0:
 			
@@ -2290,14 +2487,20 @@ class Plot:
 			legend.x = x
 			if self.plot_type=="line":
 				legend.y = y-(self.legend_font_size)
-			elif self.plot_type=="area":
+			elif self.plot_type in ["area", "stackedarea"]:
 				legend.y = y-(self.legend_font_size/2)
 			legend.strokeWidth=self.strokeweight
 			legend.alignment='right'
 			legend.fontName=self.legend_font
 			legend.fontSize=self.legend_font_size
 			legend.boxAnchor="nw"
-			legend.colorNamePairs  = [(self.line_colours[i], self.labels[i]) for i in xrange(len(data))]
+			if self.plot_type=="stackedarea":
+				legend.colorNamePairs  = []
+				for i in xrange(len(data)):
+					legend.colorNamePairs.append((self.line_colours[i], self.labels[len(data)-(i+1)]))
+					#lp.lines[i].strokeColor=self.line_colours[len(lp.data)-(j+1)]
+			else:
+				legend.colorNamePairs  = [(self.line_colours[i], self.labels[i]) for i in xrange(len(data))]
 			
 			maxlabelwidth=0
 			for label in self.labels:
@@ -2311,7 +2514,7 @@ class Plot:
 			if self.plot_type=="line":
 				legend.dy=self.strokeweight
 				legend.dx=10
-			elif self.plot_type=="area":
+			elif self.plot_type in ["area", "stackedarea"]:
 				legend.dy=self.legend_font_size
 				legend.dx=self.legend_font_size
 			legend.swdy=legend.dy/2
@@ -2333,6 +2536,8 @@ class Plot:
 		
 		lp.joinedLines = 1
 		lp.xValueAxis.visibleLabels=0
+		if not options.plot_scales:
+			lp.yValueAxis.visibleLabels=0
 		lp.xValueAxis.visibleTicks=0
 		lp.xValueAxis.valueMin = self.beginning 
 		if self.end!=-1:
@@ -2369,14 +2574,22 @@ class Plot:
 #		print lp.yValueAxis.scale(0)
 		
 #		lp.yValueAxis.valueSteps=[lp.yValueAxis.valueMin, lp.yValueAxis.valueMax]
-		
+		if self.plot_type=="stackedarea":
+			for i in xrange(len(self.line_colours)):
+				self.line_colours[i].alpha=1.0
 		for i in xrange(len(lp.data)):
 			j=i
 			while j>=len(self.line_colours):
 				j-=len(self.line_colours)
-			lp.lines[i].strokeColor=self.line_colours[j]
+			if self.plot_type=="stackedarea":
+				if j>len(self.line_colours):
+					lp.lines[i].strokeColor=self.line_colours[len(self.line_colours)-(j+1)]
+				else:
+					lp.lines[i].strokeColor=self.line_colours[len(lp.data)-(j+1)]
+			else:
+				lp.lines[i].strokeColor=self.line_colours[j]
 			lp.lines[i].strokeWidth=self.strokeweight
-		if self.plot_type=="area":
+		if self.plot_type in ["area", "stackedarea"]:
 			for i in xrange(len(lp.data)):
 				lp.data[i].append((lp.data[i][-1][0], lp.yValueAxis.valueMin))
 			lp._inFill=True
@@ -2438,6 +2651,8 @@ class Plot:
 		
 		bc.categoryAxis.visibleLabels=0
 		bc.categoryAxis.visibleTicks=0
+		if not options.plot_scales:
+			bc.valueAxis.visibleLabels=0
 		bc.categoryAxis.style = 'stacked'
 		bc.groupSpacing = 0
 		bc.barSpacing = 0
@@ -2487,7 +2702,7 @@ class Plot:
 	
 	def draw_plot(self, x, y, height, length):
 #		self.raw_data_to_data(self)
-		if self.plot_type in ["line", "area"]:
+		if self.plot_type in ["line", "area", "stackedarea"]:
 			self.draw_line_plot(x, y, height, length)
 		elif self.plot_type=="heat":
 			self.draw_heatmap(x, y, height, length)
@@ -2540,8 +2755,21 @@ if __name__ == "__main__":
 		options.fragment_separation=0
 		options.fragment_separation=int(options.fragment_separation)
 	
+	if options.page=="custom":
+		try:
+			xy=map(float,options.custompage.split(","))
+			if len(xy)!=2:
+				print "Custom page size option format must be x,y"
+				sys.exit()
+			pagesize=(float(xy[0]), float(xy[1]))
+		except StandardError:
+			print "Invalid custom page size option (-5)"
+			sys.exit()
+	else:
+		pagesize=pagesizeconverter[options.page]
 	
-	pagesize=pagesizeconverter[options.page]
+#	print pagesize
+#	sys.exit()
 	
 	#options.plottype="line"
 	
@@ -2619,6 +2847,9 @@ if __name__ == "__main__":
 		if len(colour_columns)>0:
 			colour_column_names=[]
 			for column in colour_columns:
+				if column<1:
+					print "column numbers must be positive and greater than zero"
+					sys.exit()
 				colourslist.append([])
 				if len(lines[0].strip().split(","))>=column:
 					colour_column_names.append(lines[0].strip().split(",")[column-1])
@@ -2642,7 +2873,10 @@ if __name__ == "__main__":
 						try:
 							colour_column_entry=int(words[column-1].strip())
 						except ValueError:
-							colour_column_entry=words[column-1].strip()
+							try:
+								colour_column_entry=float(words[column-1].strip())
+							except ValueError:
+								colour_column_entry=words[column-1].strip()
 						
 						if colour_column_entry in ["", "-"]:
 							continue
@@ -2653,7 +2887,7 @@ if __name__ == "__main__":
 							allcolourslist.append(colour_column_entry)
 						namecolours[words[0].strip()][x]=colour_column_entry
 				
-
+		found_keys=[]
 		if len(colour_columns)>0:
 			
 			for x, colour_column in enumerate(colour_columns):
@@ -2663,9 +2897,9 @@ if __name__ == "__main__":
 				if options.end!=-1:
 					newtrack.end=options.end
 				newtrack.beginning=options.beginning
-				track_count+=8
+				
 		#		newtrack.track_number=track_number
-				newtrack.track_height=8
+				newtrack.track_height=5
 				newtrack.scale=False
 				newtrack.name="metadata_key"+str(x)
 				metadata_keylist.append("metadata_key"+str(x))
@@ -2684,23 +2918,23 @@ if __name__ == "__main__":
 								newtrack.datamin=float(words[2])
 							except StandardError:
 								try:
-									newtrack.datamin=min(colourslist[x])
+									newtrack.datamin=min(map(float,colourslist[x]))
 								except StandardError:
 									newtrack.datatype="discrete"
 							try:
 								newtrack.datamax=float(words[3])
 							except StandardError:
 								try:
-									newtrack.datamax=max(colourslist[x])
+									newtrack.datamax=max(map(float,colourslist[x]))
 								except StandardError:
 									newtrack.datatype="discrete"
 						else:
 							try:
-								newtrack.datamin=min(colourslist[x])
+								newtrack.datamin=min(map(float,colourslist[x]))
 							except StandardError:
 								newtrack.datatype="discrete"
 							try:
-								newtrack.datamax=max(colourslist[x])
+								newtrack.datamax=max(map(float,colourslist[x]))
 							except StandardError:
 								newtrack.datatype="discrete"
 					elif words[1] in ["D", "d"]:
@@ -2710,137 +2944,98 @@ if __name__ == "__main__":
 				else:
 					newtrack.datatype="discrete"
 				
+#				try:
+#					colourslist[x]=map(float,colourslist[x])
+#					colourslist[x].sort()
+#				except StandardError:
+#					try:
+#						colourslist[x]=map(int,colourslist[x])
+#						colourslist[x].sort()
+#					except StandardError:
+#						colourslist[x].sort()
+				
 				colourslist[x].sort()
 				
 				if "" in colourslist[x]:
 					colour_dict[x][""]=(0,0,0)
 					colourslist[x].remove("")
 				
+				s=0.6
+				v=0.9
+				start_angle=0.0
+				end_angle=240.0
+				direction="counterclockwise"
+				
+				if direction=="clockwise" and start_angle>end_angle:
+					rotation_degrees=start_angle-end_angle
+					direction_multiplier=-1
+				elif direction=="clockwise":
+					rotation_degrees=start_angle+(360-end_angle)
+					direction_multiplier=-1
+				elif direction in ["anticlockwise", "counterclockwise"] and start_angle>end_angle:
+					rotation_degrees=(360-start_angle)+end_angle
+					direction_multiplier=1
+				else:
+					rotation_degrees=end_angle-start_angle
+					direction_multiplier=1
+					
 				
 				if len(colourslist[x])==1 and newtrack.datatype=="discrete":
 					newtrack.key_data.append([colourslist[x][0], colors.Color(1, 0, 0)])
 					colour_dict[x][colourslist[x][0]]=(255, 0, 0)
 				elif len(colourslist[x])==2 and newtrack.datatype=="discrete":
-					newtrack.key_data.append([colourslist[x][0], colors.Color(1, 0, 0)])
-					newtrack.key_data.append([colourslist[x][1], colors.Color(0, 0, 1)])
-					colour_dict[x][colourslist[x][0]]=(255, 0, 0)
-					colour_dict[x][colourslist[x][1]]=(0, 0, 255)
+					newtrack.key_data.append([colourslist[x][0], colors.Color(0, 0, 1)])
+					newtrack.key_data.append([colourslist[x][1], colors.Color(1, 0, 0)])
+					colour_dict[x][colourslist[x][0]]=(0, 0, 255)
+					colour_dict[x][colourslist[x][1]]=(255, 0, 0)
 				elif newtrack.datatype=="continuous":
 					
 					for y, name in enumerate(colourslist[x]):
 						value=name
 						if value<newtrack.datamin:
-							value-newtrack.datamin
+							value=newtrack.datamin
 						elif value>newtrack.datamax:
 							value=newtrack.datamax
-						proportion=((float(value)-newtrack.datamin)/((newtrack.datamax-newtrack.datamin)))*255
-						
-						
-						red=proportion
-						blue=255-proportion
-						green=0
-						colour_dict[x][name]=(red, green, blue)
 					
-					newtrack.key_data.append([newtrack.datamin, colors.Color(0, 0, 1)])
-					newtrack.key_data.append(["===>", colors.Color(0, 0, 0)])
-#					newtrack.key_data.append([newtrack.datamin, colors.Color(float(0)/255, float(green)/255, float(blue)/255)])
-#					newtrack.key_data.append([newtrack.datamin, colors.Color(float(0)/255, float(green)/255, float(blue)/255)])
-#					newtrack.key_data.append([newtrack.datamin, colors.Color(float(0)/255, float(green)/255, float(blue)/255)])
-					newtrack.key_data.append([newtrack.datamax, colors.Color(1, 0, 0)])
+						proportion=((float(value)-newtrack.datamin)/((newtrack.datamax-newtrack.datamin)))
+						
+						h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
+						
+						red, green, blue = hsv_to_rgb(h,s,v)
+						colour_dict[x][name]=(float(red)*255, float(green)*255, float(blue)*255)
+						
+					h=(start_angle/360)+(direction_multiplier*(((0.0/360)*rotation_degrees)))
+					red, green, blue = hsv_to_rgb(h,s,v)
+					newtrack.key_data.append([newtrack.datamin, colors.Color(float(red), float(green), float(blue))])
+					newtrack.key_data.append(["==>", colors.Color(0,0,0)])
+					h=(start_angle/360)+(direction_multiplier*(((1.0/360)*rotation_degrees)))
+					red, green, blue = hsv_to_rgb(h,s,v)
+					newtrack.key_data.append([newtrack.datamax, colors.Color(float(red), float(green), float(blue))])
+					
 				elif len(colourslist[x])>2:
 					if newtrack.datatype=="discrete":
 						for y, name in enumerate(colourslist[x]):
-							#proportion=(float(x)/(len(colourslist[x])-1))*1275
-							proportion=(float(y)/(len(colourslist[x])-1))*1175
-							
-							
-							red=510-proportion
-							blue=proportion-510
-							green=proportion
-							if red<-510:
-								reddiff=510+red
-								red=reddiff*-1
-							elif red<0:
-								red=0
-							elif red>255:
-								red=255
-							if blue<0:
-								blue=0
-							elif blue>255:
-								blue=255
-				#			if green>255 and green<765:
-				#				green=255
-							if green>155 and green<765:
-								green=155
-							elif green>=765:
-								greendiff=765-green
-								green=155+greendiff
-								if green<0:
-									green=0
-	#						if not name in colour_dict[x]:
-	#							colour_dict[x][name]=[]
-							colour_dict[x][name]=(red, green, blue)
-							newtrack.key_data.append([name, colors.Color(float(red)/255, float(green)/255, float(blue)/255)])
-					
-					
-					
-							
-				my_tracks["metadata_key"+str(x)]=newtrack
-	
-	
-	
-	
-	
-	if options.reference!="":
-		print "Extracting reference coordinates..."
-		referenceinfo={}
-		totallength=0
-		if options.reference.split('.')[-1].lower() in ["fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs"]:
-			try:
-				fastarecord=read_seq_file(options.reference)
-			except (StandardError, SimonError):
-				DoError("Cannot open sequence file "+options.reference+" please check the format")
-				sys.exit()
-			for record in fastarecord:
-				referenceinfo[record.name]={}
-				referenceinfo[record.name]["start"]=totallength
-				referenceinfo[record.name]["length"]=len(record.seq)
-				totallength+=len(record.seq)
-				
-		elif options.reference.split('.')[-1].lower() in ["bam"]:
-			samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools view -H "+ options.reference)
-			returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		
-			stdout, stderr  = returnval.communicate()
-			if len(stderr)>0:
-				print "Failed to open ",  options.reference, "samtools error:", stderr
-				sys.exit()
+							proportion=(float(y)/(len(colourslist[x])-1))
 
-		
-			headerlines=stdout.split("\n")
-			
-			for line in headerlines:
-				words=line.split()
-				if len(words)==3 and words[0]=="@SQ" and len(words[1].split(":"))==2 and words[1].split(":")[0]=="SN" and len(words[2].split(":"))==2 and words[2].split(":")[0]=="LN":
-					referenceinfo[words[1].split(":")[1]]={}
-					referenceinfo[words[1].split(":")[1]]["start"]=totallength
-					referenceinfo[words[1].split(":")[1]]["length"]=int(words[2].split(":")[1])
-					totallength+=int(words[2].split(":")[1])
-		
-		else:
-			print "Error! Reference file must be  in bam (.bam) or sequence (.fas, .fasta, .mfa, .dna, .fst, .phylip, .phy, .nxs, .nexus) formats"
-			sys.exit()
-	
-	
+							h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
+							red, green, blue = hsv_to_rgb(h,s,v)
+							colour_dict[x][name]=(float(red)*255, float(green)*255, float(blue)*255)
+							newtrack.key_data.append([name, colors.Color(float(red), float(green), float(blue))])
+					
+					
+				if not colour_column_names[x].split(":")[0] in found_keys:
+					track_count+=5	
+					my_tracks["metadata_key"+str(x)]=newtrack
+					found_keys.append(colour_column_names[x].split(":")[0])
 	
 	
 	for arg in args[::-1]:
 		if arg.lower() in ["tree", "list"]:
 			input_order.append(arg.lower())
 			continue
-		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area","embl", "gb", "gbk", "tab", "bam", "bcf", "fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs"]:
+		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea","embl", "gb", "gbk", "tab", "bam", "bcf", "fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs"]:
 			
-			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "bam"] or options.qualifier=="":
+			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea", "bam"] or options.qualifier=="":
 				newtrack = Track()
 				if options.suffix != "":
 					namelen=len(arg.split("/")[-1])
@@ -2890,7 +3085,7 @@ if __name__ == "__main__":
 					track_names[newtrack.name]=[]
 				input_order.append(name)
 				my_tracks[name]=newtrack
-			elif arg.split('.')[-1].lower() in ["hist", "heat", "bar", "line", "area"]:
+			elif arg.split('.')[-1].lower() in ["hist", "heat", "bar", "line", "area", "stackedarea"]:
 				track_count+=options.plotheight
 				newtrack.track_height=options.plotheight
 				plot_type=arg.split('.')[-1].lower()
@@ -3022,7 +3217,7 @@ if __name__ == "__main__":
 					my_tracks[name]=newtrack
 				
 			
-			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "bam"]:# or (arg.split('.')[-1].lower()=="tab" and options.qualifier==""):
+			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea", "bam"]:# or (arg.split('.')[-1].lower()=="tab" and options.qualifier==""):
 				newtrack.name=name
 				x=1
 				while name in my_tracks:
@@ -3036,8 +3231,7 @@ if __name__ == "__main__":
 				
 				
 				my_tracks[name]=newtrack
-		print arg, "read"		
-		sys.stdout.flush()	
+			
 
 	treenames=[]
 	tree_name_to_node={}

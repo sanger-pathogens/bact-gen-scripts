@@ -1406,9 +1406,9 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 		max_name_width+=block_length
 		gubbins_length+=block_length
 		
-	print treewidth
+	
 	treewidth-=(max_name_width+(fontsize/2)+5)
-	print treewidth
+	
 #	treewidth-=xoffset
 	
 	if options.log_branches:
@@ -1431,20 +1431,25 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	else:
 		labelfontsize=6
 	
-	if options.aligntaxa==2:
-		column_name_x_pos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
-		column_name_y_pos=treeObject.node(treeObject.get_terminals()[0]).data.comment["vertpos"]+yoffset+(vertical_scaling_factor/2)
-		colpos=0
-		if options.taxon_names:
-			
-			draw_column_label(treewidth+xoffset+((max_name_width-gubbins_length)/2), column_name_y_pos, labelfontsize, colour_column_names[0])
-		
-			colpos=1
-		for x in xrange(colpos,len(colour_column_names)):
-			
-			draw_column_label(column_name_x_pos+(block_length/2), column_name_y_pos, labelfontsize, colour_column_names[x])
-			column_name_x_pos += block_length
-			column_name_x_pos += vertical_scaling_factor
+	
+	try:
+		if colour_column_names:
+			if options.aligntaxa==2:
+				column_name_x_pos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
+				column_name_y_pos=treeObject.node(treeObject.get_terminals()[0]).data.comment["vertpos"]+yoffset+(vertical_scaling_factor/2)
+				colpos=0
+				if options.taxon_names:
+					
+					draw_column_label(treewidth+xoffset+((max_name_width-gubbins_length)/2), column_name_y_pos, labelfontsize, colour_column_names[0])
+				
+					colpos=1
+				for x in xrange(colpos,len(colour_column_names)):
+					
+					draw_column_label(column_name_x_pos+(block_length/2), column_name_y_pos, labelfontsize, colour_column_names[x])
+					column_name_x_pos += block_length
+					column_name_x_pos += vertical_scaling_factor
+	except NameError:
+		pass
 			
 		
 	
@@ -2966,10 +2971,10 @@ if __name__ == "__main__":
 					newtrack.key_data.append([colourslist[x][0], colors.Color(1, 0, 0)])
 					colour_dict[x][colourslist[x][0]]=(255, 0, 0)
 				elif len(colourslist[x])==2 and newtrack.datatype=="discrete":
-					newtrack.key_data.append([colourslist[x][0], colors.Color(1, 0, 0)])
-					newtrack.key_data.append([colourslist[x][1], colors.Color(0, 0, 1)])
-					colour_dict[x][colourslist[x][0]]=(255, 0, 0)
-					colour_dict[x][colourslist[x][1]]=(0, 0, 255)
+					newtrack.key_data.append([colourslist[x][0], colors.Color(0, 0, 1)])
+					newtrack.key_data.append([colourslist[x][1], colors.Color(1, 0, 0)])
+					colour_dict[x][colourslist[x][0]]=(0, 0, 255)
+					colour_dict[x][colourslist[x][1]]=(255, 0, 0)
 				elif newtrack.datatype=="continuous":
 					
 					for y, name in enumerate(colourslist[x]):
@@ -2998,7 +3003,7 @@ if __name__ == "__main__":
 						for y, name in enumerate(colourslist[x]):
 							#proportion=(float(x)/(len(colourslist[x])-1))*1275
 							proportion=(float(y)/(len(colourslist[x])-1))*1175
-							
+							#proportion=1175-proportion
 							
 							red=510-proportion
 							blue=proportion-510
