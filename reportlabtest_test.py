@@ -57,6 +57,8 @@ pagesizeconverter={'A0':pagesizes.A0, 'A1':pagesizes.A1, 'A2':pagesizes.A2, 'A3'
 colourconverter={'aliceblue':colors.aliceblue, 'antiquewhite':colors.antiquewhite, 'aqua':colors.aqua, 'aquamarine':colors.aquamarine, 'azure':colors.azure, 'beige':colors.beige, 'bisque':colors.bisque, 'black':colors.black, 'blanchedalmond':colors.blanchedalmond, 'blue':colors.blue, 'blueviolet':colors.blueviolet, 'brown':colors.brown, 'burlywood':colors.burlywood, 'cadetblue':colors.cadetblue, 'chartreuse':colors.chartreuse, 'chocolate':colors.chocolate, 'coral':colors.coral, 'cornflower':colors.cornflower, 'cornflowerblue':colors.cornflowerblue, 'cornsilk':colors.cornsilk, 'crimson':colors.crimson, 'cyan':colors.cyan, 'darkblue':colors.darkblue, 'darkcyan':colors.darkcyan, 'darkgoldenrod':colors.darkgoldenrod, 'darkgray':colors.darkgray, 'darkgreen':colors.darkgreen, 'darkgrey':colors.darkgrey, 'darkkhaki':colors.darkkhaki, 'darkmagenta':colors.darkmagenta, 'darkolivegreen':colors.darkolivegreen, 'darkorange':colors.darkorange, 'darkorchid':colors.darkorchid, 'darkred':colors.darkred, 'darksalmon':colors.darksalmon, 'darkseagreen':colors.darkseagreen, 'darkslateblue':colors.darkslateblue, 'darkslategray':colors.darkslategray, 'darkslategrey':colors.darkslategrey, 'darkturquoise':colors.darkturquoise, 'darkviolet':colors.darkviolet, 'deeppink':colors.deeppink, 'deepskyblue':colors.deepskyblue, 'dimgray':colors.dimgray, 'dimgrey':colors.dimgrey, 'dodgerblue':colors.dodgerblue, 'fidblue':colors.fidblue, 'fidlightblue':colors.fidlightblue, 'fidred':colors.fidred, 'firebrick':colors.floralwhite, 'floralwhite':colors.floralwhite, 'forestgreen':colors.forestgreen, 'fuchsia':colors.fuchsia, 'gainsboro':colors.gainsboro, 'ghostwhite':colors.ghostwhite, 'gold':colors.gold, 'goldenrod':colors.goldenrod, 'gray':colors.gray, 'green':colors.green, 'greenyellow':colors.greenyellow, 'grey':colors.grey, 'honeydew':colors.honeydew, 'hotpink':colors.hotpink, 'indianred':colors.indianred, 'indigo':colors.indigo, 'ivory':colors.ivory, 'khaki':colors.khaki, 'lavender':colors.lavender, 'lavenderblush':colors.lavenderblush, 'lawngreen':colors.lawngreen, 'lemonchiffon':colors.lemonchiffon, 'lightblue':colors.lightblue, 'lightcoral':colors.lightcoral, 'lightcyan':colors.lightcyan, 'lightgoldenrodyellow':colors.lightgoldenrodyellow, 'lightgreen':colors.lightgreen, 'lightgrey':colors.lightgrey, 'lightpink':colors.lightpink, 'lightsalmon':colors.lightsalmon, 'lightseagreen':colors.lightseagreen, 'lightskyblue':colors.lightskyblue, 'lightslategray':colors.lightslategray, 'lightslategrey':colors.lightslategrey, 'lightsteelblue':colors.lightsteelblue, 'lightyellow':colors.lightyellow, 'lime':colors.lime, 'limegreen':colors.limegreen, 'linen':colors.linen, 'magenta':colors.magenta, 'maroon':colors.maroon, 'math':colors.math, 'mediumaquamarine':colors.mediumaquamarine, 'mediumblue':colors.mediumblue, 'mediumorchid':colors.mediumorchid, 'mediumpurple':colors.mediumpurple, 'mediumseagreen':colors.mediumseagreen, 'mediumslateblue':colors.mediumslateblue, 'mediumspringgreen':colors.mediumspringgreen, 'mediumturquoise':colors.mediumturquoise, 'mediumvioletred':colors.mediumvioletred, 'midnightblue':colors.midnightblue, 'mintcream':colors.mintcream, 'mistyrose':colors.mistyrose, 'moccasin':colors.moccasin, 'navajowhite':colors.navajowhite, 'navy':colors.navy , 'oldlace':colors.oldlace, 'olive':colors.olive, 'olivedrab':colors.olivedrab, 'orange':colors.orange, 'orangered':colors.orangered, 'orchid':colors.orchid, 'palegoldenrod':colors.palegoldenrod, 'palegreen':colors.palegreen, 'paleturquoise':colors.paleturquoise, 'palevioletred':colors.palevioletred, 'papayawhip':colors.papayawhip, 'peachpuff':colors.peachpuff, 'peru':colors.peru, 'pink':colors.pink, 'plum':colors.plum, 'powderblue':colors.powderblue, 'purple':colors.purple, 'red':colors.red, 'rosybrown':colors.rosybrown, 'royalblue':colors.royalblue, 'saddlebrown':colors.saddlebrown, 'salmon':colors.salmon, 'sandybrown':colors.sandybrown, 'seagreen':colors.seagreen, 'seashell':colors.seashell, 'sienna':colors.sienna, 'silver':colors.silver, 'skyblue':colors.skyblue, 'slateblue':colors.slateblue, 'slategray':colors.slategray, 'slategrey':colors.slategrey, 'snow':colors.snow, 'springgreen':colors.springgreen, 'steelblue':colors.steelblue, 'tan':colors.tan, 'teal':colors.teal, 'thistle':colors.thistle, 'tomato':colors.tomato, 'turquoise':colors.turquoise, 'violet':colors.violet, 'wheat':colors.wheat, 'white':colors.white, 'whitesmoke':colors.whitesmoke, 'yellow':colors.yellow, 'yellowgreen':colors.yellowgreen}
 
 
+
+
 ################################
 # Get the command line options #
 ################################
@@ -433,7 +435,7 @@ def iterate_subfeatures(feature, locations):
 		for subfeature in feature.sub_features:
 			locations=iterate_subfeatures(subfeature, locations)
 	else:
-		locations.append((feature.location.start.position, feature.location.end.position))
+		locations.append((feature.location.start.position+1, feature.location.end.position+1))
 	
 	
 	return locations	
@@ -500,7 +502,7 @@ def add_embl_to_diagram(record, incfeatures=["CDS", "feature", "tRNA", "rRNA", "
 	
 	def get_best_feature_name(feature):
 		
-		name_types=["gene", "primary_name", "systematic_id", "locus_tag"]
+		name_types=["gene", "primary_name", "systematic_id", "locus_tag", "label"]
 		
 		for name in name_types:
 			if feature.qualifiers.has_key(name):
@@ -1338,12 +1340,27 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 		
 		mylabel.setText(column_label.split(":")[0])
 		
-		mylabel.angle=45
-		mylabel.fontName="Helvetica"
-		mylabel.fontSize=fontsize
+		mylabel.angle=control.metadata_column_label_angle
+		mylabel.fontName=control.metadata_column_label_font#"Helvetica"
+		mylabel.fontSize=control.metadata_column_label_size#fontsize
 		mylabel.x=xpox
 		mylabel.y=ypos
-		mylabel.boxAnchor="sw"
+		if mylabel.angle==0:
+			mylabel.boxAnchor='s'
+		elif mylabel.angle==90:
+			mylabel.boxAnchor='w'
+		elif mylabel.angle==180:
+			mylabel.boxAnchor='n'
+		elif mylabel.angle==270:
+			mylabel.boxAnchor='e'
+		elif (mylabel.angle>0 and mylabel.angle<90):
+			mylabel.boxAnchor='sw'
+		elif (mylabel.angle>90 and mylabel.angle<180):
+			mylabel.boxAnchor='nw'
+		elif (mylabel.angle>180 and mylabel.angle<270):
+			mylabel.boxAnchor='ne'
+		elif (mylabel.angle>270 and mylabel.angle<=360):
+			mylabel.boxAnchor='se'
 		#Axis.setPosition(self.track_position[0], self.track_position[1]+(self.track_height/2), self.track_length)
 		d.add(mylabel)
 	
@@ -1425,25 +1442,25 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	else:
 		labelfontsize=6
 	
-	
-	try:
-		if colour_column_names:
-			if options.aligntaxa==2:
-				column_name_x_pos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
-				column_name_y_pos=treeObject.node(treeObject.get_terminals()[0]).data.comment["vertpos"]+yoffset+(vertical_scaling_factor/2)
-				colpos=0
-				if options.taxon_names:
+	if control.metadata_column_labels:
+		try:
+			if colour_column_names:
+				if options.aligntaxa==2:
+					column_name_x_pos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
+					column_name_y_pos=treeObject.node(treeObject.get_terminals()[0]).data.comment["vertpos"]+yoffset+(vertical_scaling_factor/2)
+					colpos=0
+					if options.taxon_names:
+						
+						draw_column_label(treewidth+xoffset+((max_name_width-gubbins_length)/2), column_name_y_pos, labelfontsize, colour_column_names[0])
 					
-					draw_column_label(treewidth+xoffset+((max_name_width-gubbins_length)/2), column_name_y_pos, labelfontsize, colour_column_names[0])
-				
-					colpos=1
-				for x in xrange(colpos,len(colour_column_names)):
-					
-					draw_column_label(column_name_x_pos+(block_length/2), column_name_y_pos, labelfontsize, colour_column_names[x])
-					column_name_x_pos += block_length
-					column_name_x_pos += vertical_scaling_factor
-	except NameError:
-		pass
+						colpos=1
+					for x in xrange(colpos,len(colour_column_names)):
+						
+						draw_column_label(column_name_x_pos+(block_length/2), column_name_y_pos, labelfontsize, colour_column_names[x])
+						column_name_x_pos += block_length
+						column_name_x_pos += vertical_scaling_factor
+		except NameError:
+			pass
 			
 		
 	
@@ -1469,7 +1486,7 @@ class Figure:
 
 
 class Track:
-	def __init__(self, track_position=[-1,-1], track_height=0, track_length=0, track_draw_proportion=0.75, scale=False, tick_marks=True, tick_mark_number=5, tick_mark_labels=True, minor_tick_marks=True, minor_tick_mark_number=3, features=[], beginning=0, end=-1):
+	def __init__(self, track_position=[-1,-1], track_height=0, track_length=0, track_draw_proportion=0.75, scale=False, tick_marks=True, tick_mark_number=5, tick_mark_labels=True, minor_tick_marks=True, minor_tick_mark_number=3, features=[], beginning=0, end=-1, minimum_feature_length=0.1):
 	
 		self.track_position=track_position#horizontal and vertical position of centre of track
 		self.track_height=track_height#height of space allocated for track
@@ -1508,6 +1525,7 @@ class Track:
 		self.name_length=0
 		self.is_key=False
 		self.key_data=[]
+		self.minimum_feature_length=minimum_feature_length
 
 	
 	def draw_greytrack(self):
@@ -1759,6 +1777,9 @@ class Track:
 			for location in feature.feature_locations:
 				start=location[0]
 				finish=location[1]
+				if finish<start+1:
+					finish=start+1
+				
 				if self.beginning!=0:
 					if start<self.beginning and finish>self.beginning:
 						start=self.beginning
@@ -1768,7 +1789,10 @@ class Track:
 				start-=self.beginning
 				finish-=self.beginning
 				
-				scaledlocations.append(((float(start)/length)*self.track_length,(float(finish)/length)*self.track_length))
+				scaled_start=(float(start)/length)*self.track_length
+				scaled_finish=(float(finish)/length)*self.track_length
+				scaledlocations.append((scaled_start,scaled_finish))
+				
 			
 			newfeature.feature_locations=scaledlocations
 			self.scaled_features.append(newfeature)
@@ -1870,8 +1894,8 @@ class Track:
 						y2=self.track_position[1]+((float(self.track_height)/4)*self.track_draw_proportion)
 					
 					#print location[1], location[0],
-					if location[1]-location[0]<0.1:
-						location=(location[0],location[0]+0.1)
+					if location[1]-location[0]<self.minimum_feature_length:
+						location=(location[0],location[0]+self.minimum_feature_length)
 					#print location[1], location[0]
 					
 					if feature.arrows==0:
@@ -2739,6 +2763,267 @@ def get_tree_colour_comments(treeobject):
 	return tree
 
 
+
+###################################################################################################################
+# Class to set default control options and change them depending on command line options and control file options #
+###################################################################################################################
+
+class control_options:
+
+		
+	def __init__(self):
+	
+		#General drawing options
+		self.drawing_pagesize="A4"
+		self.drawing_orientation="landscape"
+		
+		self.track_beginning=0
+		self.track_end=-1
+		self.track_fragments=1
+		self.track_pages=1
+		
+		# track options specific for embl files
+		self.embl_track_draw_proportion=0.9#proportion of the track that should be used for drawing features
+		self.embl_scale=True#show scale on embl tracks. i.e. the horizontal scale line (True or False)
+		self.embl_scale_position="middle"#embl tracks scale position (top, middle or bottom)
+		self.embl_tick_marks=True#show tick marks on embl tracks scale (True or False)
+		self.embl_tick_mark_number=5#Number of tick marks to show on embl tracks (per fragment, per page)
+		self.embl_tick_mark_labels=True#Show tick mark labels on embl tracks - i.e. label scale (True or False)
+		self.embl_tick_mark_label_font="Helvetica"#Font for embl track tick mark labels (Choose from ?)
+		self.embl_tick_mark_label_size=8#Size of tick mark label font
+		self.embl_tick_mark_label_angle=45#Angle of tick mark labels on embl tracks (clockwise from vertical)
+		self.embl_minor_tick_marks=False#show minor tick marks on embl tracks scale (True or False)
+		self.embl_minor_tick_mark_number=3#Number of minor tick marks to show on embl tracks (number between major tick marks)
+		self.embl_draw_feature_labels=False#Draw feature labels on embl tracks (overridden by -l command line option)
+		self.embl_feature_label_size=8#Font size of embl track feature labels
+		self.embl_feature_label_angle=0#Angle of embl track feature labels (clockwise from vertical)
+		self.embl_feature_label_font="Helvetica"#Font for embl track labels (Choose from ?)
+		self.embl_greytrack=False#Show a coloured background on embl tracks (True or False)
+		self.embl_grey_track_colour=colors.Color(0.25,0.25,0.25)#Colour for embl track background (R,G,B scales 0 to 1 for each)
+		self.embl_grey_track_opacity_percent=10#percent opacity of background clolour of embl tracks
+		self.embl_track_show_name=False#Show name on embl tracks (True or False)
+		self.embl_track_name_font="Helvetica"#Font for embl track names
+		self.embl_track_name_size=12#Size of embl track name font (this will be reduced if it is too big for the track)
+		
+		#bcf file options
+		self.bcf_minimum_feature_length=1#minimum size for variants on bcf tracks (in points)
+		
+		#metadata column colour options
+		self.metadata_colour_start_angle=0.0#angle on HSV colour circle to start metadata colour ranges (e.g. red=0, green=120, blue=240)
+		self.metadata_colour_end_angle=240.0#angle on HSV colour circle to end metadata colour ranges (e.g. red=0, green=120, blue=240)
+		self.metadata_colour_start_saturation=0.8#Saturation value for metadata colour ranges
+		self.metadata_colour_end_saturation=0.8#Saturation value for metadata colour ranges
+		self.metadata_colour_start_value=0.9#Value parameter to use for metadata colour ranges
+		self.metadata_colour_end_value=0.9#Value parameter to use for metadata colour ranges
+		self.metadata_colour_direction="anticlockwise"#Direction of metadata colour range (e.g. clockwise = blue -> green -> red -> blue, anticlockwise = blue -> red -> green -> blue)
+		
+		#metadata label options
+		self.metadata_column_labels=True#show metadata column labels (True or False)
+		self.metadata_column_label_font="Helvetica"
+		self.metadata_column_label_size=10
+		self.metadata_column_label_angle=45
+	
+	
+	
+	
+	def read_control_file(self, control_file_name):
+		
+		def get_int(input_value, minimum=0, maximum=1):
+			
+			try: newint=int(input_value)
+			except ValueError:
+				print "illegal int in control file"
+				print input_value
+				sys.exit()
+			
+			if newint<minimum or newint>maximum:
+				print "int is outside min/max range"
+				print input_value
+				sys.exit()
+			
+			return newint
+				
+		def get_float(input_value, minimum=0, maximum=1):
+		
+			try: newfloat=float(input_value)
+			except ValueError:
+				print "illegal float in control file"
+				print input_value
+				sys.exit()
+			
+			if newfloat<minimum or newfloat>maximum:
+				print "float is outside min/max range"
+				print input_value
+				sys.exit()
+				
+			return newfloat
+		
+		def get_choice(input_value, choices=[]):
+			
+			if not input_value in choices:
+				print "illegal choice in control file"
+				print input_value
+				print "choose from:", ', '.join(choices)
+				sys.exit()
+			else:
+				return input_value
+		
+		def get_boolean(input_value):
+			
+			if input_value=='True':
+				return True
+			elif input_value=="False":
+				return False
+			else:
+				print "illegal boolean in control file"
+				print input_value
+				sys.exit()
+				
+		variable_types={
+			
+#			drawing_pagesize
+#			drawing_orientation
+#			
+#			track_beginning=0
+#			track_end=-1
+#			track_fragments=1
+#			track_pages=1
+		
+			# track options specific for embl files
+			'embl_track_draw_proportion': 'float',
+			'embl_scale': 'boolean',
+			'embl_scale_position': "choice",
+			'embl_tick_marks': 'boolean',
+			'embl_tick_mark_number': 'int',
+			'embl_tick_mark_labels': 'boolean',
+			'embl_tick_mark_label_font': 'choice',
+			'embl_tick_mark_label_size': 'float',
+			'embl_tick_mark_label_angle': 'float',
+			'embl_minor_tick_marks': 'boolean',
+			'embl_minor_tick_mark_number': 'int',
+			'embl_draw_feature_labels': 'boolean',
+			'embl_feature_label_size': 'float',
+			'embl_feature_label_angle': 'float',
+			'embl_feature_label_font': "choice",
+			'metadata_column_label_angle': 'float',
+#			embl_greytrack=False#Show a coloured background on embl tracks (True or False)
+#			embl_grey_track_colour=colors.Color(0.25,0.25,0.25)#Colour for embl track background (R,G,B scales 0 to 1 for each)
+#			embl_grey_track_opacity_percent=10#percent opacity of background clolour of embl tracks
+#			embl_track_show_name=False#Show name on embl tracks (True or False)
+#			embl_track_name_font="Helvetica"#Font for embl track names
+#			embl_track_name_size=12#Size of embl track name font (this will be reduced if it is too big for the track)
+#			
+			#bcf file options
+			'bcf_minimum_feature_length': "int",
+			
+			#metadata column colour options
+			'metadata_colour_start_angle': "float",
+			'metadata_colour_end_angle': "float",
+			
+			'metadata_colour_start_saturation': "float",
+			'metadata_colour_end_saturation': "float",
+			'metadata_colour_start_value': "float",
+			'metadata_colour_end_value': "float",
+			'metadata_colour_direction': "choice",
+			
+			'metadata_column_label': 'boolean',
+			'metadata_column_label_font': 'choice',
+			'metadata_column_label_size': 'float',
+			'metadata_column_label_angle': 'float'
+			
+			
+			
+			}
+		
+		maximums={
+			
+			'embl_track_draw_proportion': 1,
+			'embl_tick_mark_number': 1000,
+			'embl_tick_mark_label_size': 20,
+			'embl_tick_mark_label_angle': 360,
+			'embl_minor_tick_mark_number': 1000,
+			'embl_feature_label_size': 20,
+			'embl_feature_label_angle': 360,
+			'bcf_minimum_feature_length': float("Inf"),
+			'metadata_colour_start_angle': 360,
+			'metadata_colour_end_angle': 360,
+			'metadata_colour_start_saturation': 1,
+			'metadata_colour_end_saturation': 1,
+			'metadata_colour_start_value': 1,
+			'metadata_colour_end_value': 1,
+			'metadata_column_label_size': 20,
+			'metadata_column_label_angle': 360
+			}
+		
+		minimums={
+			
+			'embl_track_draw_proportion': 0,
+			'embl_tick_mark_number': 0,
+			'embl_tick_mark_label_size': 1,
+			'embl_tick_mark_label_angle': 0,
+			'embl_minor_tick_mark_number': 0,
+			'embl_feature_label_size': 1,
+			'embl_feature_label_angle': 0,
+			'bcf_minimum_feature_length': 0,
+			'metadata_colour_start_angle': 0,
+			'metadata_colour_end_angle': 0,
+			'metadata_colour_start_saturation': 0,
+			'metadata_colour_end_saturation': 0,
+			'metadata_colour_start_value': 0,
+			'metadata_colour_end_value': 0,
+			'metadata_column_label_size': 1,
+			'metadata_column_label_angle': 0
+			}
+		
+		choices={
+			
+			'embl_scale_position': ['top', 'middle', 'bottom'],
+			'embl_tick_mark_label_font': gfont_list,
+			'embl_feature_label_font': gfont_list,
+			'metadata_colour_direction':["clockwise", "anticlockwise", "counterclockwise"],
+			'metadata_column_label_font': gfont_list
+			
+			}
+		
+		for line in open(control_file_name):
+			line=line.strip().split("#")[0]
+			words=line.split("=")
+			variable=words[0].strip()
+			value='='.join(map(string.strip,words[1:]))
+			
+			
+			if variable=="metadata_colour_saturation":
+				variables=['metadata_colour_start_saturation', 'metadata_colour_end_saturation']
+			elif variable=="metadata_colour_value":
+				variables=['metadata_colour_start_value', 'metadata_colour_end_value']
+			elif variable=="metadata_colour_angle":
+				variables=['metadata_colour_start_angle', 'metadata_colour_end_angle']
+			else:
+				variables=[variable]
+				
+			for variable in variables:
+				if variable in variable_types:
+					if variable_types[variable]=="int":
+						vars(self)[variable]=get_int(value, minimum=minimums[variable], maximum=maximums[variable])
+					if variable_types[variable]=="float":
+						vars(self)[variable]=get_float(value, minimum=minimums[variable], maximum=maximums[variable])
+					if variable_types[variable]=="choice":
+						vars(self)[variable]=get_choice(value, choices=choices[variable])
+					if variable_types[variable]=="boolean":
+						vars(self)[variable]=get_boolean(value)
+			
+				else:
+					print "Invalid variable name in control file:", variable
+			
+			#print vars(self)
+			
+			
+			
+			
+
+
+
+
 ################
 # Main program #
 ################		
@@ -2750,6 +3035,18 @@ if __name__ == "__main__":
 	#Get command line arguments
 
 	(options, args) = main()
+	
+	
+	
+	#get a list of available fonts
+	gfont_list= Canvas(options.outputfile).getAvailableFonts()
+	
+	#Set other options or get them from the control file
+	control=control_options()
+	
+	
+	if os.path.isfile("control_file.txt"):
+		control.read_control_file("control_file.txt")
 	
 	if options.fragment_separation<0:
 		options.fragment_separation=0
@@ -2960,11 +3257,14 @@ if __name__ == "__main__":
 					colour_dict[x][""]=(0,0,0)
 					colourslist[x].remove("")
 				
-				s=0.6
-				v=0.9
-				start_angle=0.0
-				end_angle=240.0
-				direction="counterclockwise"
+				s_start=control.metadata_colour_start_saturation
+				s_end=control.metadata_colour_end_saturation
+				v_start=control.metadata_colour_start_value
+				v_end=control.metadata_colour_end_value
+				start_angle=control.metadata_colour_start_angle
+				end_angle=control.metadata_colour_end_angle
+				direction=control.metadata_colour_direction
+				
 				
 				if direction=="clockwise" and start_angle>end_angle:
 					rotation_degrees=start_angle-end_angle
@@ -3000,15 +3300,20 @@ if __name__ == "__main__":
 						proportion=((float(value)-newtrack.datamin)/((newtrack.datamax-newtrack.datamin)))
 						
 						h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
-						
+						v=v_start+(proportion*(v_end-v_start))
+						s=s_start+(proportion*(s_end-s_start))
 						red, green, blue = hsv_to_rgb(h,s,v)
 						colour_dict[x][name]=(float(red)*255, float(green)*255, float(blue)*255)
 						
 					h=(start_angle/360)+(direction_multiplier*(((0.0/360)*rotation_degrees)))
+					v=v_start+(0.0*(v_end-v_start))
+					s=s_start+(0.0*(s_end-s_start))
 					red, green, blue = hsv_to_rgb(h,s,v)
 					newtrack.key_data.append([newtrack.datamin, colors.Color(float(red), float(green), float(blue))])
 					newtrack.key_data.append(["==>", colors.Color(0,0,0)])
 					h=(start_angle/360)+(direction_multiplier*(((1.0/360)*rotation_degrees)))
+					v=v_start+(1.0*(v_end-v_start))
+					s=s_start+(1.0*(s_end-s_start))
 					red, green, blue = hsv_to_rgb(h,s,v)
 					newtrack.key_data.append([newtrack.datamax, colors.Color(float(red), float(green), float(blue))])
 					
@@ -3018,6 +3323,8 @@ if __name__ == "__main__":
 							proportion=(float(y)/(len(colourslist[x])-1))
 
 							h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
+							v=v_start+(proportion*(v_end-v_start))
+							s=s_start+(proportion*(s_end-s_start))
 							red, green, blue = hsv_to_rgb(h,s,v)
 							colour_dict[x][name]=(float(red)*255, float(green)*255, float(blue)*255)
 							newtrack.key_data.append([name, colors.Color(float(red), float(green), float(blue))])
@@ -3062,6 +3369,7 @@ if __name__ == "__main__":
 				newtrack.add_bam_plot(arg, plot_type, options.fragments)
 			elif arg.split('.')[-1].lower() in ["bcf"]:
 				newtrack=add_bcf_to_diagram(arg)
+				newtrack.minimum_feature_length=control.bcf_minimum_feature_length
 				newtrack.track_height=1
 				if options.end!=-1:
 					newtrack.end=options.end
@@ -3115,6 +3423,23 @@ if __name__ == "__main__":
 				newtrack.name=name
 				newtrack.track_height=options.emblheight
 				
+				newtrack.track_draw_proportion=control.embl_track_draw_proportion
+				newtrack.scale=control.embl_scale
+				newtrack.scale_position=control.embl_scale_position
+				newtrack.tick_marks=control.embl_tick_marks
+				newtrack.tick_mark_number=control.embl_tick_mark_number
+				newtrack.tick_mark_labels=control.embl_tick_mark_labels
+				newtrack.tick_mark_label_font=control.embl_tick_mark_label_font
+				newtrack.tick_mark_label_size=control.embl_tick_mark_label_size
+				newtrack.tick_mark_label_angle=control.embl_tick_mark_label_angle
+				newtrack.minor_tick_marks=control.embl_minor_tick_marks
+				newtrack.minor_tick_mark_number=control.embl_minor_tick_mark_number
+				newtrack.draw_feature_labels=control.embl_draw_feature_labels
+				newtrack.feature_label_size=control.embl_feature_label_size
+				newtrack.feature_label_angle=control.embl_feature_label_angle
+				newtrack.feature_label_font=control.embl_feature_label_font
+				
+								
 				if options.labels>0:
 					track_count+=options.labels
 					newtrack.feature_label_angle=options.label_angle

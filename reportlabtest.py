@@ -439,7 +439,7 @@ def iterate_subfeatures(feature, locations):
 		for subfeature in feature.sub_features:
 			locations=iterate_subfeatures(subfeature, locations)
 	else:
-		locations.append((feature.location.start.position, feature.location.end.position))
+		locations.append((feature.location.start.position+1, feature.location.end.position+1))
 	
 	
 	return locations	
