@@ -4,6 +4,7 @@ from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 import os, sys
 import numpy as np
+import math
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 import shapefile
 from matplotlib.collections import LineCollection
@@ -486,6 +487,33 @@ if __name__ == "__main__":
 		else:
 			print "Could not find", myloc, "in shapefiles"
 	
+
+
+
+
+
+
+	fracs = [0.1, 0.2, 0.15, 0.35, 0.2]
+	explode=(0, 0, 0, 0)
+	lon, lat = 2.112516, 13.512668
+	colors = ['red','blue','green','yellow','magenta','purple','red','blue','green','yellow','magenta','purple']
+	def draw_pie(ax,ratios=[0.4,0.3,0.3], X=0, Y=0, size = 1000):
+		xy = []
+		start = 0.
+		for ratio in ratios:
+			x = [0] + np.cos(np.linspace(2*math.pi*start,2*math.pi*(start+ratio), 30)).tolist()
+			y = [0] + np.sin(np.linspace(2*math.pi*start,2*math.pi*(start+ratio), 30)).tolist()
+			xy.append(zip(x,y))
+			start += ratio
+ 
+		for i, xyi in enumerate(xy):
+			#print [X],[Y] , (xyi,0), size, colors[i]
+		       	ax.scatter([X],[Y] , marker=(xyi,0), s=size, facecolor=colors[i])
+	X, Y = m(float(lon), float(lat))
+	draw_pie(ax,fracs, X, Y,size=1000)
+	#ax = plt.add_subplot(111)
+	#wedges, plt_labels = plt.pie(fracs, explode=explode, shadow=True)
+	#fig.set_bbox(dict(facecolor='white', edgecolor='None', alpha=0.5 ))
 	
 	if options.filetype=="screen":
 		plt.show()	
