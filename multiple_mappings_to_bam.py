@@ -446,7 +446,7 @@ class SNPanalysis:
 		
 		if options.GATK:
 			print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/"+self.name+".bam"
-			print >> bashfile, SAMTOOLS_DIR+"samtools view -H -o ", self.runname+"/tmphead.sam", self.runname+"/"+self.name+".bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools view -H", self.runname+"/"+self.name+".bam | sed 's\SO:unknown\SO:coordinate\g' >", self.runname+"/tmphead.sam"
 			now = datetime.datetime.now()
 			now = now.replace(microsecond=0)
 			print >> bashfile, 'echo "@RG\tID:'+self.name+'\tCN:Sanger\tDT:'+now.isoformat()+'\tPG:SMALT\tPL:ILLUMINA\tSM:'+self.name+'" >>', self.runname+"/tmphead.sam"

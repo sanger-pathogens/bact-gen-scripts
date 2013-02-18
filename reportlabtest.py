@@ -953,7 +953,7 @@ def add_bcf_to_diagram(filename):
 					new_track.add_feature([(start,end)], fillcolour=colour, strokecolour=colour)
 #					try: features.append((feature,colour))
 #					except NameError: pass #print "here"
-				elif SNP and options.bcfvariants not in ["S", "I", "h"] and BASEINFO["INFO"]["AF1"]<0.8 and BASEINFO["INFO"]["AF1"]>0.2:
+				elif SNP and options.bcfvariants not in ["S", "I", "h"] and "AF1" in BASEINFO["INFO"] and BASEINFO["INFO"]["AF1"]<0.8 and BASEINFO["INFO"]["AF1"]>0.2:
 #					colour='10'
 					colour=translator.artemis_color("10")
 					start=int(BASEINFO["POS"])

@@ -381,7 +381,7 @@ if len(genes_present)>0:
 						print >> tmpout, x+1, genedepths[gene][x], geneerrors[gene][x]
 				tmpout.close()
 				
-				os.system(SAMTOOLS_DIR+"~sh16/scripts/reportlabtest.py -H 6 -d area -4 "+str(len(genedepths[gene]))+"  -Y 0 -l 1 -o "+tmpname+str(filecount)+".pdf "+tmpname+".plot "+tmpname+".fasta")
+				os.system(SAMTOOLS_DIR+"~sh16/scripts/reportlabtest.py -H 6 -w -d area -4 "+str(len(genedepths[gene]))+"  -Y 0 -l 1 -o "+tmpname+str(filecount)+".pdf "+tmpname+".plot "+tmpname+".fasta")
 				tmpfilelist.append(tmpname+str(filecount)+".pdf")
 				
 				os.system("rm -f "+tmpname+".plot "+tmpname+".fasta")
@@ -394,7 +394,7 @@ if len(genes_present)>0:
 			
 			os.system("rm -f "+' '.join(tmpfilelist))
 			
-			os.system(SAMTOOLS_DIR+"~sh16/scripts/reportlabtest.py -H 8 -d area -Y 0 -l 1 -o "+options.output+"_coverage_plot.pdf "+options.output+"_coverage.plot "+options.output+"_hits.mfa")
+			os.system(SAMTOOLS_DIR+"~sh16/scripts/reportlabtest.py -H 8 -w -d area -Y 0 -l 1 -o "+options.output+"_coverage_plot.pdf "+options.output+"_coverage.plot "+options.output+"_hits.mfa")
 			
 			count=0
 			output=open(options.output+"_presence.plot", "w")
