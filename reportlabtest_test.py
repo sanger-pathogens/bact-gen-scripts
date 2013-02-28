@@ -7,7 +7,7 @@
 import string, re
 import os, sys
 import random
-from math import sqrt, pow, log, floor
+from math import sqrt, pow, log, floor, sin
 from numpy import repeat, convolve, mean, median
 from optparse import OptionParser, OptionGroup
 from Bio.Nexus import Trees, Nodes
@@ -109,6 +109,7 @@ def main():
 	group.add_option("-m", "--metadata", action="store", dest="metadata", help="metadata file in csv format. Note that this file must have a header row ontaining titles for each column", default="")
 	group.add_option("-c", "--columns", action="store", dest="columns", help="column(s) from metadata file to use for track name (comma separated list) [default=%default]", default="1")
 	group.add_option("-C", "--colourbycolumns", action="store", dest="colour_columns", help="column(s) from metadata file to use to colour track name and blocks next to name (comma separated list). If names are being shown, the first column will be used to colour names. All following columns will be added as coloured shapes as defined by the -z option. [default=%default]", default=False)
+	group.add_option("-k", "--nometadatakey", action="store_false", dest="show_metadata_key", help="Do not show metadata keys. [default=show keys]", default=True)
 	group.add_option("-r", "--parsimony_reconstruction", action="store", dest="transformation", help="Reconstruct colours across branches using parsimony. Select from acctran or deltran transformations [default=%default]", default=None, type="choice", choices=['acctran', 'deltran'])
 	group.add_option("-i", "--suffix", action="store", dest="suffix", help="suffix to remove from filenames", default="")
 	
@@ -3086,6 +3087,7 @@ if __name__ == "__main__":
 	
 	
 	margin=0.5*inch
+	topmargin=margin
 		
 	
 	
@@ -3116,17 +3118,61 @@ if __name__ == "__main__":
 	
 	metadata_keylist=[]
 	colour_columns=[0]
+	max_length_col_name=0
 	
 	#Parse metadata file and create track for key
 	
 	if options.metadata!="":
-		try: columns=map(int,options.columns.split(","))
-		except StandardError:
-			print "Could not understand columns selected:", options.columns
+		if options.columns:
+			try: 
+				columns=[]
+				cols=options.columns.split(",")
+				for col in cols:
+					if len(col.split(".."))==1:
+						try:
+							colour_columns.append(int(col))
+						except StandardError:
+							print "Could not understand columns selected:", options.columns
+							columns=[1]
+					elif len(col.split(".."))==2:
+						colbits=col.split("..")
+						for x in xrange(int(colbits[0]),int(colbits[1])+1):
+							columns.append(x)
+					else:
+						print "Could not understand columns selected:", options.columns
+						columns=[1]
+#			
+#				colour_columns=map(int,options.colour_columns.split(","))
+			except StandardError:
+				print "Could not understand columns selected:", options.columns
+				columns=[1]
+		else:
 			columns=[1]
+#		try: columns=map(int,options.columns.split(","))
+#		except StandardError:
+#			print "Could not understand columns selected:", options.columns
+#			columns=[1]
 		
 		if options.colour_columns:
-			try: colour_columns=map(int,options.colour_columns.split(","))
+			try: 
+				colour_columns=[]
+				cols=options.colour_columns.split(",")
+				for col in cols:
+					if len(col.split(".."))==1:
+						try:
+							colour_columns.append(int(col))
+						except StandardError:
+							print "Could not understand columns selected:", options.colour_columns
+							colour_columns=[]
+					elif len(col.split(".."))==2:
+						colbits=col.split("..")
+						for x in xrange(int(colbits[0]),int(colbits[1])+1):
+							colour_columns.append(x)
+					else:
+						print "Could not understand columns selected:", options.colour_columns
+						colour_columns=[]
+#			
+#				colour_columns=map(int,options.colour_columns.split(","))
 			except StandardError:
 				print "Could not understand columns selected:", options.colour_columns
 				colour_columns=[]
@@ -3183,11 +3229,12 @@ if __name__ == "__main__":
 						if colour_column_entry not in allcolourslist:
 							allcolourslist.append(colour_column_entry)
 						namecolours[words[0].strip()][x]=colour_column_entry
-				
+		
 		found_keys=[]
+		
+
 		if len(colour_columns)>0:
-			
-			for x, colour_column in enumerate(colour_columns):
+						for x, colour_column in enumerate(colour_columns):
 				colour_dict.append({})
 				newtrack=Track()
 				newtrack.track_height=1
@@ -3206,6 +3253,9 @@ if __name__ == "__main__":
 				else:
 					newtrack.key_data=[["Key:", colors.Color(0, 0, 0)]]
 				words=colour_column_names[x].split(":")
+				
+				if get_text_width(control.metadata_column_label_font, control.metadata_column_label_size, words[0])>max_length_col_name:
+					max_length_col_name=get_text_width("Helvetica", 10, words[0])
 				
 				if len(words)>1:
 					if words[1] in ["C", "c"]:
@@ -3330,11 +3380,13 @@ if __name__ == "__main__":
 							newtrack.key_data.append([name, colors.Color(float(red), float(green), float(blue))])
 					
 					
-				if not colour_column_names[x].split(":")[0] in found_keys:
+				if options.show_metadata_key and not colour_column_names[x].split(":")[0] in found_keys:
 					track_count+=5	
 					my_tracks["metadata_key"+str(x)]=newtrack
 					found_keys.append(colour_column_names[x].split(":")[0])
 	
+	if control.metadata_column_labels:
+		topmargin=topmargin+(float(max_length_col_name)*sin(control.metadata_column_label_angle))
 	
 	for arg in args[::-1]:
 		if arg.lower() in ["tree", "list"]:
@@ -3722,7 +3774,7 @@ if __name__ == "__main__":
 	
 	#from this we can work out a constant for the height of a track which takes into account the height of the page and margin sizes
 	
-	vertical_scaling_factor=float(height-(margin*2))/(track_fragment_count)
+	vertical_scaling_factor=float(height-(margin+topmargin))/(track_fragment_count)
 	
 	#to make sure names can be printed in the space of a track, we can scale the name to the same size as the vertical scaling factor, but limit it to 12pt so it doesn't get crazily big
 	

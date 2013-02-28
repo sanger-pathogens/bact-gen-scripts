@@ -423,7 +423,7 @@ if __name__ == "__main__":
 	
 	
 	ISsequences={}
-	if options.ISfasta!="":
+	if options.ISfasta!="" and os.path.isfile(options.ISfasta):
 		print "Reading IS element sequences"
 		try:
 			ISfile=open(options.ISfasta, "rU")

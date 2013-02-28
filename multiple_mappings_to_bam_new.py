@@ -59,7 +59,7 @@ def get_user_options():
 	group = OptionGroup(parser, "Mapping Options")
 	group.add_option("-p", "--program", action="store", type="choice", dest="program", choices=["bwa","ssaha", "smalt", "BWA","SSAHA", "SMALT"], help="Mapping program to use (choose from bwa, ssaha or smalt) [default= %default]", default="smalt")
 	group.add_option("-1", "--nomap", action="store_false", dest="domapping", help="Do not remap data - only available when input is bam (default is to map)", default=True)
-	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3", "0.6.4"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3, 0.6.4 and latest (currently 0.6.4) [default= %default]", default="0.5.8")
+	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3", "0.6.4", "0.7.2"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3, 0.6.4, 0.7.2 and latest (currently 0.7.2) [default= %default]", default="0.5.8")
 	group.add_option("-H", "--human", action="store_true", dest="human", help="Mapping against human (or other large euk)", default=False)
 	#group.add_option("-l", "--length", action="store", dest="readlength", help="Read length [default= %default]", default=54, type="int", metavar="INT")
 	group.add_option("-s", "--single", action="store_false", dest="pairedend", help="reads are single ended (not paired)", default=True)
@@ -69,6 +69,7 @@ def get_user_options():
 	group.add_option("-E", "--maprepeats", action="store_true", dest="maprepeats", help="randomly map repeats when using SMALT (default is to not map repeats)", default=False)
 	group.add_option("-z", "--nomapid", action="store", dest="nomapid", help="Minimum identity threshold to report a mapping Specified as a positive integer or proportion of read length (smalt only) [default= %default]", default=0, type="float", metavar="float")
 	group.add_option("-G", "--GATK", action="store_true", dest="GATK", help="Turn on GATK indel realignment (highly recommended). [Default= %default]", default=False)
+	parser.add_option("-2", "--issequence", action="store", dest="ISfasta", help="Input fasta file of IS element file", default="")
 	
 	
 	parser.add_option_group(group)
@@ -419,14 +420,14 @@ class SNPanalysis:
 					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
 					cmdline="map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
 				else:
-					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
+					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r 0 -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
 					cmdline="map -y "+str(options.nomapid)+" -x -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
 			else:
 				if options.maprepeats:
 					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
 					cmdline="map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
 				else:
-					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
+					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r 0 -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
 					cmdline="map -y "+str(options.nomapid)+" -x -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
 			print >> bashfile, SAMTOOLS_DIR+"samtools view -b -S",self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
 			print >> bashfile, "rm", self.runname+"/tmp1.sam"
@@ -519,9 +520,9 @@ class SNPanalysis:
 		#produce the pileup file
 		
 		if options.BAQ:
-			print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -DSugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+			print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -m", options.depth, " -DSugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 		else:
-			print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -DSugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+			print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -m", options.depth, " -DSugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 			
 		
 		print >> bashfile, BCFTOOLS_DIR+"bcftools view -bcg", self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"
@@ -537,12 +538,12 @@ class SNPanalysis:
 		if options.indels:
 			print >> bashfile, "mv ", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
 			print >> bashfile, "mv ", self.runname+"/"+self.name+".bam.bai", self.runname+"/tmp.bam.bai"
-			print >> bashfile, MY_SCRIPTS_DIR+"realign_indels.py -b", self.runname+"/tmp.bam -B", self.runname+"/"+self.name+"_variant.bcf -r", ref, "-p", options.ratio, "-d", options.depth, "-o", self.runname+"/"+self.name, "-D", self.runname
+			print >> bashfile, MY_SCRIPTS_DIR+"realign_indels_test.py -b", self.runname+"/tmp.bam -B", self.runname+"/"+self.name+"_variant.bcf -r", ref, "-p", options.ratio, "-d", options.depth, "-o", self.runname+"/"+self.name, "-D", self.runname, "-I", options.ISfasta
 			
 			if options.BAQ:
-				print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -DSugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+				print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -m", options.depth, " -DSugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 			else:
-				print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -DSugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+				print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -m", options.depth, " -DSugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 				
 			
 			print >> bashfile, BCFTOOLS_DIR+"bcftools view -bcg", self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"
@@ -585,15 +586,22 @@ if __name__ == "__main__":
 	#print options, args
 	check_input_validity(options, args)
 	
-	if options.version=="latest" or options.version=="0.6.4":
-                SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.4/smalt_x86_64"
-        elif options.version=="0.6.3":
-                SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.3/smalt_x86_64"
-        elif options.version=="0.5.8":
-                SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.5.8/smalt_x86_64"
-        else:
-                print "Unknown smalt version"
-                sys.exit()
+	if options.version=="latest":
+		options.version="0.7.2"
+	if options.version in ["0.7.2"]:
+		if options.maprepeats:
+			options
+	if options.version=="0.7.2":
+		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.7.2/smalt_x86_64"
+	elif options.version=="0.6.4":
+		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.4/smalt_x86_64"
+	elif options.version=="0.6.3":
+		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.3/smalt_x86_64"
+	elif options.version=="0.5.8":
+		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.5.8/smalt_x86_64"
+	else:
+		print "Unknown smalt version"
+		sys.exit()
 
 
 	print '\nChecking input files...'
