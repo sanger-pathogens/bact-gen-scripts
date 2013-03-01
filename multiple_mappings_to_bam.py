@@ -519,9 +519,9 @@ class SNPanalysis:
 		#produce the pileup file
 		
 		if options.BAQ:
-			print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -DSugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+			print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -m", options.depth, " -DSugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 		else:
-			print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -DSugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+			print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -m", options.depth, " -DSugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 			
 		
 		print >> bashfile, BCFTOOLS_DIR+"bcftools view -bcg", self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"

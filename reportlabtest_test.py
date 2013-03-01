@@ -3130,7 +3130,7 @@ if __name__ == "__main__":
 				for col in cols:
 					if len(col.split(".."))==1:
 						try:
-							colour_columns.append(int(col))
+							columns.append(int(col))
 						except StandardError:
 							print "Could not understand columns selected:", options.columns
 							columns=[1]

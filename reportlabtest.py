@@ -2839,7 +2839,7 @@ if __name__ == "__main__":
 				for col in cols:
 					if len(col.split(".."))==1:
 						try:
-							colour_columns.append(int(col))
+							columns.append(int(col))
 						except StandardError:
 							print "Could not understand columns selected:", options.columns
 							columns=[1]
@@ -2888,7 +2888,7 @@ if __name__ == "__main__":
 		else:
 			colour_columns=[]
 		
-		
+		print columns, colour_columns
 		try: lines=open(options.metadata,"rU").readlines()
 		except StandardError:
 			print "Could not open metadatafile:", options.metadata
