@@ -538,7 +538,10 @@ class SNPanalysis:
 		if options.indels:
 			print >> bashfile, "mv ", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
 			print >> bashfile, "mv ", self.runname+"/"+self.name+".bam.bai", self.runname+"/tmp.bam.bai"
-			print >> bashfile, MY_SCRIPTS_DIR+"realign_indels_test.py -b", self.runname+"/tmp.bam -B", self.runname+"/"+self.name+"_variant.bcf -r", ref, "-p", options.ratio, "-d", options.depth, "-o", self.runname+"/"+self.name, "-D", self.runname, "-I", options.ISfasta
+			if options.ISfasta!="":
+				print >> bashfile, MY_SCRIPTS_DIR+"realign_indels_test.py -b", self.runname+"/tmp.bam -B", self.runname+"/"+self.name+"_variant.bcf -r", ref, "-p", options.ratio, "-d", options.depth, "-o", self.runname+"/"+self.name, "-D", self.runname, "-I", options.ISfasta
+			else:
+				print >> bashfile, MY_SCRIPTS_DIR+"realign_indels_test.py -b", self.runname+"/tmp.bam -B", self.runname+"/"+self.name+"_variant.bcf -r", ref, "-p", options.ratio, "-d", options.depth, "-o", self.runname+"/"+self.name, "-D", self.runname
 			
 			if options.BAQ:
 				print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -m", options.depth, " -DSugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
