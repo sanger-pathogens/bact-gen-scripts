@@ -45,7 +45,7 @@ def Usage():
 def getOptions(arg):
 
 	try:
-		opts, args = getopt.getopt(argv, "ho:a:t:kr:Rs:", ["align=", "out=", "=tab", "keep", "reference=", "refrem", "symbol="])
+		opts, args = getopt.getopt(argv, "ho:a:t:kr:Rs:c", ["align=", "out=", "=tab", "keep", "reference=", "refrem", "symbol=", "cut"])
 	except getopt.GetoptError:
 		print "Option Error!", argv
 		Usage()
@@ -72,6 +72,8 @@ def getOptions(arg):
 			tabfile=arg
 		elif opt in ("-k", "--keep"):
 			keepremove='k'
+		elif opt in ("-c", "--cut"):
+			keepremove='c'
 		elif opt in ("-r", "--reference"):
 			reference=arg
 		elif opt in ("-R", "--refrem"):
@@ -92,7 +94,7 @@ def getOptions(arg):
 		print 'Error: No output file specified!'
 		Usage()
 		sys.exit()
-	elif keepremove not in ['k','r']:
+	elif keepremove not in ['k','r', 'c']:
 		print "What the???"
 		sys.exit()
 	symbol=symbol.upper()
@@ -114,7 +116,8 @@ if __name__ == "__main__":
 	
 	alnfile, outfile, tabfile, keepremove, reference, refrem, symbol=getOptions(argv)
 	
-	
+	if keepremove=='c':
+		refrem=True
 	
 	regions=[]
 	
@@ -203,6 +206,13 @@ if __name__ == "__main__":
 					newsequences[sequence]=newsequences[sequence]+sequences[sequence][region[0]:region[1]+1]
 				else:
 					newsequences[sequence]=newsequences[sequence]+revcomp(sequences[sequence][region[0]:region[1]+1])
+			elif keepremove=='c':
+				if x==0:
+					newsequences[sequence]=newsequences[sequence]+sequences[sequence][:region[0]]
+				else:
+					newsequences[sequence]=newsequences[sequence]+sequences[sequence][regions[x-1][1]+1:region[0]]
+				if x==len(regions)-1:
+					newsequences[sequence]=newsequences[sequence]+sequences[sequence][region[1]+1:]
 			else:
 				if x==0:
 					newsequences[sequence]=newsequences[sequence]+sequences[sequence][:region[0]]+symbol*(region[1]+1-region[0])
@@ -219,7 +229,7 @@ if __name__ == "__main__":
 			
 	alnout.close()
 	
-	if len(newsequences[sequence])!=len(sequences[sequence]):
+	if len(newsequences[sequence])!=len(sequences[sequence]) and keepremove!='c':
 		print "ERROR: Output and input sequences of different lengths. Do you have overlapping features in your inputfile?"
 	
 	print "Original alignment length:", len(sequences[sequence]), "New alignment length:", len(newsequences[sequence])
