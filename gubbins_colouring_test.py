@@ -12,6 +12,7 @@ from Bio.Alphabet import IUPAC, Gapped
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from optparse import OptionParser
 import math
+import copy
 #sys.path.extend(map(os.path.abspath, ['/usr/lib/python2.4/site-packages/']))
 #sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.5/site-packages/']))
 #from scipy.stats import chi2
@@ -807,6 +808,13 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 #	treeobject.display()
 	terminals=treeobject.get_terminals()
 	maxbrlen=0.0
+	minbrlen=float("Inf")
+	
+	treecopy=copy.deepcopy(treeobject)
+	if options.outgroup!="" and options.outgroup!="None":
+		treecopy.root_with_outgroup(outgroup=convertnameback[options.outgroup])
+	else:
+		midpoint_root(treecopy)
 	for tnode in terminals:
 #		bobnode=tnode
 #		boblen=0.0
@@ -814,11 +822,15 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 #			boblen+=treeobject.node(bobnode).data.branchlength
 #			bobnode=treeobject.node(bobnode).prev 
 #			print tnode, bobnode, treeobject.root, treeobject.sum_branchlength(treeobject.root,tnode), treeobject.node(tnode).data.branchlength, boblen, float(treeobject.node(bobnode).get_data().support)
-		if treeobject.sum_branchlength(treeobject.root,tnode)>maxbrlen:
-			maxbrlen=treeobject.sum_branchlength(treeobject.root,tnode)
-	nodebrlen=treeobject.sum_branchlength(treeobject.root,node)
-	nodeblue=(float(nodebrlen)/maxbrlen)*255
+		if treecopy.sum_branchlength(treecopy.root,tnode)>maxbrlen:
+			maxbrlen=treecopy.sum_branchlength(treecopy.root,tnode)
+	for tnode in treecopy.node(treecopy.root).succ:
+		if treecopy.sum_branchlength(treecopy.root,tnode)<minbrlen:
+			minbrlen=treecopy.sum_branchlength(treecopy.root,tnode)
+	nodebrlen=treecopy.sum_branchlength(treecopy.root,daughter)
+	nodeblue=(float(nodebrlen-minbrlen)/(maxbrlen-minbrlen))*255
 	nodered=255-nodeblue
+	
 	
 	for x, binsnp in enumerate(binsnps):
 		if binsnp==1:
@@ -1003,12 +1015,14 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 	
 			if treeobject.is_internal(daughter):
 				#print >> tabout, "FT                   /colour=2"
+				print nodebrlen, maxbrlen, minbrlen, nodeblue, nodered
 				print >> tabout, "FT                   /colour=",int(nodered), 0, int(nodeblue)
 				print >> tabout, 'FT                   /taxa="'+', '.join(downstreamnamelist)+'"'
 				print >> tabout, 'FT                   /node="'+nodenames[1]+'->'+daughternames[daughter][1]+'"'
 						
 			else:
 				#print >> tabout, "FT                   /colour=4"
+				print nodebrlen, maxbrlen, minbrlen, nodeblue, nodered
 				print >> tabout, "FT                   /colour=",int(nodered), 0, int(nodeblue)
 				print >> tabout, 'FT                   /taxa="'+sequencenames[daughternames[daughter][1]]+'"'
 				print >> tabout, 'FT                   /node="'+nodenames[1]+'->'+sequencenames[daughternames[daughter][1]]+'"'
@@ -1696,6 +1710,7 @@ if __name__ == "__main__":
 		snplocout=open(prefix+"_SNPS_per_branch.csv","w")
 		snptabout=open(prefix+"_SNPS_per_branch.tab","w")
 		print >> snplocout, "SNP_location,Branch,ancestral_base,Daughter_base"
+		pamltree.display()
 		tree_recurse(rootnode,pamltree)
 		snplocout.close()
 		snptabout.close()
@@ -1778,9 +1793,9 @@ if __name__ == "__main__":
 
 #	os.system("mv "+prefix+"_iteration"+str(iteration)+".tre "+prefix+"_Final.tre")
 	if options.reference=="":
-		os.system("~sh16/scripts/reportlabtest.py -a 2 -q taxa -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+prefix+"_rec.tab")
+		os.system("~sh16/scripts/reportlabtest.py -a 2 -q taxa -M -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb.pdf "+prefix+"_rec.tab")
 	else:
-		os.system("~sh16/scripts/reportlabtest.py -q taxa -a 2 -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+options.reference+" "+prefix+"_rec.tab")
+		os.system("~sh16/scripts/reportlabtest.py -q taxa -a 2 -M -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb.pdf "+options.reference+" "+prefix+"_rec.tab")
 	
 	os.system("rm "+prefix+"temp.tmp baseml.ctl rst rst1 2base.t mlb lnf rub rstnew rstnew2 RAxML_*.SNPS_"+prefix+" "+prefix+".tre SNPS_"+prefix+".phy")
 	
