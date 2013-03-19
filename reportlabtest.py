@@ -3448,6 +3448,10 @@ if __name__ == "__main__":
 			
 
 
+	if track_count==0:
+		print "Error: No data found to print"
+		sys.exit()
+
 	#Calculate the total number of tracks we need, taking into account the number of fragments requested
 
 	if options.fragments>1:

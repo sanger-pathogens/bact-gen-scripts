@@ -3762,7 +3762,9 @@ if __name__ == "__main__":
 			if get_text_width("Helvetica", 10, str(scalemin))>maxplot_scale_text:
 				maxplot_scale_text=get_text_width("Helvetica", 10, str(scalemin))
 			
-
+	if track_count==0:
+		print "Error: No data found to print"
+		sys.exit()
 
 	#Calculate the total number of tracks we need, taking into account the number of fragments requested
 
