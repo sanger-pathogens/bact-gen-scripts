@@ -37,7 +37,8 @@ def get_user_options():
 	
 	parser.add_option("-a", "--average", action="store", dest="average", help="Average coverage to use for hmm. [Default= %default]", default="mean", type="choice", choices=["mean", "median", "mode"])
 	parser.add_option("-d", "--data", action="store", dest="data", help="Test data file (coverage plot, one line per base). If no training data file is selected, the hmm will be trained on this data.", default="")
-	parser.add_option("-t", "--training_data", action="store", dest="training", help="Training data file (coverage plot, one line per base). If no training data file is selected, the hmm will be trained on your test data.", default="")
+	parser.add_option("-t", "--training_data", action="store", dest="training", help="Training data file (coverage plot, one line per base). If no training data or genes file is selected, the hmm will be trained on your test data.", default="")
+	parser.add_option("-T", "--training_genes", action="store", dest="training_genes", help="Training genes tab file (containing location of genes to use for training, such as MLST genes). If no training genes or data file is selected, the hmm will be trained on your test data.", default="")
 	parser.add_option("-m", "--min_block", action="store", dest="minblock", help="Minimum size for a block [default=%default].", default=100, type="int")
 	parser.add_option("-o", "--output", action="store", dest="output", help="Output file name.", default="")
 	parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Verbose output. Will show models.", default=False)
@@ -58,6 +59,8 @@ def check_input_validity(options, args):
 		DoError('No test data file specified')
 	elif options.data and not os.path.isfile(options.data):
 		DoError('Test data file '+options.data+' does not exist')
+	if options.training_genes and not os.path.isfile(options.training_genes):
+		DoError('Training data file '+options.training_genes+' does not exist')
 	if options.training and not os.path.isfile(options.training):
 		DoError('Training data file '+options.training+' does not exist')
 	if options.output=="":
@@ -84,7 +87,7 @@ if __name__ == "__main__":
 
 	#If a training set is provided, calculate the mean using the training set. Otherwise use the test data. Note that the max always needds to be calculated from the test data as well
 		
-	if options.training=="":
+	if options.training=="" and options.training_genes=="":
 		print "No training dataset provided\nUsing test dataset to estimate "+options.average+" coverage"
 		data=map(int,open(options.data, "rU").read().split("\n")[:-1])
 		if options.average=="mean":
@@ -101,7 +104,7 @@ if __name__ == "__main__":
 		#datastd=std(data)
 		datamax=max(data)
 	
-	else:
+	elif options.training!="":
 		print "Using training dataset to estimate "+options.average+" coverage"
 		data=map(int,open(options.training, "rU").read().split("\n")[:-1])
 		if options.average=="mean":
@@ -119,6 +122,46 @@ if __name__ == "__main__":
 		data=map(int,open(options.data, "rU").read().split("\n")[:-1])
 		datamax2=max(data)
 		datamax=max([datamax1,datamax2])
+	elif options.training_genes!="":
+		data=map(int,open(options.data, "rU").read().split("\n")[:-1])
+		training_data=[]
+		print "Using training gene locations from test dataset to estimate "+options.average+" coverage"
+		for line in open(options.training_genes, "rU"):
+			line=line.strip()
+			words=line.split()
+			if len(words)!=3 or words[0]!="FT":
+				continue
+			coords=words[2].replace("complement(","").replace(")","").split("..")
+			if len(coords)!=2:
+				continue
+			if int(coords[0])<int(coords[1]):
+				start=int(coords[0])
+				end=int(coords[1])
+			else:
+				start=int(coords[1])
+				end=int(coords[0])
+			training_data=training_data+data[start:end+1]
+			
+		
+		if options.average=="mean":
+			dataaverage=mean(training_data)
+		elif options.average=="median":
+			dataaverage=median(training_data)
+		elif options.average=="mode":
+			counts=bincount(training_data)
+			if len(counts)==1:
+				DoError("Average coverage is zero")
+			counts=counts[1:]
+			dataaverage=argmax(counts)
+		datamax1=max(training_data)
+		datamin1=min(training_data)
+		data=map(int,open(options.data, "rU").read().split("\n")[:-1])
+		datamax2=max(data)
+		datamax=max([datamax1,datamax2])
+		
+		print dataaverage, datamax, datamax1, datamin1, len(training_data)
+#		sys.exit()
+			
 	
 	if options.minblock>=len(data):
 		DoError("Your minimum block length must be smaller than your dataset length")
@@ -168,12 +211,12 @@ if __name__ == "__main__":
 	if datamax>(dataaverage*2.25):
 	#set up the model parameters for a 6 state continuous hmm
 		transitions = [[1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6], [1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6], [1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6], [1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6],[1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6],[1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6]]
-		ezero=[0.0,dataaverage/4]
+		ezero=[0.0,1.0]
 		elowintermediate=[dataaverage/2,dataaverage/4]
-		esingle=[dataaverage,dataaverage/4]
+		esingle=[dataaverage,dataaverage/2]
 		ehighintermediate=[(3*dataaverage)/2,dataaverage/4]
 		ehigh=[dataaverage*2,dataaverage/4]
-		ehuge=[datamax,datamax]
+		ehuge=[datamax,(datamax-(dataaverage*2))-(dataaverage/4)]
 		#ehuge=[(dataaverage*2)+((datamax-(dataaverage*2))/2),(datamax-(dataaverage*2))+(dataaverage/4)]
 		dist_from_ehigh=(datamax-(dataaverage*2))
 		
@@ -232,7 +275,14 @@ if __name__ == "__main__":
 	
 	if options.verbose:
 		print "\nUntrained model:\n"
-		print m
+		#print m
+		#s = m.cmodel.getState(state)
+		for i in xrange(m.cmodel.N):
+			print "\tstate", str(i)+":", m.getEmission(i)
+			print "\t\tTransitions:",
+			for j in xrange(m.cmodel.N):
+				print "->"+str(j), m.getTransition(i,j),
+			print
 	
 	#calculate the initial log likelihood (before optimisation)
 	initial_log = m.loglikelihood(emissiondata)*-1	
@@ -245,7 +295,13 @@ if __name__ == "__main__":
 	
 	if options.verbose:
 		print "\nTrained model:\n"
-		print m
+		#s = m.cmodel.getState(state)
+		for i in xrange(m.cmodel.N):
+			print "\tstate", str(i)+":", m.getEmission(i)
+			print "\t\tTransitions:",
+			for j in xrange(m.cmodel.N):
+				print "->"+str(j), m.getTransition(i,j),
+			print
 	
 	#calculate the initial log likelihood (after optimisation)
 	trained_log = m.loglikelihood(emissiondata)*-1
