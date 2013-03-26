@@ -59,7 +59,10 @@ for filename in args:
 		lengths.append(length)
 		
 		lengthnons=len(seq.upper().replace("N",""))
-		GC=(float(len(seq.upper().replace("N","").replace("A","").replace("T","")))/lengthnons)*100
+		if lengthnons==0:
+			GC=0
+		else:
+			GC=(float(len(seq.upper().replace("N","").replace("A","").replace("T","")))/lengthnons)*100
 		
 		GCs.append(GC)
 		

@@ -567,16 +567,40 @@ def add_embl_to_diagram(record, incfeatures=["CDS", "feature", "tRNA", "rRNA", "
 		else:
 			print "Can't understand colour code!"
 			colour=translator.artemis_color("5")
+		
+		
+		
+		
+		if feature.qualifiers.has_key("border"):
+			borderline=feature.qualifiers["border"][0]
+		elif feature.qualifiers.has_key("border"):
+			borderline=feature.qualifiers["border"][0]
+		else:
+			borderline=colourline
+
+		
+		if len(borderline.split())==1:
+			try:
+				border=translator.artemis_color(borderline)
+			except StandardError:
+				border=translator.artemis_color("5")
+		elif len(borderline.split())==3:
+			border=translator.int255_color((int(borderline.split()[0]),int(borderline.split()[1]),int(borderline.split()[2])))
+		else:
+			print "Can't understand colour code!"
+			border=translator.artemis_color("5")
+		
+		
 			
 		locations=[]
 		#get gene locations (including subfeatures)
 		locations=iterate_subfeatures(feature, locations)
 		
 		if feature.type.lower()=="cds":
-			new_track.add_feature(locations, fillcolour=colour, strokecolour=colour, strokeweight=0.5, strand=feature.strand, arrows=int(options.arrows), label=get_best_feature_name(feature))
+			new_track.add_feature(locations, fillcolour=colour, strokecolour=border, strokeweight=0.5, strand=feature.strand, arrows=int(options.arrows), label=get_best_feature_name(feature))
 			#gd_feature_set.add_feature(feature, color=colour, label=0, sigil=sigiltype, arrowhead_length=0.25, locations=locations)
 		else:
-			new_track.add_feature(locations, fillcolour=colour, strokecolour=colour, label=get_best_feature_name(feature), arrows=int(options.arrows))
+			new_track.add_feature(locations, fillcolour=colour, strokecolour=border, label=get_best_feature_name(feature), arrows=int(options.arrows))
 			#gd_feature_set.add_feature(feature, color=colour, label=0, strand=0, locations=locations)
 
 
@@ -660,7 +684,27 @@ def add_ordered_embl_to_diagram(record, incfeatures=["CDS", "feature"], emblfile
 			print "Can't understand colour code!"
 			print colourline
 			sys.exit()
-			
+		
+		
+		if feature.qualifiers.has_key("border"):
+			borderline=feature.qualifiers["border"][0]
+		elif feature.qualifiers.has_key("border"):
+			borderline=feature.qualifiers["border"][0]
+		else:
+			borderline=colourline
+
+		
+		if len(borderline.split())==1:
+			try:
+				border=translator.artemis_color(borderline)
+			except StandardError:
+				border=translator.artemis_color("5")
+		elif len(borderline.split())==3:
+			border=translator.int255_color((int(borderline.split()[0]),int(borderline.split()[1]),int(borderline.split()[2])))
+		else:
+			print "Can't understand colour code!"
+			border=translator.artemis_color("5")
+		
 		locations=[]
 		#get gene locations (including subfeatures)
 		locations=iterate_subfeatures(feature, locations)
@@ -683,7 +727,7 @@ def add_ordered_embl_to_diagram(record, incfeatures=["CDS", "feature"], emblfile
 					arrows=int(options.arrows)
 				else:
 					arrows=0
-				new_tracks[taxonname].add_feature(locations, fillcolour=colour, strokecolour=colour, arrows=arrows)
+				new_tracks[taxonname].add_feature(locations, fillcolour=colour, strokecolour=border, arrows=arrows)
 		
 		else:
 			if not record.name in new_tracks:
@@ -694,7 +738,7 @@ def add_ordered_embl_to_diagram(record, incfeatures=["CDS", "feature"], emblfile
 				arrows=int(options.arrows)
 			else:
 				arrows=0
-			new_tracks[record.name].add_feature(locations, fillcolour=colour, strokecolour=colour, arrows=arrows)
+			new_tracks[record.name].add_feature(locations, fillcolour=colour, strokecolour=border, arrows=arrows)
 			
 		
 	if len(new_tracks)>1 and record.name in new_tracks:
@@ -1845,12 +1889,16 @@ class Track:
 		
 		for featurenum in featuresort[::-1]:
 			feature=self.scaled_features[featurenum[1]]
+			
+				
 			#if the feature is white, outline it in black so we can see it and outline features in black if selected in the options
 			if feature.strokecolour==colors.Color(1,1,1,1) or options.outline_features:
 				feature.strokecolour=colors.Color(0,0,0,1)
-			else:
+			elif feature.strokecolour==feature.fillcolour:
 				feature.strokecolour=None
 				feature.strokeweight=0
+			else:
+				feature.strokeweight=2
 			
 			
 			
@@ -3234,7 +3282,7 @@ if __name__ == "__main__":
 		
 
 		if len(colour_columns)>0:
-						for x, colour_column in enumerate(colour_columns):
+			for x, colour_column in enumerate(colour_columns):
 				colour_dict.append({})
 				newtrack=Track()
 				newtrack.track_height=1
