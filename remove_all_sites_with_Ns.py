@@ -182,7 +182,10 @@ if __name__ == "__main__":
 	
 	
 	print "Done"
-	print "Found", len(snplocations), "sites with a SNP and no Ns or gaps"
+	if len(snpsequence)==0:
+		print "Found no sites without Ns"
+		sys.exit()
+	print "Found", len(snpsequence[snpsequence.keys()[0]]), "sites with a SNP and no Ns or gaps"
 
 		
 	alignment = Generic.Alignment(Gapped(IUPAC.unambiguous_dna, "-"))

@@ -39,6 +39,7 @@ def get_user_options():
 	parser.add_option("-d", "--data", action="store", dest="data", help="Test data file (coverage plot, one line per base). If no training data file is selected, the hmm will be trained on this data.", default="")
 	parser.add_option("-t", "--training_data", action="store", dest="training", help="Training data file (coverage plot, one line per base). If no training data or genes file is selected, the hmm will be trained on your test data.", default="")
 	parser.add_option("-T", "--training_genes", action="store", dest="training_genes", help="Training genes tab file (containing location of genes to use for training, such as MLST genes). If no training genes or data file is selected, the hmm will be trained on your test data.", default="")
+	parser.add_option("-g", "--GC_data", action="store", dest="GC", help="GC (moving average GC plot, one line per base). Used to attempt to reduce the bias caused by GC on mapping coverage.", default="")
 	parser.add_option("-m", "--min_block", action="store", dest="minblock", help="Minimum size for a block [default=%default].", default=100, type="int")
 	parser.add_option("-o", "--output", action="store", dest="output", help="Output file name.", default="")
 	parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Verbose output. Will show models.", default=False)
@@ -61,6 +62,8 @@ def check_input_validity(options, args):
 		DoError('Test data file '+options.data+' does not exist')
 	if options.training_genes and not os.path.isfile(options.training_genes):
 		DoError('Training data file '+options.training_genes+' does not exist')
+	if options.GC and not os.path.isfile(options.GC):
+		DoError('GC data file '+options.GC+' does not exist')
 	if options.training and not os.path.isfile(options.training):
 		DoError('Training data file '+options.training+' does not exist')
 	if options.output=="":
@@ -84,12 +87,55 @@ if __name__ == "__main__":
 	(options, args)=get_user_options()
 	#print options, args
 	check_input_validity(options, args)
-
+	
+	
+	#if GC data is provided, try scaling the data values by it
+	if options.GC!="":
+		GCsum=[0.0]*100
+		GCcount=[0.0]*100
+		ratios=[0.0]*100
+		data=map(int,open(options.data, "rU").read().split("\n")[:-1])
+		GCdata=map(int,open(options.GC, "rU").read().split("\n")[:-1])
+		
+		totalsum=0.0
+		totalcount=0
+		for x, baseGC in enumerate(GCdata):
+			GCsum[baseGC-1]+=data[x]
+			GCcount[baseGC-1]+=1
+			totalcount+=1
+			totalsum+=data[x]
+		totalmean=totalsum/totalcount
+		if totalmean==0:
+			print "No coverage found"
+			sys.exit()
+		for x, sum in enumerate(GCsum):
+			if GCcount[x]>0:
+				ratios[x]=(GCsum[x]/GCcount[x])/totalmean
+			else:
+				ratios[x]=0.0
+			
+			print x+1, GCsum[x], GCcount[x], ratios[x]
+		
+		newdata=[]
+		
+		output=open("newdata500.plot", "w")
+		for x, datum in enumerate(data):
+			if ratios[GCdata[x]-1]==0:
+				newdata.append(0)
+			else:
+				newdata.append(int(datum/ratios[GCdata[x]-1]))
+				print >> output, int(datum/ratios[GCdata[x]-1])
+		output.close()
+#	print newdata[:100]
+	
 	#If a training set is provided, calculate the mean using the training set. Otherwise use the test data. Note that the max always needds to be calculated from the test data as well
 		
 	if options.training=="" and options.training_genes=="":
 		print "No training dataset provided\nUsing test dataset to estimate "+options.average+" coverage"
-		data=map(int,open(options.data, "rU").read().split("\n")[:-1])
+		if options.GC!="":
+			data=newdata
+		else:
+			data=map(int,open(options.data, "rU").read().split("\n")[:-1])
 		if options.average=="mean":
 			dataaverage=mean(data)
 		elif options.average=="median":
@@ -123,7 +169,10 @@ if __name__ == "__main__":
 		datamax2=max(data)
 		datamax=max([datamax1,datamax2])
 	elif options.training_genes!="":
-		data=map(int,open(options.data, "rU").read().split("\n")[:-1])
+		if options.GC!="":
+			data=newdata
+		else:
+			data=map(int,open(options.data, "rU").read().split("\n")[:-1])
 		training_data=[]
 		print "Using training gene locations from test dataset to estimate "+options.average+" coverage"
 		for line in open(options.training_genes, "rU"):
@@ -196,9 +245,9 @@ if __name__ == "__main__":
 	
 	if options.flatten:
 		for x in xrange(len(data)):
-			if data[x]>dataaverage*3:	
-				data[x]=dataaverage*3
-			datamax=dataaverage*3
+			if data[x]>dataaverage*2:	
+				data[x]=dataaverage*2
+			datamax=dataaverage*2
 		print "Flattened max =", datamax
 		
 	print "Setting up hmm"
@@ -208,35 +257,35 @@ if __name__ == "__main__":
 		
 	
 	#when neccessary, include ehuge to account for excessively large coverage regions
-	if datamax>(dataaverage*2.25):
-	#set up the model parameters for a 6 state continuous hmm
-		transitions = [[1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6], [1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6], [1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6], [1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6],[1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6],[1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6]]
-		ezero=[0.0,1.0]
-		elowintermediate=[dataaverage/2,dataaverage/4]
-		esingle=[dataaverage,dataaverage/2]
-		ehighintermediate=[(3*dataaverage)/2,dataaverage/4]
-		ehigh=[dataaverage*2,dataaverage/4]
-		ehuge=[datamax,(datamax-(dataaverage*2))-(dataaverage/4)]
-		#ehuge=[(dataaverage*2)+((datamax-(dataaverage*2))/2),(datamax-(dataaverage*2))+(dataaverage/4)]
-		dist_from_ehigh=(datamax-(dataaverage*2))
-		
-		#ehuge=[datamax,dist_from_ehigh]
-		emissions=[ezero, elowintermediate, esingle, ehighintermediate, ehigh, ehuge]
-		pi=[1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6]
-	else:
+#	if datamax>(dataaverage*2.25):
+#	#set up the model parameters for a 6 state continuous hmm
+#		transitions = [[1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6], [1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6], [1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6], [1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6],[1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6],[1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6]]
+#		ezero=[0.0,1.0]
+#		elowintermediate=[dataaverage/2,dataaverage/4]
+#		esingle=[dataaverage,dataaverage/2]
+#		ehighintermediate=[(3*dataaverage)/2,dataaverage/4]
+#		ehigh=[dataaverage*2,dataaverage/4]
+#		ehuge=[datamax,(datamax-(dataaverage*2))-(dataaverage/4)]
+#		#ehuge=[(dataaverage*2)+((datamax-(dataaverage*2))/2),(datamax-(dataaverage*2))+(dataaverage/4)]
+#		dist_from_ehigh=(datamax-(dataaverage*2))
+#		
+#		#ehuge=[datamax,dist_from_ehigh]
+#		emissions=[ezero, elowintermediate, esingle, ehighintermediate, ehigh, ehuge]
+#		pi=[1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6, 1.0/6]
+#	else:
 	#set up the model parameters for a 5 state continuous hmm
-		transitions = [[0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2],[0.2, 0.2, 0.2, 0.2, 0.2]]
-		ezero=[0.0,1.0]
-		elowintermediate=[dataaverage/2,dataaverage/4]
-		esingle=[dataaverage,dataaverage/2]
-		ehighintermediate=[(3*dataaverage)/2,dataaverage/4]
-		if dataaverage*2>datamax:
-			ehigh=[datamax,dataaverage/4]
-		else:
-			ehigh=[dataaverage*2,dataaverage/4]
-			
-		emissions=[ezero, elowintermediate, esingle, ehighintermediate, ehigh]
-		pi=[0.2, 0.2, 0.2, 0.2, 0.2]
+	transitions = [[0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2],[0.2, 0.2, 0.2, 0.2, 0.2]]
+	ezero=[0.0,1.0]
+	elowintermediate=[dataaverage/2,dataaverage/4]
+	esingle=[dataaverage,dataaverage/2]
+	ehighintermediate=[(3*dataaverage)/2,dataaverage/4]
+	if dataaverage*2>datamax:
+		ehigh=[datamax,dataaverage/4]
+	else:
+		ehigh=[dataaverage*2,1.0]
+		
+	emissions=[ezero, elowintermediate, esingle, ehighintermediate, ehigh]
+	pi=[0.2, 0.2, 0.2, 0.2, 0.2]
 	
 	
 #	transitions = [[0.2, 0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2, 0.2],[0.2, 0.2, 0.2, 0.2, 0.2, 0.2]]
