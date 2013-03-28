@@ -241,7 +241,7 @@ if len(genes_present)>0:
 			plotlines.append([refstarts[line[0]],refends[line[0]],((float(line[5])-float(line[6]+line[7]+line[8]))/line[5])*100])
 	
 		output.close()
-		
+		sys.exit()
 		plotout=open(options.output+"_hits.plot","w")
 		print >> plotout, "#BASE MATCH"
 		plotlines.sort()
