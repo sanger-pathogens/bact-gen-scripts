@@ -77,7 +77,7 @@ if __name__ == "__main__":
 			words=line.strip().split('\t')
 		else:
 			words=line.strip().split(',')
-			
+		
 		if len(words)==0:
 			replace=False
 			continue
@@ -102,6 +102,7 @@ if __name__ == "__main__":
 				newname=newname[:-1]
 			treedata=treedata.replace("("+words[0]+':', "("+newname+':')
 			treedata=treedata.replace(","+words[0]+':', ","+newname+':')
+			
 	
 	output=open(options.outfile,'w')
 	print >> output, treedata

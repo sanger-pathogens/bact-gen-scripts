@@ -778,6 +778,7 @@ def tree_to_string(treeObject, support_as_branchlengths=False,branchlengths_only
    
 #		if not treeObject.node(node).get_succ():	#if branch is terminal
 		if treeObject.is_terminal(node):
+			
 			return treeObject.node(node).data.taxon+make_info_string(treeObject.node(node).data,terminal=True) 
 		else:
 			

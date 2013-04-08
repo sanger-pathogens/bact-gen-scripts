@@ -395,6 +395,7 @@ if __name__ == "__main__":
 				print >> tabout, 'FT                   /note="Maximum coverage = '+str(blockmax)+'"'
 				print >> tabout, 'FT                   /note="Minimum coverage = '+str(blockmin)+'"'
 				print >> tabout, 'FT                   /note="Mean coverage relative to training data average = '+str(blockrelativecoverage)+'"'
+				print >> tabout, 'FT                   /file="'+options.data+'"'
 				
 			elif block[2]==4:
 				print >> tabout, "FT                   /colour=2"
@@ -405,6 +406,7 @@ if __name__ == "__main__":
 				print >> tabout, 'FT                   /note="Maximum coverage = '+str(blockmax)+'"'
 				print >> tabout, 'FT                   /note="Minimum coverage = '+str(blockmin)+'"'
 				print >> tabout, 'FT                   /note="Mean coverage relative to training data average = '+str(blockrelativecoverage)+'"'
+				print >> tabout, 'FT                   /file="'+options.data+'"'
 				
 	
 	tabout.close()	

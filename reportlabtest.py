@@ -1317,15 +1317,18 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 			
 			
 		
-	def recurse_subtree(node, horizontalpos):
+	def recurse_subtree(node, horizontalpos, treebase=float("Inf")):
 		
 		daughters=treeObject.node(node).succ
 		
 		daughterhorizontalpos=horizontalpos+(treeObject.node(node).data.branchlength*horizontal_scaling_factor)
 		drawbranch(node,horizontalpos)
 		for daughter in daughters:
-			recurse_subtree(daughter,daughterhorizontalpos)
-
+			treebase=recurse_subtree(daughter,daughterhorizontalpos, treebase=treebase)
+		if treeObject.node(node).data.comment["vertpos"]<treebase:
+			treebase=treeObject.node(node).data.comment["vertpos"]
+		
+		return treebase
 		
 		
 	
@@ -1420,9 +1423,9 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	
 	get_node_vertical_positions()
 	
-	recurse_subtree(treeObject.root, 0)
+	treebase=recurse_subtree(treeObject.root, 0)+yoffset
 	
-	treebase=treeObject.node(treeObject.get_terminals()[-1]).data.comment["vertpos"]+yoffset
+	#treebase=treeObject.node(treeObject.get_terminals()[-1]).data.comment["vertpos"]+yoffset
 	
 	if not options.show_branchlengths:
 		draw_scale()
@@ -3307,17 +3310,71 @@ if __name__ == "__main__":
 			tree=Trees.Tree(treestring, rooted=True)
 			if options.midpoint:
 				tree=midpoint_root(tree)
-				treestring=tree_to_string(tree,plain=False,ladderize=options.ladderise)
-				tree=Trees.Tree(treestring, rooted=True)
+#				treestring=tree_to_string(tree,plain=False,ladderize=options.ladderise)
+#				tree=Trees.Tree(treestring, rooted=True)
 				
 			tree.root
 			
-			treeterminals=tree.get_terminals()
+			
+			def get_ordered_terminals(treeObject):
+				
+				def measure_downstream_branches(basenode,count=0, maxlen=0.0):
+					def measure_next_node(node,count, maxlen):
+						for daughter in treeObject.node(node).succ:
+							count, maxlen=measure_next_node(daughter,count, maxlen)
+						count+=1
+						
+						if treeObject.is_terminal(node):
+							nodedist=treeObject.distance(basenode,node)
+							if nodedist>maxlen:
+								maxlen=nodedist
+						
+						return count, maxlen
+					count, maxlen=measure_next_node(basenode,count, maxlen)
+					
+					return count, maxlen+treeObject.node(basenode).data.branchlength
+				
+				
+				def get_next_terminal(node, order):
+				
+					succs=treeObject.node(node).succ
+										
+					succ_counts=[]
+					
+					for succ in succs:
+						brcount,brlen=measure_downstream_branches(succ)
+						succ_counts.append([brcount,brlen,succ])
+					
+					succ_counts.sort()
+					
+					for succ_count in succ_counts:
+						succ=succ_count[2]
+						
+						if not treeObject.is_terminal(succ):
+							order=get_next_terminal(succ, order)
+						else:
+							order.append(succ)
+							print node, succ_count
+					
+					return order
+					
+
+				order=[]
+				order=get_next_terminal(treeObject.root, order)
+				return order
+			
+			if options.ladderise in ["left", "right"]:
+				order=get_ordered_terminals(tree)
+				if options.ladderise=="left":
+					order.reverse()
+			else:
+				order=tree.get_terminals()
+			
 			totalbr=0.0
 			
 			tree=get_tree_colour_comments(tree)
 			
-			for terminal_node in treeterminals:
+			for terminal_node in order:
 				terminal=tree.node(terminal_node).data.taxon
 				terminal=terminal.strip("'")
 				terminal=terminal.strip('"')

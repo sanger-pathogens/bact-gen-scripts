@@ -218,7 +218,7 @@ if __name__ == "__main__":
 	else:
 		os.system("cp "+options.ref+" "+core_file)
 			
-	
+	sys.exit()
 
 	if options.mapping:
 		os.system("~sh16/scripts/multiple_mappings_to_bam.py -M 2 -z 0.9 -p smalt -v latest -X -r "+core_file+" "+' '.join(args)+' > '+tmpname+'jobstring')
