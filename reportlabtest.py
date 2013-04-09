@@ -1317,18 +1317,20 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 			
 			
 		
-	def recurse_subtree(node, horizontalpos, treebase=float("Inf")):
+	def recurse_subtree(node, horizontalpos, treebase=float("Inf"), treetop=float("-Inf")):
 		
 		daughters=treeObject.node(node).succ
 		
 		daughterhorizontalpos=horizontalpos+(treeObject.node(node).data.branchlength*horizontal_scaling_factor)
 		drawbranch(node,horizontalpos)
 		for daughter in daughters:
-			treebase=recurse_subtree(daughter,daughterhorizontalpos, treebase=treebase)
+			treebase, treetop=recurse_subtree(daughter,daughterhorizontalpos, treebase=treebase, treetop=treetop)
 		if treeObject.node(node).data.comment["vertpos"]<treebase:
 			treebase=treeObject.node(node).data.comment["vertpos"]
+		if treeObject.node(node).data.comment["vertpos"]>treetop:
+			treetop=treeObject.node(node).data.comment["vertpos"]
 		
-		return treebase
+		return treebase, treetop
 		
 		
 	
@@ -1423,7 +1425,9 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	
 	get_node_vertical_positions()
 	
-	treebase=recurse_subtree(treeObject.root, 0)+yoffset
+	treebase, treetop=recurse_subtree(treeObject.root, 0)
+	treebase+=yoffset
+	treetop+=yoffset
 	
 	#treebase=treeObject.node(treeObject.get_terminals()[-1]).data.comment["vertpos"]+yoffset
 	
@@ -1440,7 +1444,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 		if colour_column_names:
 			if options.aligntaxa==2:
 				column_name_x_pos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
-				column_name_y_pos=treeObject.node(treeObject.get_terminals()[0]).data.comment["vertpos"]+yoffset+(vertical_scaling_factor/2)
+				column_name_y_pos=treetop+(vertical_scaling_factor/2)
 				colpos=0
 				if options.taxon_names:
 					
@@ -3354,7 +3358,7 @@ if __name__ == "__main__":
 							order=get_next_terminal(succ, order)
 						else:
 							order.append(succ)
-							print node, succ_count
+							#print node, succ_count
 					
 					return order
 					
@@ -3363,12 +3367,37 @@ if __name__ == "__main__":
 				order=get_next_terminal(treeObject.root, order)
 				return order
 			
+			
+			def get_terminals(treeObject):
+				
+				def get_next_taxon(node, order):
+				
+					succs=treeObject.node(node).succ
+										
+					
+					for succ in succs:
+						
+						if not treeObject.is_terminal(succ):
+							order=get_next_taxon(succ, order)
+						else:
+							order.append(succ)
+							#print node, succ_count
+					
+					return order
+					
+
+				order=[]
+				order=get_next_taxon(treeObject.root, order)
+				return order
+				
+			
 			if options.ladderise in ["left", "right"]:
 				order=get_ordered_terminals(tree)
 				if options.ladderise=="left":
 					order.reverse()
 			else:
-				order=tree.get_terminals()
+				#order=tree.get_terminals()
+				order=get_terminals(tree)
 			
 			totalbr=0.0
 			
@@ -3563,9 +3592,10 @@ if __name__ == "__main__":
 	#Set the orders of the tracks	
 	
 	output_order=[]
-	if len(metadata_keylist)>0:
-		metadata_keylist.reverse()
-		output_order=metadata_keylist
+	if options.show_metadata_key:
+		if len(metadata_keylist)>0:
+			metadata_keylist.reverse()
+			output_order=metadata_keylist
 	treetrack=0
 	if not "tree" in input_order:
 		output_order=output_order+treenames[::-1]

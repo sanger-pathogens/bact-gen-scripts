@@ -1357,18 +1357,20 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 			
 			
 		
-	def recurse_subtree(node, horizontalpos, treebase=float("Inf")):
+	def recurse_subtree(node, horizontalpos, treebase=float("Inf"), treetop=float("-Inf")):
 		
 		daughters=treeObject.node(node).succ
 		
 		daughterhorizontalpos=horizontalpos+(treeObject.node(node).data.branchlength*horizontal_scaling_factor)
 		drawbranch(node,horizontalpos)
 		for daughter in daughters:
-			treebase=recurse_subtree(daughter,daughterhorizontalpos, treebase=treebase)
+			treebase, treetop=recurse_subtree(daughter,daughterhorizontalpos, treebase=treebase, treetop=treetop)
 		if treeObject.node(node).data.comment["vertpos"]<treebase:
 			treebase=treeObject.node(node).data.comment["vertpos"]
+		if treeObject.node(node).data.comment["vertpos"]>treetop:
+			treetop=treeObject.node(node).data.comment["vertpos"]
 		
-		return treebase
+		return treebase, treetop
 
 		
 		
@@ -1480,7 +1482,9 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	get_node_vertical_positions()
 	
 	
-	treebase=recurse_subtree(treeObject.root, 0)+yoffset
+	treebase, treetop=recurse_subtree(treeObject.root, 0)
+	treebase+=yoffset
+	treetop+=yoffset
 	
 	if not options.show_branchlengths:
 		draw_scale()
@@ -1495,7 +1499,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 			if colour_column_names:
 				if options.aligntaxa==2:
 					column_name_x_pos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
-					column_name_y_pos=treeObject.node(treeObject.get_terminals()[0]).data.comment["vertpos"]+yoffset+(vertical_scaling_factor/2)
+					column_name_y_pos=treetop+(vertical_scaling_factor/2)
 					colpos=0
 					if options.taxon_names:
 						
@@ -3682,16 +3686,6 @@ if __name__ == "__main__":
 			
 			def get_ordered_terminals(treeObject):
 				
-				def count_downstream_nodes(basenode,count=0):
-					def count_next_node(node, count):
-						for daughter in treeObject.node(node).succ:
-							count=count_next_node(daughter, count)
-						count+=1
-						
-						return count
-					count=count_next_node(basenode, count)
-					return count
-				
 				def measure_downstream_branches(basenode,count=0, maxlen=0.0):
 					def measure_next_node(node,count, maxlen):
 						for daughter in treeObject.node(node).succ:
@@ -3720,8 +3714,6 @@ if __name__ == "__main__":
 						succ_counts.append([brcount,brlen,succ])
 					
 					succ_counts.sort()
-					#print node, succs, succ_counts
-					term_suc_lens=[]
 					
 					for succ_count in succ_counts:
 						succ=succ_count[2]
@@ -3730,15 +3722,7 @@ if __name__ == "__main__":
 							order=get_next_terminal(succ, order)
 						else:
 							order.append(succ)
-							print node, succ_count
-							#term_suc_lens.append([treeObject.node(succ).data.branchlength,succ])
-					
-					
-#					term_suc_lens.sort()
-#					if len(term_suc_lens)>0:
-#						print term_suc_lens
-#					for succ_len in term_suc_lens:
-#						order.append(succ_len[1])
+							#print node, succ_count
 					
 					return order
 					
@@ -3747,12 +3731,36 @@ if __name__ == "__main__":
 				order=get_next_terminal(treeObject.root, order)
 				return order
 			
+			
+			def get_terminals(treeObject):
+				
+				def get_next_taxon(node, order):
+				
+					succs=treeObject.node(node).succ
+										
+					
+					for succ in succs:
+						
+						if not treeObject.is_terminal(succ):
+							order=get_next_taxon(succ, order)
+						else:
+							order.append(succ)
+							#print node, succ_count
+					
+					return order
+					
+
+				order=[]
+				order=get_next_taxon(treeObject.root, order)
+				return order
+			
+			
 			if options.ladderise in ["left", "right"]:
 				order=get_ordered_terminals(tree)
 				if options.ladderise=="left":
 					order.reverse()
 			else:
-				order=tree.get_terminals()
+				order=get_terminals(tree)
 			
 			totalbr=0.0
 			
@@ -3945,9 +3953,10 @@ if __name__ == "__main__":
 	#Set the orders of the tracks	
 	
 	output_order=[]
-	if len(metadata_keylist)>0:
-		metadata_keylist.reverse()
-		output_order=metadata_keylist
+	if options.show_metadata_key:
+		if len(metadata_keylist)>0:
+			metadata_keylist.reverse()
+			output_order=metadata_keylist
 	treetrack=0
 	if not "tree" in input_order:
 		output_order=output_order+treenames[::-1]

@@ -111,88 +111,88 @@ for x, ref in enumerate(geneorder):
 if filename.split(".")[-1]=="bam":
 	samfile = pysam.Samfile( filename, "rb" )
 elif filename.split(".")[-1]=="sam":
-        samfile = pysam.Samfile( filename, "r" )
+	samfile = pysam.Samfile( filename, "r" )
 else:
 	print filename+" not a bam file"
-        sys.exit() 
+	sys.exit() 
 
 refs=samfile.references
 lengths=samfile.lengths
 
 for read in samfile:
 	if read.is_unmapped:
-            continue
-        if read.is_reverse:
-        	strand="-"
-        else:
-        	strand="+"
-        start=read.pos
-        readpos=0
-        refpos=start
-        insertions=0
-        inslength=0
-        deletions=0
-        dellength=0
-        SNPs=0
-        clipped=0
-        cliplength=0
-        lcliplen=0
-        rcliplen=0
-        for cignum, cig in enumerate(read.cigar):
-            
-            if cig[0]==0:
-                for x in range(0,cig[1]):
-                    if read.seq[readpos].upper()!=contigs[refs[read.tid]][refpos].upper():
-                        SNPs+=1
-                    readpos+=1
-                    refpos+=1
-            elif cig[0]==1:
-                insertions+=1
-                inslength+=cig[1]
-                readpos+=cig[1]
-            elif cig[0]==2:
-                deletions+=1
-                dellength+=cig[1]
-                refpos+=cig[1]
-            elif cig[0]==4:
-                clipped+=1
-                cliplength+=cig[1]
-                if cignum==0:
-                	lcliplen+=cig[1]
-                elif cignum==(len(read.cigar)-1):
-                	rcliplen+=cig[1]
-                else:
-                	print "Internal clipping?!"
-                	print read.cigar
-                readpos+=cig[1]
-            else:
-                print cig
-        end=refpos
-        
-        
-        adjustedcliplen=cliplength
-        at_contig_break=0
-        
-        if lcliplen>start:
-        	adjustedcliplen=adjustedcliplen-(lcliplen-start)
-        	at_contig_break+=1
-        elif (rcliplen+end)>lengths[read.tid]:
-        	adjustedcliplen=adjustedcliplen-((rcliplen+end)-lengths[read.tid])
-        	at_contig_break+=1
-        
-        matchlength=len(read.seq)-(cliplength)
-        matchpercent=(float(matchlength)/len(read.seq))*100
-        
-        percentid=((float(len(read.seq))-(SNPs+adjustedcliplen))/len(read.seq))
-#        if read.is_reverse:
-#        	readseq=revcomp(read.seq)
-#        else:
-#        	readseq=read.seq
-        
-        if percentid>=options.id:
-	        genes_present.append([read.qname, samfile.getrname(read.rname), start, end, strand, len(read.seq), SNPs, insertions, deletions, clipped, inslength, dellength, cliplength, at_contig_break, 100*percentid, matchlength, matchpercent, genes[read.qname]])
-        
-        #print filename, read.qname, len(read.seq), SNPs, insertions, deletions, clipped, inslength, dellength, cliplength
+		continue
+	if read.is_reverse:
+		strand="-"
+	else:
+		strand="+"
+	start=read.pos
+	readpos=0
+	refpos=start
+	insertions=0
+	inslength=0
+	deletions=0
+	dellength=0
+	SNPs=0
+	clipped=0
+	cliplength=0
+	lcliplen=0
+	rcliplen=0
+	for cignum, cig in enumerate(read.cigar):
+		  
+		if cig[0]==0:
+			for x in range(0,cig[1]):
+				if read.seq[readpos].upper()!=contigs[refs[read.tid]][refpos].upper():
+					SNPs+=1
+				readpos+=1
+				refpos+=1
+		elif cig[0]==1:
+			insertions+=1
+			inslength+=cig[1]
+			readpos+=cig[1]
+		elif cig[0]==2:
+			deletions+=1
+			dellength+=cig[1]
+			refpos+=cig[1]
+		elif cig[0]==4:
+			clipped+=1
+			cliplength+=cig[1]
+			if cignum==0:
+				lcliplen+=cig[1]
+			elif cignum==(len(read.cigar)-1):
+				rcliplen+=cig[1]
+			else:
+				print "Internal clipping?!"
+				print read.cigar
+			readpos+=cig[1]
+		else:
+			print cig
+	end=refpos
+	   
+	   
+	adjustedcliplen=cliplength
+	at_contig_break=0
+	   
+	if lcliplen>start:
+		adjustedcliplen=adjustedcliplen-(lcliplen-start)
+		at_contig_break+=1
+	elif (rcliplen+end)>lengths[read.tid]:
+		adjustedcliplen=adjustedcliplen-((rcliplen+end)-lengths[read.tid])
+		at_contig_break+=1
+		   
+	matchlength=len(read.seq)-(cliplength)
+	matchpercent=(float(matchlength)/len(read.seq))*100
+   
+	percentid=((float(len(read.seq))-(SNPs+adjustedcliplen))/len(read.seq))
+#	   if read.is_reverse:
+#	   	readseq=revcomp(read.seq)
+#	   else:
+#	   	readseq=read.seq
+	   
+	if percentid>=options.id:
+			genes_present.append([read.qname, samfile.getrname(read.rname), start, end, strand, len(read.seq), SNPs, insertions, deletions, clipped, inslength, dellength, cliplength, at_contig_break, 100*percentid, matchlength, matchpercent, genes[read.qname]])
+	   
+	   #print filename, read.qname, len(read.seq), SNPs, insertions, deletions, clipped, inslength, dellength, cliplength
 
 #for gene in genes_present:
 #	print gene
@@ -200,6 +200,7 @@ if len(genes_present)>0:
 
 	bestgene=genes_present[0]
 	secondary_genes=[]
+	secondary_fragments=[]
 	outputlines=[]
 	bestgene_sequences={}
 	
@@ -207,25 +208,26 @@ if len(genes_present)>0:
 	    
 	    #print gene
 	
-	    if gene[1]==bestgene[1]:
-	        if (bestgene[3]-gene[2])>(bestgene[5]*0.5) or (bestgene[3]-gene[2])>(gene[5]*0.5):
-	            #print "overlap"
-	            if float(gene[6]+gene[7]+gene[8])/gene[5] < float(bestgene[6]+bestgene[7]+bestgene[8])/bestgene[5]:
-	                secondary_genes.append(';'.join(map(str, bestgene[:-1])))
-	                bestgene=gene
-	            else:
-	                secondary_genes.append(';'.join(map(str, gene[:-1])))
-	        else:
-	            outputlines.append(bestgene[:-1]+[', '.join(secondary_genes)])
-	            bestgene_sequences[bestgene[0]]=bestgene[-1]
-		    #print outputlines
-	            bestgene=gene
-	            secondary_genes=[]
-	    else:
-	        outputlines.append(bestgene[:-1]+[', '.join(secondary_genes)])
-	        bestgene_sequences[bestgene[0]]=bestgene[-1]
-	        bestgene=gene
-	        secondary_genes=[]
+		if gene[1]==bestgene[1]:
+			if (bestgene[3]-gene[2])>(bestgene[5]*0.5) or (bestgene[3]-gene[2])>(gene[5]*0.5):
+				#print "overlap"
+				if float(gene[6]+gene[7]+gene[8])/gene[5] < float(bestgene[6]+bestgene[7]+bestgene[8])/bestgene[5]:
+					secondary_genes.append(';'.join(map(str, bestgene[:-1])))
+					bestgene=gene
+				else:
+					secondary_genes.append(';'.join(map(str, gene[:-1])))
+			else:
+				outputlines.append(bestgene[:-1]+[', '.join(secondary_genes)])
+				bestgene_sequences[bestgene[0]]=bestgene[-1]
+		    	#print outputlines
+				bestgene=gene
+				secondary_genes=[]
+				secondary_fragments=[]
+		else:
+			outputlines.append(bestgene[:-1]+[', '.join(secondary_genes)])
+			bestgene_sequences[bestgene[0]]=bestgene[-1]
+			bestgene=gene
+			secondary_genes=[]
 	
 	outputlines.append(bestgene[:-1]+[', '.join(secondary_genes)])
 	bestgene_sequences[bestgene[0]]=bestgene[-1]
