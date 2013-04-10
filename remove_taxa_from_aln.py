@@ -111,6 +111,7 @@ if __name__ == "__main__":
 	print "Found", len(taxa), "taxa in list"
 	
 	sequences={}
+	seqorder=[]
 	currseq=''
 	
 	if os.path.getsize(alnfile)<2000000000:
@@ -129,25 +130,28 @@ if __name__ == "__main__":
 	for line in lines:
 		words=line.strip().split('\n')
 		sequences[words[0].split()[0]]=''.join(words[1:])
+		seqorder.append(words[0].split()[0])
 	print "Found", len(sequences.keys()), "sequences"
 	
 	
 
 	
 	newsequences={}
+	newseqorder=[]
 	
-	for sequence in sequences.keys():
+	for sequence in seqorder:
 
 		if keepremove=="k" and sequence in taxa:
 			newsequences[sequence]=sequences[sequence]
+			newseqorder.append(sequence)
 		elif keepremove=="r" and not sequence in taxa:
 			newsequences[sequence]=sequences[sequence]
-		
+			newseqorder.append(sequence)
 	
 	
 				
 	alnout=open(outfile,"w")
-	for sequence in newsequences:
+	for sequence in newseqorder:
 		print >> alnout, ">"+sequence
 		print >> alnout, newsequences[sequence]
 			
