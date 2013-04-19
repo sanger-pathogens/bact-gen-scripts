@@ -471,11 +471,20 @@ def set_text_width(font, size, length, text):
 ##############################################
 
 def read_dendropy_tree(treefile):
-
+		
+		def log_branchlengths(t):
+		
+			print "Log transforming branch lengths"
+			
+			for node in t.postorder_node_iter():
+				if node.edge_length!=None:
+					node.edge_length=log(node.edge_length+1)
+		
+		#Try opening the tree using various schemas
 		opened=False
 		for treeschema in ["beast-summary-tree", "nexus", "newick"]:
 			try:
-				t = dendropy.Tree.get_from_path(treefile, schema=treeschema, as_rooted=True)
+				t = dendropy.Tree.get_from_path(treefile, schema=treeschema, as_rooted=True, preserve_underscores=True, case_insensitive_taxon_labels=False)
 				opened=True
 				t.schema=treeschema
 				break
@@ -485,14 +494,14 @@ def read_dendropy_tree(treefile):
 			print "Failed to open tree file"
 			sys.exit()
 		
-		
+		#Midpoint root if the option is selected
 		if options.midpoint:
 			print "Midpoint rooting tree"
 			if t.schema=="beast-summary-tree":
 				print "Warning: Midpoint rooting a BEAST tree may destroy temporal information represented in node opsitions"
 			t.reroot_at_midpoint(update_splits=True)
 			
-			
+		#Ladderise the tree if the option is selected
 		if options.ladderise=="left":
 			print "ladderising tree to the left (ascending)"
 			#ladderise the tree right
@@ -502,24 +511,18 @@ def read_dendropy_tree(treefile):
 			#ladderise the tree right
 			t.ladderize(ascending=False)
 		
+		if options.log_branches:
+			log_branchlengths(tree)
+			
+		
 		#print the tree in ascii as a cladogram
-		print(t.as_ascii_plot())
+		#print(t.as_ascii_plot())
 		
 		#print the tree in ascii including branch lengths
 		#print(t.as_ascii_plot(plot_metric='length'))
 		
 		
-#			for edge in t.postorder_edge_iter():
-#				print edge.label
-#				print edge.length
-#				print edge.description(0)
-#				if edge.has_annotations:
-#					print edge.annotations()
-		
-#			for node in t.postorder_node_iter():
-#				if "beast_info" in dir(node):
-#					print node.beast_info
-#				print node.annotations()
+		#Make sure the tree is rooted on an edge rather than a node
 		if t.is_unrooted:
 			print "Tree is unrooted. Rooting it now."
 			t.is_rooted=True
@@ -529,49 +532,27 @@ def read_dendropy_tree(treefile):
 		if len(root_children) != 2:
 			print "Tree rooted at node. Rerooting on first edge from that node."
 			t.reroot_at_edge(root_children[0].edge, update_splits=True)
-			
-			#raise ValueError("Expecting a binary rooted tree.  Root has more than 2 children!")
 		
+		return t
+
+
+def get_leaf_nodes(t):
+	leaves=[]
+	for leaf in t.leaf_iter():
+		leaves.append(leaf)
 		
-#		for node in t.postorder_node_iter():
-#			count=0
-#			for n in node.postorder_iter():
-#				count+=1
-		
-		leaf_count=1.0
-		for leaf in t.leaf_iter():
-			leaf_count+=1
-		
+	return leaves
+
+
+def get_vertical_positions_of_leaves(t):
+		#Set the vertical position of the leaves
 		vert_scaling_factor=float(height-20)/leaf_count
-		
 		count=1.0
 		for leaf in t.leaf_iter():
 			leaf.vertpos=vert_scaling_factor*count
 			count+=1
 			
-			
-#		def set_leaf_vertical_positions(tree):
-#			
-#			def set_leaf_node_vertpos(node, leaf_count):
-#				children=node.child_nodes()
-#				if not children:
-#					leaf_count+=1
-#					node.vertpos=float(height-20)/leaf_count
-#					return leaf_count
-#				else:
-#					for child in children:
-#						leaf_count=set_leaf_node_vertpos(child, leaf_count)
-#				return leaf_count
-#			
-#			leaf_count=0.0
-#			leaf_count=set_leaf_node_vertpos(tree.seed_node, leaf_count)
-#		
-#		set_leaf_vertical_positions(t)
-		
-		
-		
-		
-		
+		return
 		mycolours=[(1,0,0),(0,1,0),(0,0,1)]
 		
 		for leaf in t.leaf_iter():
@@ -592,12 +573,33 @@ def read_dendropy_tree(treefile):
 			
 		draw_dendropy_tree(t, height-20, width-20, 10, 10, name_offset=5)
 		
-		return
+		return 
 		
 		sys.exit()
 
 
-
+def deltran_parsimony_reconstruction(t, transformation="deltran"):
+	
+	print "Reconstructing first colour across tree using parsimony"
+	
+	for leaf in t.leaf_iter():
+		if hasattr(leaf, 'name_colour') and len(leaf.name_colour)>0:
+			r,g,b=leaf.name_colour[0]
+			leaf.edge_colour=[set([(r/255,g/255,b/255)])]
+		else:
+			leaf.edge_colour=[set([(0.0,0.0,0.0)])]
+		#print leaf.edge_colour
+	postorder_node_list=[]
+	for node in t.postorder_node_iter():
+		postorder_node_list.append(node)
+	preorder_node_list=[]
+	for node in t.preorder_node_iter():
+		preorder_node_list.append(node)
+	
+	reclen=dendropy.treecalc.fitch_down_pass(postorder_node_list, attr_name='edge_colour', weight_list=None, taxa_to_state_set_map=None)
+	print "Reconstruction tree length =", reclen
+	dendropy.treecalc.fitch_up_pass(preorder_node_list, attr_name='edge_colour', taxa_to_state_set_map=None)
+	
 
 
 #############################
@@ -606,7 +608,7 @@ def read_dendropy_tree(treefile):
 
 def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5):
 	
-	vertical_scaling_factor=5
+#	vertical_scaling_factor=5
 	def make_edge_lengths_equal():#Updated for dendropy
 		for edge in treeObject.preorder_edge_iter():
 			edge.length=1
@@ -655,9 +657,9 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 		d.add(String(horizontalpos+(float(branchlength)/2), vertpos-(scalefontsize+1), scalestring, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
 #		
 #		
-#	def log_branchlengths():
-#		
-#		
+	
+		
+		
 #		def min_branchlength(node, min_brlen):
 #			daughters=treeObject.node(node).succ
 #			brlen=treeObject.node(node).data.branchlength
@@ -745,7 +747,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 					child_min=child.vertpos
 			
 			node.vertpos=(child_max+child_min)/2
-			print node.vertpos
+			#print node.vertpos
 		
 		
 	
@@ -779,23 +781,23 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			vlinewidth=0.5
 		else:
 			vlinewidth=1.0
-				
-		print "linewidth =", linewidth
-		
-#		print dir(node)
-#		print dir(node.edge)
 		
 		# if branches have colours, find out now
 		if hasattr(node, 'edge_colour') and len(node.edge_colour)==1 and len(node.edge_colour[0])==1:
-			print "here"
 			r,g,b=list(node.edge_colour[0])[0]
 			branch_colour=colors.Color(float(r),float(g),float(b))
 		else:
 			branch_colour=colors.black
 		
-		print "branch colour =", branch_colour
-			
-#		c.line(horizontalpos,vertpos,horizontalpos+branchlength,vertpos)
+		
+		# if branches have colours, find out now
+		if node.parent_node and  hasattr(node.parent_node, 'edge_colour') and len(node.parent_node.edge_colour)==1 and len(node.parent_node.edge_colour[0])==1:
+			r,g,b=list(node.parent_node.edge_colour[0])[0]
+			vbranch_colour=colors.Color(float(r),float(g),float(b))
+		else:
+			vbranch_colour=colors.black
+		
+		
 		if branchlength<linewidth:
 			branchlength=linewidth
 		d.add(Line(horizontalpos-(vlinewidth/2), vertpos, (horizontalpos-(vlinewidth/2))+branchlength, vertpos, strokeWidth=linewidth, strokeColor=branch_colour))
@@ -812,208 +814,187 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 					sister_min=sister.vertpos
 		
 		if node.vertpos==sister_max:
-			d.add(Line(horizontalpos, sister_max+yoffset, horizontalpos, sister_min+yoffset, strokeWidth=vlinewidth, strokeColor=branch_colour))
+			d.add(Line(horizontalpos, sister_max+yoffset, horizontalpos, sister_min+yoffset, strokeWidth=vlinewidth, strokeColor=vbranch_colour))
 			
-#		if not node.child_nodes():
-#			namewidth=get_text_width('Helvetica', fontsize, str(node.taxon))+name_offset
-#			d.add(String(horizontalpos+(fontsize/2), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fontSize=fontsize, fontName='Helvetica'))
 		
+		if node.is_leaf():
+			if hasattr(node, 'name_colour'):
+				name_colours=[]
+				for x in xrange(0,len(node.name_colour)):
+					r,g,b= node.name_colour[x]
+					name_colours.append(colors.Color(float(r)/255,float(g)/255,float(b)/255))
+			else:
+				name_colours=[colors.black]
 		
-		
-#		
-#		
-#		if treeObject.is_terminal(node):
-#			
-#			if treeObject.node(node).data.comment and "name_colour" in treeObject.node(node).data.comment:
-#				name_colours=[]
-#				for x in xrange(0,len(treeObject.node(node).data.comment["name_colour"])):
-#					r,g,b= treeObject.node(node).data.comment["name_colour"][x]
-#					name_colours.append(colors.Color(float(r)/255,float(g)/255,float(b)/255))
-#			else:
-#				name_colours=[colors.black]
-#			
-#			
-#			# calculate total length of gubbins to add
-#			
-#			gubbins_length=0.0
-#			
-#			colpos=0
-#			if options.taxon_names:
-#				namewidth=get_text_width('Helvetica', fontsize, treeObject.node(node).data.taxon)+name_offset
-#				gubbins_length += namewidth
-#				colpos=1
-#			
-#			for x in xrange(colpos,len(name_colours)):
-#				gubbins_length += block_length
-#				if x!=0:
-#					gubbins_length += vertical_scaling_factor
-#			
-#			#Add the taxon names if present
-#			if options.taxon_names:
-#				if options.aligntaxa==2:
-#					d.add(String(treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2), vertpos-(fontsize/3), treeObject.node(node).data.taxon, textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
-#					block_xpos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)+namewidth
-#				elif options.aligntaxa==1:
-#					d.add(String(treewidth+(fontsize/2)+xoffset, vertpos-(fontsize/3), treeObject.node(node).data.taxon, textAnchor='start', fillColor=name_colours[0], fontSize=fontsize, fontName='Helvetica'))
-#					block_xpos=treewidth+(fontsize/2)+xoffset+(fontsize/2)+namewidth
-#				else:
-#					d.add(String(horizontalpos+branchlength+(fontsize/2), vertpos-(fontsize/3), treeObject.node(node).data.taxon, textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
-#					block_xpos=horizontalpos+branchlength+(fontsize/2)+namewidth
-#			else:
-#				if options.aligntaxa==2:
-#					block_xpos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
-#				elif options.aligntaxa==1:
-#					block_xpos=treewidth+(fontsize/2)+xoffset+(fontsize/2)
-#				else:
-#					block_xpos=horizontalpos+branchlength+(fontsize/2)
-#			
-#			
-#			
-#			# draw dashed lines
-#			
-#			if options.aligntaxa==1:
-#				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
-#				#d.add(Line(treewidth+xoffset+max_name_width, vertpos, horizontalpos+branchlength+gubbins_length, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
-#			elif options.aligntaxa==2:
-#				#d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
-#				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-gubbins_length), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
-#				#d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeWidth=linewidth/2, strokeColor=name_colours[0]))
-#			
-#			for x, name_colour in enumerate(name_colours[colpos:]):
-##				if options.aligntaxa==1:
-##					if options.names_as_shapes=="circle":
-##						d.add(Circle(cx=horizontalpos+branchlength+vertical_scaling_factor, cy=vertpos, r=(vertical_scaling_factor/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-##					elif options.names_as_shapes=="square":
-##						d.add(Rect(horizontalpos+branchlength+(vertical_scaling_factor/2), vertpos-(vertical_scaling_factor/2), vertical_scaling_factor, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-##					elif options.names_as_shapes=="rectangle":
-##						d.add(Rect(horizontalpos+branchlength+(vertical_scaling_factor/2), vertpos-(vertical_scaling_factor/2), vertical_scaling_factor*2, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-##					elif options.names_as_shapes=="auto":
-##						d.add(Rect(horizontalpos+branchlength+(vertical_scaling_factor/2), vertpos-(vertical_scaling_factor/2), max_name_width, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-##					elif options.taxon_names:
-##						d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colour))
-##						d.add(String(treewidth+(fontsize/2)+xoffset, vertpos-(fontsize/3), treeObject.node(node).data.taxon, textAnchor='start', fillColor=name_colour, fontSize=fontsize, fontName='Helvetica'))
-##					else:
-##						d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colour))
-##				
-##				elif options.aligntaxa==2:
-#
-#
-#
-#
-#
-#				if options.names_as_shapes=="circle":
-#					d.add(Circle(cx=block_xpos+block_length, cy=vertpos, r=(block_length/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-#				elif options.names_as_shapes in ["square", "rectangle", "auto"]:
-#					d.add(Rect(block_xpos, vertpos-(vertical_scaling_factor/2), block_length, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-#						
-#						
-#						
-#						
-#						
-##					elif options.taxon_names:
-##						namewidth=get_text_width("Helvetica", fontsize, treeObject.node(node).data.taxon)+name_offset
-##						#d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-namewidth), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colour))
-##						d.add(String(treewidth+xoffset+(max_name_width-namewidth)+(fontsize/2), vertpos-(fontsize/3), treeObject.node(node).data.taxon, textAnchor='start', fontSize=fontsize, fillColor=name_colour, fontName='Helvetica'))
-##					else:
-##						d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colour))
+#			print "name colour =", name_colours
+			
+			# calculate total length of gubbins to add
+			
+			gubbins_length=0.0
+			
+			colpos=0
+			if options.taxon_names:
+				namewidth=get_text_width('Helvetica', fontsize, str(node.taxon))+name_offset
+				gubbins_length += namewidth
+				colpos=1
+			
+			for x in xrange(colpos,len(name_colours)):
+				gubbins_length += block_length
+				if x!=0:
+					gubbins_length += vertical_scaling_factor
+			
+			#Add the taxon names if present
+			if options.taxon_names:
+				if options.aligntaxa==2:
+					d.add(String(treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
+					block_xpos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)+namewidth
+				elif options.aligntaxa==1:
+					d.add(String(treewidth+(fontsize/2)+xoffset, vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fillColor=name_colours[0], fontSize=fontsize, fontName='Helvetica'))
+					block_xpos=treewidth+(fontsize/2)+xoffset+(fontsize/2)+namewidth
+				else:
+					d.add(String(horizontalpos+branchlength+(fontsize/2), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
+					block_xpos=horizontalpos+branchlength+(fontsize/2)+namewidth
+			else:
+				if options.aligntaxa==2:
+					block_xpos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
+				elif options.aligntaxa==1:
+					block_xpos=treewidth+(fontsize/2)+xoffset+(fontsize/2)
+				else:
+					block_xpos=horizontalpos+branchlength+(fontsize/2)
+				
+			
+			# draw dashed lines
+			
+			if options.aligntaxa==1:
+				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+				#d.add(Line(treewidth+xoffset+max_name_width, vertpos, horizontalpos+branchlength+gubbins_length, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+			elif options.aligntaxa==2:
+				#d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-gubbins_length), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+				#d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+			
+			for x, name_colour in enumerate(name_colours[colpos:]):
+#				if options.aligntaxa==1:
+#					if options.names_as_shapes=="circle":
+#						d.add(Circle(cx=horizontalpos+branchlength+vertical_scaling_factor, cy=vertpos, r=(vertical_scaling_factor/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
+#					elif options.names_as_shapes=="square":
+#						d.add(Rect(horizontalpos+branchlength+(vertical_scaling_factor/2), vertpos-(vertical_scaling_factor/2), vertical_scaling_factor, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
+#					elif options.names_as_shapes=="rectangle":
+#						d.add(Rect(horizontalpos+branchlength+(vertical_scaling_factor/2), vertpos-(vertical_scaling_factor/2), vertical_scaling_factor*2, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
+#					elif options.names_as_shapes=="auto":
+#						d.add(Rect(horizontalpos+branchlength+(vertical_scaling_factor/2), vertpos-(vertical_scaling_factor/2), max_name_width, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
+#					elif options.taxon_names:
+#						d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colour))
+#						d.add(String(treewidth+(fontsize/2)+xoffset, vertpos-(fontsize/3), treeObject.node(node).data.taxon, textAnchor='start', fillColor=name_colour, fontSize=fontsize, fontName='Helvetica'))
+#					else:
+#						d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colour))
 #				
-##				else:
-##					if options.names_as_shapes=="circle":
-##						d.add(Circle(cx=horizontalpos+branchlength+vertical_scaling_factor, cy=vertpos, r=(vertical_scaling_factor/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-##					elif options.taxon_names:
-##						d.add(String(horizontalpos+branchlength+(fontsize/2), vertpos-(fontsize/3), treeObject.node(node).data.taxon, textAnchor='start', fontSize=fontsize, fillColor=name_colour, fontName='Helvetica'))
-#				
-#				block_xpos+=block_length+vertical_scaling_factor
-#			
-#			
-#		
+#				elif options.aligntaxa==2:
+
+
+
+
+
+				if options.names_as_shapes=="circle":
+					d.add(Circle(cx=block_xpos+block_length, cy=vertpos, r=(block_length/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
+				elif options.names_as_shapes in ["square", "rectangle", "auto"]:
+					d.add(Rect(block_xpos, vertpos-(vertical_scaling_factor/2), block_length, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
+						
+						
+						
+						
+						
+#					elif options.taxon_names:
+#						namewidth=get_text_width("Helvetica", fontsize, treeObject.node(node).data.taxon)+name_offset
+#						#d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-namewidth), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colour))
+#						d.add(String(treewidth+xoffset+(max_name_width-namewidth)+(fontsize/2), vertpos-(fontsize/3), treeObject.node(node).data.taxon, textAnchor='start', fontSize=fontsize, fillColor=name_colour, fontName='Helvetica'))
+#					else:
+#						d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colour))
+				
+#				else:
+#					if options.names_as_shapes=="circle":
+#						d.add(Circle(cx=horizontalpos+branchlength+vertical_scaling_factor, cy=vertpos, r=(vertical_scaling_factor/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
+#					elif options.taxon_names:
+#						d.add(String(horizontalpos+branchlength+(fontsize/2), vertpos-(fontsize/3), treeObject.node(node).data.taxon, textAnchor='start', fontSize=fontsize, fillColor=name_colour, fontName='Helvetica'))
+				
+				block_xpos+=block_length+vertical_scaling_factor
+			
+			
+		
 	def draw_branches():
 		
 		for node in treeObject.postorder_node_iter():
 			if node.edge_length!=None:
 				draw_branch(node)
 			
-
-#	def recurse_subtree(node, horizontalpos):
-#		
-#		daughters=treeObject.node(node).succ
-#		
-#		daughterhorizontalpos=horizontalpos+(treeObject.node(node).data.branchlength*horizontal_scaling_factor)
-#		drawbranch(node,horizontalpos)
-#		for daughter in daughters:
-#			recurse_subtree(daughter,daughterhorizontalpos)
-#
-#		
-#		
-#	
-#	def get_max_name_width(name_offset, fontsize):
-#		max_width=0.0
-#		for taxon in treeObject.get_terminals():
-#			curwidth= get_text_width("Helvetica", fontsize, treeObject.node(taxon).data.taxon)
-#			if curwidth>max_width:
-#				max_width=curwidth
-#		
-#		return max_width
-#	
-#	
-#	
-##	vertical_scaling_factor=float(treeheight)/(treeObject.count_terminals(node=treeObject.root)+2)
-#	fontsize=vertical_scaling_factor
-#	if fontsize>12:
-#		fontsize=12
-#	
-#	if options.taxon_names:
-#		while get_max_name_width(name_offset, fontsize)+name_offset>treewidth/3:
-#			fontsize-=0.2
-#		max_name_width=get_max_name_width(name_offset, fontsize)+name_offset
-#		colblockstart=1
-#	else:
-#		max_name_width=0
-#		colblockstart=0
-#	
-#	block_length=0
-#	if len(colour_dict)>0:
-#		max_total_name_length=(float(treewidth)/2)
-#		
-#		max_total_block_length=(max_total_name_length-max_name_width)
-#		
-#		
-#		max_block_length=((max_total_block_length-(vertical_scaling_factor*((len(colour_dict)-1)+colblockstart)))/len(colour_dict))	
-#		
-#		if max_block_length<vertical_scaling_factor:
-#			print ("Not enough space to draw your metadata colour columns")
-#			sys.exit()
-#		
-#		if options.names_as_shapes in ["circle", "square"]:
-#			block_length=vertical_scaling_factor
-#		elif options.names_as_shapes=="rectangle":
-#			if max_block_length>(vertical_scaling_factor*2):
-#				block_length=vertical_scaling_factor*2
-#			else:
-#				block_length=max_block_length
-#		elif options.names_as_shapes=="auto":
-#			if (treewidth/20)<max_block_length and (treewidth/20)<20:
-#				block_length=(treewidth/20)
-#			elif max_block_length>20:
-#				block_length=20
-#			else:
-#				block_length=max_block_length
-#		
-#		
-#	for x in range(colblockstart,len(colour_dict)):
-#		if x>0:
-#			max_name_width+=vertical_scaling_factor
-#		max_name_width+=block_length
 		
 	
-	max_name_width=10
-	fontsize=10
+	def get_max_name_width(name_offset, fontsize):
+		max_width=0.0
+		for leaf in treeObject.leaf_iter():
+			curwidth= get_text_width("Helvetica", fontsize, str(leaf.taxon))
+			if curwidth>max_width:
+				max_width=curwidth
+		
+		return max_width
 	
+	
+	
+#	vertical_scaling_factor=float(treeheight)/(treeObject.count_terminals(node=treeObject.root)+2)
+	fontsize=vertical_scaling_factor
+	if fontsize>12:
+		fontsize=12
+	
+	if fontsize<2:
+		options.taxon_names=False
+	
+	if options.taxon_names:
+		while get_max_name_width(name_offset, fontsize)+name_offset>treewidth/3:
+			fontsize-=0.2
+		max_name_width=get_max_name_width(name_offset, fontsize)+name_offset
+		colblockstart=1
+	else:
+		max_name_width=0
+		colblockstart=0
+	
+	block_length=0
+	if len(colour_dict)>0:
+		max_total_name_length=(float(treewidth)/2)
+		
+		max_total_block_length=(max_total_name_length-max_name_width)
+		
+		
+		max_block_length=((max_total_block_length-(vertical_scaling_factor*((len(colour_dict)-1)+colblockstart)))/len(colour_dict))	
+		
+		if max_block_length<vertical_scaling_factor:
+			print ("Not enough space to draw your metadata colour columns")
+			sys.exit()
+		
+		if options.names_as_shapes in ["circle", "square"]:
+			block_length=vertical_scaling_factor
+		elif options.names_as_shapes=="rectangle":
+			if max_block_length>(vertical_scaling_factor*2):
+				block_length=vertical_scaling_factor*2
+			else:
+				block_length=max_block_length
+		elif options.names_as_shapes=="auto":
+			if (treewidth/20)<max_block_length and (treewidth/20)<20:
+				block_length=(treewidth/20)
+			elif max_block_length>20:
+				block_length=20
+			else:
+				block_length=max_block_length
+		
+		
+	for x in range(colblockstart,len(colour_dict)):
+		if x>0:
+			max_name_width+=vertical_scaling_factor
+		max_name_width+=block_length
+		
+
 	treewidth-=(max_name_width+(fontsize/2))
-#	treewidth-=xoffset
 	
-	if options.log_branches:
-		log_branchlengths()
+
 	
 	max_branch_depth=get_max_branch_depth()
 	
@@ -1022,17 +1003,24 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 	get_node_vertical_positions()
 	
 	draw_branches()
-	treebase=10
+	
+	def get_tree_base_and_top(t):
+		base=float("Inf")
+		top=float("-Inf")
+		for leaf in t.leaf_iter():
+			if leaf.vertpos<base:
+				base=leaf.vertpos
+			if leaf.vertpos>top:
+				top=leaf.vertpos
+		return base, top
+	
+	treebase, treetop=get_tree_base_and_top(tree)
+	treebase+=yoffset
+	treetop+=yoffset
 	draw_scale()
 	
 	return
-	recurse_subtree(treeObject.root, 0)
 	
-	treebase=treeObject.node(treeObject.get_terminals()[-1]).data.comment["vertpos"]+yoffset
-	
-	draw_scale()
-	
-	return
 
 
 
@@ -4257,107 +4245,23 @@ if __name__ == "__main__":
 			print "Cannot find file:", options.tree
 			options.tree=""
 		else:
-#			treestring=open(options.tree,"rU").read().strip()
-#			tree=Trees.Tree(treestring, rooted=True)
-			d = Drawing(width, height)
+#			d = Drawing(width, height)
 			
-			read_dendropy_tree(options.tree)
+			tree=read_dendropy_tree(options.tree)
 			
-			renderPDF.drawToFile(d, options.outputfile)
-			sys.exit()
+#			renderPDF.drawToFile(d, options.outputfile)
+#			sys.exit()
 			
-			if options.midpoint:
-				tree=midpoint_root(tree)
-#				treestring=tree_to_string(tree,plain=False,ladderize=options.ladderise)
-#				tree=Trees.Tree(treestring, rooted=True)
-				
-			tree.root
+#			if options.midpoint:
+#				tree=midpoint_root(tree)
+#			
+#			
+#			print dir(tree)
+#			print list(tree.taxon_set)
+#			order=get_leaf_nodes(tree)
 			
-			
-			def get_ordered_terminals(treeObject):
-				
-				def measure_downstream_branches(basenode,count=0, maxlen=0.0):
-					def measure_next_node(node,count, maxlen):
-						for daughter in treeObject.node(node).succ:
-							count, maxlen=measure_next_node(daughter,count, maxlen)
-						count+=1
-						
-						if treeObject.is_terminal(node):
-							nodedist=treeObject.distance(basenode,node)
-							if nodedist>maxlen:
-								maxlen=nodedist
-						
-						return count, maxlen
-					count, maxlen=measure_next_node(basenode,count, maxlen)
-					
-					return count, maxlen+treeObject.node(basenode).data.branchlength
-				
-				
-				def get_next_terminal(node, order):
-				
-					succs=treeObject.node(node).succ
-										
-					succ_counts=[]
-					
-					for succ in succs:
-						brcount,brlen=measure_downstream_branches(succ)
-						succ_counts.append([brcount,brlen,succ])
-					
-					succ_counts.sort()
-					
-					for succ_count in succ_counts:
-						succ=succ_count[2]
-						
-						if not treeObject.is_terminal(succ):
-							order=get_next_terminal(succ, order)
-						else:
-							order.append(succ)
-							#print node, succ_count
-					
-					return order
-					
-
-				order=[]
-				order=get_next_terminal(treeObject.root, order)
-				return order
-			
-			
-			def get_terminals(treeObject):
-				
-				def get_next_taxon(node, order):
-				
-					succs=treeObject.node(node).succ
-										
-					
-					for succ in succs:
-						
-						if not treeObject.is_terminal(succ):
-							order=get_next_taxon(succ, order)
-						else:
-							order.append(succ)
-							#print node, succ_count
-					
-					return order
-					
-
-				order=[]
-				order=get_next_taxon(treeObject.root, order)
-				return order
-			
-			
-			if options.ladderise in ["left", "right"]:
-				order=get_ordered_terminals(tree)
-				if options.ladderise=="left":
-					order.reverse()
-			else:
-				order=get_terminals(tree)
-			
-			totalbr=0.0
-			
-			tree=get_tree_colour_comments(tree)
-			
-			for terminal_node in order:
-				terminal=tree.node(terminal_node).data.taxon
+			for terminal_node in tree.leaf_iter():
+				terminal=str(terminal_node.taxon)
 				terminal=terminal.strip("'")
 				terminal=terminal.strip('"')
 				treenames.append(terminal)
@@ -4366,43 +4270,44 @@ if __name__ == "__main__":
 				tree_name_to_node[terminal]=terminal_node
 				
 				if terminal in namecolours and len(namecolours[terminal])>0:
-					tree.node(terminal_node).data.comment["name_colour"]=[]
+					terminal_node.name_colour=[]
 					if len(colour_columns)>0:
 						for x in xrange(len(colour_columns)):
 							if x in namecolours[terminal]:
 								namecolour=namecolours[terminal][x]
-								tree.node(terminal_node).data.comment["name_colour"].append(colour_dict[x][namecolour])
+								terminal_node.name_colour.append(colour_dict[x][namecolour])
 							else:
-								tree.node(terminal_node).data.comment["name_colour"].append((0,0,0))
+								terminal_node.name_colour.append((0,0,0))
 								namecolours[terminal][x]="-"
 					else:
-						tree.node(terminal_node).data.comment["name_colour"].append((0,0,0))
+						terminal_node.name_colour.append((0,0,0))
 						namecolours[terminal][0]="-"
 				else:
 					namecolours[terminal]={}
-					tree.node(terminal_node).data.comment["name_colour"]=[]
+					terminal_node.name_colour=[]
 					if len(colour_columns)>0:
 						for x in xrange(len(colour_columns)):
-							tree.node(terminal_node).data.comment["name_colour"].append((0,0,0))
+							terminal_node.name_colour.append((0,0,0))
 							namecolours[terminal][x]="-"
 					else:
-						tree.node(terminal_node).data.comment["name_colour"].append((0,0,0))
-						namecolours[terminal][0]="-"	
+						terminal_node.name_colour.append((0,0,0))
+						namecolours[terminal][0]="-"
 				
 				if terminal in metadatanames:
 					terminal=metadatanames[terminal]
-					tree.node(terminal_node).data.taxon=terminal
-				totalbr+=tree.sum_branchlength(root=tree.root, node=terminal_node)
-			if totalbr==0:
-				
-				def make_branches_equal(node):
-					for daughter in tree.node(node).succ:
-						make_branches_equal(daughter)
-						tree.node(daughter).data.branchlength=1
-				make_branches_equal(tree.root)
+					terminal_node.taxon=terminal
+#				totalbr+=tree.sum_branchlength(root=tree.root, node=terminal_node)
+#			if totalbr==0:
+#				
+#				def make_branches_equal(node):
+#					for daughter in tree.node(node).succ:
+#						make_branches_equal(daughter)
+#						tree.node(daughter).data.branchlength=1
+#				make_branches_equal(tree.root)
 		
 			if options.transformation in ["acctran", "deltran"]:
-				parsimony_reconstruction(tree, namecolours, colour_dict[0], transformation=options.transformation)
+				#parsimony_reconstruction(tree, namecolours, colour_dict[0], transformation=options.transformation)
+				deltran_parsimony_reconstruction(tree, transformation=options.transformation)
 			
 				
 				
@@ -4618,7 +4523,7 @@ if __name__ == "__main__":
 		if options.track_names and not track in treenames:
 			my_tracks[track].show_name=True
 		if track in treenames:
-			tree.node(tree_name_to_node[track]).data.comment["vertpos"]=margin+((track_number)*vertical_scaling_factor)+float((my_tracks[track].track_height)/2)
+			tree_name_to_node[track].vertpos=margin+((track_number)*vertical_scaling_factor)+float((my_tracks[track].track_height)/2)
 			if track in namecolours and '0' in namecolours[track] and namecolours[track][0]!="-":
 				r,g,b=colour_dict[0][namecolours[track][max(namecolours[track].keys())]]
 				my_tracks[track].grey_track_colour=colors.Color(float(r)/255,float(g)/255,float(b)/255)
@@ -4692,7 +4597,8 @@ if __name__ == "__main__":
 				my_tracks[track].draw_track()
 			
 			if options.tree!="":
-				drawtree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3)
+				draw_dendropy_tree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3)
+				#drawtree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3)
 				
 		
 		

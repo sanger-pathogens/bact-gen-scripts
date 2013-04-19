@@ -261,30 +261,30 @@ if __name__ == "__main__":
 
 
 	#set up the model parameters for a 5 state continuous hmm
-	transitions = [[0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2],[0.2, 0.2, 0.2, 0.2, 0.2]]
-	ezero=[0.0,1.0]
-	elowintermediate=[dataaverage/8,dataaverage/8]
-	esingle=[dataaverage,dataaverage/2]
-	ehighintermediate=[(3*dataaverage)/2,dataaverage/4]
-	if dataaverage*2>datamax:
-		ehigh=[datamax,dataaverage/4]
-	else:
-		ehigh=[dataaverage*2,1.0]
-		
-	emissions=[ezero, elowintermediate, esingle, ehighintermediate, ehigh]
-	pi=[0.2, 0.2, 0.2, 0.2, 0.2]
-	
-#	transitions = [[0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25]]
+#	transitions = [[0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2],[0.2, 0.2, 0.2, 0.2, 0.2]]
 #	ezero=[0.0,1.0]
-#	esingle=[dataaverage,dataaverage]
+#	elowintermediate=[dataaverage/2,dataaverage/4]
+#	esingle=[dataaverage,dataaverage/2]
 #	ehighintermediate=[(3*dataaverage)/2,dataaverage/4]
 #	if dataaverage*2>datamax:
 #		ehigh=[datamax,dataaverage/4]
 #	else:
 #		ehigh=[dataaverage*2,1.0]
 #		
-#	emissions=[ezero, esingle, ehighintermediate, ehigh]
-#	pi=[0.25, 0.25, 0.25, 0.25]
+#	emissions=[ezero, elowintermediate, esingle, ehighintermediate, ehigh]
+#	pi=[0.2, 0.2, 0.2, 0.2, 0.2]
+	
+	transitions = [[0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25], [0.25, 0.25, 0.25, 0.25]]
+	ezero=[0.0,1.0]
+	esingle=[dataaverage,dataaverage]
+	ehighintermediate=[(3*dataaverage)/2,dataaverage/4]
+	if dataaverage*2>datamax:
+		ehigh=[datamax,dataaverage/4]
+	else:
+		ehigh=[dataaverage*2,1.0]
+		
+	emissions=[ezero, esingle, ehighintermediate, ehigh]
+	pi=[0.25, 0.25, 0.25, 0.25]
 
 	
 	#create the hmm from the parameter matrices
@@ -351,93 +351,91 @@ if __name__ == "__main__":
 	blockstart=0
 	currstate=-1
 	sys.stdout.flush()
-	for x, state in enumerate(v[0]):
-
-		if state!=currstate and state!=2 and inblock=="n":
-			blockstart=x+1
-			inblock="y"
-		elif state!=currstate and inblock=="y":
-			blocks.append([blockstart,x,currstate])
-			inblock="n"
-			if state!=2:
-				blockstart=x+1
-				inblock="y"
-		currstate=state
-	if inblock=="y":
-		blocks.append([blockstart,x,currstate])
-	
-	
-	#join blocks within xbp of each other, as set in the minblock option. Also rename block 5 to 4
-#	for x in xrange(len(blocks)-1, 1, -1):
-#		if blocks[x-1][2]==5:
-#			blocks[x-1][2]=4
-#		if blocks[x][2]==5:
-#			blocks[x][2]=4
-#		if blocks[x-1][2]==blocks[x][2] and (blocks[x][0]-blocks[x-1][1])<options.minblock:
-#			blocks[x-1][1]=blocks[x][1]
-#			del blocks[x]
-		
-			
-	#remove any intermediate blocks that are not directly adjacent to blocks 0 or 4 on either side
-	for x in xrange(len(blocks)-1, 1, -1):
-		if blocks[x-1][2]==1:
-			if blocks[x][2]!=blocks[x-2][2] or (blocks[x][0]-blocks[x-1][1])>1 or (blocks[x-1][0]-blocks[x-2][1])>1:
-				del blocks[x-1]
-		elif blocks[x-1][2]==3:
-			if blocks[x][2]!=blocks[x-2][2] or (blocks[x][0]-blocks[x-1][1])>1 or (blocks[x-1][0]-blocks[x-2][1])>1:
-				del blocks[x-1]
-	
-	
-	
-	#join adjacent blocks and colour them correctly
-	for x in xrange(len(blocks)-1, 1, -1):
-		if blocks[x-1][2] in [0,1] and blocks[x][2] in [0,1] and (blocks[x][0]-blocks[x-1][1])==1:
-			blocks[x-1][1]=blocks[x][1]
-			blocks[x-1][2]=0
-			del blocks[x]
-		elif blocks[x-1][2] in [3,4] and blocks[x][2] in [3,4] and (blocks[x][0]-blocks[x-1][1])==1:
-			blocks[x-1][1]=blocks[x][1]
-			blocks[x-1][2]=4
-			del blocks[x]
-	
-#	print v[0][35800:36100]
 #	for x, state in enumerate(v[0]):
 #
-#		if state!=currstate and state!=1 and inblock=="n":
+#		if state!=currstate and state!=2 and inblock=="n":
 #			blockstart=x+1
 #			inblock="y"
 #		elif state!=currstate and inblock=="y":
 #			blocks.append([blockstart,x,currstate])
 #			inblock="n"
-#			if state!=1:
+#			if state!=2:
 #				blockstart=x+1
 #				inblock="y"
 #		currstate=state
-#	
-#	print blocks[:100]
-#	
 #	if inblock=="y":
 #		blocks.append([blockstart,x,currstate])
 #	
 #	
-#	print "a", blocks[:100]
+#	#join blocks within xbp of each other, as set in the minblock option. Also rename block 5 to 4
+##	for x in xrange(len(blocks)-1, 1, -1):
+##		if blocks[x-1][2]==5:
+##			blocks[x-1][2]=4
+##		if blocks[x][2]==5:
+##			blocks[x][2]=4
+##		if blocks[x-1][2]==blocks[x][2] and (blocks[x][0]-blocks[x-1][1])<options.minblock:
+##			blocks[x-1][1]=blocks[x][1]
+##			del blocks[x]
+#		
 #			
-#	#remove any intermediate blocks that are not directly adjacent to blocks 1 or 2 on either side
+#	#remove any intermediate blocks that are not directly adjacent to blocks 1 or 3 on either side
 #	for x in xrange(len(blocks)-1, 1, -1):
-#		if blocks[x-1][2]==2:
+#		if blocks[x-1][2]==1:
+#			if blocks[x][2]!=blocks[x-2][2] or (blocks[x][0]-blocks[x-1][1])>1:
+#				del blocks[x-1]
+#		elif blocks[x-1][2]==3:
 #			if blocks[x][2]!=blocks[x-2][2] or (blocks[x][0]-blocks[x-1][1])>1:
 #				del blocks[x-1]
 #	
-#	print "b", blocks[:100]
-#	
 #	#join adjacent blocks and colour them correctly
 #	for x in xrange(len(blocks)-1, 1, -1):
-#		if blocks[x-1][2] in [2,3] and blocks[x][2] in [2,3] and (blocks[x][0]-blocks[x-1][1])==1:
+#		if blocks[x-1][2] in [0,1] and blocks[x][2] in [0,1] and (blocks[x][0]-blocks[x-1][1])==1:
 #			blocks[x-1][1]=blocks[x][1]
-#			blocks[x-1][2]=3
+#			blocks[x-1][2]=0
 #			del blocks[x]
-#	
-#	print "c", blocks[:100]
+#		elif blocks[x-1][2] in [3,4] and blocks[x][2] in [3,4] and (blocks[x][0]-blocks[x-1][1])==1:
+#			blocks[x-1][1]=blocks[x][1]
+#			blocks[x-1][2]=4
+#			del blocks[x]
+	
+	print v[0][35800:36100]
+	for x, state in enumerate(v[0]):
+
+		if state!=currstate and state!=1 and inblock=="n":
+			blockstart=x+1
+			inblock="y"
+		elif state!=currstate and inblock=="y":
+			blocks.append([blockstart,x,currstate])
+			inblock="n"
+			if state!=1:
+				blockstart=x+1
+				inblock="y"
+		currstate=state
+	
+	print blocks[:100]
+	
+	if inblock=="y":
+		blocks.append([blockstart,x,currstate])
+	
+	
+	print "a", blocks[:100]
+			
+	#remove any intermediate blocks that are not directly adjacent to blocks 1 or 2 on either side
+	for x in xrange(len(blocks)-1, 1, -1):
+		if blocks[x-1][2]==2:
+			if blocks[x][2]!=blocks[x-2][2] or (blocks[x][0]-blocks[x-1][1])>1:
+				del blocks[x-1]
+	
+	print "b", blocks[:100]
+	
+	#join adjacent blocks and colour them correctly
+	for x in xrange(len(blocks)-1, 1, -1):
+		if blocks[x-1][2] in [2,3] and blocks[x][2] in [2,3] and (blocks[x][0]-blocks[x-1][1])==1:
+			blocks[x-1][1]=blocks[x][1]
+			blocks[x-1][2]=3
+			del blocks[x]
+	
+	print "c", blocks[:100]
 
 	
 	#sys.exit()
@@ -446,7 +444,7 @@ if __name__ == "__main__":
 	tabout=open(options.output,"w")
 	for block in blocks:
 		#print block
-		if block[2] in [0,4] and block[1]-(block[0]-1)>options.minblock:
+		if block[2] in [0,3] and block[1]-(block[0]-1)>options.minblock:
 			blockmean=mean(data[block[0]-1:block[1]])
 			blockmedian=median(data[block[0]-1:block[1]])
 			blockstd=std(data[block[0]-1:block[1]])
@@ -464,7 +462,7 @@ if __name__ == "__main__":
 				print >> tabout, 'FT                   /note="Minimum coverage = '+str(blockmin)+'"'
 				print >> tabout, 'FT                   /note="Mean coverage relative to training data average = '+str(blockrelativecoverage)+'"'
 				
-			elif block[2]==4:
+			elif block[2]==3:
 				print >> tabout, "FT                   /colour=2"
 				print >> tabout, 'FT                   /note="Predicted region of high coverage"'
 				print >> tabout, 'FT                   /note="Mean coverage = '+str(blockmean)+'"'
