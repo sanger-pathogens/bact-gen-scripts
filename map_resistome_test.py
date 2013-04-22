@@ -114,7 +114,7 @@ if __name__ == "__main__":
 	fastaout.close()
 
 	os.system(SAMTOOLS_DIR+"samtools faidx "+options.output+"_no_Ns.fasta")
-	os.system(SMALT_DIR+"smalt index -k 13 -s 1 "+options.output+"_no_Ns.fasta.index "+options.output+"_no_Ns.fasta")
+	os.system(SMALT_DIR+"smalt index -k 13 -s 4 "+options.output+"_no_Ns.fasta.index "+options.output+"_no_Ns.fasta")
 	os.system(SMALT_DIR+"smalt map -d -1 -f samsoft -o "+options.output+".sam "+options.output+"_no_Ns.fasta.index "+options.genes)
 	os.system(SAMTOOLS_DIR+"samtools view -b -S "+options.output+".sam -t "+options.output+"_no_Ns.fasta.fai > "+options.output+".1.bam")
 	os.system(SAMTOOLS_DIR+"samtools sort "+options.output+".1.bam "+options.output)

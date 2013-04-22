@@ -85,7 +85,7 @@ def main():
 	
 	group.add_option("-t", "--tree", action="store", dest="tree", help="tree file to align tab files to", default="")
 	group.add_option("-2", "--proportion", action="store", dest="treeproportion", help="Proportion of page to take up with the tree", default=0.3, type='float')
-	group.add_option("-s", "--support", action="store_true", dest="tree_support", help="Scale tree branch widths by support (if present)", default=False)
+	group.add_option("-s", "--support", action="store", dest="tree_support", help="Scale tree branch widths by value. For newick trees this can be any value stored in the tree. Otherwise, use 'support' to scale by branch support values (if present)", default="")
 	group.add_option("-6", "--brlens", action="store_true", dest="show_branchlengths", help="Label branches with branchlengths", default=False)
 	group.add_option("-M", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root tree", default=False)
 	group.add_option("-L", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="page size [default= %default]", type="choice", default=None)
@@ -480,19 +480,38 @@ def read_dendropy_tree(treefile):
 				if node.edge_length!=None:
 					node.edge_length=log(node.edge_length+1)
 		
+		
+#		print dendropy.dataio.beast.BEAST_NODE_INFO_PATTERN
+#		print dendropy.dataio.beast.BEAST_NODE_INFO_PATTERN
+#		dendropy.dataio.beast.BEAST_NODE_INFO_PATTERN = re.compile(r'(.+?)=({.+?}|{.+?,.+?}|.+?)(,|$)')
+#		dendropy.dataio.nexustokenizer.NHX_COMMENT_FIELD_PATTERN = re.compile(r'(.+?)=({.+?}|{.+?,.+?}|.+?)(,|$)')
+#		dendropy.dataio.nexustokenizer.FIGTREE_COMMENT_FIELD_PATTERN = re.compile(r'(.+?)=({.+?}|{.+?,.+?}|.+?)(,|$)')
+#		print dendropy.dataio.beast.BEAST_NODE_INFO_PATTERN
+		
+		#dendropy.dataio.beast.BEAST_SUMMARY_FIELDS_TO_ATTR_MAP = {'height_95%_HPD' : 'height_95hpd', 'length_95%_HPD' : 'length_95hpd', 'State.set.prob' : 'State.set.prob'}
+#		print dendropy.dataio.beast.BEAST_SUMMARY_FIELDS_TO_ATTR_MAP
+
 		#Try opening the tree using various schemas
 		opened=False
-		for treeschema in ["beast-summary-tree", "nexus", "newick"]:
-			try:
-				t = dendropy.Tree.get_from_path(treefile, schema=treeschema, as_rooted=True, preserve_underscores=True, case_insensitive_taxon_labels=False)
+		for treeschema in ["beast-summary-tree",  "nexus", "newick"]:
+			try: 
+				t = dendropy.Tree.get_from_path(treefile, schema=treeschema, as_rooted=True, preserve_underscores=True, case_insensitive_taxon_labels=False, set_node_attributes=True)
 				opened=True
 				t.schema=treeschema
 				break
 			except dendropy.utility.error.DataParseError:
 				continue
+			except ValueError as e:
+				print "Encountered ValueError while trying to read tree file as", treeschema+":", e
+				continue
+				
 		if not opened:
 			print "Failed to open tree file"
 			sys.exit()
+		
+#		print treeschema
+#		
+#		sys.exit()
 		
 		#Midpoint root if the option is selected
 		if options.midpoint:
@@ -503,13 +522,13 @@ def read_dendropy_tree(treefile):
 			
 		#Ladderise the tree if the option is selected
 		if options.ladderise=="left":
-			print "ladderising tree to the left (ascending)"
-			#ladderise the tree right
-			t.ladderize(ascending=True)
-		elif options.ladderise=="right":
-			print "ladderising tree to the right (descending)"
+			print "ladderising tree to the left"
 			#ladderise the tree right
 			t.ladderize(ascending=False)
+		elif options.ladderise=="right":
+			print "ladderising tree to the right"
+			#ladderise the tree right
+			t.ladderize(ascending=True)
 		
 		if options.log_branches:
 			log_branchlengths(tree)
@@ -613,19 +632,28 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 		for edge in treeObject.preorder_edge_iter():
 			edge.length=1
 	
-	def get_max_branch_depth():#Updated for dendropy
+	def get_max_and_min_branch_depth():#Updated for dendropy
 			
-		max_height=0
+		max_height=float("-Inf")
+		min_height=float("Inf")
 		for leaf in treeObject.leaf_iter():
 			if leaf.distance_from_root()>max_height:
 				max_height=leaf.distance_from_root()
 		
-		return max_height
+		for node in treeObject.preorder_node_iter():
+			if node.distance_from_root()<min_height:
+				min_height=node.distance_from_root()
+		
+		
+		if min_height>0:
+			min_height=0
+		
+		return max_height, min_height
 	
 	
 	def node_heights_from_edge_lengths():#Updated for dendropy
 		
-		max_height=get_max_branch_depth()
+		max_height, min_height=get_max_and_min_branch_depth()
 		
 		for node in treeObject.preorder_node_iter():
 			node.height=max_height-node.distance_from_root()
@@ -759,18 +787,28 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 		vertpos=node.vertpos+yoffset
 		
 		branchlength=node.edge_length*horizontal_scaling_factor
-		horizontalpos=(node.distance_from_root()*horizontal_scaling_factor)+xoffset-branchlength
+		
+		horizontalpos=(node.distance_from_root()*horizontal_scaling_factor)+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
 		
 		
-		if options.tree_support:
+		if options.tree_support!="":
 			max_width=vertical_scaling_factor*0.5
 			
-			if (treeObject.schema=="beast-summary-tree" and node.posterior==None) or (treeObject.schema!="beast-summary-tree" and node.label==None):
-				linewidth=max_width
-			elif treeObject.schema=="beast-summary-tree":
-				linewidth=float(node.posterior)*max_width
+			if options.tree_support=="support":
+				
+				if (treeObject.schema=="beast-summary-tree" and node.posterior==None) or (treeObject.schema!="beast-summary-tree" and node.label==None):
+					linewidth=max_width
+				elif treeObject.schema=="beast-summary-tree":
+					linewidth=float(node.posterior)*max_width
+				else:
+					linewidth=(float(node.label)/100)*max_width
+			
 			else:
-				linewidth=(float(node.label)/100)*max_width
+				if (treeObject.schema=="beast-summary-tree" and hasattr(node, options.tree_support)):
+					linewidth=float(getattr(node,options.tree_support))*max_width
+				else:
+					linewidth=max_width
+			
 		else:
 			if vertical_scaling_factor<5:
 				linewidth=0.5
@@ -798,8 +836,12 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			vbranch_colour=colors.black
 		
 		
-		if branchlength<linewidth:
+		if branchlength>0 and branchlength<linewidth:
 			branchlength=linewidth
+		
+		if branchlength<0 and (-1*branchlength)<linewidth:
+			branchlength=(-1*linewidth)
+		
 		d.add(Line(horizontalpos-(vlinewidth/2), vertpos, (horizontalpos-(vlinewidth/2))+branchlength, vertpos, strokeWidth=linewidth, strokeColor=branch_colour))
 		
 		
@@ -996,9 +1038,12 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 	
 
 	
-	max_branch_depth=get_max_branch_depth()
+	max_branch_depth, min_branch_depth=get_max_and_min_branch_depth()
+#	max_branch_depth+=(-1*min_branch_depth)
 	
-	horizontal_scaling_factor=float(treewidth)/max_branch_depth
+	horizontal_scaling_factor=float(treewidth)/(max_branch_depth-min_branch_depth)
+	
+#	xoffset+=horizontal_scaling_factor*(-1*min_branch_depth)
 	
 	get_node_vertical_positions()
 	

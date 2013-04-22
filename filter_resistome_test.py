@@ -279,9 +279,10 @@ if options.reverse.split(".")[-1]=="gz":
 	runzip=True
 
 os.system(SAMTOOLS_DIR+"samtools faidx "+options.output+"_hits.mfa")
-os.system(SMALT_DIR+"smalt index -k 13 -s 1 "+options.output+"_hits.mfa.index "+options.output+"_hits.mfa")
+os.system(SMALT_DIR+"smalt index -k 13 -s 2 "+options.output+"_hits.mfa.index "+options.output+"_hits.mfa")
 #os.system(SMALT_DIR+"smalt map -y "+str(options.id)+" -r 12345 -f samsoft -o "+options.output+".sam "+options.output+"_hits.mfa.index "+options.forward+" "+options.reverse)
-os.system(SMALT_DIR+"smalt map -y 0.5 -r 12345 -f samsoft -o "+options.output+".sam "+options.output+"_hits.mfa.index "+options.forward+" "+options.reverse)
+#os.system(SMALT_DIR+"smalt map -y 0.5 -r 12345 -f samsoft -o "+options.output+".sam "+options.output+"_hits.mfa.index "+options.forward+" "+options.reverse)
+os.system(SMALT_DIR+"smalt map -y 0.5 -d 0 -f samsoft -o "+options.output+".sam "+options.output+"_hits.mfa.index "+options.forward+" "+options.reverse)
 os.system(SAMTOOLS_DIR+"samtools view -F 4 -b -S "+options.output+".sam -t "+options.output+"_hits.mfa.fai > "+options.output+".1.bam")
 os.system(SAMTOOLS_DIR+"samtools sort "+options.output+".1.bam "+options.output+"_mapping")
 os.system(SAMTOOLS_DIR+"samtools index "+options.output+"_mapping.bam")
@@ -397,6 +398,8 @@ print "gene coverage unique unique_exc_repeat repeat"
 present_genes=[]
 
 for gene in nonredundant_gene_names:
+	if not gene in genedepths or len(genedepths[gene])==0:
+		continue
 	gene_coverage=0.0
 	unique_coverage=0.0
 	errors=0.0
@@ -411,7 +414,10 @@ for gene in nonredundant_gene_names:
 	
 	error_proportion=(gene_coverage-errors)/len(genedepths[gene])
 	coverage_proportion=gene_coverage/len(genedepths[gene])
-	unique_coverage_proportion=unique_coverage/(len(genedepths[gene])-(gene_coverage-unique_coverage))
+	if unique_coverage==0:
+		unique_coverage_proportion=0.0
+	else:
+		unique_coverage_proportion=unique_coverage/(len(genedepths[gene])-(gene_coverage-unique_coverage))
 	
 	
 	
