@@ -493,9 +493,9 @@ def read_dendropy_tree(treefile):
 
 		#Try opening the tree using various schemas
 		opened=False
-		for treeschema in ["beast-summary-tree",  "nexus", "newick"]:
+		for treeschema in ["nexus", "newick"]:#["beast-summary-tree",  "nexus", "newick"]:
 			try: 
-				t = dendropy.Tree.get_from_path(treefile, schema=treeschema, as_rooted=True, preserve_underscores=True, case_insensitive_taxon_labels=False, set_node_attributes=True)
+				t = dendropy.Tree.get_from_path(treefile, schema=treeschema, as_rooted=True, preserve_underscores=True, case_insensitive_taxon_labels=False, set_node_attributes=True)#, extract_comment_metadata=True)
 				opened=True
 				t.schema=treeschema
 				break
@@ -509,9 +509,16 @@ def read_dendropy_tree(treefile):
 			print "Failed to open tree file"
 			sys.exit()
 		
-#		print treeschema
-#		
-#		sys.exit()
+		print treeschema
+		
+		for node in t.postorder_node_iter():
+			for a in node.annotations:
+				print a.name, a.value
+			print node.annotations
+			print node.comments
+			
+		
+			sys.exit()
 		
 		#Midpoint root if the option is selected
 		if options.midpoint:
@@ -1241,7 +1248,7 @@ def add_tab_to_diagram(filename):
 		print "Cannot find file", filename
 		sys.exit()
 	record.name=filename
-	track=add_embl_to_diagram(record, incfeatures=["i", "d", "li", "del", "snp", "misc_feature", "core", "CORE", "cds", "insertion", "deletion", "recombination", "feature", "blastn_hit", "fasta_record", "contig", "repeat_region"], emblfile=False)
+	track=add_embl_to_diagram(record, incfeatures=["i", "d", "li", "del", "snp", "misc_feature", "core", "CORE", "cds", "insertion", "deletion", "recombination", "feature", "blastn_hit", "fasta_record", "contig", "repeat_region", "variation"], emblfile=False)
 	
 	return track
 
@@ -1383,7 +1390,7 @@ def add_ordered_tab_to_diagram(filename):
 		print "Cannot find file", filename
 		sys.exit()
 	record.name=filename
-	new_tracks=add_ordered_embl_to_diagram(record, incfeatures=["i", "d", "li", "del", "snp", "misc_feature", "core", "cds", "insertion", "deletion", "recombination", "feature", "blastn_hit", "fasta_record", "repeat_region"], emblfile=False)
+	new_tracks=add_ordered_embl_to_diagram(record, incfeatures=["i", "d", "li", "del", "snp", "misc_feature", "core", "cds", "insertion", "deletion", "recombination", "feature", "blastn_hit", "fasta_record", "repeat_region", "variation"], emblfile=False)
 	return new_tracks
 
 
