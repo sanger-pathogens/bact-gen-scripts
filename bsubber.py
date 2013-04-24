@@ -37,7 +37,7 @@ def get_user_options():
 	parser.add_option("-m", "--memory", action="store", dest="mem", help="Amount of memory required for analysis (Gb). [Default= None]", default=False, type="float")
 	parser.add_option("-p", "--processors", action="store", dest="CPUs", help="Number of processors to use on each node. [Default= %default]", default=1, type="int")
 	parser.add_option("-c", "--c", action="store_true", dest="checkpoint", help="Checkpoint your job (so it can be restarted if it dies due to hardware failure). [Default= False]", default=False)
-	parser.add_option("-d", "--checkpoint_directory", action="store", dest="checkpoint_directory", help="Directory to store checkpoints in. [Default= pwd]", default=False)
+	parser.add_option("-d", "--checkpoint_directory", action="store", dest="checkpoint_directory", help="Directory to store checkpoints in. [Default= pwd]", default="")
 	parser.add_option("-f", "--checkpoint_frequency", action="store", dest="checkpoint_period", help="Frequency to save checkpoints in minutes. [Default= %default]", default=120, type="int")
 	parser.add_option("-r", "--restart", action="store_true", dest="restart", help="Restart a checkpointed job. To do this you will need to provide the path to the checkpoint file including the jobid (you will normally probably want to use the last one in the directory), e.g. /my/checkpoint/directory/<JOBID>. Important: Check that your job has really died; restarting a job from a checkpoint whilst the original is running will lead to unpredictable results! If your jobs needs special resources, you should add them to the command. (LSF does not remember them from the original bsub). ", default=False)
 	parser.add_option("-o", "--output", action="store", dest="output", help="Output file name. [Default= None]", default=False)
@@ -63,8 +63,10 @@ def check_input_validity(options, args):
 		options.checkpoint_directory=os.getcwd()
 	elif options.checkpoint and not os.path.isdir(options.checkpoint_directory):
 		DoError('Checkpoint directory '+options.checkpoint_directory+' does not exist')
-	if options.checkpoint and host[:4]=="pcs4":
-		DoError('Checkpointing does not work on pcs4')
+	elif options.restart and not os.path.isdir(options.checkpoint_directory):
+		DoError('Checkpoint directory '+options.checkpoint_directory+' does not exist')
+#	if options.checkpoint and host[:4]=="pcs4":
+#		DoError('Checkpointing does not work on pcs4. You will need to long on to the farm to use this option.')
 	if options.checkpoint and (options.checkpoint_period<1):
 		DoError('Checkpoint frequency must be greater than 1')
 #	if options.restart and not os.path.isfile(args[0]):
@@ -86,6 +88,7 @@ if __name__ == "__main__":
 	(options, args)=get_user_options()
 	#print options, args
 	check_input_validity(options, args)
+	
 	options.checkpoint_directory=os.path.abspath(options.checkpoint_directory)
 	
 	rlist=[]
@@ -143,7 +146,9 @@ if __name__ == "__main__":
 		else:
 			arguments='"'+' '.join(args)+'"'
 			
-			
+	if len(arguments)==0:
+		print "Nothing to bsub"
+		sys.exit()		
 	
 	submitstring= ' '.join(' '.join([bsubstring, cstring, memstring, cpustring, rstring, qstring, ostring, estring, arguments]).split())
 	print submitstring
