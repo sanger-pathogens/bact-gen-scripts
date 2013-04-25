@@ -89,9 +89,12 @@ def main():
 	group.add_option("-7", "--height_HPD", action="store_true", dest="show_height_HPD", help="show branch 95% HPD heights (if present in tree) [default= %default]", default=False)
 	group.add_option("-6", "--brlens", action="store_true", dest="show_branchlengths", help="Label branches with branchlengths", default=False)
 	group.add_option("-M", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root tree", default=False)
-	group.add_option("-L", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="page size [default= %default]", type="choice", default=None)
+	group.add_option("-L", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="ladderise tree (choose from right or left) [default= %default]", type="choice", default=None)
 	group.add_option("-z", "--names_as_shapes", action="store", choices=['circle', 'square', 'rectangle', 'auto'], dest="names_as_shapes", help="Use shapes rather than taxon names in tree (choose from circle) [default= %default]", type="choice", default="auto")
 	group.add_option("-1", "--logbranches", action="store_true", dest="log_branches", help="log branch lengths [default= %default]", default=False)
+	group.add_option("-D", "--date_separator", action="store", dest="date_separator", help="For trees with dating information, the script will read these from the taxon names if they are a suffix separated from the rest of the taxon name by a particular character. To do this you need to choose the character used to separate the dates with this option", default="")
+	group.add_option("-I", "--time_type", action="store", choices=['days', 'years'], dest="time_type", help="Time measurement used in trees with dating information (choose from days or years) [default= %default]", type="choice", default="years")
+
 	
 	parser.add_option_group(group)
 	
@@ -519,11 +522,6 @@ def read_dendropy_tree(treefile):
 		
 		dendropy.dataio.nexusreader_py.NexusReader._parse_taxlabels_statement=_parse_taxlabels_statement
 		
-		
-		
-		
-		#dendropy.dataio.beast.BEAST_SUMMARY_FIELDS_TO_ATTR_MAP = {'height_95%_HPD' : 'height_95hpd', 'length_95%_HPD' : 'length_95hpd', 'State.set.prob' : 'State.set.prob'}
-#		print dendropy.dataio.beast.BEAST_SUMMARY_FIELDS_TO_ATTR_MAP
 
 		#Try opening the tree using various schemas
 		opened=False
@@ -582,7 +580,7 @@ def read_dendropy_tree(treefile):
 						node.annotations[x].value=colors.Color(float(r)/255,float(g)/255,float(b)/255)
 					
 			
-		
+		#parse leaf annotation information
 		for leaf in t.leaf_iter():
 			for x, a in enumerate(leaf.taxon.annotations):
 				if isinstance(a.value, str):
@@ -611,6 +609,43 @@ def read_dendropy_tree(treefile):
 					r,g,b=rgbint2rgbtuple(rgbint)
 					leaf.taxon.annotations[x].name="Figtree_colour"
 					leaf.taxon.annotations[x].value=colors.Color(float(r)/255,float(g)/255,float(b)/255)
+		
+		
+		#Check if tree is from BEAST (not sure best way to check this, but will check from height on root node)
+		root=t.seed_node
+		t.is_BEAST=False
+		if hasattr(root, "annotations"):
+			for a in root.annotations:
+				if a.name=="height":
+					t.is_BEAST=True
+					break
+		
+		
+		if t.is_BEAST and options.date_separator!="":
+			min_leaf_sampling_date=float("Inf")
+			max_leaf_sampling_date=float("-Inf")
+			for leaf in t.leaf_iter():
+				try:
+					last_part_of_name=str(leaf.taxon).split(options.date_separator)[-1]
+				except:
+					"Found name that failed to split on", options.date_separator+":", leaf.taxon
+				
+				try:
+					leaf.sampling_date=int(last_part_of_name)
+					if leaf.sampling_date>max_leaf_sampling_date:
+						max_leaf_sampling_date=leaf.sampling_date
+					if leaf.sampling_date<min_leaf_sampling_date:
+						min_leaf_sampling_date=leaf.sampling_date
+				except:
+					if last_part_of_name=="NA":
+						leaf.sampling_date=None
+					else:
+						"Failed to find date when splitting on", options.date_separator+":", leaf.taxon
+			if min_leaf_sampling_date!=float("Inf") and max_leaf_sampling_date!=float("-Inf"):
+				t.min_leaf_sampling_date=min_leaf_sampling_date
+				t.max_leaf_sampling_date=max_leaf_sampling_date
+			else:
+				print "Failed to find any dates for taxa"
 			
 		
 		#log the branch lengths if the option has been chosen
@@ -787,20 +822,96 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 	
 	
 	def draw_scale():
-		
 		if vertical_scaling_factor<5:
 			linewidth=0.5
 		else:
 			linewidth=1.0
-		branchlength=round_to_n(max_branch_depth/10, 2)*horizontal_scaling_factor
-		horizontalpos=xoffset+round_to_n(max_branch_depth/10, 2)*horizontal_scaling_factor
-		vertpos=treebase-fontsize
-		scalestring = str(round_to_n(max_branch_depth/10, 2))
-		scalefontsize=fontsize
-		if scalefontsize<6:
-			scalefontsize=6
-		d.add(Line(horizontalpos, vertpos, horizontalpos+branchlength, vertpos, strokeWidth=linewidth))
-		d.add(String(horizontalpos+(float(branchlength)/2), vertpos-(scalefontsize+1), scalestring, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
+		
+		if treeObject.is_BEAST:
+			max_depth=max_branch_depth+(-1*min_branch_depth)
+			branchlength=(max_depth)*horizontal_scaling_factor
+			horizontalpos=xoffset
+			scalestring = str(round_to_n(max_depth/10, 2))
+			scalefontsize=fontsize
+			if scalefontsize<10:
+				scalefontsize=10
+			if fontsize<10:
+				gap=10
+			else:
+				gap=fontsize
+			vertposbottom=treebase-gap
+			d.add(Line(horizontalpos, vertposbottom, horizontalpos+branchlength, vertposbottom, strokeWidth=linewidth))
+			vertpostop=treetop+gap
+			d.add(Line(horizontalpos, vertpostop, horizontalpos+branchlength, vertpostop, strokeWidth=linewidth))
+			
+			if hasattr(treeObject, "max_leaf_sampling_date"):
+				max_date=float(treeObject.max_leaf_sampling_date)
+				min_date=max_date-max_depth
+			else:
+				max_date=0
+				min_date=max_depth
+				
+			date_range=max_depth
+			date_chunks=date_range
+			if date_chunks>10:
+				while date_chunks>10:
+					date_chunks=date_chunks/10
+			if date_chunks<1:
+				while date_chunks<1:
+					date_chunks=date_chunks*10
+			
+			if options.time_type=="years":
+				datestring="Year"
+			if options.time_type=="days":
+				datestring="Day"
+			
+			if max_date<min_date:
+				
+				datestring=datestring+"s Before Last Sample Date"
+				
+			d.add(String(horizontalpos+(float(branchlength)/2), vertposbottom-(scalefontsize*2+2), datestring, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
+			
+			if date_chunks<3:
+				date_chunks=date_chunks*2
+			for chunk in xrange(0,int(date_chunks)+1):
+				chunklength=(chunk*(date_range/date_chunks))*horizontal_scaling_factor
+				d.add(Line(horizontalpos+branchlength-chunklength, vertposbottom, horizontalpos+branchlength-chunklength, vertpostop, strokeDashArray=[1, 2], strokeWidth=linewidth/2))
+				if max_date>min_date:
+					scale_date=str(int(max_date-(chunk*(date_range/date_chunks))))
+				else:
+					scale_date=str(int(max_date+(chunk*(date_range/date_chunks))))
+				d.add(String(horizontalpos+branchlength-chunklength, vertposbottom-(scalefontsize+1), scale_date, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
+				d.add(String(horizontalpos+branchlength-chunklength, vertpostop+1, scale_date, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
+				
+				
+#				if (chunk % 2)==0:
+#					if chunk<int(date_chunks)-1:
+#						start_of_box=horizontalpos+branchlength-(((chunk+1)*(date_range/date_chunks))*horizontal_scaling_factor)
+#					else:
+#						start_of_box=horizontalpos+branchlength-(max_depth*horizontal_scaling_factor)
+#					end_of_box=horizontalpos+branchlength-chunklength
+#					d.add(Rect(start_of_box, vertposbottom, end_of_box-start_of_box, vertpostop-vertposbottom, fillColor=colors.antiquewhite, strokeColor=None, strokeWidth=0))
+#				else:
+#					if chunk<int(date_chunks)-1:
+#						start_of_box=horizontalpos+branchlength-(((chunk+1)*(date_range/date_chunks))*horizontal_scaling_factor)
+#					else:
+#						start_of_box=horizontalpos+branchlength-(max_depth*horizontal_scaling_factor)
+#					end_of_box=horizontalpos+branchlength-chunklength
+#					d.add(Rect(start_of_box, vertposbottom, end_of_box-start_of_box, vertpostop-vertposbottom, fillColor=colors.lightgrey, strokeColor=None, strokeWidth=0))
+				
+			if (chunk*(date_range/date_chunks))!=max_depth:
+				d.add(Line(horizontalpos+branchlength-(max_depth*horizontal_scaling_factor), vertposbottom, horizontalpos+branchlength-(max_depth*horizontal_scaling_factor), vertpostop, strokeDashArray=[1, 2], strokeWidth=linewidth/2))
+			
+		else:
+			vertpos=treebase-fontsize
+			branchlength=round_to_n(max_branch_depth/10, 2)*horizontal_scaling_factor
+			horizontalpos=xoffset+round_to_n(max_branch_depth/10, 2)*horizontal_scaling_factor
+			scalestring = str(round_to_n(max_branch_depth/10, 2))
+			scalefontsize=fontsize
+			if scalefontsize<6:
+				scalefontsize=6
+			d.add(Line(horizontalpos, vertpos, horizontalpos+branchlength, vertpos, strokeWidth=linewidth))
+			d.add(String(horizontalpos+(float(branchlength)/2), vertpos-(scalefontsize+1), scalestring, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
 	
 		
 	
@@ -992,7 +1103,9 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-gubbins_length), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 			
 			for x, name_colour in enumerate(name_colours[colpos:]):
-
+				
+				if block_length==0:
+					break
 
 				if options.names_as_shapes=="circle":
 					d.add(Circle(cx=block_xpos+block_length, cy=vertpos, r=(block_length/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
@@ -1089,8 +1202,6 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 	
 	set_node_vertical_positions()
 	
-	draw_branches()
-	
 	def get_tree_base_and_top(t):
 		base=float("Inf")
 		top=float("-Inf")
@@ -1106,6 +1217,10 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 	treetop+=yoffset
 	if tree.draw_scale:
 		draw_scale()
+	
+	draw_branches()
+	
+	
 	
 	return
 	
@@ -3537,6 +3652,9 @@ class control_options:
 		self.metadata_column_label_font="Helvetica"
 		self.metadata_column_label_size=10
 		self.metadata_column_label_angle=45
+		
+		
+		#plot options
 	
 	
 	

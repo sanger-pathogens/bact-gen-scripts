@@ -85,12 +85,16 @@ def main():
 	
 	group.add_option("-t", "--tree", action="store", dest="tree", help="tree file to align tab files to", default="")
 	group.add_option("-2", "--proportion", action="store", dest="treeproportion", help="Proportion of page to take up with the tree", default=0.3, type='float')
-	group.add_option("-s", "--support", action="store_true", dest="tree_support", help="Scale tree branch widths by support (if present)", default=False)
+	group.add_option("-s", "--support", action="store", dest="tree_support", help="Scale tree branch widths by value. For newick trees this can be any value stored in the tree. Otherwise, use 'support' to scale by branch support values (if present)", default="")
+	group.add_option("-7", "--height_HPD", action="store_true", dest="show_height_HPD", help="show branch 95% HPD heights (if present in tree) [default= %default]", default=False)
 	group.add_option("-6", "--brlens", action="store_true", dest="show_branchlengths", help="Label branches with branchlengths", default=False)
 	group.add_option("-M", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root tree", default=False)
-	group.add_option("-L", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="page size [default= %default]", type="choice", default=None)
+	group.add_option("-L", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="ladderise tree (choose from right or left) [default= %default]", type="choice", default=None)
 	group.add_option("-z", "--names_as_shapes", action="store", choices=['circle', 'square', 'rectangle', 'auto'], dest="names_as_shapes", help="Use shapes rather than taxon names in tree (choose from circle) [default= %default]", type="choice", default="auto")
-	group.add_option("-1", "--logbranches", action="store_true", dest="log_branches", help="page size [default= %default]", default=False)
+	group.add_option("-1", "--logbranches", action="store_true", dest="log_branches", help="log branch lengths [default= %default]", default=False)
+	group.add_option("-D", "--date_separator", action="store", dest="date_separator", help="For trees with dating information, the script will read these from the taxon names if they are a suffix separated from the rest of the taxon name by a particular character. To do this you need to choose the character used to separate the dates with this option", default="")
+	group.add_option("-I", "--time_type", action="store", choices=['days', 'years'], dest="time_type", help="Time measurement used in trees with dating information (choose from days or years) [default= %default]", type="choice", default="years")
+
 	
 	parser.add_option_group(group)
 	
@@ -454,7 +458,7 @@ def get_text_width(font, size, text):
 	return length
 
 ###############################################################################
-# Function to find the best font size for a strint to fit in a certain length #
+# Function to find the best font size for a string to fit in a certain length #
 ###############################################################################
 
 def set_text_width(font, size, length, text):
@@ -464,6 +468,18 @@ def set_text_width(font, size, length, text):
 		strlen= c.stringWidth(text,font,size)
 		size-=0.1
 	return size
+
+
+##############################################
+# Function to convert RGB ints to RGB tuples #
+##############################################
+
+def rgbint2rgbtuple(RGBint):
+	blue =  RGBint & 255
+	green = (RGBint >> 8) & 255
+	red =   (RGBint >> 16) & 255
+	return (red, green, blue)
+
 
 
 ##############################################
@@ -480,20 +496,175 @@ def read_dendropy_tree(treefile):
 				if node.edge_length!=None:
 					node.edge_length=log(node.edge_length+1)
 		
+		
+		#Some fixes to dendropy to make it read annotations properly
+		dendropy.dataio.nexustokenizer.NHX_COMMENT_FIELD_PATTERN = re.compile(r'(.+?)=({.+?}|.+?)(,|$)')
+		dendropy.dataio.nexustokenizer.FIGTREE_COMMENT_FIELD_PATTERN = re.compile(r'(.+?)=({.+?}|.+?)(,|$)')
+		
+		
+		def _parse_taxlabels_statement(self, taxon_set=None):
+			"""
+			Processes a TAXLABELS command. Assumes that the file reader is
+			positioned right after the "TAXLABELS" token in a TAXLABELS command.
+			"""
+			if taxon_set is None:
+				taxon_set = self._get_taxon_set()
+			token = self.stream_tokenizer.read_next_token()
+			while token != ';':
+				label = token
+				if len(taxon_set) >= self.file_specified_ntax and not self.attached_taxon_set:
+					raise self.too_many_taxa_error(taxon_set=taxon_set, label=label)
+				taxon = taxon_set.require_taxon(label=label)
+				self.stream_tokenizer.store_comment_metadata(taxon)
+				self.stream_tokenizer.store_comments(taxon)
+				token = self.stream_tokenizer.read_next_token()
+				
+		
+		dendropy.dataio.nexusreader_py.NexusReader._parse_taxlabels_statement=_parse_taxlabels_statement
+		
+
 		#Try opening the tree using various schemas
 		opened=False
-		for treeschema in ["beast-summary-tree", "nexus", "newick"]:
-			try:
-				t = dendropy.Tree.get_from_path(treefile, schema=treeschema, as_rooted=True, preserve_underscores=True, case_insensitive_taxon_labels=False)
+		for treeschema in ["nexus", "newick"]:#["beast-summary-tree",  "nexus", "newick"]:
+			try: 
+				t = dendropy.Tree.get_from_path(treefile, schema=treeschema, as_rooted=True, preserve_underscores=True, case_insensitive_taxon_labels=False, set_node_attributes=True, extract_comment_metadata=True)
 				opened=True
 				t.schema=treeschema
 				break
 			except dendropy.utility.error.DataParseError:
 				continue
+			except ValueError as e:
+				print "Encountered ValueError while trying to read tree file as", treeschema+":", e
+				continue
+				
 		if not opened:
 			print "Failed to open tree file"
 			sys.exit()
 		
+		
+		for node in t.postorder_node_iter():
+			for x, a in enumerate(node.annotations):
+				if isinstance(a.value, str):
+					a.value=a.value.replace('"','')
+					try:
+						node.annotations[x].value=float(a.value)
+					except:
+						node.annotations[x].value=a.value
+				elif isinstance(a.value, list):
+					for y in xrange(len(a.value)):
+						if isinstance(a.value[y], str):
+							a.value[y]=a.value[y].replace('"','')
+							node.annotations[x].value[y]=a.value[y]
+					
+					try:
+						node.annotations[x].value=map(float,node.annotations[x].value)
+					except:		
+						if a.name=="!hilight" and len(a.value)==3 and len(a.value[2])>1 and a.value[2][0]=="#":
+							try:
+								rgbint=int(a.value[2][1:])
+							except:
+								break
+							r,g,b=rgbint2rgbtuple(rgbint)
+							node.annotations[x].name="Figtree_hilight"
+							node.annotations[x].value=colors.Color(float(r)/255,float(g)/255,float(b)/255)
+				
+				
+				if isinstance(a.value, str):
+					if a.name=="!color" and len (a.value)>1 and a.value[0]=="#":
+						try:
+							rgbint=int(a.value[1:])
+						except:
+							break
+						r,g,b=rgbint2rgbtuple(rgbint)
+						node.annotations[x].name="Figtree_colour"
+						node.annotations[x].value=colors.Color(float(r)/255,float(g)/255,float(b)/255)
+					
+			
+		#parse leaf annotation information
+		for leaf in t.leaf_iter():
+			for x, a in enumerate(leaf.taxon.annotations):
+				if isinstance(a.value, str):
+					a.value=a.value.replace('"','')
+					try:
+						leaf.taxon.annotations[x].value=float(a.value)
+					except:
+						leaf.taxon.annotations[x].value=a.value
+				elif isinstance(a.value, list):
+					for y in xrange(len(a.value)):
+						if isinstance(a.value[y], str):
+							a.value[y]=a.value[y].replace('"','')
+							leaf.taxon.annotations[x].value[y]=a.value[y]
+					
+					try:
+						leaf.taxon.annotations[x].value=map(float,node.annotations[x].value)
+					except:
+						continue
+				
+				
+				if isinstance(a.value, str) and a.name=="!color" and len (a.value)>1 and a.value[0]=="#":
+					try:
+						rgbint=int(a.value[1:])
+					except:
+						break
+					r,g,b=rgbint2rgbtuple(rgbint)
+					leaf.taxon.annotations[x].name="Figtree_colour"
+					leaf.taxon.annotations[x].value=colors.Color(float(r)/255,float(g)/255,float(b)/255)
+		
+		
+		#Check if tree is from BEAST (not sure best way to check this, but will check from height on root node)
+		root=t.seed_node
+		t.is_BEAST=False
+		if hasattr(root, "annotations"):
+			for a in root.annotations:
+				if a.name=="height":
+					t.is_BEAST=True
+					break
+		
+		
+		if t.is_BEAST and options.date_separator!="":
+			min_leaf_sampling_date=float("Inf")
+			max_leaf_sampling_date=float("-Inf")
+			for leaf in t.leaf_iter():
+				try:
+					last_part_of_name=str(leaf.taxon).split(options.date_separator)[-1]
+				except:
+					"Found name that failed to split on", options.date_separator+":", leaf.taxon
+				
+				try:
+					leaf.sampling_date=int(last_part_of_name)
+					if leaf.sampling_date>max_leaf_sampling_date:
+						max_leaf_sampling_date=leaf.sampling_date
+					if leaf.sampling_date<min_leaf_sampling_date:
+						min_leaf_sampling_date=leaf.sampling_date
+				except:
+					if last_part_of_name=="NA":
+						leaf.sampling_date=None
+					else:
+						"Failed to find date when splitting on", options.date_separator+":", leaf.taxon
+			if min_leaf_sampling_date!=float("Inf") and max_leaf_sampling_date!=float("-Inf"):
+				t.min_leaf_sampling_date=min_leaf_sampling_date
+				t.max_leaf_sampling_date=max_leaf_sampling_date
+			else:
+				print "Failed to find any dates for taxa"
+			
+		
+		#log the branch lengths if the option has been chosen
+		if options.log_branches:
+			log_branchlengths(t)
+		
+		
+		#some code here to make the branch lengths equal - not actually possible to choose this yet
+		t.draw_scale=True
+		if options.show_branchlengths:
+			t.draw_scale=False
+		
+		equal_branches=False
+		if equal_branches:
+			for node in t.postorder_node_iter():
+				if node.edge_length!=None:
+					node.edge_length=0.1
+			t.draw_scale=False
+			
 		#Midpoint root if the option is selected
 		if options.midpoint:
 			print "Midpoint rooting tree"
@@ -503,16 +674,14 @@ def read_dendropy_tree(treefile):
 			
 		#Ladderise the tree if the option is selected
 		if options.ladderise=="left":
-			print "ladderising tree to the left (ascending)"
-			#ladderise the tree right
-			t.ladderize(ascending=True)
-		elif options.ladderise=="right":
-			print "ladderising tree to the right (descending)"
+			print "ladderising tree to the left"
 			#ladderise the tree right
 			t.ladderize(ascending=False)
+		elif options.ladderise=="right":
+			print "ladderising tree to the right"
+			#ladderise the tree right
+			t.ladderize(ascending=True)
 		
-		if options.log_branches:
-			log_branchlengths(tree)
 			
 		
 		#print the tree in ascii as a cladogram
@@ -613,19 +782,31 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 		for edge in treeObject.preorder_edge_iter():
 			edge.length=1
 	
-	def get_max_branch_depth():#Updated for dendropy
+	def get_max_and_min_branch_depth():#Updated for dendropy
 			
-		max_height=0
+		max_height=float("-Inf")
+		min_height=float("Inf")
 		for leaf in treeObject.leaf_iter():
 			if leaf.distance_from_root()>max_height:
 				max_height=leaf.distance_from_root()
 		
-		return max_height
+		for node in treeObject.preorder_node_iter():
+			try:
+				if node.distance_from_root()<min_height:
+					min_height=node.distance_from_root()
+			except:
+				continue
+		
+		
+		if min_height>0:
+			min_height=0
+		
+		return max_height, min_height
 	
 	
 	def node_heights_from_edge_lengths():#Updated for dendropy
 		
-		max_height=get_max_branch_depth()
+		max_height, min_height=get_max_and_min_branch_depth()
 		
 		for node in treeObject.preorder_node_iter():
 			node.height=max_height-node.distance_from_root()
@@ -641,102 +822,102 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 	
 	
 	def draw_scale():
-		
 		if vertical_scaling_factor<5:
 			linewidth=0.5
 		else:
 			linewidth=1.0
-		branchlength=round_to_n(max_branch_depth/10, 2)*horizontal_scaling_factor
-		horizontalpos=xoffset+round_to_n(max_branch_depth/10, 2)*horizontal_scaling_factor
-		vertpos=treebase-fontsize
-		scalestring = str(round_to_n(max_branch_depth/10, 2))
-		scalefontsize=fontsize
-		if scalefontsize<6:
-			scalefontsize=6
-		d.add(Line(horizontalpos, vertpos, horizontalpos+branchlength, vertpos, strokeWidth=linewidth))
-		d.add(String(horizontalpos+(float(branchlength)/2), vertpos-(scalefontsize+1), scalestring, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
-#		
-#		
-	
 		
-		
-#		def min_branchlength(node, min_brlen):
-#			daughters=treeObject.node(node).succ
-#			brlen=treeObject.node(node).data.branchlength
-#			
-#			if brlen!=0 and brlen<min_brlen:
-#				min_brlen=brlen
-#			
-#			for daughter in daughters:
-#				daughterbrlen=min_branchlength(daughter, min_brlen)
-#				if daughterbrlen<min_brlen:
-#					min_brlen=daughterbrlen
-#			
-#			return min_brlen
-#		
-#		
-#		def log_branchlength(node, multiplier):
-#		
-#			daughters=treeObject.node(node).succ
-#			if treeObject.node(node).data.branchlength>0:
-#				treeObject.node(node).data.branchlength=log(treeObject.node(node).data.branchlength*multiplier)
-#			
-#			for daughter in daughters:
-#				log_branchlength(daughter, multiplier)
-#		
-#		node=treeObject.root
-#		min_br_len=min_branchlength(node, float("Inf"))
-#		
-#		x=1
-#		while x*min_br_len<=1:
-#			x=x*10
-#		
-#		print min_br_len
-#		node=treeObject.root
-#		log_branchlength(node, x)
-#	
-#	
-#	def get_outgroup_nodes_above_and_below(node):
-#		
-#		outgroup_nodes_above=0
-#		outgroup_nodes_below=0
-#		
-#		def get_outgroup_prevnode(node, outgroup_nodes_above, outgroup_nodes_below):
-#		
-#			if node==treeObject.root:
-#				return outgroup_nodes_above, outgroup_nodes_below
-#			
-#			parentnode=treeObject.node(node).prev
-#			outgroup_nodes_above, outgroup_nodes_below=get_outgroup_prevnode(parentnode, outgroup_nodes_above, outgroup_nodes_below)
-#			sisters=treeObject.node(parentnode).succ
-#			above=True
-#			for sister in sisters:
-#				if sister==node:
-#					above=False
-#				elif above:
-#					if treeObject.is_internal(node=sister):
-#						outgroup_nodes_above+=treeObject.count_terminals(node=sister)
+		if treeObject.is_BEAST:
+			max_depth=max_branch_depth+(-1*min_branch_depth)
+			branchlength=(max_depth)*horizontal_scaling_factor
+			horizontalpos=xoffset
+			scalestring = str(round_to_n(max_depth/10, 2))
+			scalefontsize=fontsize
+			if scalefontsize<10:
+				scalefontsize=10
+			if fontsize<10:
+				gap=10
+			else:
+				gap=fontsize
+			vertposbottom=treebase-gap
+			d.add(Line(horizontalpos, vertposbottom, horizontalpos+branchlength, vertposbottom, strokeWidth=linewidth))
+			vertpostop=treetop+gap
+			d.add(Line(horizontalpos, vertpostop, horizontalpos+branchlength, vertpostop, strokeWidth=linewidth))
+			
+			if hasattr(treeObject, "max_leaf_sampling_date"):
+				max_date=float(treeObject.max_leaf_sampling_date)
+				min_date=max_date-max_depth
+			else:
+				max_date=0
+				min_date=max_depth
+				
+			date_range=max_depth
+			date_chunks=date_range
+			if date_chunks>10:
+				while date_chunks>10:
+					date_chunks=date_chunks/10
+			if date_chunks<1:
+				while date_chunks<1:
+					date_chunks=date_chunks*10
+			
+			if options.time_type=="years":
+				datestring="Year"
+			if options.time_type=="days":
+				datestring="Day"
+			
+			if max_date<min_date:
+				
+				datestring=datestring+"s Before Last Sample Date"
+				
+			d.add(String(horizontalpos+(float(branchlength)/2), vertposbottom-(scalefontsize*2+2), datestring, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
+			
+			if date_chunks<3:
+				date_chunks=date_chunks*2
+			for chunk in xrange(0,int(date_chunks)+1):
+				chunklength=(chunk*(date_range/date_chunks))*horizontal_scaling_factor
+				d.add(Line(horizontalpos+branchlength-chunklength, vertposbottom, horizontalpos+branchlength-chunklength, vertpostop, strokeDashArray=[1, 2], strokeWidth=linewidth/2))
+				if max_date>min_date:
+					scale_date=str(int(max_date-(chunk*(date_range/date_chunks))))
+				else:
+					scale_date=str(int(max_date+(chunk*(date_range/date_chunks))))
+				d.add(String(horizontalpos+branchlength-chunklength, vertposbottom-(scalefontsize+1), scale_date, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
+				d.add(String(horizontalpos+branchlength-chunklength, vertpostop+1, scale_date, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
+				
+				
+#				if (chunk % 2)==0:
+#					if chunk<int(date_chunks)-1:
+#						start_of_box=horizontalpos+branchlength-(((chunk+1)*(date_range/date_chunks))*horizontal_scaling_factor)
 #					else:
-#						outgroup_nodes_above+=1
+#						start_of_box=horizontalpos+branchlength-(max_depth*horizontal_scaling_factor)
+#					end_of_box=horizontalpos+branchlength-chunklength
+#					d.add(Rect(start_of_box, vertposbottom, end_of_box-start_of_box, vertpostop-vertposbottom, fillColor=colors.antiquewhite, strokeColor=None, strokeWidth=0))
 #				else:
-#					if treeObject.is_internal(node=sister):
-#						outgroup_nodes_below+=treeObject.count_terminals(node=sister)
+#					if chunk<int(date_chunks)-1:
+#						start_of_box=horizontalpos+branchlength-(((chunk+1)*(date_range/date_chunks))*horizontal_scaling_factor)
 #					else:
-#						outgroup_nodes_below+=1
-#				
-#	
-#			return outgroup_nodes_above, outgroup_nodes_below
-#		
-#		
-#		outgroup_nodes_above, outgroup_nodes_below = get_outgroup_prevnode(node, outgroup_nodes_above, outgroup_nodes_below)
-#		return outgroup_nodes_above, outgroup_nodes_below
-#	
+#						start_of_box=horizontalpos+branchlength-(max_depth*horizontal_scaling_factor)
+#					end_of_box=horizontalpos+branchlength-chunklength
+#					d.add(Rect(start_of_box, vertposbottom, end_of_box-start_of_box, vertpostop-vertposbottom, fillColor=colors.lightgrey, strokeColor=None, strokeWidth=0))
+				
+			if (chunk*(date_range/date_chunks))!=max_depth:
+				d.add(Line(horizontalpos+branchlength-(max_depth*horizontal_scaling_factor), vertposbottom, horizontalpos+branchlength-(max_depth*horizontal_scaling_factor), vertpostop, strokeDashArray=[1, 2], strokeWidth=linewidth/2))
+			
+		else:
+			vertpos=treebase-fontsize
+			branchlength=round_to_n(max_branch_depth/10, 2)*horizontal_scaling_factor
+			horizontalpos=xoffset+round_to_n(max_branch_depth/10, 2)*horizontal_scaling_factor
+			scalestring = str(round_to_n(max_branch_depth/10, 2))
+			scalefontsize=fontsize
+			if scalefontsize<6:
+				scalefontsize=6
+			d.add(Line(horizontalpos, vertpos, horizontalpos+branchlength, vertpos, strokeWidth=linewidth))
+			d.add(String(horizontalpos+(float(branchlength)/2), vertpos-(scalefontsize+1), scalestring, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
+	
+		
 	
 	
-	def get_node_vertical_positions():
-		
-		
-		
+	def set_node_vertical_positions():
+	
 		for node in treeObject.postorder_internal_node_iter():
 			child_max=float("-Inf")
 			child_min=float("Inf")
@@ -747,11 +928,8 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 					child_min=child.vertpos
 			
 			node.vertpos=(child_max+child_min)/2
-			#print node.vertpos
 		
-		
-	
-	
+
 		
 	
 	def draw_branch(node):
@@ -759,18 +937,32 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 		vertpos=node.vertpos+yoffset
 		
 		branchlength=node.edge_length*horizontal_scaling_factor
-		horizontalpos=(node.distance_from_root()*horizontal_scaling_factor)+xoffset-branchlength
 		
+		horizontalpos=(node.distance_from_root()*horizontal_scaling_factor)+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
 		
-		if options.tree_support:
-			max_width=vertical_scaling_factor*0.5
+		if options.tree_support!="":
+			max_width=vertical_scaling_factor*0.8
 			
-			if (treeObject.schema=="beast-summary-tree" and node.posterior==None) or (treeObject.schema!="beast-summary-tree" and node.label==None):
-				linewidth=max_width
-			elif treeObject.schema=="beast-summary-tree":
-				linewidth=float(node.posterior)*max_width
+			if options.tree_support=="support":
+				
+				if (treeObject.schema=="nexus" and hasattr(node, "posterior") and node.posterior!=None):
+					linewidth=float(node.posterior)*max_width
+				elif hasattr(node, "label") and node.label!=None:
+					linewidth=(float(node.label)/100)*max_width
+				else:
+					linewidth=max_width
+			
 			else:
-				linewidth=(float(node.label)/100)*max_width
+				if hasattr(node, "annotations"):
+					for a in node.annotations:
+						if a.name==options.tree_support:
+							try:
+								linewidth=float(a.value)*max_width
+							except:
+								linewidth=max_width
+				else:
+					linewidth=max_width
+			
 		else:
 			if vertical_scaling_factor<5:
 				linewidth=0.5
@@ -782,52 +974,92 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 		else:
 			vlinewidth=1.0
 		
-		# if branches have colours, find out now
+		
+		
+		if branchlength>0 and branchlength<vlinewidth:
+			branchlength=linewidth
+		
+		if branchlength<0 and (-1*branchlength)<vlinewidth:
+			branchlength=(-1*vlinewidth)
+			
+		
+		# if branches have colours or hilights, find out now
 		if hasattr(node, 'edge_colour') and len(node.edge_colour)==1 and len(node.edge_colour[0])==1:
 			r,g,b=list(node.edge_colour[0])[0]
 			branch_colour=colors.Color(float(r),float(g),float(b))
+			clade_hilight=None
+		elif hasattr(node, "annotations"):
+			branch_colour=colors.black
+			clade_hilight=None
+			for a  in node.annotations:
+				if a.name=="Figtree_colour":
+					branch_colour=a.value
+				if a.name=="Figtree_hilight":
+					clade_hilight=a.value
 		else:
 			branch_colour=colors.black
+			clade_hilight=None
 		
-		
-		# if branches have colours, find out now
-		if node.parent_node and  hasattr(node.parent_node, 'edge_colour') and len(node.parent_node.edge_colour)==1 and len(node.parent_node.edge_colour[0])==1:
-			r,g,b=list(node.parent_node.edge_colour[0])[0]
-			vbranch_colour=colors.Color(float(r),float(g),float(b))
-		else:
-			vbranch_colour=colors.black
-		
-		
-		if branchlength<linewidth:
-			branchlength=linewidth
-		d.add(Line(horizontalpos-(vlinewidth/2), vertpos, (horizontalpos-(vlinewidth/2))+branchlength, vertpos, strokeWidth=linewidth, strokeColor=branch_colour))
-		
-		
-		if node.level()!=0:
-
-			sister_max=node.vertpos
-			sister_min=node.vertpos
-			for sister in node.sister_nodes():
-				if sister.vertpos>sister_max:
-					sister_max=sister.vertpos
-				if sister.vertpos<sister_min:
-					sister_min=sister.vertpos
-		
-		if node.vertpos==sister_max:
-			d.add(Line(horizontalpos, sister_max+yoffset, horizontalpos, sister_min+yoffset, strokeWidth=vlinewidth, strokeColor=vbranch_colour))
-			
-		
+		#If leaves have colours, find out now
 		if node.is_leaf():
-			if hasattr(node, 'name_colour'):
+			#print dir(node)
+			if hasattr(node, 'name_colour') and len(node.name_colour)>0:
 				name_colours=[]
 				for x in xrange(0,len(node.name_colour)):
 					r,g,b= node.name_colour[x]
 					name_colours.append(colors.Color(float(r)/255,float(g)/255,float(b)/255))
+			elif hasattr(node, "taxon"):
+				name_colours=[colors.black]
+				if hasattr(node.taxon, "annotations"):
+					for a  in node.taxon.annotations:
+						if a.name=="Figtree_colour":
+							name_colours=[a.value]
 			else:
 				name_colours=[colors.black]
+				
+		#If a node is hilighted, draw the hilight box now
+		if clade_hilight!=None:
+			max_down_leaf_vertpos=float("-Inf")
+			min_down_leaf_vertpos=float("Inf")
+			#we need to find the top and bottom leaves downstream of the node to define the top and bottom of the box the box
+			for downsteam_leaf in node.leaf_iter():
+				if downsteam_leaf.vertpos+yoffset>max_down_leaf_vertpos:
+					max_down_leaf_vertpos=downsteam_leaf.vertpos+yoffset
+				if downsteam_leaf.vertpos+yoffset<min_down_leaf_vertpos:
+					min_down_leaf_vertpos=downsteam_leaf.vertpos+yoffset
+			d.add(Rect(horizontalpos+(branchlength/2), min_down_leaf_vertpos-(vertical_scaling_factor/2), treewidth+xoffset+max_name_width+(fontsize/2)-(horizontalpos+(branchlength/2)), (max_down_leaf_vertpos-min_down_leaf_vertpos)+vertical_scaling_factor, fillColor=clade_hilight, strokeColor=None, strokeWidth=0))
 		
-#			print "name colour =", name_colours
+		#if the user has chosen to show 95%HPD, draw them now:
+		if options.show_height_HPD:
+			if hasattr(node, "annotations"):
+				HPDmax=float("-Inf")
+				HPDmin=float("Inf")
+				median=0.0
+				for a  in node.annotations:
+					if a.name=="height_95%_HPD":
+						print a.value
+						HPDmax=((max_branch_depth-a.value[0])*horizontal_scaling_factor)+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
+						HPDmin=((max_branch_depth-a.value[1])*horizontal_scaling_factor)+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
+					elif a.name=="height_median":
+						median=a.value
+				print horizontalpos, HPDmax, HPDmin, HPDmax-HPDmin
+				if HPDmax-HPDmin>0:
+					print HPDmin, vertpos-(vlinewidth/2), HPDmax, vertpos+(vlinewidth/2)
+					d.add(Rect(HPDmin+branchlength, vertpos-((vertical_scaling_factor*0.8)/2), HPDmax-HPDmin, vertical_scaling_factor*0.8, fillColor=colors.lightblue, strokeColor=None, strokeWidth=0))
+		
+		#draw the horizontal part of the branch
+		d.add(Line(horizontalpos-(vlinewidth/2), vertpos, (horizontalpos-(vlinewidth/2))+branchlength, vertpos, strokeWidth=linewidth, strokeColor=branch_colour))
+		
+		#If the user has chosen to show branchlengths on branches, draw them now
+		if options.show_branchlengths and node.edge_length>0:
+			d.add(String((horizontalpos-(linewidth/2))+(branchlength/2), vertpos+linewidth, str(node.edge_length).rstrip('0').rstrip('.'), textAnchor='middle', fontSize=fontsize*0.9, fillColor='black', fontName='Helvetica'))
+
+
+		#draw the vertical part of the branch that goes to the parent node
+		d.add(Line(horizontalpos, node.vertpos+yoffset, horizontalpos, node.parent_node.vertpos+yoffset, strokeWidth=vlinewidth, strokeColor=branch_colour))
+		
 			
+		if node.is_leaf():
 			# calculate total length of gubbins to add
 			
 			gubbins_length=0.0
@@ -867,64 +1099,29 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			
 			if options.aligntaxa==1:
 				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
-				#d.add(Line(treewidth+xoffset+max_name_width, vertpos, horizontalpos+branchlength+gubbins_length, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 			elif options.aligntaxa==2:
-				#d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-gubbins_length), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
-				#d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 			
 			for x, name_colour in enumerate(name_colours[colpos:]):
-#				if options.aligntaxa==1:
-#					if options.names_as_shapes=="circle":
-#						d.add(Circle(cx=horizontalpos+branchlength+vertical_scaling_factor, cy=vertpos, r=(vertical_scaling_factor/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-#					elif options.names_as_shapes=="square":
-#						d.add(Rect(horizontalpos+branchlength+(vertical_scaling_factor/2), vertpos-(vertical_scaling_factor/2), vertical_scaling_factor, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-#					elif options.names_as_shapes=="rectangle":
-#						d.add(Rect(horizontalpos+branchlength+(vertical_scaling_factor/2), vertpos-(vertical_scaling_factor/2), vertical_scaling_factor*2, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-#					elif options.names_as_shapes=="auto":
-#						d.add(Rect(horizontalpos+branchlength+(vertical_scaling_factor/2), vertpos-(vertical_scaling_factor/2), max_name_width, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-#					elif options.taxon_names:
-#						d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colour))
-#						d.add(String(treewidth+(fontsize/2)+xoffset, vertpos-(fontsize/3), treeObject.node(node).data.taxon, textAnchor='start', fillColor=name_colour, fontSize=fontsize, fontName='Helvetica'))
-#					else:
-#						d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colour))
-#				
-#				elif options.aligntaxa==2:
-
-
-
-
+				
+				if block_length==0:
+					break
 
 				if options.names_as_shapes=="circle":
 					d.add(Circle(cx=block_xpos+block_length, cy=vertpos, r=(block_length/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
 				elif options.names_as_shapes in ["square", "rectangle", "auto"]:
 					d.add(Rect(block_xpos, vertpos-(vertical_scaling_factor/2), block_length, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
 						
-						
-						
-						
-						
-#					elif options.taxon_names:
-#						namewidth=get_text_width("Helvetica", fontsize, treeObject.node(node).data.taxon)+name_offset
-#						#d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-namewidth), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colour))
-#						d.add(String(treewidth+xoffset+(max_name_width-namewidth)+(fontsize/2), vertpos-(fontsize/3), treeObject.node(node).data.taxon, textAnchor='start', fontSize=fontsize, fillColor=name_colour, fontName='Helvetica'))
-#					else:
-#						d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colour))
-				
-#				else:
-#					if options.names_as_shapes=="circle":
-#						d.add(Circle(cx=horizontalpos+branchlength+vertical_scaling_factor, cy=vertpos, r=(vertical_scaling_factor/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-#					elif options.taxon_names:
-#						d.add(String(horizontalpos+branchlength+(fontsize/2), vertpos-(fontsize/3), treeObject.node(node).data.taxon, textAnchor='start', fontSize=fontsize, fillColor=name_colour, fontName='Helvetica'))
 				
 				block_xpos+=block_length+vertical_scaling_factor
 			
 			
 		
 	def draw_branches():
-		
-		for node in treeObject.postorder_node_iter():
-			if node.edge_length!=None:
+		for node in treeObject.preorder_node_iter():
+			if node.edge_length==None:
+				node.edge_length=0.0
+			if node!=treeObject.seed_node:
 				draw_branch(node)
 			
 		
@@ -996,13 +1193,14 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 	
 
 	
-	max_branch_depth=get_max_branch_depth()
+	max_branch_depth, min_branch_depth=get_max_and_min_branch_depth()
+#	max_branch_depth+=(-1*min_branch_depth)
 	
-	horizontal_scaling_factor=float(treewidth)/max_branch_depth
+	horizontal_scaling_factor=float(treewidth)/(max_branch_depth-min_branch_depth)
 	
-	get_node_vertical_positions()
+#	xoffset+=horizontal_scaling_factor*(-1*min_branch_depth)
 	
-	draw_branches()
+	set_node_vertical_positions()
 	
 	def get_tree_base_and_top(t):
 		base=float("Inf")
@@ -1017,7 +1215,12 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 	treebase, treetop=get_tree_base_and_top(tree)
 	treebase+=yoffset
 	treetop+=yoffset
-	draw_scale()
+	if tree.draw_scale:
+		draw_scale()
+	
+	draw_branches()
+	
+	
 	
 	return
 	
@@ -1196,7 +1399,7 @@ def add_tab_to_diagram(filename):
 		print "Cannot find file", filename
 		sys.exit()
 	record.name=filename
-	track=add_embl_to_diagram(record, incfeatures=["i", "d", "li", "del", "snp", "misc_feature", "core", "CORE", "cds", "insertion", "deletion", "recombination", "feature", "blastn_hit", "fasta_record", "contig", "repeat_region"], emblfile=False)
+	track=add_embl_to_diagram(record, incfeatures=["i", "d", "li", "del", "snp", "misc_feature", "core", "CORE", "cds", "insertion", "deletion", "recombination", "feature", "blastn_hit", "fasta_record", "contig", "repeat_region", "variation"], emblfile=False)
 	
 	return track
 
@@ -1338,7 +1541,7 @@ def add_ordered_tab_to_diagram(filename):
 		print "Cannot find file", filename
 		sys.exit()
 	record.name=filename
-	new_tracks=add_ordered_embl_to_diagram(record, incfeatures=["i", "d", "li", "del", "snp", "misc_feature", "core", "cds", "insertion", "deletion", "recombination", "feature", "blastn_hit", "fasta_record", "repeat_region"], emblfile=False)
+	new_tracks=add_ordered_embl_to_diagram(record, incfeatures=["i", "d", "li", "del", "snp", "misc_feature", "core", "cds", "insertion", "deletion", "recombination", "feature", "blastn_hit", "fasta_record", "repeat_region", "variation"], emblfile=False)
 	return new_tracks
 
 
@@ -1752,7 +1955,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	
 	
 	
-	def get_node_vertical_positions():
+	def set_node_vertical_positions():
 		
 		def get_node_vertical_position(node):
 			
@@ -2050,7 +2253,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	max_branch_depth=get_max_branch_depth()
 	horizontal_scaling_factor=float(treewidth)/max_branch_depth
 	
-	get_node_vertical_positions()
+	set_node_vertical_positions()
 	
 	
 	treebase, treetop=recurse_subtree(treeObject.root, 0)
@@ -3449,6 +3652,9 @@ class control_options:
 		self.metadata_column_label_font="Helvetica"
 		self.metadata_column_label_size=10
 		self.metadata_column_label_angle=45
+		
+		
+		#plot options
 	
 	
 	
@@ -3743,7 +3949,7 @@ if __name__ == "__main__":
 	input_order=[]
 	
 	metadata_keylist=[]
-	colour_columns=[0]
+	colour_columns=[]
 	max_length_col_name=0
 	
 	#Parse metadata file and create track for key
@@ -4289,9 +4495,9 @@ if __name__ == "__main__":
 						for x in xrange(len(colour_columns)):
 							terminal_node.name_colour.append((0,0,0))
 							namecolours[terminal][x]="-"
-					else:
-						terminal_node.name_colour.append((0,0,0))
-						namecolours[terminal][0]="-"
+#					else:
+#						terminal_node.name_colour.append((0,0,0))
+#						namecolours[terminal][0]="-"
 				
 				if terminal in metadatanames:
 					terminal=metadatanames[terminal]
