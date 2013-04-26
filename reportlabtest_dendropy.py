@@ -41,6 +41,7 @@ from reportlab.graphics.widgets.grids import ShadedRect
 from reportlab.graphics.widgets.signsandsymbols import ArrowOne
 from reportlab.graphics import renderPDF
 import pysam
+from itertools import izip
 #on my laptop
 #SAMTOOLS_DIR="/Users/sh16/Applications/samtools-0.1.18/"
 #BCFTOOLS_DIR="/Users/sh16/Applications/samtools-0.1.18/bcftools/"
@@ -94,6 +95,8 @@ def main():
 	group.add_option("-1", "--logbranches", action="store_true", dest="log_branches", help="log branch lengths [default= %default]", default=False)
 	group.add_option("-D", "--date_separator", action="store", dest="date_separator", help="For trees with dating information, the script will read these from the taxon names if they are a suffix separated from the rest of the taxon name by a particular character. To do this you need to choose the character used to separate the dates with this option", default="")
 	group.add_option("-I", "--time_type", action="store", choices=['days', 'years'], dest="time_type", help="Time measurement used in trees with dating information (choose from days or years) [default= %default]", type="choice", default="years")
+	group.add_option("-j", "--Figtree_colours", action="store_true", dest="figtree", help="Use colours in tree saved from Figtree [default= %default]", default=False)
+	group.add_option("-J", "--colour_by_annotation", action="store", dest="colour_by_annotation", help="Colour tree based on annotations (e.g. BEAST trait states). You must specify the annotation to use.", default="")
 
 	
 	parser.add_option_group(group)
@@ -420,15 +423,15 @@ def parsimony_reconstruction(treeObject, namecolours, colours, transformation="a
 ####################################################
 
 def round_to_n(x, n):
-    if n < 1:
-        raise ValueError("number of significant digits must be >= 1")
-    # Use %e format to get the n most significant digits, as a string.
-    format = "%." + str(n-1) + "e"
-    as_string = format % x
-    if x>=10 or x<=-10:
-    	return int(float(as_string))
-    else:
-	    return float(as_string)
+	if n < 1:
+		raise ValueError("number of significant digits must be >= 1")
+	# Use %e format to get the n most significant digits, as a string.
+	format = "%." + str(n-1) + "e"
+	as_string = format % x
+	if x>=10 or x<=-10:
+		return int(float(as_string))
+	else:
+		return float(as_string)
 
 
 
@@ -470,6 +473,71 @@ def set_text_width(font, size, length, text):
 	return size
 
 
+
+##########################################
+# Function to produce colours for a list #
+##########################################
+
+def get_colours_for_list(data_list, data_type="discrete", data_max=float("-Inf"), data_min=float("Inf"), direction="anticlockwise", start_angle=0.0, end_angle=240, start_saturation=0.8, end_saturation=0.8, start_value=0.9, end_value=0.9):
+	
+	colour_db={}
+	if data_type=="continuous" and data_max==float("-Inf"):
+		data_max=max(colour_list)
+	if data_type=="continuous" and data_min==float("Inf"):
+		data_min=min(colour_list)
+	
+	if direction=="clockwise" and start_angle>end_angle:
+		rotation_degrees=start_angle-end_angle
+		direction_multiplier=-1
+	elif direction=="clockwise":
+		rotation_degrees=start_angle+(360-end_angle)
+		direction_multiplier=-1
+	elif direction in ["anticlockwise", "counterclockwise"] and start_angle>end_angle:
+		rotation_degrees=(360-start_angle)+end_angle
+		direction_multiplier=1
+	else:
+		rotation_degrees=end_angle-start_angle
+		direction_multiplier=1
+
+	
+	if len(data_list)==1 and data_type=="discrete":
+		colour_db[data_list[0]]=colors.Color(1, 0, 0)
+	elif len(data_list)==2 and data_type=="discrete":
+		colour_db[data_list[0]]=colors.Color(0, 0, 1)
+		colour_db[data_list[1]]=colors.Color(1, 0, 0)
+	elif data_type=="continuous":
+		
+		for y, name in enumerate(data_list):
+			value=name
+			if value<data_min:
+				value=data_min
+			elif value>data_max:
+				value=data_max
+		
+			proportion=((float(value)-data_min)/((data_max-data_min)))
+			
+			h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
+			v=v_start+(proportion*(v_end-v_start))
+			s=s_start+(proportion*(s_end-s_start))
+			red, green, blue = hsv_to_rgb(h,s,v)
+			colour_db[name]=colors.Color(float(red), float(green), float(blue))
+		
+	elif len(data_list)>2:
+		if data_type=="discrete":
+			for y, name in enumerate(data_list):
+				proportion=(float(y)/(len(data_list)-1))
+	
+				h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
+				v=v_start+(proportion*(v_end-v_start))
+				s=s_start+(proportion*(s_end-s_start))
+				red, green, blue = hsv_to_rgb(h,s,v)
+				colour_db[name]=colors.Color(float(red), float(green), float(blue))
+	
+	return colour_db
+
+
+
+
 ##############################################
 # Function to convert RGB ints to RGB tuples #
 ##############################################
@@ -479,7 +547,6 @@ def rgbint2rgbtuple(RGBint):
 	green = (RGBint >> 8) & 255
 	red =   (RGBint >> 16) & 255
 	return (red, green, blue)
-
 
 
 ##############################################
@@ -541,6 +608,57 @@ def read_dendropy_tree(treefile):
 			print "Failed to open tree file"
 			sys.exit()
 		
+		
+		
+		#log the branch lengths if the option has been chosen
+		if options.log_branches:
+			log_branchlengths(t)
+		
+		
+		#some code here to make the branch lengths equal - not actually possible to choose this yet
+		t.draw_scale=True
+		if options.show_branchlengths:
+			t.draw_scale=False
+		
+		equal_branches=False
+		if equal_branches:
+			for node in t.postorder_node_iter():
+				if node.edge_length!=None:
+					node.edge_length=0.1
+			t.draw_scale=False
+			
+		#Midpoint root if the option is selected
+		if options.midpoint:
+			print "Midpoint rooting tree"
+			if t.schema=="beast-summary-tree":
+				print "Warning: Midpoint rooting a BEAST tree may destroy temporal information represented in node opsitions"
+			t.reroot_at_midpoint(update_splits=True)
+			
+		#Ladderise the tree if the option is selected
+		if options.ladderise=="left":
+			print "ladderising tree to the left"
+			#ladderise the tree right
+			t.ladderize(ascending=False)
+		elif options.ladderise=="right":
+			print "ladderising tree to the right"
+			#ladderise the tree right
+			t.ladderize(ascending=True)
+		
+		#Make sure the tree is rooted on an edge rather than a node
+		if t.is_unrooted:
+			print "Tree is unrooted. Rooting it now."
+			t.is_rooted=True
+			t.update_splits(delete_outdegree_one=False)
+		root = t.seed_node
+		root_children = root.child_nodes()
+		print len(root_children)
+		if len(root_children) != 2:
+			print "Tree rooted at node. Rerooting on first edge from that node."
+			t.reroot_at_edge(root_children[0].edge, update_splits=True)
+		#print the tree in ascii as a cladogram
+		#print(t.as_ascii_plot())
+		#print the tree in ascii including branch lengths
+		#print(t.as_ascii_plot(plot_metric='length'))
 		
 		for node in t.postorder_node_iter():
 			for x, a in enumerate(node.annotations):
@@ -646,61 +764,30 @@ def read_dendropy_tree(treefile):
 				t.max_leaf_sampling_date=max_leaf_sampling_date
 			else:
 				print "Failed to find any dates for taxa"
+		
+		
+		
+		
+		#colour branches by annotation
+		if options.colour_by_annotation!="":
 			
-		
-		#log the branch lengths if the option has been chosen
-		if options.log_branches:
-			log_branchlengths(t)
-		
-		
-		#some code here to make the branch lengths equal - not actually possible to choose this yet
-		t.draw_scale=True
-		if options.show_branchlengths:
-			t.draw_scale=False
-		
-		equal_branches=False
-		if equal_branches:
+			annotation_list=[]
+			
 			for node in t.postorder_node_iter():
-				if node.edge_length!=None:
-					node.edge_length=0.1
-			t.draw_scale=False
+				if hasattr(node, "annotations"):
+					for a in node.annotations:
+						if a.name==options.colour_by_annotation and a.value not in annotation_list:
+							annotation_list.append(a.value)	
+							
+			colour_dictionary=get_colours_for_list(annotation_list)
 			
-		#Midpoint root if the option is selected
-		if options.midpoint:
-			print "Midpoint rooting tree"
-			if t.schema=="beast-summary-tree":
-				print "Warning: Midpoint rooting a BEAST tree may destroy temporal information represented in node opsitions"
-			t.reroot_at_midpoint(update_splits=True)
-			
-		#Ladderise the tree if the option is selected
-		if options.ladderise=="left":
-			print "ladderising tree to the left"
-			#ladderise the tree right
-			t.ladderize(ascending=False)
-		elif options.ladderise=="right":
-			print "ladderising tree to the right"
-			#ladderise the tree right
-			t.ladderize(ascending=True)
+			for node in t.postorder_node_iter():
+				if hasattr(node, "annotations"):
+					for a in node.annotations:
+						if a.name==options.colour_by_annotation and a.value in colour_dictionary:
+							node.edge_colour=colour_dictionary[a.value]
 		
-			
-		
-		#print the tree in ascii as a cladogram
-		#print(t.as_ascii_plot())
-		
-		#print the tree in ascii including branch lengths
-		#print(t.as_ascii_plot(plot_metric='length'))
-		
-		
-		#Make sure the tree is rooted on an edge rather than a node
-		if t.is_unrooted:
-			print "Tree is unrooted. Rooting it now."
-			t.is_rooted=True
-			t.update_splits(delete_outdegree_one=False)
-		root = t.seed_node
-		root_children = root.child_nodes()
-		if len(root_children) != 2:
-			print "Tree rooted at node. Rerooting on first edge from that node."
-			t.reroot_at_edge(root_children[0].edge, update_splits=True)
+
 		
 		return t
 
@@ -725,7 +812,7 @@ def get_vertical_positions_of_leaves(t):
 		mycolours=[(1,0,0),(0,1,0),(0,0,1)]
 		
 		for leaf in t.leaf_iter():
-			leaf.edge_colour=[set([mycolours[randrange(0, 3)]])]
+			leaf.edge_colours=[set([mycolours[randrange(0, 3)]])]
 		postorder_node_list=[]
 		for node in t.postorder_node_iter():
 			postorder_node_list.append(node)
@@ -733,11 +820,11 @@ def get_vertical_positions_of_leaves(t):
 		for node in t.preorder_node_iter():
 			preorder_node_list.append(node)
 		
-		dendropy.treecalc.fitch_down_pass(postorder_node_list, attr_name='edge_colour', weight_list=None, taxa_to_state_set_map=None)
-		dendropy.treecalc.fitch_up_pass(preorder_node_list, attr_name='edge_colour', taxa_to_state_set_map=None)
+		dendropy.treecalc.fitch_down_pass(postorder_node_list, attr_name='edge_colours', weight_list=None, taxa_to_state_set_map=None)
+		dendropy.treecalc.fitch_up_pass(preorder_node_list, attr_name='edge_colours', taxa_to_state_set_map=None)
 		
-		for node in t.postorder_node_iter():
-			print node.edge_colour
+#		for node in t.postorder_node_iter():
+#			print node.edge_colour
 #			print len(n.postorder_node_iter())
 			
 		draw_dendropy_tree(t, height-20, width-20, 10, 10, name_offset=5)
@@ -754,10 +841,10 @@ def deltran_parsimony_reconstruction(t, transformation="deltran"):
 	for leaf in t.leaf_iter():
 		if hasattr(leaf, 'name_colour') and len(leaf.name_colour)>0:
 			r,g,b=leaf.name_colour[0]
-			leaf.edge_colour=[set([(r/255,g/255,b/255)])]
+			leaf.edge_colours=[set([(r/255,g/255,b/255)])]
 		else:
-			leaf.edge_colour=[set([(0.0,0.0,0.0)])]
-		#print leaf.edge_colour
+			leaf.edge_colours=[set([(0.0,0.0,0.0)])]
+		#print leaf.edge_colours
 	postorder_node_list=[]
 	for node in t.postorder_node_iter():
 		postorder_node_list.append(node)
@@ -765,9 +852,15 @@ def deltran_parsimony_reconstruction(t, transformation="deltran"):
 	for node in t.preorder_node_iter():
 		preorder_node_list.append(node)
 	
-	reclen=dendropy.treecalc.fitch_down_pass(postorder_node_list, attr_name='edge_colour', weight_list=None, taxa_to_state_set_map=None)
+	
+	reclen=dendropy.treecalc.fitch_down_pass(postorder_node_list, attr_name='edge_colours', weight_list=None, taxa_to_state_set_map=None)
 	print "Reconstruction tree length =", reclen
-	dendropy.treecalc.fitch_up_pass(preorder_node_list, attr_name='edge_colour', taxa_to_state_set_map=None)
+
+	if not hasattr(t.seed_node.parent_node,'edge_colours'):
+		t.seed_node.parent_node.edge_colours=t.seed_node.edge_colours
+	
+	dendropy.treecalc.fitch_up_pass(preorder_node_list, attr_name='edge_colours', taxa_to_state_set_map=None)
+
 	
 
 
@@ -984,18 +1077,23 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			
 		
 		# if branches have colours or hilights, find out now
-		if hasattr(node, 'edge_colour') and len(node.edge_colour)==1 and len(node.edge_colour[0])==1:
-			r,g,b=list(node.edge_colour[0])[0]
+		if hasattr(node, 'edge_colours') and len(node.edge_colours)==1 and len(node.edge_colours[0])==1:
+			r,g,b=list(node.edge_colours[0])[0]
 			branch_colour=colors.Color(float(r),float(g),float(b))
+			clade_hilight=None
+		elif hasattr(node, 'edge_colour'):
+			branch_colour=node.edge_colour
 			clade_hilight=None
 		elif hasattr(node, "annotations"):
 			branch_colour=colors.black
 			clade_hilight=None
 			for a  in node.annotations:
-				if a.name=="Figtree_colour":
+				if a.name=="Figtree_colour" and options.figtree:
 					branch_colour=a.value
-				if a.name=="Figtree_hilight":
+				if a.name=="Figtree_hilight" and options.figtree:
 					clade_hilight=a.value
+				elif a.name=="branch_colour":
+					branch_colour=a.value
 		else:
 			branch_colour=colors.black
 			clade_hilight=None
@@ -1012,7 +1110,9 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				name_colours=[colors.black]
 				if hasattr(node.taxon, "annotations"):
 					for a  in node.taxon.annotations:
-						if a.name=="Figtree_colour":
+						if a.name=="Figtree_colour" and options.figtree:
+							name_colours=[a.value]
+						if a.name=="leaf_colour":
 							name_colours=[a.value]
 			else:
 				name_colours=[colors.black]
@@ -1037,15 +1137,12 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				median=0.0
 				for a  in node.annotations:
 					if a.name=="height_95%_HPD":
-						print a.value
 						HPDmax=((max_branch_depth-a.value[0])*horizontal_scaling_factor)+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
 						HPDmin=((max_branch_depth-a.value[1])*horizontal_scaling_factor)+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
 					elif a.name=="height_median":
 						median=a.value
-				print horizontalpos, HPDmax, HPDmin, HPDmax-HPDmin
 				if HPDmax-HPDmin>0:
-					print HPDmin, vertpos-(vlinewidth/2), HPDmax, vertpos+(vlinewidth/2)
-					d.add(Rect(HPDmin+branchlength, vertpos-((vertical_scaling_factor*0.8)/2), HPDmax-HPDmin, vertical_scaling_factor*0.8, fillColor=colors.lightblue, strokeColor=None, strokeWidth=0))
+					d.add(Rect(HPDmin+branchlength, vertpos-(vertical_scaling_factor*0.4), HPDmax-HPDmin, vertical_scaling_factor*0.8, fillColor=colors.lightblue, strokeColor=None, strokeWidth=0))
 		
 		#draw the horizontal part of the branch
 		d.add(Line(horizontalpos-(vlinewidth/2), vertpos, (horizontalpos-(vlinewidth/2))+branchlength, vertpos, strokeWidth=linewidth, strokeColor=branch_colour))
@@ -1072,8 +1169,12 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			
 			for x in xrange(colpos,len(name_colours)):
 				gubbins_length += block_length
+				if vertical_scaling_factor>2:
+					spacer=2
+				else:
+					spacer=vertical_scaling_factor
 				if x!=0:
-					gubbins_length += vertical_scaling_factor
+					gubbins_length += spacer
 			
 			#Add the taxon names if present
 			if options.taxon_names:
@@ -1112,8 +1213,11 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				elif options.names_as_shapes in ["square", "rectangle", "auto"]:
 					d.add(Rect(block_xpos, vertpos-(vertical_scaling_factor/2), block_length, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
 						
-				
-				block_xpos+=block_length+vertical_scaling_factor
+				if vertical_scaling_factor>2:
+					spacer=2
+				else:
+					spacer=vertical_scaling_factor
+				block_xpos+=block_length+spacer
 			
 			
 		
@@ -1156,14 +1260,18 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 	
 	block_length=0
 	if len(colour_dict)>0:
-		max_total_name_length=(float(treewidth)/2)
+		max_total_name_length=(3*float(treewidth)/4)
 		
 		max_total_block_length=(max_total_name_length-max_name_width)
 		
+		if vertical_scaling_factor>2:
+			spacer=2
+		else:
+			spacer=vertical_scaling_factor
+		max_block_length=((max_total_block_length-(spacer*((len(colour_dict)-1)+colblockstart)))/len(colour_dict))	
 		
-		max_block_length=((max_total_block_length-(vertical_scaling_factor*((len(colour_dict)-1)+colblockstart)))/len(colour_dict))	
 		
-		if max_block_length<vertical_scaling_factor:
+		if max_block_length<1:
 			print ("Not enough space to draw your metadata colour columns")
 			sys.exit()
 		
@@ -1184,8 +1292,12 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 		
 		
 	for x in range(colblockstart,len(colour_dict)):
+		if vertical_scaling_factor>2:
+			spacer=2
+		else:
+			spacer=vertical_scaling_factor
 		if x>0:
-			max_name_width+=vertical_scaling_factor
+			max_name_width+=spacer
 		max_name_width+=block_length
 		
 
@@ -3869,7 +3981,18 @@ if __name__ == "__main__":
 
 	(options, args) = main()
 	
-	
+	if (options.colour_by_annotation!="" and options.figtree and options.transformation in ["acctran", "deltran"]):
+		print "Can only colour tree once. You have chosen to colour by Figtree colours, annotations and parsimony!"
+		sys.exit()
+	elif options.colour_by_annotation!="" and options.figtree:
+		print "Can only colour tree once. You have chosen to colour by Figtree colours and annotations!"
+		sys.exit()
+	elif options.colour_by_annotation!="" and  options.transformation in ["acctran", "deltran"]:
+		print "Can only colour tree once. You have chosen to colour by annotations and parsimony!"
+		sys.exit()
+	elif options.figtree and options.transformation in ["acctran", "deltran"]:
+		print "Can only colour tree once. You have chosen to colour by Figtree colours and parsimony!"
+		sys.exit()
 	
 	#get a list of available fonts
 	gfont_list= Canvas(options.outputfile).getAvailableFonts()
