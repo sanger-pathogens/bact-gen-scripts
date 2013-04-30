@@ -2406,6 +2406,69 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 
 
 
+
+class blast_result:
+	def __init__(self):
+		self.blast_matches=[]
+		self.min_id=90.0
+		self.min_length=100
+		self.max_e=0.0001
+		self.min_bitscore=2000
+	
+	
+	def add_m8_match(self, m8blastline):
+		
+		blast_match={}
+		blastwords=m8blastline.strip().split()
+		blast_match['query']=blastwords[0]
+		blast_match['subject']=blastwords[1]
+		blast_match['percent_id']=float(blastwords[2])
+		blast_match['length']=float(blastwords[3])
+		blast_match['query_start']=int(blastwords[6])/5000
+		blast_match['query_end']=int(blastwords[7])/5000
+		blast_match['subject_start']=int(blastwords[8])/5000
+		blast_match['subject_end']=int(blastwords[9])/5000
+		blast_match['e']=float(blastwords[10])
+		blast_match['bitscore']=float(blastwords[11])
+		#print blast_match
+		if blast_match['e']<self.max_e and blast_match['percent_id']>self.min_id and blast_match['length']>self.min_length and blast_match['bitscore']>self.min_bitscore:
+			self.blast_matches.append(blast_match)
+	
+	
+	def parse_m8_blast_output(self, blastfile):
+		for line in open(blastfile, "rU"):
+			self.add_m8_match(line)
+		print 'Found', len(self.blast_matches), "blast matches matching cutoffs in file", blastfile
+	
+	
+	def print_blast_match(self, blast_match):
+		if blast_match['query_end']>blast_match['query_start'] and blast_match['subject_end']<blast_match['subject_start']:
+			fill=colors.blue
+		else:
+			fill=colors.red
+		stroke=None
+		d.add(Polygon([blast_match['query_start'], 100, blast_match['query_end'], 100, blast_match['subject_start'], 200, blast_match['subject_end'], 200], fillColor=fill, strokeColor=stroke))
+	
+	
+	def print_blast_matches(self):
+		for match in self.blast_matches:
+			self.print_blast_match(match)
+
+
+
+
+
+def add_blast_track(filename):
+	 newtrack= Track()
+	 newtrack.blast_output=blast_result()
+	 newtrack.blast_output.parse_m8_blast_output(filename)
+	 #newtrack.blast_output.print_blast_matches()
+	 return newtrack
+
+
+
+
+
 #################
 # Drawing class #
 #################
@@ -2967,6 +3030,9 @@ class Track:
 		if self.is_key:
 			self.draw_key()
 			return
+		
+		if hasattr(self, "blast_output"):
+			self.blast_output.print_blast_matches()
 		
 		self.draw_features()
 		#self.scale=False
@@ -4347,7 +4413,7 @@ if __name__ == "__main__":
 		if arg.lower() in ["tree", "list"]:
 			input_order.append(arg.lower())
 			continue
-		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea","embl", "gb", "gbk", "tab", "bam", "bcf", "fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs"]:
+		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea","embl", "gb", "gbk", "tab", "bam", "bcf", "fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs", "blast"]:
 			
 			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea", "bam"] or options.qualifier=="":
 				newtrack = Track()
@@ -4394,7 +4460,7 @@ if __name__ == "__main__":
 				newtrack.name=name
 				x=1
 				while name in my_tracks:
-					name='.'.join(arg.split('.')[:-1])+"_"+str(x)
+					name='.'.join(arg.split('/')[-1].split('.')[:-1])+"_"+str(x)
 					x+=1
 				if not newtrack.name in track_names:
 					track_names[newtrack.name]=[]
@@ -4407,6 +4473,22 @@ if __name__ == "__main__":
 				
 				newtrack.scale=False
 				newtrack.add_plot(arg, plot_type, options.fragments)
+			elif arg.split('.')[-1].lower()=="blast":
+				newtrack=add_blast_track(arg)
+				newtrack.scale=False
+				newtrack.trackheight=2
+				newtrack.beginning=options.beginning
+				if options.end!=-1:
+					newtrack.end=options.end
+				name='.'.join(arg.split('/')[-1].split('.')[:-1])
+				x=1
+				while name in my_tracks:
+					name='.'.join(arg.split('/')[-1].split('.')[:-1])+"_"+str(x)
+					x+=1
+				if not newtrack.name in track_names:
+					track_names[newtrack.name]=[]
+				input_order.append(name)
+				my_tracks[name]=newtrack
 			elif arg.split('.')[-1].lower() in ["embl", "gb", "gbk"]:
 				track_count+=options.emblheight
 				
@@ -4928,10 +5010,8 @@ if __name__ == "__main__":
 			if options.tree!="":
 				draw_dendropy_tree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3)
 				#drawtree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3)
-				
+
 		
-		
-		 
 		renderPDF.draw(d, c, 0, 0)
 		c.showPage()
 	c.save()
