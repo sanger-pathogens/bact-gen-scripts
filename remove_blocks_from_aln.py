@@ -122,7 +122,7 @@ if __name__ == "__main__":
 	regions=[]
 	
 	for line in open(tabfile, 'rU'):
-		if len(line.split())>2 and line.split()[0]=="FT" and (line.split()[1]=="misc_feature" or line.split()[1]=="CDS" or line.split()[1]=="mobile_element"):
+		if len(line.split())>2 and line.split()[0]=="FT" and (line.split()[1].lower() in ["misc_feature", "cds", "mobile_element", "fasta_record"]):
 			if len(line.split()[2].split('..'))==1:
 				start=int(line.split()[2])
 				end=start

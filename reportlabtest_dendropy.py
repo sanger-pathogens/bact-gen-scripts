@@ -14,6 +14,7 @@ from optparse import OptionParser, OptionGroup
 from Bio.Nexus import Trees, Nodes
 import shlex, subprocess
 from colorsys import hsv_to_rgb
+import copy
 #on my laptop
 #sys.path.extend(map(os.path.abspath, ['/Users/sh16/Documents/scripts/modules/']))
 #on pcs4
@@ -2409,11 +2410,20 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 
 class blast_result:
 	def __init__(self):
+#		self.blast_matches=[]
+#		self.min_id=90.0
+#		self.min_length=100
+#		self.max_e=0.0001
+#		self.min_bitscore=2000
 		self.blast_matches=[]
-		self.min_id=90.0
-		self.min_length=100
-		self.max_e=0.0001
-		self.min_bitscore=2000
+		self.min_id=control.blast_minimum_id
+		self.min_length=control.blast_minimum_length
+		self.max_e=control.blast_maximum_e_value
+		self.min_bitscore=control.blast_minimum_bitscore
+		self.blast_block_stroke=control.blast_block_stroke
+		self.blast_block_forward_fill=control.blast_block_forward_fill
+		self.blast_block_reverse_fill=control.blast_block_reverse_fill
+		self.blast_block_transparency_by_id=control.blast_block_transparency_by_id
 	
 	
 	def add_m8_match(self, m8blastline):
@@ -2424,14 +2434,14 @@ class blast_result:
 		blast_match['subject']=blastwords[1]
 		blast_match['percent_id']=float(blastwords[2])
 		blast_match['length']=float(blastwords[3])
-		blast_match['query_start']=int(blastwords[6])/5000
-		blast_match['query_end']=int(blastwords[7])/5000
-		blast_match['subject_start']=int(blastwords[8])/5000
-		blast_match['subject_end']=int(blastwords[9])/5000
+		blast_match['query_start']=int(blastwords[6])
+		blast_match['query_end']=int(blastwords[7])
+		blast_match['subject_start']=int(blastwords[8])
+		blast_match['subject_end']=int(blastwords[9])
 		blast_match['e']=float(blastwords[10])
 		blast_match['bitscore']=float(blastwords[11])
 		#print blast_match
-		if blast_match['e']<self.max_e and blast_match['percent_id']>self.min_id and blast_match['length']>self.min_length and blast_match['bitscore']>self.min_bitscore:
+		if blast_match['e']<=self.max_e and blast_match['percent_id']>=self.min_id and blast_match['length']>=self.min_length and blast_match['bitscore']>=self.min_bitscore:
 			self.blast_matches.append(blast_match)
 	
 	
@@ -2441,18 +2451,63 @@ class blast_result:
 		print 'Found', len(self.blast_matches), "blast matches matching cutoffs in file", blastfile
 	
 	
-	def print_blast_match(self, blast_match):
-		if blast_match['query_end']>blast_match['query_start'] and blast_match['subject_end']<blast_match['subject_start']:
-			fill=colors.blue
+	def print_blast_match(self, query_x1, query_x2, subject_x1, subject_x2, query_y, subject_y, percent_id):
+		if query_x2>query_x1 and subject_x2<subject_x1:
+			fill=copy.deepcopy(self.blast_block_reverse_fill)
 		else:
-			fill=colors.red
-		stroke=None
-		d.add(Polygon([blast_match['query_start'], 100, blast_match['query_end'], 100, blast_match['subject_start'], 200, blast_match['subject_end'], 200], fillColor=fill, strokeColor=stroke))
+			fill=copy.deepcopy(self.blast_block_forward_fill)
+		if self.blast_block_transparency_by_id:
+			fill.alpha=(float(percent_id-self.min_id)/(100-self.min_id))
+			#print percent_id, percent_id-self.min_id, 100-self.min_id, (float(percent_id-self.min_id)/(100-self.min_id))
+		if self.blast_block_stroke:
+			stroke=self.blast_block_stroke
+		else:
+			stroke=None
+		d.add(Polygon([query_x1, query_y, query_x2, query_y, subject_x2, subject_y, subject_x1, subject_y], fillColor=fill, strokeColor=stroke))
+		#print query_x2-query_x1, subject_x2-subject_x1, percent_id, fill, self.min_id
 	
-	
-	def print_blast_matches(self):
-		for match in self.blast_matches:
-			self.print_blast_match(match)
+	def print_blast_matches(self, x0, y0, trackheight, tracklength, start_loc, end_loc):
+		for blast_match in self.blast_matches:
+			
+			length_of_printed_genomic_region=end_loc-start_loc
+			horizontal_scaling_factor=float(tracklength)/length_of_printed_genomic_region
+			
+			if (blast_match['query_start']>start_loc and blast_match['query_start']<end_loc) or (blast_match['query_end']>start_loc and blast_match['query_end']<end_loc) or (blast_match['query_start']<start_loc and blast_match['query_end']>end_loc) or (blast_match['query_end']<start_loc and blast_match['query_start']>end_loc):
+				if (blast_match['subject_start']>start_loc and blast_match['subject_start']<end_loc) or (blast_match['subject_end']>start_loc and blast_match['subject_end']<end_loc) or (blast_match['subject_start']<start_loc and blast_match['subject_end']>end_loc) or (blast_match['subject_end']<start_loc and blast_match['subject_start']>end_loc):
+					
+					
+					if blast_match['query_start']<start_loc:
+						query_x1=x0
+					if blast_match['query_start']>end_loc:
+						query_x1=((end_loc-start_loc)*horizontal_scaling_factor)+x0
+					elif blast_match['query_start']>=start_loc and blast_match['query_start']<=end_loc:
+						query_x1=((blast_match['query_start']-start_loc)*horizontal_scaling_factor)+x0
+					
+					if blast_match['query_end']<start_loc:
+						query_x2=x0
+					if blast_match['query_end']>end_loc:
+						query_x2=((end_loc-start_loc)*horizontal_scaling_factor)+x0
+					elif blast_match['query_end']>=start_loc and blast_match['query_end']<=end_loc:
+						query_x2=((blast_match['query_end']-start_loc)*horizontal_scaling_factor)+x0
+					
+					if blast_match['subject_start']<start_loc:
+						subject_x1=x0
+					if blast_match['subject_start']>end_loc:
+						subject_x1=((end_loc-start_loc)*horizontal_scaling_factor)+x0
+					elif blast_match['subject_start']>=start_loc and blast_match['subject_start']<=end_loc:
+						subject_x1=((blast_match['subject_start']-start_loc)*horizontal_scaling_factor)+x0
+					
+					if blast_match['subject_end']<start_loc:
+						subject_x2=x0
+					if blast_match['subject_end']>end_loc:
+						subject_x2=((end_loc-start_loc)*horizontal_scaling_factor)+x0
+					elif blast_match['subject_end']>=start_loc and blast_match['subject_end']<=end_loc:
+						subject_x2=((blast_match['subject_end']-start_loc)*horizontal_scaling_factor)+x0
+
+#					print blast_match					
+#					print query_x1, query_x2, subject_x1, subject_x2, y0, y0+trackheight
+#					print trackheight, horizontal_scaling_factor, length_of_printed_genomic_region, blast_match['query_start'], blast_match['query_end'], blast_match['subject_start'], blast_match['subject_end']
+					self.print_blast_match(query_x1, query_x2, subject_x1, subject_x2, y0, y0+trackheight, blast_match['percent_id'])
 
 
 
@@ -3032,7 +3087,7 @@ class Track:
 			return
 		
 		if hasattr(self, "blast_output"):
-			self.blast_output.print_blast_matches()
+			self.blast_output.print_blast_matches(self.track_position[0], self.track_position[1]-((float(self.track_height)/2)*self.track_draw_proportion), self.track_height*self.track_draw_proportion, self.track_length, self.beginning, self.end)
 		
 		self.draw_features()
 		#self.scale=False
@@ -3831,6 +3886,16 @@ class control_options:
 		self.metadata_column_label_size=10
 		self.metadata_column_label_angle=45
 		
+		#blast options
+		self.blast_minimum_id=90.0
+		self.blast_minimum_length=100.0
+		self.blast_maximum_e_value=0.00001
+		self.blast_minimum_bitscore=2000.0
+		self.blast_block_stroke=None
+		self.blast_block_forward_fill=colors.red
+		self.blast_block_reverse_fill=colors.blue
+		self.blast_block_transparency_by_id=True
+		
 		
 		#plot options
 	
@@ -3889,6 +3954,33 @@ class control_options:
 				print "illegal boolean in control file"
 				print input_value
 				sys.exit()
+		
+		def get_colour(input_value):
+			
+			if input_value=="None" or input_value=="":
+				return None
+			elif hasattr(colors,input_value):
+				return getattr(colors, input_value)
+			elif len(input_value.split(","))==3:
+				try:
+					r,g,b=input_value.split(",")
+					return colors.Color(float(r)/255,float(g)/255,float(b)/255)
+				except:
+					print "illegal rgb colour in control file"
+					print input_value
+					sys.exit()
+			elif len(input_value.split(","))==4:
+				try:
+					r,g,b,a=input_value.split(",")
+					return colors.Color(float(r)/255,float(g)/255,float(b)/255, alpha=float(a))
+				except:
+					print "illegal rgba colour in control file"
+					print input_value
+					sys.exit()
+			else:
+				print "illegal colour in control file"
+				print input_value
+				sys.exit()
 				
 		variable_types={
 			
@@ -3940,8 +4032,18 @@ class control_options:
 			'metadata_column_label': 'boolean',
 			'metadata_column_label_font': 'choice',
 			'metadata_column_label_size': 'float',
-			'metadata_column_label_angle': 'float'
+			'metadata_column_label_angle': 'float',
 			
+			
+			#blast output options
+			'blast_block_stroke': 'colour',
+			'blast_block_forward_fill': 'colour',
+			'blast_block_reverse_fill': 'colour',
+			'blast_minimum_id': 'float',
+			'blast_minimum_length': 'float',
+			'blast_maximum_e_value': 'float',
+			'blast_minimum_bitscore': 'float',
+			'blast_block_transparency_by_id': 'boolean'
 			
 			
 			}
@@ -3963,7 +4065,11 @@ class control_options:
 			'metadata_colour_start_value': 1,
 			'metadata_colour_end_value': 1,
 			'metadata_column_label_size': 20,
-			'metadata_column_label_angle': 360
+			'metadata_column_label_angle': 360,
+			'blast_minimum_id': 100,
+			'blast_minimum_length': float("Inf"),
+			'blast_maximum_e_value': float("Inf"),
+			'blast_minimum_bitscore': float("Inf")
 			}
 		
 		minimums={
@@ -3983,7 +4089,11 @@ class control_options:
 			'metadata_colour_start_value': 0,
 			'metadata_colour_end_value': 0,
 			'metadata_column_label_size': 1,
-			'metadata_column_label_angle': 0
+			'metadata_column_label_angle': 0,
+			'blast_minimum_id': 0,
+			'blast_minimum_length': 0,
+			'blast_maximum_e_value': float("-Inf"),
+			'blast_minimum_bitscore': 0
 			}
 		
 		choices={
@@ -3996,9 +4106,14 @@ class control_options:
 			
 			}
 		
+		
+		print "Reading control file"
+		
 		for line in open(control_file_name):
 			line=line.strip().split("#")[0]
 			words=line.split("=")
+			if len(line)==0 or len(words)<2:
+				continue
 			variable=words[0].strip()
 			value='='.join(map(string.strip,words[1:]))
 			
@@ -4022,6 +4137,10 @@ class control_options:
 						vars(self)[variable]=get_choice(value, choices=choices[variable])
 					if variable_types[variable]=="boolean":
 						vars(self)[variable]=get_boolean(value)
+					if variable_types[variable]=="colour":
+						vars(self)[variable]=get_colour(value)
+					
+					print "\t"+variable, "set to", vars(self)[variable]
 			
 				else:
 					print "Invalid variable name in control file:", variable
@@ -4413,7 +4532,7 @@ if __name__ == "__main__":
 		if arg.lower() in ["tree", "list"]:
 			input_order.append(arg.lower())
 			continue
-		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea","embl", "gb", "gbk", "tab", "bam", "bcf", "fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs", "blast"]:
+		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea","embl", "gb", "gbk", "tab", "bam", "bcf", "fas", "fa", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs", "blast"]:
 			
 			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea", "bam"] or options.qualifier=="":
 				newtrack = Track()
@@ -4476,7 +4595,9 @@ if __name__ == "__main__":
 			elif arg.split('.')[-1].lower()=="blast":
 				newtrack=add_blast_track(arg)
 				newtrack.scale=False
-				newtrack.trackheight=2
+				newtrack.track_height=5
+				track_count+=5
+				newtrack.track_draw_proportion=1.0
 				newtrack.beginning=options.beginning
 				if options.end!=-1:
 					newtrack.end=options.end
@@ -4542,7 +4663,7 @@ if __name__ == "__main__":
 				
 				my_tracks[name]=newtrack
 			
-			elif arg.split('.')[-1].lower() in ["fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs"]:
+			elif arg.split('.')[-1].lower() in ["fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs", "fa"]:
 				track_count+=options.emblheight
 				
 				newtrack = Track()

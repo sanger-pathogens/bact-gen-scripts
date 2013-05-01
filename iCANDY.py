@@ -41,6 +41,7 @@ from reportlab.graphics.widgets.grids import ShadedRect
 from reportlab.graphics.widgets.signsandsymbols import ArrowOne
 from reportlab.graphics import renderPDF
 import pysam
+from itertools import izip
 #on my laptop
 #SAMTOOLS_DIR="/Users/sh16/Applications/samtools-0.1.18/"
 #BCFTOOLS_DIR="/Users/sh16/Applications/samtools-0.1.18/bcftools/"
@@ -422,15 +423,15 @@ def parsimony_reconstruction(treeObject, namecolours, colours, transformation="a
 ####################################################
 
 def round_to_n(x, n):
-    if n < 1:
-        raise ValueError("number of significant digits must be >= 1")
-    # Use %e format to get the n most significant digits, as a string.
-    format = "%." + str(n-1) + "e"
-    as_string = format % x
-    if x>=10 or x<=-10:
-    	return int(float(as_string))
-    else:
-	    return float(as_string)
+	if n < 1:
+		raise ValueError("number of significant digits must be >= 1")
+	# Use %e format to get the n most significant digits, as a string.
+	format = "%." + str(n-1) + "e"
+	as_string = format % x
+	if x>=10 or x<=-10:
+		return int(float(as_string))
+	else:
+		return float(as_string)
 
 
 
@@ -608,6 +609,57 @@ def read_dendropy_tree(treefile):
 			sys.exit()
 		
 		
+		
+		#log the branch lengths if the option has been chosen
+		if options.log_branches:
+			log_branchlengths(t)
+		
+		
+		#some code here to make the branch lengths equal - not actually possible to choose this yet
+		t.draw_scale=True
+		if options.show_branchlengths:
+			t.draw_scale=False
+		
+		equal_branches=False
+		if equal_branches:
+			for node in t.postorder_node_iter():
+				if node.edge_length!=None:
+					node.edge_length=0.1
+			t.draw_scale=False
+			
+		#Midpoint root if the option is selected
+		if options.midpoint:
+			print "Midpoint rooting tree"
+			if t.schema=="beast-summary-tree":
+				print "Warning: Midpoint rooting a BEAST tree may destroy temporal information represented in node opsitions"
+			t.reroot_at_midpoint(update_splits=True)
+			
+		#Ladderise the tree if the option is selected
+		if options.ladderise=="left":
+			print "ladderising tree to the left"
+			#ladderise the tree right
+			t.ladderize(ascending=False)
+		elif options.ladderise=="right":
+			print "ladderising tree to the right"
+			#ladderise the tree right
+			t.ladderize(ascending=True)
+		
+		#Make sure the tree is rooted on an edge rather than a node
+		if t.is_unrooted:
+			print "Tree is unrooted. Rooting it now."
+			t.is_rooted=True
+			t.update_splits(delete_outdegree_one=False)
+		root = t.seed_node
+		root_children = root.child_nodes()
+		print len(root_children)
+		if len(root_children) != 2:
+			print "Tree rooted at node. Rerooting on first edge from that node."
+			t.reroot_at_edge(root_children[0].edge, update_splits=True)
+		#print the tree in ascii as a cladogram
+		#print(t.as_ascii_plot())
+		#print the tree in ascii including branch lengths
+		#print(t.as_ascii_plot(plot_metric='length'))
+		
 		for node in t.postorder_node_iter():
 			for x, a in enumerate(node.annotations):
 				if isinstance(a.value, str):
@@ -735,61 +787,7 @@ def read_dendropy_tree(treefile):
 						if a.name==options.colour_by_annotation and a.value in colour_dictionary:
 							node.edge_colour=colour_dictionary[a.value]
 		
-		
-		
-		#log the branch lengths if the option has been chosen
-		if options.log_branches:
-			log_branchlengths(t)
-		
-		
-		#some code here to make the branch lengths equal - not actually possible to choose this yet
-		t.draw_scale=True
-		if options.show_branchlengths:
-			t.draw_scale=False
-		
-		equal_branches=False
-		if equal_branches:
-			for node in t.postorder_node_iter():
-				if node.edge_length!=None:
-					node.edge_length=0.1
-			t.draw_scale=False
-			
-		#Midpoint root if the option is selected
-		if options.midpoint:
-			print "Midpoint rooting tree"
-			if t.schema=="beast-summary-tree":
-				print "Warning: Midpoint rooting a BEAST tree may destroy temporal information represented in node opsitions"
-			t.reroot_at_midpoint(update_splits=True)
-			
-		#Ladderise the tree if the option is selected
-		if options.ladderise=="left":
-			print "ladderising tree to the left"
-			#ladderise the tree right
-			t.ladderize(ascending=False)
-		elif options.ladderise=="right":
-			print "ladderising tree to the right"
-			#ladderise the tree right
-			t.ladderize(ascending=True)
-		
-			
-		
-		#print the tree in ascii as a cladogram
-		#print(t.as_ascii_plot())
-		
-		#print the tree in ascii including branch lengths
-		#print(t.as_ascii_plot(plot_metric='length'))
-		
-		
-		#Make sure the tree is rooted on an edge rather than a node
-		if t.is_unrooted:
-			print "Tree is unrooted. Rooting it now."
-			t.is_rooted=True
-			t.update_splits(delete_outdegree_one=False)
-		root = t.seed_node
-		root_children = root.child_nodes()
-		if len(root_children) != 2:
-			print "Tree rooted at node. Rerooting on first edge from that node."
-			t.reroot_at_edge(root_children[0].edge, update_splits=True)
+
 		
 		return t
 
@@ -854,9 +852,15 @@ def deltran_parsimony_reconstruction(t, transformation="deltran"):
 	for node in t.preorder_node_iter():
 		preorder_node_list.append(node)
 	
+	
 	reclen=dendropy.treecalc.fitch_down_pass(postorder_node_list, attr_name='edge_colours', weight_list=None, taxa_to_state_set_map=None)
 	print "Reconstruction tree length =", reclen
+
+	if not hasattr(t.seed_node.parent_node,'edge_colours'):
+		t.seed_node.parent_node.edge_colours=t.seed_node.edge_colours
+	
 	dendropy.treecalc.fitch_up_pass(preorder_node_list, attr_name='edge_colours', taxa_to_state_set_map=None)
+
 	
 
 
@@ -2402,6 +2406,108 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 
 
 
+
+class blast_result:
+	def __init__(self):
+		self.blast_matches=[]
+		self.min_id=90.0
+		self.min_length=100
+		self.max_e=0.0001
+		self.min_bitscore=2000
+	
+	
+	def add_m8_match(self, m8blastline):
+		
+		blast_match={}
+		blastwords=m8blastline.strip().split()
+		blast_match['query']=blastwords[0]
+		blast_match['subject']=blastwords[1]
+		blast_match['percent_id']=float(blastwords[2])
+		blast_match['length']=float(blastwords[3])
+		blast_match['query_start']=int(blastwords[6])
+		blast_match['query_end']=int(blastwords[7])
+		blast_match['subject_start']=int(blastwords[8])
+		blast_match['subject_end']=int(blastwords[9])
+		blast_match['e']=float(blastwords[10])
+		blast_match['bitscore']=float(blastwords[11])
+		#print blast_match
+		if blast_match['e']<self.max_e and blast_match['percent_id']>self.min_id and blast_match['length']>self.min_length and blast_match['bitscore']>self.min_bitscore:
+			self.blast_matches.append(blast_match)
+	
+	
+	def parse_m8_blast_output(self, blastfile):
+		for line in open(blastfile, "rU"):
+			self.add_m8_match(line)
+		print 'Found', len(self.blast_matches), "blast matches matching cutoffs in file", blastfile
+	
+	
+	def print_blast_match(self, query_x1, query_x2, subject_x1, subject_x2, query_y, subject_y):
+		if query_x2>query_x1 and subject_x2<subject_x1:
+			fill=colors.blue
+		else:
+			fill=colors.red
+		stroke=None
+		d.add(Polygon([query_x1, query_y, query_x2, query_y, subject_x2, subject_y, subject_x1, subject_y], fillColor=fill, strokeColor=stroke))
+	
+	
+	def print_blast_matches(self, x0, y0, trackheight, tracklength, start_loc, end_loc):
+		for blast_match in self.blast_matches:
+			
+			length_of_printed_genomic_region=end_loc-start_loc
+			horizontal_scaling_factor=float(tracklength)/length_of_printed_genomic_region
+			
+			if (blast_match['query_start']>start_loc and blast_match['query_start']<end_loc) or (blast_match['query_end']>start_loc and blast_match['query_end']<end_loc) or (blast_match['query_start']<start_loc and blast_match['query_end']>end_loc) or (blast_match['query_end']<start_loc and blast_match['query_start']>end_loc):
+				if (blast_match['subject_start']>start_loc and blast_match['subject_start']<end_loc) or (blast_match['subject_end']>start_loc and blast_match['subject_end']<end_loc) or (blast_match['subject_start']<start_loc and blast_match['subject_end']>end_loc) or (blast_match['subject_end']<start_loc and blast_match['subject_start']>end_loc):
+					
+					
+					if blast_match['query_start']<start_loc:
+						query_x1=x0
+					if blast_match['query_start']>end_loc:
+						query_x1=((end_loc-start_loc)*horizontal_scaling_factor)+x0
+					elif blast_match['query_start']>start_loc and blast_match['query_start']<end_loc:
+						query_x1=((blast_match['query_start']-start_loc)*horizontal_scaling_factor)+x0
+					
+					if blast_match['query_end']<start_loc:
+						query_x2=x0
+					if blast_match['query_end']>end_loc:
+						query_x2=((end_loc-start_loc)*horizontal_scaling_factor)+x0
+					elif blast_match['query_end']>start_loc and blast_match['query_end']<end_loc:
+						query_x2=((blast_match['query_end']-start_loc)*horizontal_scaling_factor)+x0
+					
+					if blast_match['subject_start']<start_loc:
+						subject_x1=x0
+					if blast_match['subject_start']>end_loc:
+						subject_x1=((end_loc-start_loc)*horizontal_scaling_factor)+x0
+					elif blast_match['subject_start']>start_loc and blast_match['subject_start']<end_loc:
+						subject_x1=((blast_match['subject_start']-start_loc)*horizontal_scaling_factor)+x0
+					
+					if blast_match['subject_end']<start_loc:
+						subject_x2=x0
+					if blast_match['subject_end']>end_loc:
+						subject_x2=((end_loc-start_loc)*horizontal_scaling_factor)+x0
+					elif blast_match['subject_end']>start_loc and blast_match['subject_end']<end_loc:
+						subject_x2=((blast_match['subject_end']-start_loc)*horizontal_scaling_factor)+x0
+					
+#					print query_x1, query_x2, subject_x1, subject_x2, y0, y0+trackheight
+#					print trackheight, horizontal_scaling_factor, length_of_printed_genomic_region, blast_match['query_start'], blast_match['query_end'], blast_match['subject_start'], blast_match['subject_end']
+					
+					self.print_blast_match(query_x1, query_x2, subject_x1, subject_x2, y0, y0+trackheight)
+
+
+
+
+
+def add_blast_track(filename):
+	 newtrack= Track()
+	 newtrack.blast_output=blast_result()
+	 newtrack.blast_output.parse_m8_blast_output(filename)
+	 #newtrack.blast_output.print_blast_matches()
+	 return newtrack
+
+
+
+
+
 #################
 # Drawing class #
 #################
@@ -2963,6 +3069,9 @@ class Track:
 		if self.is_key:
 			self.draw_key()
 			return
+		
+		if hasattr(self, "blast_output"):
+			self.blast_output.print_blast_matches(self.track_position[0], self.track_position[1]-((float(self.track_height)/2)*self.track_draw_proportion), self.track_height*self.track_draw_proportion, self.track_length, self.beginning, self.end)
 		
 		self.draw_features()
 		#self.scale=False
@@ -4343,7 +4452,7 @@ if __name__ == "__main__":
 		if arg.lower() in ["tree", "list"]:
 			input_order.append(arg.lower())
 			continue
-		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea","embl", "gb", "gbk", "tab", "bam", "bcf", "fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs"]:
+		if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea","embl", "gb", "gbk", "tab", "bam", "bcf", "fas", "fa", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs", "blast"]:
 			
 			if arg.split('.')[-1].lower() in ["plot", "hist", "heat", "bar", "line", "graph", "area", "stackedarea", "bam"] or options.qualifier=="":
 				newtrack = Track()
@@ -4390,7 +4499,7 @@ if __name__ == "__main__":
 				newtrack.name=name
 				x=1
 				while name in my_tracks:
-					name='.'.join(arg.split('.')[:-1])+"_"+str(x)
+					name='.'.join(arg.split('/')[-1].split('.')[:-1])+"_"+str(x)
 					x+=1
 				if not newtrack.name in track_names:
 					track_names[newtrack.name]=[]
@@ -4403,6 +4512,24 @@ if __name__ == "__main__":
 				
 				newtrack.scale=False
 				newtrack.add_plot(arg, plot_type, options.fragments)
+			elif arg.split('.')[-1].lower()=="blast":
+				newtrack=add_blast_track(arg)
+				newtrack.scale=False
+				newtrack.track_height=5
+				track_count+=5
+				newtrack.track_draw_proportion=1.0
+				newtrack.beginning=options.beginning
+				if options.end!=-1:
+					newtrack.end=options.end
+				name='.'.join(arg.split('/')[-1].split('.')[:-1])
+				x=1
+				while name in my_tracks:
+					name='.'.join(arg.split('/')[-1].split('.')[:-1])+"_"+str(x)
+					x+=1
+				if not newtrack.name in track_names:
+					track_names[newtrack.name]=[]
+				input_order.append(name)
+				my_tracks[name]=newtrack
 			elif arg.split('.')[-1].lower() in ["embl", "gb", "gbk"]:
 				track_count+=options.emblheight
 				
@@ -4456,7 +4583,7 @@ if __name__ == "__main__":
 				
 				my_tracks[name]=newtrack
 			
-			elif arg.split('.')[-1].lower() in ["fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs"]:
+			elif arg.split('.')[-1].lower() in ["fas", "fasta", "mfa", "dna", "fst", "phylip", "phy", "nexus", "nxs", "fa"]:
 				track_count+=options.emblheight
 				
 				newtrack = Track()
@@ -4924,10 +5051,8 @@ if __name__ == "__main__":
 			if options.tree!="":
 				draw_dendropy_tree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3)
 				#drawtree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3)
-				
+
 		
-		
-		 
 		renderPDF.draw(d, c, 0, 0)
 		c.showPage()
 	c.save()
