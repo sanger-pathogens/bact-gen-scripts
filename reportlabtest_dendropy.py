@@ -119,7 +119,7 @@ def main():
 	group.add_option("-c", "--columns", action="store", dest="columns", help="column(s) from metadata file to use for track name (comma separated list) [default=%default]", default="1")
 	group.add_option("-C", "--colourbycolumns", action="store", dest="colour_columns", help="column(s) from metadata file to use to colour track name and blocks next to name (comma separated list). If names are being shown, the first column will be used to colour names. All following columns will be added as coloured shapes as defined by the -z option. [default=%default]", default=False)
 	group.add_option("-k", "--nometadatakey", action="store_false", dest="show_metadata_key", help="Do not show metadata keys. [default=show keys]", default=True)
-	group.add_option("-r", "--parsimony_reconstruction", action="store", dest="transformation", help="Reconstruct colours across branches using parsimony. Select from acctran or deltran transformations [default=%default]", default=None, type="choice", choices=['acctran', 'deltran'])
+	group.add_option("-r", "--parsimony_reconstruction", action="store", dest="transformation", help="Reconstruct colours across branches using parsimony. Select from acctran, deltran or MPR transformations (note, MPR will colour branches black if the reconstructions are ambiguous) [default=%default]", default=None, type="choice", choices=['acctran', 'deltran', 'MPR'])
 	group.add_option("-i", "--suffix", action="store", dest="suffix", help="suffix to remove from filenames", default="")
 	
 	parser.add_option_group(group)
@@ -835,7 +835,7 @@ def get_vertical_positions_of_leaves(t):
 		sys.exit()
 
 
-def deltran_parsimony_reconstruction(t, transformation="deltran"):
+def dendropy_parsimony_reconstruction(t, transformation="deltran"):
 	
 	print "Reconstructing first colour across tree using parsimony"
 	
@@ -856,11 +856,53 @@ def deltran_parsimony_reconstruction(t, transformation="deltran"):
 	
 	reclen=dendropy.treecalc.fitch_down_pass(postorder_node_list, attr_name='edge_colours', weight_list=None, taxa_to_state_set_map=None)
 	print "Reconstruction tree length =", reclen
-
-	if not hasattr(t.seed_node.parent_node,'edge_colours'):
+	
+	print t.seed_node.parent_node
+	
+	if t.seed_node.parent_node!= None and not hasattr(t.seed_node.parent_node,'edge_colours'):
 		t.seed_node.parent_node.edge_colours=t.seed_node.edge_colours
 	
 	dendropy.treecalc.fitch_up_pass(preorder_node_list, attr_name='edge_colours', taxa_to_state_set_map=None)
+	
+	return
+	
+	#Should add acctran and deltran stuff here. The following code is a start
+	
+	#if there's more than one colour at the root, randomly choose one to start from (in this case, I've chosen the first colour in all ambiguous cases below, but could change that)
+	#Currently doesn't work, as acctran flips the states every node
+	if len(t.seed_node.edge_colours[0])>1:
+		t.seed_node.edge_colours[0]=t.seed_node.edge_colours[0][0]
+		if transformation in ["acctran", "deltran"]:
+			t.seed_node.edge_dashed=True
+		else:
+			t.seed_node.edge_dashed=False
+	else:
+		t.seed_node.edge_dashed=False
+	
+	for node in preorder_node_list:
+		if node.parent_node!= None:
+			
+			if len(node.edge_colours[0])>1:
+				print transformation, node, node.parent_node.edge_colours, node.edge_colours, len(node.parent_node.edge_colours), len(node.edge_colours)
+				print node.edge_colours[0].difference(node.parent_node.edge_colours[0]), node.edge_colours[0].intersection(node.parent_node.edge_colours[0])
+				if transformation=="acctran":
+					node.edge_dashed=True
+					print list(node.edge_colours[0].difference(node.parent_node.edge_colours[0]))[0]
+					print set([list(node.edge_colours[0].difference(node.parent_node.edge_colours[0]))[0]])
+					node.edge_colours=[set([list(node.edge_colours[0].difference(node.parent_node.edge_colours[0]))[0]])]
+				elif transformation=="deltran":
+					node.edge_colours=[set([list(node.edge_colours[0].intersection(node.parent_node.edge_colours[0]))[0]])]
+					node.edge_dashed=True
+				else:
+					node.edge_dashed=False
+				print transformation, node, node.parent_node.edge_colours, node.edge_colours, len(node.parent_node.edge_colours), len(node.edge_colours)
+				print node.edge_colours[0].difference(node.parent_node.edge_colours[0]), node.edge_colours[0].intersection(node.parent_node.edge_colours[0])
+			else:
+				node.edge_dashed=False
+				
+#		else:
+#			print '-', node.edge_colours
+		
 
 	
 
@@ -1145,8 +1187,13 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				if HPDmax-HPDmin>0:
 					d.add(Rect(HPDmin+branchlength, vertpos-(vertical_scaling_factor*0.4), HPDmax-HPDmin, vertical_scaling_factor*0.8, fillColor=colors.lightblue, strokeColor=None, strokeWidth=0))
 		
+		if hasattr(node, "edge_dashed") and node.edge_dashed:
+			dasharray=[0.5,0.5]
+		else:
+			dasharray=None
+		
 		#draw the horizontal part of the branch
-		d.add(Line(horizontalpos-(vlinewidth/2), vertpos, (horizontalpos-(vlinewidth/2))+branchlength, vertpos, strokeWidth=linewidth, strokeColor=branch_colour))
+		d.add(Line(horizontalpos-(vlinewidth/2), vertpos, (horizontalpos-(vlinewidth/2))+branchlength, vertpos, strokeWidth=linewidth, strokeColor=branch_colour, strokeDashArray=dasharray))
 		
 		#If the user has chosen to show branchlengths on branches, draw them now
 		if options.show_branchlengths and node.edge_length>0:
@@ -1154,7 +1201,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 
 
 		#draw the vertical part of the branch that goes to the parent node
-		d.add(Line(horizontalpos, node.vertpos+yoffset, horizontalpos, node.parent_node.vertpos+yoffset, strokeWidth=vlinewidth, strokeColor=branch_colour))
+		d.add(Line(horizontalpos, node.vertpos+yoffset, horizontalpos, node.parent_node.vertpos+yoffset, strokeWidth=vlinewidth, strokeColor=branch_colour, strokeDashArray=dasharray))
 		
 			
 		if node.is_leaf():
@@ -4837,9 +4884,9 @@ if __name__ == "__main__":
 #						tree.node(daughter).data.branchlength=1
 #				make_branches_equal(tree.root)
 		
-			if options.transformation in ["acctran", "deltran"]:
+			if options.transformation in ["acctran", "deltran", "MPR"]:
 				#parsimony_reconstruction(tree, namecolours, colour_dict[0], transformation=options.transformation)
-				deltran_parsimony_reconstruction(tree, transformation=options.transformation)
+				dendropy_parsimony_reconstruction(tree, transformation=options.transformation)
 			
 				
 				

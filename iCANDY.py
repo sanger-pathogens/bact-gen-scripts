@@ -856,7 +856,7 @@ def deltran_parsimony_reconstruction(t, transformation="deltran"):
 	reclen=dendropy.treecalc.fitch_down_pass(postorder_node_list, attr_name='edge_colours', weight_list=None, taxa_to_state_set_map=None)
 	print "Reconstruction tree length =", reclen
 
-	if not hasattr(t.seed_node.parent_node,'edge_colours'):
+	if t.seed_node.parent_node!= None and not hasattr(t.seed_node.parent_node,'edge_colours'):
 		t.seed_node.parent_node.edge_colours=t.seed_node.edge_colours
 	
 	dendropy.treecalc.fitch_up_pass(preorder_node_list, attr_name='edge_colours', taxa_to_state_set_map=None)
