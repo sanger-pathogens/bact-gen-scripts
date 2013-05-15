@@ -157,23 +157,13 @@ if __name__ == "__main__":
 	else:
 		lines=[]
 		count=-1
-		curseqlist=[]
-		append=curseqlist.append
 		for linea in open(alnfile, "rU"):
 			if linea[0]==">":
-				if count>-1:
-					lines.append(''.join(curseqlist))
 				count=count+1
-				#lines.append(linea.split()[0][1:]+'\n')
-				curseqlist=[]
-				append=curseqlist.append
-				append(linea.split()[0][1:]+'\n')
+				lines.append(linea.split()[0][1:]+'\n')
 			else:	
-#				lines[count]=lines[count]+linea
-				append(linea)
-		if count>-1:
-			lines.append(''.join(curseqlist))
-		curseqlist=[]
+				lines[count]=lines[count]+linea
+		linesa=[]
 	
 	for line in lines:
 		words=line.strip().split('\n')

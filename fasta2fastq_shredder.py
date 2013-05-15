@@ -50,9 +50,14 @@ else:
 
 for refcount, ref in enumerate(refs):
 	count=0
+	if lc=="c" and insert+(readlen*2)>len(ref):
+		print "Warning, some of your contigs are shorter than the fragment size. This causes problems when assuming contigs are circularised. Skipping contig", str(refcount+1)
+		print "You could try using the linear option"
+		continue
 	for x in range(0-(readlen+insert),len(ref),step):
 		if x+readlen>len(ref):
 			continue
+		
 		count=count+1
 		
 		if len(sys.argv)==7:

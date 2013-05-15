@@ -149,98 +149,124 @@ if __name__ == "__main__":
 	
 	print "Found", len(regions), "regions"
 	
+	
+	
+	
+	
 	sequences={}
 	currseq=''
-	
-	if os.path.getsize(alnfile)<2000000000:
-		lines=open(alnfile, "rU").read().split('>')[1:]
-	else:
+	foundref=False
+	if reference!="":
 		lines=[]
 		count=-1
 		curseqlist=[]
 		append=curseqlist.append
 		for linea in open(alnfile, "rU"):
 			if linea[0]==">":
-				if count>-1:
-					lines.append(''.join(curseqlist))
+				if count>-1 and foundref:
+					sequence=''.join(curseqlist)
+					break
 				count=count+1
 				#lines.append(linea.split()[0][1:]+'\n')
-				curseqlist=[]
-				append=curseqlist.append
-				append(linea.split()[0][1:]+'\n')
-			else:	
-#				lines[count]=lines[count]+linea
+				name=linea.split()[0][1:]
+				
+				if name==reference:
+					curseqlist=[]
+					append=curseqlist.append
+					foundref=True
+				
+			elif foundref:	
+	#				lines[count]=lines[count]+linea
 				append(linea)
-		if count>-1:
-			lines.append(''.join(curseqlist))
+		if count>-1 and foundref:
+			sequence=''.join(curseqlist)
 		curseqlist=[]
-	
-	for line in lines:
-		words=line.strip().split('\n')
-		if words[0].split()[0] in sequences:
-			DoError("Found duplicate sequence name: "+words[0].split()[0])
-			
-		sequences[words[0].split()[0]]=''.join(words[1:])
-	print "Found", len(sequences.keys()), "sequences"
-	
-	
-	if reference!="":
-		if not reference in sequences.keys():
+		if not foundref:
 			DoError("Cannot find reference in alignment")
+	
 		print "Adjusting region locations to alignment positions"
 		reftoaln={}
 		refnum=0
-		print reference
-		for alnnum, base in enumerate(sequences[reference]):
+		
+		for alnnum, base in enumerate(sequence):
 			if base!="-" and base!="N":
 				reftoaln[refnum]=alnnum
 				refnum+=1
 		for region in regions:
 			region[0]=reftoaln[region[0]]
 			region[1]=reftoaln[region[1]]
-			
-	
-	
 	regions.sort()
+	reftoaln=''
+	#sys.exit()
 	
-	newsequences={}
-	
-	for sequence in sequences.keys():
-		if not refrem and sequence==reference:
-			newsequences[sequence]=sequences[sequence]
-			continue
-		newsequences[sequence]=''
+	def remove_blocks_from_sequence(name, sequence, regions):
+		if not refrem and name==reference:
+			return name, sequence
+		newsequence=''
 		for x, region in enumerate(regions):
 			if keepremove=='k':
 				if region[2]=="f":
-					newsequences[sequence]=newsequences[sequence]+sequences[sequence][region[0]:region[1]+1]
+					newsequence=newsequence+sequence[region[0]:region[1]+1]
 				else:
-					newsequences[sequence]=newsequences[sequence]+revcomp(sequences[sequence][region[0]:region[1]+1])
+					newsequence=newsequence+revcomp(sequence[region[0]:region[1]+1])
 			elif keepremove=='c':
 				if x==0:
-					newsequences[sequence]=newsequences[sequence]+sequences[sequence][:region[0]]
+					newsequence=newsequence+sequence[:region[0]]
 				else:
-					newsequences[sequence]=newsequences[sequence]+sequences[sequence][regions[x-1][1]+1:region[0]]
+					newsequence=newsequence+sequence[regions[x-1][1]+1:region[0]]
 				if x==len(regions)-1:
-					newsequences[sequence]=newsequences[sequence]+sequences[sequence][region[1]+1:]
+					newsequence=newsequence+sequence[region[1]+1:]
 			else:
 				if x==0:
-					newsequences[sequence]=newsequences[sequence]+sequences[sequence][:region[0]]+symbol*(region[1]+1-region[0])
+					newsequence=newsequence+sequence[:region[0]]+symbol*(region[1]+1-region[0])
 				else:
-					newsequences[sequence]=newsequences[sequence]+sequences[sequence][regions[x-1][1]+1:region[0]]+symbol*(region[1]+1-region[0])
+					newsequence=newsequence+sequence[regions[x-1][1]+1:region[0]]+symbol*(region[1]+1-region[0])
 				if x==len(regions)-1:
-					newsequences[sequence]=newsequences[sequence]+sequences[sequence][region[1]+1:]
+					newsequence=newsequence+sequence[region[1]+1:]
+		return name, newsequence
 	
-				
+	lines=[]
+	count=-1
+	curseqlist=[]
+	append=curseqlist.append
 	alnout=open(outfile,"w")
-	for sequence in newsequences:
-		print >> alnout, ">"+sequence
-		print >> alnout, newsequences[sequence]
+	names=set([])
+	for linea in open(alnfile, "rU"):
+		if linea[0]==">":
+			if count>-1:
+				sequence=''.join(curseqlist)
+				newname, newseq=remove_blocks_from_sequence(name, sequence, regions)
+				if len(newseq)!=len(sequence) and keepremove!='c':
+					print DoError("Output and input sequences of different lengths. Do you have overlapping features in your inputfile?")
+				print >> alnout, ">"+newname
+				print >> alnout, newseq
+			count=count+1
+			#lines.append(linea.split()[0][1:]+'\n')
+			curseqlist=[]
+			append=curseqlist.append
+			name=linea.split()[0][1:]
+			if name in names:
+				DoError("Found duplicate sequence name: "+name)
+			else:
+				names.add(name)
+		else:	
+#				lines[count]=lines[count]+linea
+			append(linea)
+	if count>-1:
+		sequence=''.join(curseqlist)
+		newname, newseq=remove_blocks_from_sequence(name, sequence, regions)
+		if len(newseq)!=len(sequence) and keepremove!='c':
+			print DoError("Output and input sequences of different lengths. Do you have overlapping features in your inputfile?")
+		print >> alnout, ">"+newname
+		print >> alnout, newseq
+	curseqlist=[]
+			
+	print "Adjusted", len(names), "sequences"
 			
 	alnout.close()
 	
-	if len(newsequences[sequence])!=len(sequences[sequence]) and keepremove!='c':
-		print "ERROR: Output and input sequences of different lengths. Do you have overlapping features in your inputfile?"
-	
-	print "Original alignment length:", len(sequences[sequence]), "New alignment length:", len(newsequences[sequence])
+#	if len(newsequences[sequence])!=len(sequences[sequence]) and keepremove!='c':
+#		print "ERROR: Output and input sequences of different lengths. Do you have overlapping features in your inputfile?"
+#	
+	print "Original alignment length:", len(sequence), "New alignment length:", len(newseq)
 	print "Done."
