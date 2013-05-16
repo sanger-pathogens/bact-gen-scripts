@@ -541,7 +541,7 @@ def colour_nodes_by_splitting(treeObject):
 	
 	def split_colours(node, colourrange):
 		daughters=treeObject.node(node).get_succ()
-		print node, daughters
+		#print node, daughters
 		if len(daughters)>0:
 			nodebrlens=get_downstream_total_branch_lengths(treeObject, node)
 			daughter1brlens=get_downstream_total_branch_lengths(treeObject, daughters[0])
@@ -2185,8 +2185,9 @@ def change_reference_location_to_alignment_location(seqFeature, translation_dict
 	
 	startoffset=translation_dict[int(seqFeature.location.nofuzzy_start)]-int(seqFeature.location.nofuzzy_start)
 	endoffset=(translation_dict[int(seqFeature.location.nofuzzy_end)-1]-int(seqFeature.location.nofuzzy_end)+1)
+	strand=seqFeature.location.strand
 	
-	seqFeature.location=FeatureLocation(start = seqFeature.location._start._shift(startoffset),end = seqFeature.location._end._shift(endoffset))
+	seqFeature.location=FeatureLocation(start = seqFeature.location._start._shift(startoffset),end = seqFeature.location._end._shift(endoffset), strand=strand)
 	#seqFeature.location.start=seqFeature.location.start._shift(shift)
 	
 	#what about fuzzy positions???
@@ -2471,7 +2472,7 @@ def apply_annotation_to_root(treeObject, annotationObject):
 					
 	for feature in annotationObject.features:
 		
-		if feature.strand==1:
+		if feature.location.strand==1:
 			
 			node_start, node_end=Si_SNPs_temp.find_gene_limits(str(node_data.comment["sequence"][feature.location.nofuzzy_start:feature.location.nofuzzy_end+9999]),0,feature.location.nofuzzy_end-feature.location.nofuzzy_start)
 			
@@ -2513,7 +2514,7 @@ def apply_annotation_to_root(treeObject, annotationObject):
 		if not new_feature.has_key("name"):
 			new_feature["name"]="no name"
 		
-		new_feature["strand"]=feature.strand
+		new_feature["strand"]=feature.location.strand
 		
 		
 		
@@ -2649,7 +2650,7 @@ def apply_annotation_to_node(treeObject, annotationObject, node):
 					
 	for feature in annotationObject.features:
 		
-		if feature.strand==1:
+		if feature.location.strand==1:
 			
 			node_start, possible_node_starts, node_end, possible_node_ends=Si_SNPs_temp.find_gene_limits_new(str(node_data.comment["sequence"][feature.location.nofuzzy_start:feature.location.nofuzzy_end+9999]),0,feature.location.nofuzzy_end-feature.location.nofuzzy_start)
 			
@@ -2693,7 +2694,7 @@ def apply_annotation_to_node(treeObject, annotationObject, node):
 		if not new_feature.has_key("name"):
 			new_feature["name"]="no name"
 		
-		new_feature["strand"]=feature.strand
+		new_feature["strand"]=feature.location.strand
 		
 		
 		
@@ -3125,7 +3126,7 @@ def print_summary(treeObject, handle, node=-1):
 #				elif SNP_type=="old_SNP_locations" and not SNP.recombination:
 #					print "Shouldn't get here!"
 				
-				print >> handle, '\t'.join(map(str,[SNP.position+1,"SNP","1", node_node, daughter_node,SNP.parent_base[0], SNP.daughter_base[0], SNP.parent_aminoacid, SNP.daughter_aminoacid, SNP.codon_type, SNP.CDSname, SNP.strand, SNP.position_in_CDS+1, ', '.join(homoplasyline), ', '.join(oldhomoplasyline), ', '.join(recs)]))
+				print >> handle, '\t'.join(map(str,[SNP.position+1,"SNP","1", node_node, daughter_node,SNP.parent_base[0], SNP.daughter_base[0], SNP.parent_aminoacid, SNP.daughter_aminoacid, SNP.codon_type, SNP.CDSname, SNP.location.strand, SNP.position_in_CDS+1, ', '.join(homoplasyline), ', '.join(oldhomoplasyline), ', '.join(recs)]))
 
 
 			

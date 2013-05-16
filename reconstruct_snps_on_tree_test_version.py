@@ -340,7 +340,7 @@ if __name__ == "__main__":
 	print >> handle, tree_to_figtree_string(tree, False, False, False, False, ladderize=None)
 		
 	handle.close()
-	sys.exit()
+	#sys.exit()
 
 	if options.outgroup!="None":
 	
@@ -434,6 +434,10 @@ if __name__ == "__main__":
 		for x, feature in enumerate(emblrecord.features):
 			#print emblrecord.features[x]
 			#print feature
+			
+			#feature.strand=feature.location.strand
+			#sys.exit()
+			
 			feature=change_reference_location_to_alignment_location(feature, ref_to_alignment)
 			emblrecord.features[x]=feature
 
