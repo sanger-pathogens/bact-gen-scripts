@@ -162,6 +162,7 @@ if __name__ == "__main__":
 		curseqlist=[]
 		append=curseqlist.append
 		for linea in open(alnfile, "rU"):
+			linea=linea.strip()
 			if linea[0]==">":
 				if count>-1 and foundref:
 					sequence=''.join(curseqlist)
@@ -183,11 +184,13 @@ if __name__ == "__main__":
 		curseqlist=[]
 		if not foundref:
 			DoError("Cannot find reference in alignment")
+		else:
+			reflen=len(sequence)
+			print "Found reference:", reference, "("+str(reflen)+"bp)"
 	
 		print "Adjusting region locations to alignment positions"
 		reftoaln={}
 		refnum=0
-		
 		for alnnum, base in enumerate(sequence):
 			if base!="-" and base!="N":
 				reftoaln[refnum]=alnnum
@@ -232,12 +235,15 @@ if __name__ == "__main__":
 	alnout=open(outfile,"w")
 	names=set([])
 	for linea in open(alnfile, "rU"):
+		linea=linea.strip()
 		if linea[0]==">":
 			if count>-1:
 				sequence=''.join(curseqlist)
+				if len(sequence)!=reflen:
+					DoError("Input sequences of different lengths. Your file is not an alignment")
 				newname, newseq=remove_blocks_from_sequence(name, sequence, regions)
 				if len(newseq)!=len(sequence) and keepremove!='c':
-					print DoError("Output and input sequences of different lengths. Do you have overlapping features in your inputfile?")
+					DoError("Output and input sequences of different lengths. Do you have overlapping features in your inputfile?")
 				print >> alnout, ">"+newname
 				print >> alnout, newseq
 			count=count+1
@@ -254,16 +260,18 @@ if __name__ == "__main__":
 			append(linea)
 	if count>-1:
 		sequence=''.join(curseqlist)
+		if len(sequence)!=reflen:
+			DoError("Input sequences of different lengths. Your file is not an alignment")
 		newname, newseq=remove_blocks_from_sequence(name, sequence, regions)
 		if len(newseq)!=len(sequence) and keepremove!='c':
-			print DoError("Output and input sequences of different lengths. Do you have overlapping features in your inputfile?")
+			DoError("Output and input sequences of different lengths. Do you have overlapping features in your inputfile?")
 		print >> alnout, ">"+newname
 		print >> alnout, newseq
 	curseqlist=[]
-			
+	alnout.close()
 	print "Adjusted", len(names), "sequences"
 			
-	alnout.close()
+	
 	
 #	if len(newsequences[sequence])!=len(sequences[sequence]) and keepremove!='c':
 #		print "ERROR: Output and input sequences of different lengths. Do you have overlapping features in your inputfile?"
