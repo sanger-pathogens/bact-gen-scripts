@@ -1884,8 +1884,10 @@ class Track:
 						y2=self.track_position[1]+((float(self.track_height)/4)*self.track_draw_proportion)
 					
 					#print location[1], location[0],
-					if location[1]-location[0]<0.1:
-						location=(location[0],location[0]+0.1)
+					#seta  minimum width for a feature
+					min_feature_width=0.5
+					if location[1]-location[0]<min_feature_width:
+						location=(location[0],location[0]+min_feature_width)
 					#print location[1], location[0]
 					
 					if feature.arrows==0:
