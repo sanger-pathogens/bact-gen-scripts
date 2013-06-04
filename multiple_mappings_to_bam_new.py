@@ -59,7 +59,7 @@ def get_user_options():
 	group = OptionGroup(parser, "Mapping Options")
 	group.add_option("-p", "--program", action="store", type="choice", dest="program", choices=["bwa","ssaha", "smalt", "BWA","SSAHA", "SMALT"], help="Mapping program to use (choose from bwa, ssaha or smalt) [default= %default]", default="smalt")
 	group.add_option("-1", "--nomap", action="store_false", dest="domapping", help="Do not remap data - only available when input is bam (default is to map)", default=True)
-	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3", "0.6.4", "0.7.2"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3, 0.6.4, 0.7.2 and latest (currently 0.7.2) [default= %default]", default="0.5.8")
+	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3", "0.6.4", "0.7.4"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3, 0.6.4, 0.7.4 and latest (currently 0.7.4) [default= %default]", default="0.5.8")
 	group.add_option("-H", "--human", action="store_true", dest="human", help="Mapping against human (or other large euk)", default=False)
 	#group.add_option("-l", "--length", action="store", dest="readlength", help="Read length [default= %default]", default=54, type="int", metavar="INT")
 	group.add_option("-s", "--single", action="store_false", dest="pairedend", help="reads are single ended (not paired)", default=True)
@@ -417,20 +417,29 @@ class SNPanalysis:
 			sys.stdout.flush()
 			if self.pairedend:
 				if options.maprepeats:
-					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
-					cmdline="map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
+					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r 0 -i", options.maxinsertsize, " -j", options.mininsertsize, " -f "+smaltoutput+" -o "+self.runname+"/tmp1."+smaltoutput, tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
+					cmdline="map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -i", options.maxinsertsize, " -j", options.mininsertsize, " -f "+smaltoutput+"  -o "+self.runname+"/tmp1."+smaltoutput, tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
 				else:
-					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r 0 -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
-					cmdline="map -y "+str(options.nomapid)+" -x -i", options.maxinsertsize, " -j", options.mininsertsize, " -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
+					if newsmalt:
+						rbit=" -r -1"
+					else:
+						rbit=""
+					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+rbit+" -x -i", options.maxinsertsize, " -j", options.mininsertsize, " -f "+smaltoutput+" -o "+self.runname+"/tmp1."+smaltoutput, tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
+					cmdline="map -y "+str(options.nomapid)+rbit+" -x -i", options.maxinsertsize, " -j", options.mininsertsize, " -f "+smaltoutput+" -o "+self.runname+"/tmp1."+smaltoutput, tmpname+".index", self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq"
 			else:
 				if options.maprepeats:
-					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
-					cmdline="map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
+					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r 0 -f "+smaltoutput+" -o "+self.runname+"/tmp1."+smaltoutput, tmpname+".index", self.fastqdir+self.name+".fastq"
+					cmdline="map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -f "+smaltoutput+" -o "+self.runname+"/tmp1."+smaltoutput, tmpname+".index", self.fastqdir+self.name+".fastq"
 				else:
-					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+" -x -r 0 -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
-					cmdline="map -y "+str(options.nomapid)+" -x -f samsoft -o "+self.runname+"/tmp1.sam", tmpname+".index", self.fastqdir+self.name+".fastq"
-			print >> bashfile, SAMTOOLS_DIR+"samtools view -b -S",self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
-			print >> bashfile, "rm", self.runname+"/tmp1.sam"
+					if newsmalt:
+						rbit="-r -1"
+					else:
+						rbit=""
+					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+rbit+" -x -f "+smaltoutput+" -o "+self.runname+"/tmp1."+smaltoutput, tmpname+".index", self.fastqdir+self.name+".fastq"
+					cmdline="map -y "+str(options.nomapid)+rbit+" -x -f "+smaltoutput+" -o "+self.runname+"/tmp1."+smaltoutput, tmpname+".index", self.fastqdir+self.name+".fastq"
+			if not newsmalt:
+				print >> bashfile, SAMTOOLS_DIR+"samtools view -b -S",self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
+				print >> bashfile, "rm", self.runname+"/tmp1.sam"
 		else:
 			print >> bashfile, "cp ", self.bam, self.runname+"/tmp1.bam"
 		
@@ -589,19 +598,18 @@ if __name__ == "__main__":
 	#print options, args
 	check_input_validity(options, args)
 	
-	if options.version=="latest":
-		options.version="0.7.2"
-	if options.version in ["0.7.2"]:
-		if options.maprepeats:
-			options
-	if options.version=="0.7.2":
-		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.7.2/smalt_x86_64"
+	if options.version=="latest" or options.version=="0.7.4":
+		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.7.4/smalt_x86_64"
+		newsmalt=True
 	elif options.version=="0.6.4":
 		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.4/smalt_x86_64"
+		newsmalt=False
 	elif options.version=="0.6.3":
 		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.6.3/smalt_x86_64"
+		newsmalt=False
 	elif options.version=="0.5.8":
 		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.5.8/smalt_x86_64"
+		newsmalt=False
 	else:
 		print "Unknown smalt version"
 		sys.exit()
