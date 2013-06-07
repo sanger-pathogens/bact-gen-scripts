@@ -20,6 +20,24 @@ SAMTOOLS_DIR=""
 BCFTOOLS_DIR=""
 SMALT_DIR=""
 
+
+##############################################
+## Function to reverse complement a sequence #
+##############################################
+
+def revcomp(sequence):
+	rev=sequence[::-1]
+	revcomp=''
+	d={'A':'T', 'T':'A', 'C':'G', 'G':'C', 'a':'t', 't':'a', 'g':'c', 'c':'g', "n":"n", "N":"N"}
+	for i in rev:
+		if d.has_key(i):
+			revcomp=revcomp+d[i]
+		else:
+			revcomp=revcomp+i
+	
+	return revcomp
+
+
 ##########################
 # Error message function #
 ##########################
@@ -220,14 +238,58 @@ def create_fastq_from_bam(bamfile, fastqfile):
 		idtoref[x]=refs[x]
 		reftoid[refs[x]]=x
 	
-	toprint=set([])
+	toprint={}
 	
 	for read in samfile:
 			
 		#print read.qname, read.is_read1, read.is_read2
-		if not read.is_unmapped and (read.mate_is_unmapped or (read.pos==0 and read.cigar[0][0]==4) or ((read.pos+read.rlen)>=(reftolen[samfile.getrname(read.tid)]) and read.cigar[-1][0]==4)):
-			if options.distance==0 or (read.is_reverse and read.pos<options.distance) or (not read.is_reverse and (read.pos+read.rlen)>(reftolen[samfile.getrname(read.tid)]-options.distance)):
-				
+		
+		if not read.is_unmapped:
+		
+			if read.mate_is_unmapped and (options.distance==0 or (read.is_reverse and read.pos<options.distance) or (not read.is_reverse and (read.pos+read.rlen)>(reftolen[samfile.getrname(read.tid)]-options.distance))):
+				if not read.qname in toprint:
+					toprint[read.qname]=set([])
+				if read.is_read1:
+					toprint[read.qname].add(2)
+				else:
+					toprint[read.qname].add(1)
+			elif read.is_proper_pair:
+				print read.pnext, read.rlen, reftolen[samfile.getrname(read.tid)], read.mate_is_reverse
+				if read.pnext==0 or (read.pnext+read.rlen)>=(reftolen[samfile.getrname(read.tid)]):
+					if not read.qname in toprint:
+						toprint[read.qname]=set([])
+					if read.is_read1:
+						toprint[read.qname].add(2)
+					else:
+						toprint[read.qname].add(1)
+			
+			if read.pos==0 or read.is_reverse and (read.pos+read.rlen)>=(reftolen[samfile.getrname(read.tid)]):
+				if not read.qname in toprint:
+					toprint[read.qname]=set([])
+				if read.is_read1:
+					toprint[read.qname].add(1)
+				else:
+					toprint[read.qname].add(2)
+		
+	
+			
+	
+	print toprint		
+	samfile.reset()
+	
+	for read in samfile:
+		if read.is_read1:
+			readnum=1
+		else:
+			readnum=2
+		
+		
+		if read.is_unmapped and read.qname in toprint and readnum in toprint[read.qname]:
+			count+=1
+			print_read_to_file(fastqout, read, samfile.getrname(read.rnext), reftoid)
+		
+		elif read.qname in toprint and readnum in toprint[read.qname]:
+			if options.distance==0 or read.pos<options.distance or (read.pos+read.rlen)>(reftolen[samfile.getrname(read.tid)]-options.distance):
 				mapped=0.0
 				matches=0.
 				insertions=0.0
@@ -268,8 +330,6 @@ def create_fastq_from_bam(bamfile, fastqfile):
 				if percentid>=options.queryid:
 					#count+=1
 					#print_read_to_file(fastqout, read, samfile.getrname(read.rnext), reftoid)
-					if read.mate_is_unmapped and read.is_unmapped:
-						toprint.add(read.qname)
 					if (read.pos==0 and read.cigar[0][0]==4) or (read.cigar[-1][0]==4 and refpos==reftolen[samfile.getrname(read.tid)]):
 						count+=1
 						print_read_to_file(fastqout, read, samfile.getrname(read.tid), reftoid, startpos=startpos, endpos=endpos)
@@ -277,16 +337,6 @@ def create_fastq_from_bam(bamfile, fastqfile):
 				
 					
 					
-		
-			
-	
-	print toprint		
-	samfile.reset()
-	
-	for read in samfile:
-		if read.is_unmapped and read.qname in toprint:
-			count+=1
-			print_read_to_file(fastqout, read, samfile.getrname(read.rnext), reftoid)
 	
 	fastqout.close()
 	samfile.close()
