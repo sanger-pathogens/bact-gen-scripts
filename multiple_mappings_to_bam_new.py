@@ -410,7 +410,10 @@ class SNPanalysis:
 			
 	def runSMALT(self, ref, bashfile):	
 		
-		
+		if newsmalt:
+			smaltoutput="bam"
+		else:
+			smaltoutput="sam"
 		#Map the reads against the genome
 		if self.domapping:
 			print "\nRunning SMALT on "+self.name+'...',
