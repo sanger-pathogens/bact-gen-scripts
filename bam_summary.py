@@ -88,7 +88,11 @@ for filename in sys.argv[filestart:]:
 	
 	for read in samfile:
 		total+=1
-		totallength+=len(read.seq)
+		if read.rlen==0:
+			totallength+=read.rlen
+			unmapped+=1
+			continue
+		totallength+=read.rlen
 		if read.is_proper_pair and read.rname==read.mrnm:
 			refstats[samfile.getrname(read.rname)]["proper_pair"]+=0.5
 			refstats[samfile.getrname(read.rname)]["mapped"]+=1
@@ -143,6 +147,8 @@ for filename in sys.argv[filestart:]:
 					refpos+=cig[1]
 				elif cig[0]==4:
 					readpos+=cig[1]
+				elif cig[0]==5:
+					continue
 				else:
 					print cig
 		elif not read.is_unmapped:
