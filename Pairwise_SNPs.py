@@ -80,8 +80,10 @@ if __name__ == "__main__":
 		names.append(words[0].replace('Position_in_',''))
 		incref='y'
 		
-	for name in words[refpos+3:-1]:
+	for name in words[refpos+3:]:
 			names.append(name)
+			
+	
 	nostrains=len(names)
 	
 	if refpos==-1:
@@ -100,7 +102,7 @@ if __name__ == "__main__":
 		if incref=='y':
 			site.append(words[refpos])
 		
-		for x in words[refpos+3:-1]:
+		for x in words[refpos+3:]:
 			site.append(x)
 		
 			
@@ -164,7 +166,7 @@ if __name__ == "__main__":
 	
 	
 	
-	output=open("Pairwise_test.txt",'w')
+	output=open(outfile,'w')
 	for x in range(nostrains):
 		for y in range(x, nostrains):
 			if x!=y:
