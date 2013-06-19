@@ -602,37 +602,37 @@ if __name__ == "__main__":
 	print '\nReading input alignment...',
 	sys.stdout.flush()
 	
+	#else:
+	lines=[]
+	count=-1
 	sequences={}
-
-
-	currseq=''
-
-	#Read the alignment. If it's bigger than 2Gb read it line by line. Else read it all at once (faster)
+	names=set([])
+	curseqlist=[]
+	append=curseqlist.append
+	for linea in open(options.inputfile, "rU"):
+		linea=linea.strip()
+		if linea[0]==">":
+			if count>-1:
+				sequence=''.join(curseqlist)
+				sequences[name]=sequence
+			count=count+1
+			curseqlist=[]
+			append=curseqlist.append
+			name=linea.split()[0][1:]
+			
+			lines.append(linea.split()[0][1:]+'\n')
+		else:	
+			append(linea)
 	
-	try:
-		open(options.inputfile, "rU")
-	except IOError:
-		DoError('Cannot open alignment file '+options.inputfile)
-	
-	if os.path.getsize(options.inputfile)<2000000000:
-			lines=open(options.inputfile, "rU").read().split('>')[1:]
-
-	else:
-		lines=[]
-		count=-1
-		for linea in open(options.inputfile, "rU"):
-			if linea[0]==">":
-				count=count+1
-				lines.append(linea.split()[0][1:]+'\n')
-			else:	
-				lines[count]=lines[count]+linea
-		linesa=[]
-		sequences={}
+	if count>-1:
+		sequence=''.join(curseqlist)
+		sequences[name]=sequence
+		
 	
 	
-	for line in lines:
-		words=line.strip().split('\n')
-		sequences[words[0].split()[0]]=''.join(words[1:])
+	#for line in lines:
+	#	words=line.strip().split('\n')
+	#	sequences[words[0].split()[0]]=''.join(words[1:])
 	snpstructs.append(SNPanalysis())	
 	
 	

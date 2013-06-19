@@ -192,10 +192,12 @@ if __name__ == "__main__":
 		refnum=0
 		print reference
 		for alnnum, base in enumerate(sequences[reference]):
-			if base!="-" and base!="N":
+			if base!="-":# and base!="N":
 				reftoaln[refnum]=alnnum
 				refnum+=1
 		for region in regions:
+			if region[0]<1 or region[1]>len(sequences[reference]):
+				DoError("One of your regions has locations outside of the reference sequence length")
 			region[0]=reftoaln[region[0]]
 			region[1]=reftoaln[region[1]]
 			
@@ -239,7 +241,7 @@ if __name__ == "__main__":
 			
 	alnout.close()
 	
-	if len(newsequences[sequence])!=len(sequences[sequence]) and keepremove!='c':
+	if len(newsequences[sequence])!=len(sequences[sequence]) and keepremove!='k' and keepremove!='c':
 		print "ERROR: Output and input sequences of different lengths. Do you have overlapping features in your inputfile?"
 	
 	print "Original alignment length:", len(sequences[sequence]), "New alignment length:", len(newsequences[sequence])

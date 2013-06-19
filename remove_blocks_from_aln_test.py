@@ -192,10 +192,12 @@ if __name__ == "__main__":
 		reftoaln={}
 		refnum=0
 		for alnnum, base in enumerate(sequence):
-			if base!="-" and base!="N":
+			if base!="-":# and base!="N":
 				reftoaln[refnum]=alnnum
 				refnum+=1
 		for region in regions:
+			if region[0] not in reftoaln or region[1] not in reftoaln:
+				DoError("One of your regions has locations outside of the reference sequence length")
 			region[0]=reftoaln[region[0]]
 			region[1]=reftoaln[region[1]]
 	regions.sort()
@@ -239,10 +241,13 @@ if __name__ == "__main__":
 		if linea[0]==">":
 			if count>-1:
 				sequence=''.join(curseqlist)
-				if len(sequence)!=reflen:
-					DoError("Input sequences of different lengths. Your file is not an alignment")
+				if count==0:
+					reflen=len(sequence)
+				else:
+					if len(sequence)!=reflen:
+						DoError("Input sequences of different lengths. Is your file an alignment?")
 				newname, newseq=remove_blocks_from_sequence(name, sequence, regions)
-				if len(newseq)!=len(sequence) and keepremove!='c':
+				if len(newseq)!=len(sequence) and keepremove!='c' and keepremove!="k":
 					DoError("Output and input sequences of different lengths. Do you have overlapping features in your inputfile?")
 				print >> alnout, ">"+newname
 				print >> alnout, newseq

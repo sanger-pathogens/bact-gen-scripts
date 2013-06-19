@@ -2902,7 +2902,7 @@ if __name__ == "__main__":
 		else:
 			colour_columns=[]
 		
-		print columns, colour_columns
+		#print columns, colour_columns
 		try: lines=open(options.metadata,"rU").readlines()
 		except StandardError:
 			print "Could not open metadatafile:", options.metadata
@@ -3100,6 +3100,9 @@ if __name__ == "__main__":
 					track_count+=5	
 					my_tracks["metadata_key"+str(x)]=newtrack
 					found_keys.append(colour_column_names[x].split(":")[0])
+	
+	
+	
 	
 	
 	topmargin=topmargin+(float(max_length_col_name)/2)
@@ -3459,9 +3462,29 @@ if __name__ == "__main__":
 				parsimony_reconstruction(tree, namecolours, colour_dict[0], transformation=options.transformation)
 			
 				
-				
-				
-				
+		def RGBToHTMLColor(rgb_tuple):
+			""" convert an (R, G, B) tuple to #RRGGBB """
+			hexcolor = '#%02x%02x%02x' % rgb_tuple
+			# that's it! '%02x' means zero-padded, 2-digit hex values
+			return hexcolor	
+		
+		print "LABELS,"+",".join(colour_column_names)
+			
+		dataforcircos={}
+	
+		for n in treenames:
+			dataforcircos[n]=[]
+		
+			for x in xrange(len(colourslist)):
+				if namecolours[n][x]=="-":
+					dataforcircos[n].append("#ffffff")
+				else:
+					dataforcircos[n].append(RGBToHTMLColor(colour_dict[x][namecolours[n][x]]))		
+		
+		
+		
+		for x in dataforcircos:
+			print x+","+",".join(dataforcircos[x])
 				
 				
 				

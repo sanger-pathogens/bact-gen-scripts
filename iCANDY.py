@@ -918,6 +918,37 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 		return count
 	
 	
+	def draw_column_label(xpox, ypos, fontsize, column_label):
+		
+		mylabel=Label()
+		
+		mylabel.setText(column_label.split(":")[0])
+		
+		mylabel.angle=control.metadata_column_label_angle
+		mylabel.fontName=control.metadata_column_label_font#"Helvetica"
+		mylabel.fontSize=control.metadata_column_label_size#fontsize
+		mylabel.x=xpox
+		mylabel.y=ypos
+		if mylabel.angle==0:
+			mylabel.boxAnchor='s'
+		elif mylabel.angle==90:
+			mylabel.boxAnchor='w'
+		elif mylabel.angle==180:
+			mylabel.boxAnchor='n'
+		elif mylabel.angle==270:
+			mylabel.boxAnchor='e'
+		elif (mylabel.angle>0 and mylabel.angle<90):
+			mylabel.boxAnchor='sw'
+		elif (mylabel.angle>90 and mylabel.angle<180):
+			mylabel.boxAnchor='nw'
+		elif (mylabel.angle>180 and mylabel.angle<270):
+			mylabel.boxAnchor='ne'
+		elif (mylabel.angle>270 and mylabel.angle<=360):
+			mylabel.boxAnchor='se'
+		#Axis.setPosition(self.track_position[0], self.track_position[1]+(self.track_height/2), self.track_length)
+		d.add(mylabel)
+
+	
 	
 	def draw_scale():
 		if vertical_scaling_factor<5:
@@ -1208,8 +1239,12 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			elif options.aligntaxa==2:
 				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-gubbins_length), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 			
+			
+			
+			#print metadata blocks
+			print name_colours, colpos
 			for x, name_colour in enumerate(name_colours[colpos:]):
-				
+				print name_colour
 				if block_length==0:
 					break
 
@@ -1251,7 +1286,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 	if fontsize>12:
 		fontsize=12
 	
-	if fontsize<2:
+	if fontsize<1:
 		options.taxon_names=False
 	
 	if options.taxon_names:
@@ -1295,7 +1330,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			else:
 				block_length=max_block_length
 		
-		
+	gubbins_length=0.0
 	for x in range(colblockstart,len(colour_dict)):
 		if vertical_scaling_factor>2:
 			spacer=2
@@ -1303,8 +1338,9 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			spacer=vertical_scaling_factor
 		if x>0:
 			max_name_width+=spacer
+			gubbins_length+=spacer
 		max_name_width+=block_length
-		
+		gubbins_length+=block_length
 
 	treewidth-=(max_name_width+(fontsize/2))
 	
@@ -1337,7 +1373,29 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 	
 	draw_branches()
 	
+	if fontsize>6:
+		labelfontsize=fontsize
+	else:
+		labelfontsize=6
 	
+	if control.metadata_column_labels:
+		try:
+			if colour_column_names:
+				if options.aligntaxa==2:
+					column_name_x_pos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
+					column_name_y_pos=treetop+(vertical_scaling_factor/2)
+					colpos=0
+					if options.taxon_names:
+						
+						draw_column_label(treewidth+xoffset+((max_name_width-gubbins_length)/2), column_name_y_pos, labelfontsize, colour_column_names[0])
+						colpos=1
+					for x in xrange(colpos,len(colour_column_names)):
+						
+						draw_column_label(column_name_x_pos+(block_length/2), column_name_y_pos, labelfontsize, colour_column_names[x])
+						column_name_x_pos += block_length
+						column_name_x_pos += vertical_scaling_factor
+		except NameError:
+			pass
 	
 	return
 	
@@ -2384,6 +2442,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 		labelfontsize=fontsize
 	else:
 		labelfontsize=6
+	
 	
 	if control.metadata_column_labels:
 		try:
@@ -4355,6 +4414,7 @@ if __name__ == "__main__":
 						newtrack.datatype="discrete"
 				else:
 					newtrack.datatype="discrete"
+
 				
 #				try:
 #					colourslist[x]=map(float,colourslist[x])
@@ -4417,6 +4477,8 @@ if __name__ == "__main__":
 						h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
 						v=v_start+(proportion*(v_end-v_start))
 						s=s_start+(proportion*(s_end-s_start))
+						if h<0:
+							h=1.0+h
 						red, green, blue = hsv_to_rgb(h,s,v)
 						colour_dict[x][name]=(float(red)*255, float(green)*255, float(blue)*255)
 						
@@ -4436,13 +4498,15 @@ if __name__ == "__main__":
 					if newtrack.datatype=="discrete":
 						for y, name in enumerate(colourslist[x]):
 							proportion=(float(y)/(len(colourslist[x])-1))
-
 							h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
 							v=v_start+(proportion*(v_end-v_start))
 							s=s_start+(proportion*(s_end-s_start))
+							if h<0:
+								h=1.0+h
 							red, green, blue = hsv_to_rgb(h,s,v)
 							colour_dict[x][name]=(float(red)*255, float(green)*255, float(blue)*255)
 							newtrack.key_data.append([name, colors.Color(float(red), float(green), float(blue))])
+							
 					
 					
 				if options.show_metadata_key and not colour_column_names[x].split(":")[0] in found_keys:
