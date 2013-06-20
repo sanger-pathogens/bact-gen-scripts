@@ -1274,6 +1274,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-gubbins_length), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 				#d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 			
+			
 			for x, name_colour in enumerate(name_colours[colpos:]):
 #				if options.aligntaxa==1:
 #					if options.names_as_shapes=="circle":
@@ -1389,9 +1390,11 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 		
 		max_block_length=((max_total_block_length-(vertical_scaling_factor*((len(colour_dict)-1)+colblockstart)))/len(colour_dict))	
 		
-		if max_block_length<vertical_scaling_factor:
-			print ("Not enough space to draw your metadata colour columns")
+		if max_block_length<vertical_scaling_factor and max_block_length<2:
+			print "Not enough space to draw your metadata colour columns"
+			print max_block_length, vertical_scaling_factor
 			sys.exit()
+			
 		
 		if options.names_as_shapes in ["circle", "square"]:
 			block_length=vertical_scaling_factor
@@ -3461,33 +3464,39 @@ if __name__ == "__main__":
 			if options.transformation in ["acctran", "deltran"]:
 				parsimony_reconstruction(tree, namecolours, colour_dict[0], transformation=options.transformation)
 			
+		
+		#######This part outputs html colours for metadata. Can be used in Circos
+		
 				
-		def RGBToHTMLColor(rgb_tuple):
-			""" convert an (R, G, B) tuple to #RRGGBB """
-			hexcolor = '#%02x%02x%02x' % rgb_tuple
-			# that's it! '%02x' means zero-padded, 2-digit hex values
-			return hexcolor	
-		
-		print "LABELS,"+",".join(colour_column_names)
-			
-		dataforcircos={}
-	
-		for n in treenames:
-			dataforcircos[n]=[]
-		
-			for x in xrange(len(colourslist)):
-				if namecolours[n][x]=="-":
-					dataforcircos[n].append("#ffffff")
-				else:
-					dataforcircos[n].append(RGBToHTMLColor(colour_dict[x][namecolours[n][x]]))		
-		
-		
-		
-		for x in dataforcircos:
-			print x+","+",".join(dataforcircos[x])
+#		def RGBToHTMLColor(rgb_tuple):
+#			""" convert an (R, G, B) tuple to #RRGGBB """
+#			hexcolor = '#%02x%02x%02x' % rgb_tuple
+#			# that's it! '%02x' means zero-padded, 2-digit hex values
+#			return hexcolor	
+#		
+#		print "LABELS,"+",".join(colour_column_names)
+#			
+#		dataforcircos={}
+#	
+#		for n in treenames:
+#			dataforcircos[n]=[]
+#		
+#			for x in xrange(len(colourslist)):
+#				if namecolours[n][x]=="-":
+#					dataforcircos[n].append("#ffffff")
+#				else:
+#					dataforcircos[n].append(RGBToHTMLColor(colour_dict[x][namecolours[n][x]]))		
+#		
+#		
+#		
+#		for x in dataforcircos:
+#			print x+","+",".join(dataforcircos[x])
 				
 				
-				
+		#########	
+		
+		
+		
 		
 		
 	elif options.taxon_list!="":
