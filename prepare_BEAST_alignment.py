@@ -202,15 +202,21 @@ if __name__ == "__main__":
 		elif numbases==1:
 			if foundbases.keys()[0] in constants:
 				constants[foundbases.keys()[0]]+=1
+			else:
+				constants[foundbases.keys()[0]]=0
+				constants[foundbases.keys()[0]]+=1
 	
 	
 	print "Done"
 	print "Found", len(snplocations)-Ncount, "sites with a SNP"
 	if not options.nons:
-		print "Found a further ", Ncount, "sites with a no SNP, but at least one N"
+		print "Found a further ", Ncount, "sites with no SNP, but at least one N"
 	print "Constant bases:"
-
-	for base in ["A","C","G","T"]:
+	
+	sortbase=foundbases.keys()
+	sortbase.sort()
+	
+	for base in sortbase:
 		print base+":", constants[base]
 	print
 	sys.stdout.flush()
