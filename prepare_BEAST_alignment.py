@@ -213,7 +213,7 @@ if __name__ == "__main__":
 		print "Found a further ", Ncount, "sites with no SNP, but at least one N"
 	print "Constant bases:"
 	
-	sortbase=foundbases.keys()
+	sortbase=constants.keys()
 	sortbase.sort()
 	
 	for base in sortbase:
