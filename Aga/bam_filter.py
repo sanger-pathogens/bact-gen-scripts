@@ -100,7 +100,7 @@ def print_read_to_file(out, samread, format, sammate=False, mateout=False):
 	if sammate and sammate.is_reverse:
 		sammateseq=revcomp(sammate.seq)
 		sammatequal=sammate.qual[::-1]
-	elif sammate!=False:
+	elif sammate:
 		sammateseq=sammate.seq
 		sammatequal=sammate.qual
 		
@@ -111,6 +111,8 @@ def print_read_to_file(out, samread, format, sammate=False, mateout=False):
 		print >>out, ">"+samread.qname
 		print >>out, samreadseq
 	elif format=="fastq":
+		if not samread.is_paired:
+			samname="@"+samread.qname
 		if samread.is_read1:
 			samname="@"+samread.qname+"/1"
 		elif samread.is_read2:

@@ -96,38 +96,52 @@ if __name__ == "__main__":
 			while pileupcolumn.pos!=lastcolumn+1:
 				#print lastcolumn, pileupcolumn.pos
 				poscount+=1
-				if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
-					print >> output, ' '.join([str(poscount), "0", "0"])
-				else:
-					print >> output, ' '.join([str(poscount), "0"])
+#				if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+#					print >> output, ' '.join([str(poscount), "0", "0"])
+#				else:
+#					print >> output, ' '.join([str(poscount), "0"])
 				lastcolumn+=1
 				zerocount+=1
 			poscount+=1
-			if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
-				#print str(pileupcolumn)
-				filtered_depth=0
-				for pileupread in pileupcolumn.pileups:
-					#print pileupread.alignment
-					q=ord(pileupread.alignment.qual[pileupread.qpos])-33
-					Q=pileupread.alignment.mapq
-					#print q, Q, options.base_qual_filter, options.mapping_qual_filter
-					if q>=options.base_qual_filter and Q>=options.mapping_qual_filter:
-						filtered_depth+=1
-				print >> output, ' '.join([str(poscount), str(filtered_depth), str(pileupcolumn.n-filtered_depth)])
-				#sys.exit()
-			else:
-				print >> output, ' '.join([str(poscount), str(pileupcolumn.n)])
+			if pileupcolumn.n>0:
+				if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+					#print str(pileupcolumn)
+					filtered_depth=0
+					for pileupread in pileupcolumn.pileups:
+						#print pileupread.alignment
+						q=ord(pileupread.alignment.qual[pileupread.qpos])-33
+						Q=pileupread.alignment.mapq
+						#print q, Q, options.base_qual_filter, options.mapping_qual_filter
+						if q>=options.base_qual_filter and Q>=options.mapping_qual_filter:
+							filtered_depth+=1
+					print >> output, ' '.join([str(poscount), str(filtered_depth), str(pileupcolumn.n-filtered_depth)])
+					#sys.exit()
+				else:
+					print >> output, ' '.join([str(poscount), str(pileupcolumn.n)])
 			lastcolumn=pileupcolumn.pos
 		
-		while lastcolumn+1<lengths[x]:
+#		while lastcolumn+1<lengths[x]:
+#			poscount+=1
+#			if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+#				print >> output, ' '.join([str(poscount), "0", "0"])
+#			else:
+#				print >> output, ' '.join([str(poscount), "0"])
+#			lastcolumn+=1
+#			zerocount+=1
+		#print len(depths)
+		while lastcolumn<lengths[x]:
 			poscount+=1
-			if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
-				print >> output, ' '.join([str(poscount), "0", "0"])
-			else:
-				print >> output, ' '.join([str(poscount), "0"])
+#			if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+#				print >> output, ' '.join([str(poscount), "0", "0"])
+#			else:
+#				print >> output, ' '.join([str(poscount), "0"])
 			lastcolumn+=1
 			zerocount+=1
-		#print len(depths)
+		if lastcolumn==lengths[x]:
+			if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
+				print >> output, ' '.join([str(lengths[x]), "0", "0"])
+			else:
+				print >> output, ' '.join([str(lengths[x]), "0"])
 	
 	
 	output.close()
