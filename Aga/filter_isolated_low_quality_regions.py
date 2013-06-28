@@ -56,6 +56,7 @@ if __name__ == "__main__":
 	inredblock=False
 	blocklines=[]
 	redcount=0
+	lastlinenum=0
 	print >> output, "#Base\tCoverage"
 	for line in open(filename, "rU"):
 		line=line.strip()
@@ -74,7 +75,15 @@ if __name__ == "__main__":
 				print "Invalid value in row"
 				sys.exit()
 			
-			if values[1]>0:
+			
+			if values[0]!=lastlinenum+1:
+				if inredblock:
+					for blockline in blocklines:
+						print >> output, str(blockline[0])+"\t"+str(blockline[1]+blockline[2])
+				inredblock=False
+				redcount=0
+				blocklines=[]
+			elif values[1]>0:
 				blocklines.append(values)
 				redcount+=1
 				if redcount==100:
@@ -89,6 +98,8 @@ if __name__ == "__main__":
 				inredblock=False
 				redcount=0
 				blocklines=[]
+				
+			lastlinenum=values[0]
 		
 			
 	if inredblock:

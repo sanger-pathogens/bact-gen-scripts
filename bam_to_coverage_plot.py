@@ -87,12 +87,18 @@ if __name__ == "__main__":
 		print >> output, ' '.join(["#BASE", "High_Quality_Coverage", "Low_Quality_Coverage"])
 	else:
 		print >> output, ' '.join(["#BASE", "Coverage"])
+	
+	totlen=0
+	
 	for x, ref in enumerate(refs):
 		print ref
+		totlen+=lengths[x]
 		lastcolumn=-1
 		zerocount=0
 		for pileupcolumn in samfile.pileup(ref):
 			
+			poscount+=1
+			print pileupcolumn.pos, lastcolumn+1, poscount
 			while pileupcolumn.pos!=lastcolumn+1:
 				#print lastcolumn, pileupcolumn.pos
 				poscount+=1
@@ -102,7 +108,7 @@ if __name__ == "__main__":
 #					print >> output, ' '.join([str(poscount), "0"])
 				lastcolumn+=1
 				zerocount+=1
-			poscount+=1
+			
 			if pileupcolumn.n>0:
 				if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
 					#print str(pileupcolumn)
@@ -129,7 +135,8 @@ if __name__ == "__main__":
 #			lastcolumn+=1
 #			zerocount+=1
 		#print len(depths)
-		while lastcolumn<lengths[x]:
+		print poscount, totlen, lengths[x], lastcolumn
+		while lastcolumn+1<lengths[x]:
 			poscount+=1
 #			if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
 #				print >> output, ' '.join([str(poscount), "0", "0"])
@@ -137,11 +144,14 @@ if __name__ == "__main__":
 #				print >> output, ' '.join([str(poscount), "0"])
 			lastcolumn+=1
 			zerocount+=1
-		if lastcolumn==lengths[x]:
+		print poscount
+		if lastcolumn+1==lengths[x]:
 			if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
-				print >> output, ' '.join([str(lengths[x]), "0", "0"])
+				print >> output, ' '.join([str(totlen), "0", "0"])
 			else:
-				print >> output, ' '.join([str(lengths[x]), "0"])
-	
+				print >> output, ' '.join([str(totlen), "0"])
+		
+#		if ref=="5463_3#11_shuffled_141_cov_6":
+#			sys.exit()
 	
 	output.close()
