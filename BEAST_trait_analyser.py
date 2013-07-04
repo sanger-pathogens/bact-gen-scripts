@@ -95,15 +95,74 @@ def read_dendropy_tree(treefile):
 			count+=1
 			print count
 			sys.stdout.flush()
+			
+			
+			
 			for node in tree.preorder_node_iter():
+#				if not hasattr(node, 'annotations'):
+#					continue
 				if node.parent_node:
-					if options.trait in node.comment_metadata:
-						if not node.comment_metadata[options.trait] in trait_data:
-							trait_data[node.comment_metadata[options.trait]]=[]
+#					print dir(node)
+#					print node.comments
+#					print node.annotations
+#					sys.exit()
+					
+					for x, a in enumerate(node.annotations):
+						if isinstance(a.value, str):
+							a.value=a.value.replace('"','')
+							try:
+								node.annotations[x].value=float(a.value)
+							except:
+								node.annotations[x].value=a.value
+						elif isinstance(a.value, list):
+							for y in xrange(len(a.value)):
+								if isinstance(a.value[y], str):
+									a.value[y]=a.value[y].replace('"','')
+									node.annotations[x].value[y]=a.value[y]
+							
+							try:
+								node.annotations[x].value=map(float,node.annotations[x].value)
+							except:	
+								break
+					
+					#print a.label, a.value, a.name
+					annotations={}
+					for a in node.annotations:
+						annotations[a.name]=a.value
+						
+					
+					for x, a in enumerate(node.parent_node.annotations):
+						if isinstance(a.value, str):
+							a.value=a.value.replace('"','')
+							try:
+								node.parent_node.annotations[x].value=float(a.value)
+							except:
+								node.parent_node.annotations[x].value=a.value
+						elif isinstance(a.value, list):
+							for y in xrange(len(a.value)):
+								if isinstance(a.value[y], str):
+									a.value[y]=a.value[y].replace('"','')
+									node.parent_node.annotations[x].value[y]=a.value[y]
+							
+							try:
+								node.parent_node.annotations[x].value=map(float,node.parent_node.annotations[x].value)
+							except:	
+								break
+					
+					#print a.label, a.value, a.name
+					parent_annotations={}
+					for a in node.parent_node.annotations:
+						parent_annotations[a.name]=a.value
+
+						
+					
+					if options.trait in annotations:
+						if not annotations[options.trait] in trait_data:
+							trait_data[annotations[options.trait]]=[]
 						if options.value!="":
-							if options.value in node.comment_metadata:
+							if options.value in annotations:
 								try:
-									trait_data[node.comment_metadata[options.trait]].append(float(node.comment_metadata[options.value]))
+									trait_data[annotations[options.trait]].append(float(annotations[options.value]))
 								except StandardError:
 									print options.value, "is not numeric... aborting"
 									sys.exit()
@@ -111,8 +170,8 @@ def read_dendropy_tree(treefile):
 								print "No metadata named", options.value, " found on node... aborting"
 								sys.exit()
 						if options.count_changes:
-							parent_state=node.parent_node.comment_metadata[options.trait]
-							daughter_state=node.comment_metadata[options.trait]
+							parent_state=parent_annotations[options.trait]
+							daughter_state=annotations[options.trait]
 							if not parent_state in state_changes:
 								state_changes[parent_state]={}
 							if not daughter_state in state_changes[parent_state]:
@@ -128,6 +187,8 @@ def read_dendropy_tree(treefile):
 			#print dir(tree)
 #			if count>999:
 #				break
+		
+#		print state_changes, trait_data
 		
 		if count==0:
 			print "No trees visited. Perhaps you subsampled too much?"
