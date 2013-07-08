@@ -122,35 +122,39 @@ if __name__ == "__main__":
 	regions=[]
 	
 	for line in open(tabfile, 'rU'):
-		if len(line.split())>2 and line.split()[0]=="FT" and (line.split()[1].lower() in ["misc_feature", "cds", "mobile_element", "fasta_record"]):
-			if len(line.split()[2].split('..'))==1:
-				start=int(line.split()[2])
-				end=start
-				regions.append([start-1,end-1,"f"])
-			elif line.split()[2][:10]=="complement":
-				line=line.replace(")","").replace("complement(", "")
-				
-				if int(line.split()[2].split('..')[0])<int(line.split()[2].split('..')[1]):
-					start=int(line.split()[2].split('..')[0])
-					end=int(line.split()[2].split('..')[1])
+		try:
+			if len(line.split())>2 and line.split()[0]=="FT" and (line.split()[1].lower() in ["misc_feature", "cds", "mobile_element", "fasta_record"]):
+				if len(line.split()[2].split('..'))==1:
+					start=int(line.split()[2])
+					end=start
+					regions.append([start-1,end-1,"f"])
+				elif line.split()[2][:10]=="complement":
+					line=line.replace(")","").replace("complement(", "")
+					
+					if int(line.split()[2].split('..')[0])<int(line.split()[2].split('..')[1]):
+						start=int(line.split()[2].split('..')[0])
+						end=int(line.split()[2].split('..')[1])
+					else:
+						start=int(line.split()[2].split('..')[1])
+						end=int(line.split()[2].split('..')[2])
+					
+					regions.append([start-1,end-1,"r"])
 				else:
-					start=int(line.split()[2].split('..')[1])
-					end=int(line.split()[2].split('..')[2])
-				
-				regions.append([start-1,end-1,"r"])
-			else:
-				if int(line.split()[2].split('..')[0])<int(line.split()[2].split('..')[1]):
-					start=int(line.split()[2].split('..')[0])
-					end=int(line.split()[2].split('..')[1])
-				else:
-					start=int(line.split()[2].split('..')[1])
-					end=int(line.split()[2].split('..')[2])
-				regions.append([start-1,end-1,"f"])
+					if int(line.split()[2].split('..')[0])<int(line.split()[2].split('..')[1]):
+						start=int(line.split()[2].split('..')[0])
+						end=int(line.split()[2].split('..')[1])
+					else:
+						start=int(line.split()[2].split('..')[1])
+						end=int(line.split()[2].split('..')[0])
+					regions.append([start-1,end-1,"f"])
+		except StandardError:
+			print line.split()
+			sys.exit()
 	
 	print "Found", len(regions), "regions"
 	
 	
-	
+	regions.sort()
 	
 	
 	sequences={}
@@ -200,6 +204,8 @@ if __name__ == "__main__":
 				DoError("One of your regions has locations outside of the reference sequence length")
 			region[0]=reftoaln[region[0]]
 			region[1]=reftoaln[region[1]]
+			if region[0]>region[1]:
+				DoError("coordinated are the wrong way around")
 	regions.sort()
 	reftoaln=''
 	#sys.exit()
@@ -208,7 +214,15 @@ if __name__ == "__main__":
 		if not refrem and name==reference:
 			return name, sequence
 		newsequence=''
+		lastregionend=0
+		distsincelastgoodblock=1
 		for x, region in enumerate(regions):
+			if region[1]<=lastregionend:
+				distsincelastgoodblock+=1
+				continue
+			if region[0]<=lastregionend:
+				region[0]=lastregionend
+			
 			if keepremove=='k':
 				if region[2]=="f":
 					newsequence=newsequence+sequence[region[0]:region[1]+1]
@@ -218,16 +232,23 @@ if __name__ == "__main__":
 				if x==0:
 					newsequence=newsequence+sequence[:region[0]]
 				else:
-					newsequence=newsequence+sequence[regions[x-1][1]+1:region[0]]
+					newsequence=newsequence+sequence[regions[x-distsincelastgoodblock][1]+1:region[0]]
 				if x==len(regions)-1:
 					newsequence=newsequence+sequence[region[1]+1:]
 			else:
 				if x==0:
 					newsequence=newsequence+sequence[:region[0]]+symbol*(region[1]+1-region[0])
 				else:
-					newsequence=newsequence+sequence[regions[x-1][1]+1:region[0]]+symbol*(region[1]+1-region[0])
+					newsequence=newsequence+sequence[regions[x-distsincelastgoodblock][1]+1:region[0]]+symbol*(region[1]+1-region[0])
 				if x==len(regions)-1:
 					newsequence=newsequence+sequence[region[1]+1:]
+#			if len(newsequence)!=region[1]+1:
+#				print region, len(newsequence), lastregionend
+#				sys.exit()
+#			else:
+#				print region, len(newsequence), "OK"
+			lastregionend=region[1]
+			distsincelastgoodblock=1
 		return name, newsequence
 	
 	lines=[]

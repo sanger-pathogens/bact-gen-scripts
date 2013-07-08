@@ -24,7 +24,7 @@ ambiguity_to_bases={"A":["A"], "C":["C"], "T":["T"], "G":["G"], "M":["A", "C"], 
 bases_to_ambiguity={"A":"A", "C":"C", "T":"T", "G":"G", "AC":"M", "GT":"K", "AG":"R", "CT":"Y", "CG":"S", "AT":"W", "CGT":"B", "ACG":"V", "ACT":"H", "AGT":"D", "ACGT":"N", "-":"-", "?":"N", "X":"N", "-A":"a", "-C":"c", "-T":"t", "-G":"g", "-AC":"m", "-GT":"k", "-AG":"r", "-CT":"y", "-CG":"s", "-AT":"w", "-CGT":"b", "-ACG":"v", "-ACT":"h", "-AGT":"d", "-ACGT":"N"}
 
 
-transition_matrix={"A":{"A":0, "C":1, "G":1, "T":1, "-":1}, "C":{"A":1, "C":0, "G":1, "T":1, "-":1}, "G":{"A":1, "C":1, "G":0, "T":1, "-":1}, "T":{"A":1, "C":1, "G":1, "T":0, "-":1}, "-":{"A":1, "C":1, "G":1, "T":1, "-":0}}
+transition_matrix={"A":{"A":0, "C":1, "G":1, "T":1, "-":1, "N":0}, "C":{"A":1, "C":0, "G":1, "T":1, "-":1, "N":0}, "G":{"A":1, "C":1, "G":0, "T":1, "-":1, "N":0}, "T":{"A":1, "C":1, "G":1, "T":0, "-":1, "N":0}, "-":{"A":1, "C":1, "G":1, "T":1, "-":0, "N":0}, "N":{"A":0, "C":0, "G":0, "T":0, "-":0, "N":0}}
 
 four_bases=["A", "C", "G", "T"]
 missing_data_and_gaps=["N", "?", "-"]
@@ -1341,6 +1341,8 @@ def parsimonious_sequence_reconstruction(treeObject, alignmentObject, transforma
 			
 			if len(min_cost_states)>1 and "-" in min_cost_states:
 				min_cost_states.remove("-")
+			if len(min_cost_states)>1 and "N" in min_cost_states:
+				min_cost_states.remove("N")
 			
 			if len(min_cost_states)>1:# and transformation=="deltran":
 				
@@ -1421,6 +1423,8 @@ def parsimonious_sequence_reconstruction(treeObject, alignmentObject, transforma
 			
 			if len(min_cost_states)>1 and "-" in min_cost_states:
 				min_cost_states.remove("-")
+			if len(min_cost_states)>1 and "N" in min_cost_states:
+				min_cost_states.remove("N")
 			
 			if len(min_cost_states)>1:
 			
@@ -1486,6 +1490,8 @@ def parsimonious_sequence_reconstruction(treeObject, alignmentObject, transforma
 					node_data.comment["sequence"][sitenumber]="-"
 					
 					treeObject.node(node).set_data(node_data)
+				if len(min_cost_states)>1 and "N" in min_cost_states:
+					min_cost_states.remove("N")
 		
 		
 		
@@ -1513,6 +1519,9 @@ def parsimonious_sequence_reconstruction(treeObject, alignmentObject, transforma
 					daughter_data.comment["sequence"][sitenumber]="-"
 					
 					treeObject.node(daughter).set_data(daughter_data)
+					
+				if len(min_cost_states)>1 and "N" in min_cost_states:
+					min_cost_states.remove("N")
 				
 				
 				
