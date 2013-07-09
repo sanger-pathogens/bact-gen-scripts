@@ -56,7 +56,7 @@ BCFTOOLS_DIR="/nfs/users/nfs_s/sh16/samtools-0.1.17/bcftools/"
 pagesizeconverter={'A0':pagesizes.A0, 'A1':pagesizes.A1, 'A2':pagesizes.A2, 'A3':pagesizes.A3, 'A4':pagesizes.A4, 'A5':pagesizes.A5, 'A6':pagesizes.A6, 'B0':pagesizes.B0, 'B1':pagesizes.B1, 'B2':pagesizes.B2, 'B3':pagesizes.B3, 'B4':pagesizes.B4, 'B5':pagesizes.B5, 'B6':pagesizes.B6, 'LEGAL':pagesizes.LEGAL, 'LETTER':pagesizes.LETTER, 'landscape':pagesizes.landscape, 'legal':pagesizes.legal, 'letter':pagesizes.letter, 'portrait':pagesizes.portrait}
 
 
-colourconverter={'aliceblue':colors.aliceblue, 'antiquewhite':colors.antiquewhite, 'aqua':colors.aqua, 'aquamarine':colors.aquamarine, 'azure':colors.azure, 'beige':colors.beige, 'bisque':colors.bisque, 'black':colors.black, 'blanchedalmond':colors.blanchedalmond, 'blue':colors.blue, 'blueviolet':colors.blueviolet, 'brown':colors.brown, 'burlywood':colors.burlywood, 'cadetblue':colors.cadetblue, 'chartreuse':colors.chartreuse, 'chocolate':colors.chocolate, 'coral':colors.coral, 'cornflower':colors.cornflower, 'cornflowerblue':colors.cornflowerblue, 'cornsilk':colors.cornsilk, 'crimson':colors.crimson, 'cyan':colors.cyan, 'darkblue':colors.darkblue, 'darkcyan':colors.darkcyan, 'darkgoldenrod':colors.darkgoldenrod, 'darkgray':colors.darkgray, 'darkgreen':colors.darkgreen, 'darkgrey':colors.darkgrey, 'darkkhaki':colors.darkkhaki, 'darkmagenta':colors.darkmagenta, 'darkolivegreen':colors.darkolivegreen, 'darkorange':colors.darkorange, 'darkorchid':colors.darkorchid, 'darkred':colors.darkred, 'darksalmon':colors.darksalmon, 'darkseagreen':colors.darkseagreen, 'darkslateblue':colors.darkslateblue, 'darkslategray':colors.darkslategray, 'darkslategrey':colors.darkslategrey, 'darkturquoise':colors.darkturquoise, 'darkviolet':colors.darkviolet, 'deeppink':colors.deeppink, 'deepskyblue':colors.deepskyblue, 'dimgray':colors.dimgray, 'dimgrey':colors.dimgrey, 'dodgerblue':colors.dodgerblue, 'fidblue':colors.fidblue, 'fidlightblue':colors.fidlightblue, 'fidred':colors.fidred, 'firebrick':colors.floralwhite, 'floralwhite':colors.floralwhite, 'forestgreen':colors.forestgreen, 'fuchsia':colors.fuchsia, 'gainsboro':colors.gainsboro, 'ghostwhite':colors.ghostwhite, 'gold':colors.gold, 'goldenrod':colors.goldenrod, 'gray':colors.gray, 'green':colors.green, 'greenyellow':colors.greenyellow, 'grey':colors.grey, 'honeydew':colors.honeydew, 'hotpink':colors.hotpink, 'indianred':colors.indianred, 'indigo':colors.indigo, 'ivory':colors.ivory, 'khaki':colors.khaki, 'lavender':colors.lavender, 'lavenderblush':colors.lavenderblush, 'lawngreen':colors.lawngreen, 'lemonchiffon':colors.lemonchiffon, 'lightblue':colors.lightblue, 'lightcoral':colors.lightcoral, 'lightcyan':colors.lightcyan, 'lightgoldenrodyellow':colors.lightgoldenrodyellow, 'lightgreen':colors.lightgreen, 'lightgrey':colors.lightgrey, 'lightpink':colors.lightpink, 'lightsalmon':colors.lightsalmon, 'lightseagreen':colors.lightseagreen, 'lightskyblue':colors.lightskyblue, 'lightslategray':colors.lightslategray, 'lightslategrey':colors.lightslategrey, 'lightsteelblue':colors.lightsteelblue, 'lightyellow':colors.lightyellow, 'lime':colors.lime, 'limegreen':colors.limegreen, 'linen':colors.linen, 'magenta':colors.magenta, 'maroon':colors.maroon, 'math':colors.math, 'mediumaquamarine':colors.mediumaquamarine, 'mediumblue':colors.mediumblue, 'mediumorchid':colors.mediumorchid, 'mediumpurple':colors.mediumpurple, 'mediumseagreen':colors.mediumseagreen, 'mediumslateblue':colors.mediumslateblue, 'mediumspringgreen':colors.mediumspringgreen, 'mediumturquoise':colors.mediumturquoise, 'mediumvioletred':colors.mediumvioletred, 'midnightblue':colors.midnightblue, 'mintcream':colors.mintcream, 'mistyrose':colors.mistyrose, 'moccasin':colors.moccasin, 'navajowhite':colors.navajowhite, 'navy':colors.navy , 'oldlace':colors.oldlace, 'olive':colors.olive, 'olivedrab':colors.olivedrab, 'orange':colors.orange, 'orangered':colors.orangered, 'orchid':colors.orchid, 'palegoldenrod':colors.palegoldenrod, 'palegreen':colors.palegreen, 'paleturquoise':colors.paleturquoise, 'palevioletred':colors.palevioletred, 'papayawhip':colors.papayawhip, 'peachpuff':colors.peachpuff, 'peru':colors.peru, 'pink':colors.pink, 'plum':colors.plum, 'powderblue':colors.powderblue, 'purple':colors.purple, 'red':colors.red, 'rosybrown':colors.rosybrown, 'royalblue':colors.royalblue, 'saddlebrown':colors.saddlebrown, 'salmon':colors.salmon, 'sandybrown':colors.sandybrown, 'seagreen':colors.seagreen, 'seashell':colors.seashell, 'sienna':colors.sienna, 'silver':colors.silver, 'skyblue':colors.skyblue, 'slateblue':colors.slateblue, 'slategray':colors.slategray, 'slategrey':colors.slategrey, 'snow':colors.snow, 'springgreen':colors.springgreen, 'steelblue':colors.steelblue, 'tan':colors.tan, 'teal':colors.teal, 'thistle':colors.thistle, 'tomato':colors.tomato, 'turquoise':colors.turquoise, 'violet':colors.violet, 'wheat':colors.wheat, 'white':colors.white, 'whitesmoke':colors.whitesmoke, 'yellow':colors.yellow, 'yellowgreen':colors.yellowgreen}
+colourconverter={'aliceblue':colors.aliceblue, 'antiquewhite':colors.antiquewhite, 'aqua':colors.aqua, 'aquamarine':colors.aquamarine, 'azure':colors.azure, 'beige':colors.beige, 'bisque':colors.bisque, 'black':colors.black, 'blanchedalmond':colors.blanchedalmond, 'blue':colors.blue, 'blueviolet':colors.blueviolet, 'brown':colors.brown, 'burlywood':colors.burlywood, 'cadetblue':colors.cadetblue, 'chartreuse':colors.chartreuse, 'chocolate':colors.chocolate, 'coral':colors.coral, 'cornflower':colors.cornflower, 'cornflowerblue':colors.cornflowerblue, 'cornsilk':colors.cornsilk, 'crimson':colors.crimson, 'cyan':colors.cyan, 'darkblue':colors.darkblue, 'darkcyan':colors.darkcyan, 'darkgoldenrod':colors.darkgoldenrod, 'darkgray':colors.darkgray, 'darkgreen':colors.darkgreen, 'darkgrey':colors.darkgrey, 'darkkhaki':colors.darkkhaki, 'darkmagenta':colors.darkmagenta, 'darkolivegreen':colors.darkolivegreen, 'darkorange':colors.darkorange, 'darkorchid':colors.darkorchid, 'darkred':colors.darkred, 'darksalmon':colors.darksalmon, 'darkseagreen':colors.darkseagreen, 'darkslateblue':colors.darkslateblue, 'darkslategray':colors.darkslategray, 'darkslategrey':colors.darkslategrey, 'darkturquoise':colors.darkturquoise, 'darkviolet':colors.darkviolet, 'deeppink':colors.deeppink, 'deepskyblue':colors.deepskyblue, 'dimgray':colors.dimgray, 'dimgrey':colors.dimgrey, 'dodgerblue':colors.dodgerblue, 'fidblue':colors.fidblue, 'fidlightblue':colors.fidlightblue, 'fidred':colors.fidred, 'firebrick':colors.floralwhite, 'floralwhite':colors.floralwhite, 'forestgreen':colors.forestgreen, 'fuchsia':colors.fuchsia, 'gainsboro':colors.gainsboro, 'ghostwhite':colors.ghostwhite, 'gold':colors.gold, 'goldenrod':colors.goldenrod, 'gray':colors.gray, 'green':colors.green, 'greenyellow':colors.greenyellow, 'grey':colors.grey, 'honeydew':colors.honeydew, 'hotpink':colors.hotpink, 'indianred':colors.indianred, 'indigo':colors.indigo, 'ivory':colors.ivory, 'khaki':colors.khaki, 'lavender':colors.lavender, 'lavenderblush':colors.lavenderblush, 'lawngreen':colors.lawngreen, 'lemonchiffon':colors.lemonchiffon, 'lightblue':colors.lightblue, 'lightcoral':colors.lightcoral, 'lightcyan':colors.lightcyan, 'lightgoldenrodyellow':colors.lightgoldenrodyellow, 'lightgreen':colors.lightgreen, 'lightgrey':colors.lightgrey, 'lightpink':colors.lightpink, 'lightsalmon':colors.lightsalmon, 'lightseagreen':colors.lightseagreen, 'lightskyblue':colors.lightskyblue, 'lightslategray':colors.lightslategray, 'lightslategrey':colors.lightslategrey, 'lightsteelblue':colors.lightsteelblue, 'lightyellow':colors.lightyellow, 'lime':colors.lime, 'limegreen':colors.limegreen, 'linen':colors.linen, 'magenta':colors.magenta, 'maroon':colors.maroon, 'mediumaquamarine':colors.mediumaquamarine, 'mediumblue':colors.mediumblue, 'mediumorchid':colors.mediumorchid, 'mediumpurple':colors.mediumpurple, 'mediumseagreen':colors.mediumseagreen, 'mediumslateblue':colors.mediumslateblue, 'mediumspringgreen':colors.mediumspringgreen, 'mediumturquoise':colors.mediumturquoise, 'mediumvioletred':colors.mediumvioletred, 'midnightblue':colors.midnightblue, 'mintcream':colors.mintcream, 'mistyrose':colors.mistyrose, 'moccasin':colors.moccasin, 'navajowhite':colors.navajowhite, 'navy':colors.navy , 'oldlace':colors.oldlace, 'olive':colors.olive, 'olivedrab':colors.olivedrab, 'orange':colors.orange, 'orangered':colors.orangered, 'orchid':colors.orchid, 'palegoldenrod':colors.palegoldenrod, 'palegreen':colors.palegreen, 'paleturquoise':colors.paleturquoise, 'palevioletred':colors.palevioletred, 'papayawhip':colors.papayawhip, 'peachpuff':colors.peachpuff, 'peru':colors.peru, 'pink':colors.pink, 'plum':colors.plum, 'powderblue':colors.powderblue, 'purple':colors.purple, 'red':colors.red, 'rosybrown':colors.rosybrown, 'royalblue':colors.royalblue, 'saddlebrown':colors.saddlebrown, 'salmon':colors.salmon, 'sandybrown':colors.sandybrown, 'seagreen':colors.seagreen, 'seashell':colors.seashell, 'sienna':colors.sienna, 'silver':colors.silver, 'skyblue':colors.skyblue, 'slateblue':colors.slateblue, 'slategray':colors.slategray, 'slategrey':colors.slategrey, 'snow':colors.snow, 'springgreen':colors.springgreen, 'steelblue':colors.steelblue, 'tan':colors.tan, 'teal':colors.teal, 'thistle':colors.thistle, 'tomato':colors.tomato, 'turquoise':colors.turquoise, 'violet':colors.violet, 'wheat':colors.wheat, 'white':colors.white, 'whitesmoke':colors.whitesmoke, 'yellow':colors.yellow, 'yellowgreen':colors.yellowgreen}
 
 
 default_rgb_colours=["blue", "red",  "limegreen", "aqua", "fuchsia", "orange", "green", "gray", "purple", "olive", "teal", "silver", "navy", "maroon", "yellow", "white", "black"]
@@ -4421,7 +4421,9 @@ if __name__ == "__main__":
 							except StandardError:
 								newtrack.datatype="discrete"
 					elif words[1] in ["D", "d"]:
-						newtrack.datatype="discrete"		
+						newtrack.datatype="discrete"
+					elif words[1] in ["U", "u"]:
+						newtrack.datatype="colour"
 					else:
 						newtrack.datatype="discrete"
 				else:
@@ -4443,6 +4445,7 @@ if __name__ == "__main__":
 				if "" in colourslist[x]:
 					colour_dict[x][""]=(0,0,0)
 					colourslist[x].remove("")
+				
 				
 				
 				s_start=control.metadata_colour_start_saturation
@@ -4468,67 +4471,55 @@ if __name__ == "__main__":
 					direction_multiplier=1
 					
 				use_default_colourlist=False
-				if len(colourslist[x])==1 and newtrack.datatype=="discrete":
-#					newtrack.key_data.append([colourslist[x][0], colors.Color(1, 0, 0)])
-#					colour_dict[x][colourslist[x][0]]=(255, 0, 0)
-					use_default_colourlist=True
-				elif len(colourslist[x])==2 and newtrack.datatype=="discrete":
-#					newtrack.key_data.append([colourslist[x][0], colors.Color(0, 0, 1)])
-#					newtrack.key_data.append([colourslist[x][1], colors.Color(1, 0, 0)])
-#					colour_dict[x][colourslist[x][0]]=(0, 0, 255)
-#					colour_dict[x][colourslist[x][1]]=(255, 0, 0)
-					use_default_colourlist=True
-				if newtrack.datatype=="continuous":
-					
-					if control.use_default_colourlist:
+				
+				if newtrack.datatype=="colour":
+					try:
+						for name in colourslist[x]:
+							colour_dict[x][name]=(float(colourconverter[name].red)*255, float(colourconverter[name].green)*255, float(colourconverter[name].blue)*255)
+							newtrack.key_data.append([name, colourconverter[name]])
+					except StandardError:
+						print "Unknown colour in", colour_column_names[x].split(":")[0], "column:", name
+						sys.exit()
+						print "Failed to read column colours. Treating as discrete character"
+						newtrack.datatype=="discrete"
+						colour_dict[x]={}
+						if "" in colourslist[x]:
+							colour_dict[x][""]=(0,0,0)
+						if len(colour_column_names[x].split(":")[0])>0:
+							newtrack.key_data=[["Key ("+colour_column_names[x].split(":")[0]+"):", colors.Color(0, 0, 0)]]
+						else:
+							newtrack.key_data=[["Key:", colors.Color(0, 0, 0)]]
+							
+				if newtrack.datatype!="colour":
+					if len(colourslist[x])==1 and newtrack.datatype=="discrete":
+	#					newtrack.key_data.append([colourslist[x][0], colors.Color(1, 0, 0)])
+	#					colour_dict[x][colourslist[x][0]]=(255, 0, 0)
 						use_default_colourlist=True
-					if use_default_colourlist and newtrack.datamax-newtrack.datamin<=len(default_rgb_colours)-2:
-							for y, name in enumerate(colourslist[x]):
-								colourcode=name-1
-								colour_dict[x][name]=(float(colourconverter[default_rgb_colours[int(colourcode)]].red)*255, float(colourconverter[default_rgb_colours[int(colourcode)]].green)*255, float(colourconverter[default_rgb_colours[int(colourcode)]].blue)*255)
-								newtrack.key_data.append([name, colourconverter[default_rgb_colours[int(colourcode)]]])
-					else:
-						for y, name in enumerate(colourslist[x]):
-							value=name
-							if value<newtrack.datamin:
-								value=newtrack.datamin
-							elif value>newtrack.datamax:
-								value=newtrack.datamax
+					elif len(colourslist[x])==2 and newtrack.datatype=="discrete":
+	#					newtrack.key_data.append([colourslist[x][0], colors.Color(0, 0, 1)])
+	#					newtrack.key_data.append([colourslist[x][1], colors.Color(1, 0, 0)])
+	#					colour_dict[x][colourslist[x][0]]=(0, 0, 255)
+	#					colour_dict[x][colourslist[x][1]]=(255, 0, 0)
+						use_default_colourlist=True
+					if newtrack.datatype=="continuous":
 						
-							proportion=((float(value)-newtrack.datamin)/((newtrack.datamax-newtrack.datamin)))
-							
-							h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
-							v=v_start+(proportion*(v_end-v_start))
-							s=s_start+(proportion*(s_end-s_start))
-							if h<0:
-								h=1.0+h
-							red, green, blue = hsv_to_rgb(h,s,v)
-							colour_dict[x][name]=(float(red)*255, float(green)*255, float(blue)*255)
-							
-						h=(start_angle/360)+(direction_multiplier*(((0.0/360)*rotation_degrees)))
-						v=v_start+(0.0*(v_end-v_start))
-						s=s_start+(0.0*(s_end-s_start))
-						red, green, blue = hsv_to_rgb(h,s,v)
-						newtrack.key_data.append([newtrack.datamin, colors.Color(float(red), float(green), float(blue))])
-						newtrack.key_data.append(["==>", colors.Color(0,0,0)])
-						h=(start_angle/360)+(direction_multiplier*(((1.0/360)*rotation_degrees)))
-						v=v_start+(1.0*(v_end-v_start))
-						s=s_start+(1.0*(s_end-s_start))
-						red, green, blue = hsv_to_rgb(h,s,v)
-						newtrack.key_data.append([newtrack.datamax, colors.Color(float(red), float(green), float(blue))])
-					
-				elif len(colourslist[x])>2:
-					if newtrack.datatype=="discrete":
 						if control.use_default_colourlist:
 							use_default_colourlist=True
-						if use_default_colourlist and len(colourslist[x])<=len(default_rgb_colours)-2:
-							for y, name in enumerate(colourslist[x]):
-								colour_dict[x][name]=(float(colourconverter[default_rgb_colours[y]].red)*255, float(colourconverter[default_rgb_colours[y]].green)*255, float(colourconverter[default_rgb_colours[y]].blue)*255)
-								newtrack.key_data.append([name, colourconverter[default_rgb_colours[y]]])
+						if use_default_colourlist and newtrack.datamax-newtrack.datamin<=len(default_rgb_colours)-2:
+								for y, name in enumerate(colourslist[x]):
+									colourcode=name-1
+									colour_dict[x][name]=(float(colourconverter[default_rgb_colours[int(colourcode)]].red)*255, float(colourconverter[default_rgb_colours[int(colourcode)]].green)*255, float(colourconverter[default_rgb_colours[int(colourcode)]].blue)*255)
+									newtrack.key_data.append([name, colourconverter[default_rgb_colours[int(colourcode)]]])
 						else:
-					
 							for y, name in enumerate(colourslist[x]):
-								proportion=(float(y)/(len(colourslist[x])-1))
+								value=name
+								if value<newtrack.datamin:
+									value=newtrack.datamin
+								elif value>newtrack.datamax:
+									value=newtrack.datamax
+							
+								proportion=((float(value)-newtrack.datamin)/((newtrack.datamax-newtrack.datamin)))
+								
 								h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
 								v=v_start+(proportion*(v_end-v_start))
 								s=s_start+(proportion*(s_end-s_start))
@@ -4536,14 +4527,46 @@ if __name__ == "__main__":
 									h=1.0+h
 								red, green, blue = hsv_to_rgb(h,s,v)
 								colour_dict[x][name]=(float(red)*255, float(green)*255, float(blue)*255)
-								newtrack.key_data.append([name, colors.Color(float(red), float(green), float(blue))])
-							
+								
+							h=(start_angle/360)+(direction_multiplier*(((0.0/360)*rotation_degrees)))
+							v=v_start+(0.0*(v_end-v_start))
+							s=s_start+(0.0*(s_end-s_start))
+							red, green, blue = hsv_to_rgb(h,s,v)
+							newtrack.key_data.append([newtrack.datamin, colors.Color(float(red), float(green), float(blue))])
+							newtrack.key_data.append(["==>", colors.Color(0,0,0)])
+							h=(start_angle/360)+(direction_multiplier*(((1.0/360)*rotation_degrees)))
+							v=v_start+(1.0*(v_end-v_start))
+							s=s_start+(1.0*(s_end-s_start))
+							red, green, blue = hsv_to_rgb(h,s,v)
+							newtrack.key_data.append([newtrack.datamax, colors.Color(float(red), float(green), float(blue))])
+						
+					elif newtrack.datatype=="discrete":
+							if control.use_default_colourlist:
+								use_default_colourlist=True
+							if use_default_colourlist and len(colourslist[x])<=len(default_rgb_colours)-2:
+								for y, name in enumerate(colourslist[x]):
+									colour_dict[x][name]=(float(colourconverter[default_rgb_colours[y]].red)*255, float(colourconverter[default_rgb_colours[y]].green)*255, float(colourconverter[default_rgb_colours[y]].blue)*255)
+									newtrack.key_data.append([name, colourconverter[default_rgb_colours[y]]])
+							else:
+						
+								for y, name in enumerate(colourslist[x]):
+									proportion=(float(y)/(len(colourslist[x])-1))
+									h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
+									v=v_start+(proportion*(v_end-v_start))
+									s=s_start+(proportion*(s_end-s_start))
+									if h<0:
+										h=1.0+h
+									red, green, blue = hsv_to_rgb(h,s,v)
+									colour_dict[x][name]=(float(red)*255, float(green)*255, float(blue)*255)
+									newtrack.key_data.append([name, colors.Color(float(red), float(green), float(blue))])
+								
 					
 					
 				if options.show_metadata_key and not colour_column_names[x].split(":")[0] in found_keys:
 					track_count+=5	
 					my_tracks["metadata_key"+str(x)]=newtrack
 					found_keys.append(colour_column_names[x].split(":")[0])
+	
 	
 	if control.metadata_column_labels:
 		topmargin=topmargin+(float(max_length_col_name)*sin(control.metadata_column_label_angle))
