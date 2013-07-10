@@ -98,7 +98,7 @@ if __name__ == "__main__":
 		for pileupcolumn in samfile.pileup(ref):
 			
 			poscount+=1
-			print pileupcolumn.pos, lastcolumn+1, poscount
+			#print pileupcolumn.pos, lastcolumn+1, poscount
 			while pileupcolumn.pos!=lastcolumn+1:
 				#print lastcolumn, pileupcolumn.pos
 				poscount+=1
