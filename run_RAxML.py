@@ -61,6 +61,8 @@ def main():
 	group.add_option("-d", "--distance", action="store_true", dest="distance", help="Compute pairwise ML distances (GAMMA-based models of ASRV only). Will use a parsimony tree unless you specify a tree with the -T option", default=False)
 	group.add_option("-g", "--constraint", action="store", dest="constraint", help="File name of a multifurcating constraint tree. Does not have to contain all taxa", default="", metavar="FILE")
 	group.add_option("-T", "--tree", action="store", dest="tree", help="File name of a user-specified starting tree", default="", metavar="FILE")
+	group.add_option("-O", "--bsubout", action="store_true", dest="bsubout", help="Save bsub outputs", default=False)
+	group.add_option("-E", "--bsuberr", action="store_true", dest="bsuberr", help="Save bsub errors", default=False)
 	
 	parser.add_option_group(group)
 	
@@ -372,6 +374,12 @@ if __name__ == "__main__":
 	
 	bsubcommand=["bsub"]
 	bsubcommand.append("-q "+options.queue)
+	
+	if options.bsubout:
+		bsubcommand.append("-o "+options.suffix+".bsub.o")
+	if options.bsuberr:
+		bsubcommand.append("-e "+options.suffix+".bsub.e")
+	
 	if options.mem>0:
 		bsubcommand.append("-M "+str(options.mem)+'000000 -R \'select[mem>'+str(options.mem)+'000] rusage[mem='+str(options.mem)+'000]\'')
 		
@@ -438,6 +446,7 @@ if __name__ == "__main__":
 				mlmodel=model
 			
 			sys.stdout.flush()
+			
 			if options.number>1:
 				os.system(bsub+' -J "'+tmpname+'_ml" RAxML -f d -s '+tmpname+'.phy -N '+str(options.number)+' -m '+mlmodel+' -n ml_'+options.suffix)
 			else:
@@ -453,23 +462,39 @@ if __name__ == "__main__":
 			#Run the bootstraps over LSF
 			
 			bootstrapstring="echo 'RAxML -f d -b "+str(randrange(1,9999))+"${LSB_JOBINDEX} -# 1 -m "+model+" -s "+tmpname+".phy -n boot_"+tmpname+"_${LSB_JOBINDEX}'"
+		
 			host=gethostname()
+			bsub=bsub.replace(".bsub.o", ".bootstrap.bsub.o").replace(".bsub.e", ".bootstrap.bsub.e")
 			if host[:4]=="pcs4":
 				os.system(bootstrapstring+' | '+bsub+' -J "'+tmpname+'_boot[1-'+str(numjobs)+']%15"')
 			else:
 				os.system(bootstrapstring+' | '+bsub+' -J "'+tmpname+'_boot[1-'+str(numjobs)+']"')
 				
-			
+			bsub='" | bsub -w \'ended('+tmpname+'_boot)\' -J "'+tmpname+'_cat"'
+			if options.bsubout:
+				bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
+			if options.bsuberr:
+				bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
 			#When all bootstrap replicates are finished, cat them into a single file
-			os.system('echo "cat RAxML_bootstrap.boot_'+tmpname+'* > RAxML_bootstrap.boot_'+options.suffix+'" | bsub -w \'ended('+tmpname+'_boot)\' -J "'+tmpname+'_cat"')
+			os.system('echo "cat RAxML_bootstrap.boot_'+tmpname+'* > RAxML_bootstrap.boot_'+options.suffix+bsub)
 			
 			#When the ml and bootstrap replicates are complete, put the bootstrap numbers onto the nodes of the ml tree
 			if options.number>1:
 				bsubcommand="echo \'x=$(grep \'Best\' RAxML_info.ml_"+options.suffix+" | awk \"{print \$6}\" |tr -d \':\' ) && cp RAxML_result.ml_"+options.suffix+".RUN.${x} RAxML_result.ml_"+options.suffix+" &&  RAxML -f b -t RAxML_result.ml_"+options.suffix+" -z RAxML_bootstrap.boot_"+options.suffix+" -s "+tmpname+".phy -m "+model+" -n "+options.suffix+"'"
 				print bsubcommand
-				os.system(bsubcommand+' | bsub -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\'')
+				bsub=' | bsub -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
+				if options.bsubout:
+					bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
+				if options.bsuberr:
+					bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
+				os.system(bsubcommand+bsub)
 			else:
-				os.system('bsub -M 2000000 -R \'select[mem>2000] rusage[mem=2000]\' -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\' RAxML -f b -t RAxML_result.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
+				bsub='bsub -M 2000000 -R \'select[mem>2000] rusage[mem=2000]\' -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
+				if options.bsubout:
+					bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
+				if options.bsuberr:
+					bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
+				os.system(bsub+' RAxML -f b -t RAxML_result.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
 					
 	
 			#Clean up all temporary files created	
