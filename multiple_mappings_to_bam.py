@@ -464,14 +464,14 @@ class SNPanalysis:
 		
 		if options.GATK:
 			print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/"+self.name+".bam"
-			print >> bashfile, SAMTOOLS_DIR+"samtools view -H", self.runname+"/"+self.name+".bam | sed 's\SO:unknown\SO:coordinate\g' >", self.runname+"/tmphead.sam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools view -H", self.runname+"/"+self.name+".bam | sed 's\SO:unknown\SO:coordinate\g' | sed 's/\x00//g'  >", self.runname+"/tmphead.sam"
 			now = datetime.datetime.now()
 			now = now.replace(microsecond=0)
 			print >> bashfile, 'echo "@RG\tID:'+self.name+'\tCN:Sanger\tDT:'+now.isoformat()+'\tPG:SMALT\tPL:ILLUMINA\tSM:'+self.name+'" >>', self.runname+"/tmphead.sam"
 			if self.domapping and not newsmalt:
 				print >> bashfile, "smaltversion=$( "+SMALT_DIR+" version  | grep Version | awk '{print $2}' )"
 				print >> bashfile, 'echo "@PG\tID:SMALT\tPN:SMALT\tCL:'+' '.join(map(str,cmdline))+'\tVN:$smaltversion" >>', self.runname+'/tmphead.sam'
-			print >> bashfile, SAMTOOLS_DIR+'samtools view -b -H -o', self.runname+'/tmphead.bam', self.runname+"/"+self.name+".bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools view -b -H", self.runname+"/"+self.name+".bam | sed 's/\x00//g'  >", self.runname+'/tmphead.bam'
 			print >> bashfile, SAMTOOLS_DIR+'samtools merge -h ', self.runname+'/tmphead.sam -r', self.runname+"/tmp1.bam", self.runname+"/"+self.name+".bam", self.runname+'/tmphead.bam'
 			print >> bashfile, "rm", self.runname+"/"+self.name+".bam"
 			print >> bashfile, SAMTOOLS_DIR+'samtools sort', self.runname+"/tmp1.bam", self.runname+"/tmpsort"
