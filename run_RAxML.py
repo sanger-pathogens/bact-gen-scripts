@@ -28,7 +28,11 @@ import time
 ####################
 
 
-RAXML_DIR="/software/pathogen/external/applications/RAxML/RAxML-7.0.4/"
+RAxML_DIR="/software/pathogen/external/applications/RAxML/RAxML-7.0.4/raxmlHPC"
+AVX_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-AVX"
+SSE3_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-SSE3"
+AVX_PARALLEL_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-PTHREADS-AVX"
+SSE3_PARALLEL_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-PTHREADS-SSE3"
 
 
 gap_and_missing=set(["-", "N", "?"])
@@ -61,8 +65,6 @@ def main():
 	group.add_option("-d", "--distance", action="store_true", dest="distance", help="Compute pairwise ML distances (GAMMA-based models of ASRV only). Will use a parsimony tree unless you specify a tree with the -T option", default=False)
 	group.add_option("-g", "--constraint", action="store", dest="constraint", help="File name of a multifurcating constraint tree. Does not have to contain all taxa", default="", metavar="FILE")
 	group.add_option("-T", "--tree", action="store", dest="tree", help="File name of a user-specified starting tree", default="", metavar="FILE")
-	group.add_option("-O", "--bsubout", action="store_true", dest="bsubout", help="Save bsub outputs", default=False)
-	group.add_option("-E", "--bsuberr", action="store_true", dest="bsuberr", help="Save bsub errors", default=False)
 	
 	parser.add_option_group(group)
 	
@@ -73,6 +75,10 @@ def main():
 	group = OptionGroup(parser, "LSF options")
 	group.add_option("-q", "--queue", action="store", dest="queue", help="LSF queue [Choices = normal, long, basement, hugemem (farm only)] [Default = %default]", default="normal", type="choice", choices=["normal","long", "basement", "hugemem"])
 	group.add_option("-M", "--memory", action="store", dest="mem", help="Amount of memory required for analysis (Gb). 0 means do not require a memory limit, 10 means ask for at least 10Gb. [Default= %default]", default=0, type="int")
+	group.add_option("-O", "--bsubout", action="store_true", dest="bsubout", help="Save bsub outputs", default=False)
+	group.add_option("-E", "--bsuberr", action="store_true", dest="bsuberr", help="Save bsub errors", default=False)
+	group.add_option("-n", "--threads", action="store", dest="threads", help="Number of threads to run - allows parallelisation of the analysis. Max=32. [Default= %default]", default=1, type="int")
+	group.add_option("-V", "--version", action="store", dest="version", help="Version of raxml to run. Choices are AVX or SSE3 on farm3. AVX is faster, but only half of the nodes support it. SSE3 is slightly slower, but supported on all nodes. On farm2 or pcs4 the orginal version will be used, so this option is irrelevant. [Default= %default]", default="SSE3", type="choice", choices=["AVX", "SSE3"])
 	
 	parser.add_option_group(group)
 	
@@ -125,6 +131,10 @@ def check_input_validity(options, args):
 	if options.distance and options.asrv!="GAMMA":
 		print "Only GAMMA-based asrv models can be used when calculating distance. Setting asrv to GAMMA"
 		options.asrv="GAMMA"
+	
+	if options.threads<1 or options.threads>32:
+		DoError('Number of threads to run must be between 1 and 32')
+		
 	
 	userinput=""
 	filelist=glob.glob('RAxML_*.'+options.suffix)+glob.glob('RAxML_*.ml_'+options.suffix)+glob.glob('RAxML_*.boot_'+options.suffix)
@@ -370,7 +380,36 @@ if __name__ == "__main__":
 	#1MB=1048576 bytes
 
 	
+	host=gethostname().split("-")[0]
+	print "Running on "+host
 	
+	if host=="farm3":
+		if options.threads>1:
+			if options.version=="AVX":
+				RAxML=AVX_PARALLEL_RAxML_DIR+" -T "+str(options.threads)
+				RAxML_DIR=SSE3_RAxML_DIR
+			elif options.version=="SSE3":
+				RAxML=SSE3_PARALLEL_RAxML_DIR+" -T "+str(options.threads)
+				RAxML_DIR=SSE3_RAxML_DIR
+			else:
+				DoError("There shouldn't be any other options here")
+		else:
+			if options.version=="AVX":
+				RAxML=AVX_RAxML_DIR+" -T "+str(options.threads)
+			elif options.version=="SSE3":
+				RAxML=SSE3_RAxML_DIR+" -T "+str(options.threads)
+			else:
+				DoError("There shouldn't be any other options here")
+		print "Using "+options.version+" version of RAxML"
+	elif options.threads>1:
+		print "Parallelisation only available on farm3. Setting threads to 1"	
+		RAxML=RAxML_DIR
+		options.version="SSE3"
+		options.threads=1
+	else:
+		RAxML=RAxML_DIR
+		options.version="SSE3"
+		
 	
 	bsubcommand=["bsub"]
 	bsubcommand.append("-q "+options.queue)
@@ -380,13 +419,23 @@ if __name__ == "__main__":
 	if options.bsuberr:
 		bsubcommand.append("-e "+options.suffix+".bsub.e")
 	
+	if options.version=="AVX":
+		bsubcommand.append("-R 'avx'")
+	
 	if options.mem>0:
-		bsubcommand.append("-M "+str(options.mem)+'000000 -R \'select[mem>'+str(options.mem)+'000] rusage[mem='+str(options.mem)+'000]\'')
+		if host=="farm3":
+			bsubcommand.append("-M "+str(options.mem)+'000 -R \'select[mem>'+str(options.mem)+'000] rusage[mem='+str(options.mem)+'000]\'')
+		else:
+			bsubcommand.append("-M "+str(options.mem)+'000000 -R \'select[mem>'+str(options.mem)+'000] rusage[mem='+str(options.mem)+'000]\'')
+	
+	if options.threads>1:
+		bsubcommand.append('-n '+str(options.threads)+' -R "span[hosts=1]"')
 		
 #	bsubcommand.append("-o out.%J_"+options.suffix)
 #	bsubcommand.append("-e err.%J_"+options.suffix)
 	
 	bsub=" ".join(bsubcommand)
+	
 	
 	
 	if options.analysistype=="DNA":
@@ -407,7 +456,9 @@ if __name__ == "__main__":
 		if options.model=="LG":
 			model=model+" -P ~sh16/data/LG.dat"
 
+	#Add the random seed parameter that is now essential
 	
+	model=model+" -p "+str(randrange(1,99999))
 	
 	#If user only wants to calculate distances
 	if options.distance:
@@ -418,7 +469,7 @@ if __name__ == "__main__":
 		else:
 			print "Using parsimony tree"
 		
-		os.system(bsub+' -J "'+tmpname+'_dist" RAxML -f x -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
+		os.system(bsub+' -J "'+tmpname+'_dist" '+RAxML_DIR+' -f x -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
 		os.system('bsub -w \'ended('+tmpname+'_dist)\' rm -rf \'*'+tmpname+'*\'')
 	#If they want to make a tree rather than distances
 	else:
@@ -433,7 +484,7 @@ if __name__ == "__main__":
 			else:
 				mlmodel=model
 			
-			os.system(bsub+" RAxML -f a -x "+str(randrange(1,99999))+" -p "+str(randrange(1,99999))+" -# "+str(options.bootstrap)+" -m "+mlmodel+" -s "+tmpname+".phy -n "+options.suffix)
+			os.system(bsub+" "+RAxML+" -f a -x "+str(randrange(1,99999))+" -p "+str(randrange(1,99999))+" -# "+str(options.bootstrap)+" -m "+mlmodel+" -s "+tmpname+".phy -n "+options.suffix)
 		else:
 			#Run the ML tree over LSF
 			print "Running RAxML phylogeny with "+model+" model of evolution..."
@@ -448,9 +499,9 @@ if __name__ == "__main__":
 			sys.stdout.flush()
 			
 			if options.number>1:
-				os.system(bsub+' -J "'+tmpname+'_ml" RAxML -f d -s '+tmpname+'.phy -N '+str(options.number)+' -m '+mlmodel+' -n ml_'+options.suffix)
+				os.system(bsub+' -J "'+tmpname+'_ml" '+RAxML+' -f d -s '+tmpname+'.phy -N '+str(options.number)+' -m '+mlmodel+' -n ml_'+options.suffix)
 			else:
-				os.system(bsub+' -J "'+tmpname+'_ml" RAxML -f d -s '+tmpname+'.phy -m '+mlmodel+' -n ml_'+options.suffix)
+				os.system(bsub+' -J "'+tmpname+'_ml" '+RAxML+' -f d -s '+tmpname+'.phy -m '+mlmodel+' -n ml_'+options.suffix)
 			outputname="RAxML_result."+tmpname
 			
 		if not options.fast and options.bootstrap>0:
@@ -461,11 +512,14 @@ if __name__ == "__main__":
 			
 			#Run the bootstraps over LSF
 			
-			bootstrapstring="echo 'RAxML -f d -b "+str(randrange(1,9999))+"${LSB_JOBINDEX} -# 1 -m "+model+" -s "+tmpname+".phy -n boot_"+tmpname+"_${LSB_JOBINDEX}'"
+			bootstrapstring="echo '"+RAxML+" -f d -b "+str(randrange(1,9999))+"${LSB_JOBINDEX} -# 1 -m "+model+" -s "+tmpname+".phy -n boot_"+tmpname+"_${LSB_JOBINDEX}'"
 		
-			host=gethostname()
+			
 			bsub=bsub.replace(".bsub.o", ".bootstrap.bsub.o").replace(".bsub.e", ".bootstrap.bsub.e")
-			if host[:4]=="pcs4":
+			
+			print bsub
+			
+			if host=="pcs4":
 				os.system(bootstrapstring+' | '+bsub+' -J "'+tmpname+'_boot[1-'+str(numjobs)+']%15"')
 			else:
 				os.system(bootstrapstring+' | '+bsub+' -J "'+tmpname+'_boot[1-'+str(numjobs)+']"')
@@ -480,8 +534,8 @@ if __name__ == "__main__":
 			
 			#When the ml and bootstrap replicates are complete, put the bootstrap numbers onto the nodes of the ml tree
 			if options.number>1:
-				bsubcommand="echo \'x=$(grep \'Best\' RAxML_info.ml_"+options.suffix+" | awk \"{print \$6}\" |tr -d \':\' ) && cp RAxML_result.ml_"+options.suffix+".RUN.${x} RAxML_result.ml_"+options.suffix+" &&  RAxML -f b -t RAxML_result.ml_"+options.suffix+" -z RAxML_bootstrap.boot_"+options.suffix+" -s "+tmpname+".phy -m "+model+" -n "+options.suffix+"'"
-				print bsubcommand
+				bsubcommand="echo \'x=$(grep \'Best\' RAxML_info.ml_"+options.suffix+" | awk \"{print \$6}\" |tr -d \':\' ) && cp RAxML_result.ml_"+options.suffix+".RUN.${x} RAxML_result.ml_"+options.suffix+" && "+RAxML+" -f b -t RAxML_result.ml_"+options.suffix+" -z RAxML_bootstrap.boot_"+options.suffix+" -s "+tmpname+".phy -m "+model+" -n "+options.suffix+"'"
+				
 				bsub=' | bsub -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
 				if options.bsubout:
 					bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
@@ -489,12 +543,15 @@ if __name__ == "__main__":
 					bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
 				os.system(bsubcommand+bsub)
 			else:
-				bsub='bsub -M 2000000 -R \'select[mem>2000] rusage[mem=2000]\' -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
+				if host=="farm3":
+					bsub='bsub -M 2000 -R \'select[mem>2000] rusage[mem=2000]\' -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
+				else:
+					bsub='bsub -M 2000000 -R \'select[mem>2000] rusage[mem=2000]\' -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
 				if options.bsubout:
 					bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
 				if options.bsuberr:
 					bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
-				os.system(bsub+' RAxML -f b -t RAxML_result.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
+				os.system(bsub+' '+RAxML_DIR+' -f b -t RAxML_result.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
 					
 	
 			#Clean up all temporary files created	
