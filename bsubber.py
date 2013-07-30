@@ -83,7 +83,7 @@ def check_input_validity(options, args):
 
 if __name__ == "__main__":
 
-	host=gethostname()
+	host=gethostname().split("-")[0]
 
 	(options, args)=get_user_options()
 	#print options, args
@@ -110,10 +110,13 @@ if __name__ == "__main__":
 		cpustring="-n "+str(options.CPUs)
 	
 	if options.mem>0:
-		memkb=str(int(options.mem*1000000))
-		memmb=str(int(options.mem*1000))
-		rlist.append('select[mem>'+memmb+'] rusage[mem='+memmb+']')
-		memstring="-M "+memkb
+		if host=="farm3":
+			memlimit=str(int(options.mem*1000))
+		else:
+			memlimit=str(int(options.mem*1000000))
+		memresource=str(int(options.mem*1000))
+		rlist.append('select[mem>'+memresource+'] rusage[mem='+memresource+']')
+		memstring="-M "+memlimit
 	
 	if options.checkpoint:
 		cstring=' '.join(["-k '"+options.checkpoint_directory, "method=blcr", str(options.checkpoint_period)+"'"])

@@ -3483,6 +3483,7 @@ class Plot:
 		elif self.plot_type in ["bar", "heat"]:
 			for x, data in enumerate(self.data):
 				currdata=[]
+				end=self.beginning
 				for y, datum in enumerate(data):
 					if self.xdata[x][y]>=self.beginning and self.xdata[x][y]<=self.end:
 						if datum>self.max_yaxis:
@@ -3503,7 +3504,10 @@ class Plot:
 	def draw_heatmap(self, x, y, height, length):
 	
 		data, end, valueMin, valueMax=self.get_data_to_print()
-				
+		
+		if len(data)==0 or end==self.beginning:
+			return
+		
 		datalength=length*(float(end-self.beginning)/(self.end-self.beginning))
 		
 		feature_width=float(datalength)/len(data[0])
@@ -4949,8 +4953,13 @@ if __name__ == "__main__":
 			else:
 				if len(plot.data)==0:
 					plot.data=[minplotheight]
-				plot.max_yaxis=max(map(max,plot.data))
-				plot.min_yaxis=min(map(min,plot.data))
+				try:
+					plot.max_yaxis=max(map(max,plot.data))
+					plot.min_yaxis=min(map(min,plot.data))
+				except ValueError:
+					plot.max_yaxis=minplotheight
+					plot.min_yaxis=minplotheight
+					plot.data=[minplotheight]
 			
 			if options.plot_min!=float("Inf"):
 				plot.min_yaxis=options.plot_min

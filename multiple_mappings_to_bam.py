@@ -28,7 +28,8 @@ BWA_DIR=""
 #SMALT_DIR="smalt"
 MY_SCRIPTS_DIR="/nfs/users/nfs_s/sh16/scripts/"
 GATK_LOC="/software/vertres/bin-external/GenomeAnalysisTK-1.5-9-ga05a7f2/GenomeAnalysisTK.jar"
-JAVA_DIR="/software/jdk1.6.0_01/bin/"
+pcs4_JAVA_DIR="/software/jdk1.6.0_01/bin/"
+farm3_JAVA_DIR="/software/pathogen/external/apps/usr/local/jdk1.7.0_21/bin/"
 
 
 ##########################
@@ -802,7 +803,13 @@ if __name__ == "__main__":
 	os.system("samtools faidx "+options.ref)
 		
 	count=0
-
+	
+	host=gethostname().split("-")[0]
+	if host=="farm3":
+		JAVA_DIR=farm3_JAVA_DIR
+	else:
+		JAVA_DIR=pcs4_JAVA_DIR
+	
 	for pool in pools:
 		
 		if options.keep and options.pseudosequence and os.path.isfile(pool.runname+"/"+pool.name+".bam") and os.path.isfile(pool.runname+"/"+pool.name+".bcf") and os.path.isfile(pool.runname+"/"+pool.name+".mfa"):# and os.path.isfile(pool.runname+"/"+pool.name+"_indels.txt"):
@@ -868,12 +875,14 @@ if __name__ == "__main__":
 		if options.raxml:
 			summarystring=summarystring+" -p -l -b "+str(options.bootstrap)
 		
+	
+	
 	print
 	sys.stdout.flush()
 	if options.LSF==True:
 		if count>0:
 			if options.mem>0:
-				host=gethostname().split("-")[0]
+				
 				if host=="farm3":
 					memlimit=str(options.mem*1000)
 				else:
