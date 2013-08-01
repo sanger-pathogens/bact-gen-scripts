@@ -522,7 +522,7 @@ if __name__ == "__main__":
 			sequencelist.append(line)
 	if len(sequencelist)>0:
 		print taxonname, len(''.join(sequencelist))	
-	sys.exit()
+	#sys.exit()
 	
 	
 	

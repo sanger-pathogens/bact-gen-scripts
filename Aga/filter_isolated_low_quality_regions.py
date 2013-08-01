@@ -58,7 +58,9 @@ if __name__ == "__main__":
 	redcount=0
 	lastlinenum=0
 	print >> output, "#Base\tCoverage"
+	linenum=0
 	for line in open(filename, "rU"):
+		linenum+=1
 		line=line.strip()
 		if line[0]=="#":
 			continue
@@ -66,13 +68,13 @@ if __name__ == "__main__":
 			words=line.split()
 			
 			if len(words)!=3:
-				print "Unexpected number of columns in row:", line
+				print "Unexpected number of columns in row:", line, linenum
 				sys.exit()
 			
 			try:
 				values=map(float,words)
 			except ValueError:
-				print "Invalid value in row"
+				print "Invalid value in row", line, linenum
 				sys.exit()
 			
 			
