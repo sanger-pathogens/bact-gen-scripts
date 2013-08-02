@@ -10,6 +10,8 @@ from Bio.SeqUtils import GC
 import subprocess
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 from Si_SeqIO import *
+import gzip
+import mimetypes
 
 
 def cleanup():
@@ -89,23 +91,35 @@ if __name__ == "__main__":
 	
 	check_input_options(options, args)
 	
-	if options.forward.split('.')[-1]=="gz":
-		print "Unzipping forward fastq file"
-		os.system("zcat "+options.forward+" > "+'.'.join(options.forward.split("/")[-1].split(".")[:-1]))
-		forward='.'.join(options.forward.split("/")[-1].split(".")[:-1])
+#	if options.forward.split('.')[-1]=="gz":
+#		print "Unzipping forward fastq file"
+#		os.system("zcat "+options.forward+" > "+'.'.join(options.forward.split("/")[-1].split(".")[:-1]))
+#		forward='.'.join(options.forward.split("/")[-1].split(".")[:-1])
+#	else:
+#		forward=options.forward
+#	if options.reverse.split('.')[-1]=="gz":
+#		print "Unzipping reverse fastq file"
+#		os.system("zcat "+options.reverse+" > "+'.'.join(options.reverse.split("/")[-1].split(".")[:-1]))
+#		reverse='.'.join(options.reverse.split("/")[-1].split(".")[:-1])
+#	else:
+#		reverse=options.reverse
+	
+	forward=options.forward
+	reverse=options.reverse
+	
+	if mimetypes.guess_type(forward)[1]=="gzip":
+		linecount1=0
+		for line in gzip.open(forward,"r"):
+			linecount1+=1
 	else:
-		forward=options.forward
-	if options.reverse.split('.')[-1]=="gz":
-		print "Unzipping reverse fastq file"
-		os.system("zcat "+options.reverse+" > "+'.'.join(options.reverse.split("/")[-1].split(".")[:-1]))
-		reverse='.'.join(options.reverse.split("/")[-1].split(".")[:-1])
+		linecount1=bufcount(forward)
+	if mimetypes.guess_type(reverse)[1]=="gzip":
+		linecount2=0
+		for line in gzip.open(reverse,"r"):
+			linecount2+=1
 	else:
-		reverse=options.reverse
-		
-	linecount1=bufcount(forward)
-	linecount2=bufcount(reverse)
+		linecount2=bufcount(reverse)
 	if linecount1!=linecount2:
-		os.system("rm "+tmpname+"*")
 		cleanup()
 		DoError("Forward and reverse line counts are not the same")
 	linecount=float(linecount1)
@@ -114,7 +128,10 @@ if __name__ == "__main__":
 	if options.coverage>0:
 		if options.length<=0:
 			DoError("When using coverage to subsample, the reference length must be specified.")
-		fastqfile=open(forward,"rU")
+		if mimetypes.guess_type(forward)[1]=="gzip":
+			fastqfile=gzip.open(forward,"r")
+		else:
+			fastqfile=open(forward,"rU")
 		lines=[]
 		for y in range(0,2):
 			lines.append(fastqfile.next().strip())
@@ -130,9 +147,12 @@ if __name__ == "__main__":
 		print "Subsample is >= number of reads in the input files. No need to subsample. Exiting..."
 		sys.exit()
 	
-	
-	outfilef=open(options.output+"_1.fastq","w")
-	outfiler=open(options.output+"_2.fastq","w")
+	if options.zip:
+		outfilef=gzip.open(options.output+"_1.fastq.gz","w")
+		outfiler=gzip.open(options.output+"_2.fastq.gz","w")
+	else:
+		outfilef=open(options.output+"_1.fastq","w")
+		outfiler=open(options.output+"_2.fastq","w")
 	readstoadd=sample(xrange(1, int(linecount/4)+1), subsample)
 	readstoadd.sort()
 	readstoadd.reverse()
@@ -142,8 +162,14 @@ if __name__ == "__main__":
 	print "Sampling", subsample, "paired reads from fastq files"
 	
 	linenum=0
-	fastqfilef=open(forward,"rU")
-	fastqfiler=open(reverse,"rU")
+	if mimetypes.guess_type(forward)[1]=="gzip":
+		fastqfilef=gzip.open(forward,"r")
+	else:
+		fastqfilef=open(forward,"rU")
+	if mimetypes.guess_type(reverse)[1]=="gzip":
+		fastqfiler=gzip.open(reverse,"r")
+	else:
+		fastqfiler=open(reverse,"rU")
 	
 	for x in fastqfilef:
 		linesr=[]
@@ -170,11 +196,11 @@ if __name__ == "__main__":
 	fastqfiler.close()
 	outfilef.close()
 	outfiler.close()
-	if options.zip:
-		print "Zipping forward output file"
-		os.system("gzip "+options.output+"_1.fastq")
-		print "Zipping reverse output file"
-		os.system("gzip "+options.output+"_2.fastq")
+#	if options.zip:
+#		print "Zipping forward output file"
+#		os.system("gzip "+options.output+"_1.fastq")
+#		print "Zipping reverse output file"
+#		os.system("gzip "+options.output+"_2.fastq")
 	cleanup()
 	
 	

@@ -77,6 +77,8 @@ for filename in sys.argv[filestart:]:
 	mappedlen=0.0
 	totallength=0.0
 	depth={}
+	insertion_types={}
+	deletion_types={}
 	
 	totreflen=0
 	for x, ref in enumerate(refs):
@@ -140,10 +142,16 @@ for filename in sys.argv[filestart:]:
 				elif cig[0]==1:
 					insertions+=1
 					refstats[samfile.getrname(read.rname)]["insertions"]+=1
+					if not readseq[readpos:readpos+cig[1]] in insertion_types:
+						insertion_types[readseq[readpos:readpos+cig[1]]]=0
+					insertion_types[readseq[readpos:readpos+cig[1]]]+=1
 					readpos+=cig[1]
 				elif cig[0]==2:
 					deletions+=1
 					refstats[samfile.getrname(read.rname)]["deletions"]+=1
+					if not refseqs[samfile.getrname(read.rname)][refpos:refpos+cig[1]] in deletion_types:
+						deletion_types[refseqs[samfile.getrname(read.rname)][refpos:refpos+cig[1]]]=0
+					deletion_types[refseqs[samfile.getrname(read.rname)][refpos:refpos+cig[1]]]+=1
 					refpos+=cig[1]
 				elif cig[0]==4:
 					readpos+=cig[1]
@@ -227,5 +235,27 @@ for filename in sys.argv[filestart:]:
 #		print "Errors per mapped base\tInsertions per mapped base\tDeletions per mapped base"
 #		print str(errors/mappedlen), str(insertions/mappedlen), str(deletions/mappedlen)
 	
-	    	
+	print "\nBreakdown of top 20 most common insertions"
+	ins=[]
+	for insertion in insertion_types:
+		ins.append([insertion_types[insertion],insertion])
+		#print insertion, insertion_types[insertion]
+	ins.sort()
+	ins.reverse()
+	for x, insertion in enumerate(ins):
+		print insertion[1], insertion[0]
+		if x==20:
+			break
+	
+	print "\nBreakdown of top 20 most common deletions"
+	dele=[]
+	for deletion in deletion_types:
+		dele.append([deletion_types[deletion],deletion])
+		#print insertion, insertion_types[insertion]
+	dele.sort()
+	dele.reverse()
+	for x, deletion in enumerate(dele):
+		print deletion[1], deletion[0]
+		if x==20:
+			break
 			
