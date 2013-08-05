@@ -9,6 +9,7 @@ import string, re
 import os, sys
 from optparse import OptionParser, OptionGroup
 from socket import gethostname
+import shlex
 
 
 ##########################
@@ -25,7 +26,7 @@ def DoError(errorstring):
 # Get command line arguments #
 ##############################
 
-def get_user_options():
+def get_user_options(args=[]):
 	usage = "usage: %prog [options] <script/program to bsub>"
 	version="%prog 1.0. Written by Simon Harris, Wellcome Trust Sanger Institute, 2012"
 	parser = OptionParser(usage=usage, version=version)
@@ -43,8 +44,10 @@ def get_user_options():
 	parser.add_option("-o", "--output", action="store", dest="output", help="Output file name. [Default= None]", default=False)
 	parser.add_option("-e", "--error", action="store", dest="error", help="Error file name. [Default= None]", default=False)
 	
-	
-	return parser.parse_args()
+	if args==[]:
+		return parser.parse_args()
+	else:
+		return parser.parse_args(args)
 
 
 ################################
@@ -86,8 +89,20 @@ if __name__ == "__main__":
 	host=gethostname().split("-")[0]
 
 	(options, args)=get_user_options()
+	
+	if len(args)==1:
+		if len(args[0])==0:
+			print "No command found to bsub"
+			sys.exit()
+		args[0].strip()
+		usage = "usage: %prog [options] <script/program to bsub>"
+		version="%prog 1.0. Written by Simon Harris, Wellcome Trust Sanger Institute, 2012"
+		parser = OptionParser(usage=usage, version=version)
+		(options, args)=get_user_options(args=sys.argv[1:-1]+shlex.split(args[0]))
+		
 	#print options, args
 	check_input_validity(options, args)
+	
 	
 	options.checkpoint_directory=os.path.abspath(options.checkpoint_directory)
 	
@@ -138,6 +153,7 @@ if __name__ == "__main__":
 		args[x]=args[x].replace("(","\(")
 		args[x]=args[x].replace(")","\)")
 		args[x]=args[x].replace(" ","\ ")
+		args[x]=args[x].replace('\\"','"')
 	
 	if options.restart:
 		bsubstring="brestart"
@@ -145,10 +161,13 @@ if __name__ == "__main__":
 	else:
 		bsubstring="bsub"
 		if options.checkpoint:
-			arguments='"'+' '.join([crstring]+args)+'"'
+			arguments="'"+' '.join([crstring]+args)+"'"
 		else:
-			arguments='"'+' '.join(args)+'"'
-			
+			arguments="'"+' '.join(args)+"'"
+	
+	
+	#print arguments
+	
 	if len(arguments)==0:
 		print "Nothing to bsub"
 		sys.exit()		
