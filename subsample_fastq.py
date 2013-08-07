@@ -136,7 +136,7 @@ if __name__ == "__main__":
 		for y in range(0,2):
 			lines.append(fastqfile.next().strip())
 		readlen=len(lines[1])
-		subsample=int(float(options.coverage*options.length)/readlen)
+		subsample=int(float(options.coverage*options.length)/(readlen*2))
 		fastqfile.close()
 	else:
 		subsample=options.number
@@ -159,7 +159,7 @@ if __name__ == "__main__":
 	#readsset=set(readstoadd)
 	
 	
-	print "Sampling", subsample, "paired reads from fastq files"
+	print "Sampling", subsample, "paired reads from each fastq file"
 	
 	linenum=0
 	if mimetypes.guess_type(forward)[1]=="gzip":

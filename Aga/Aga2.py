@@ -267,7 +267,10 @@ if __name__ == "__main__":
 		else:
 			print "Cannot understand file name of", arg+". Skipping..."
 		
-		
+	
+	#subsample the fastq files here to reduce coverage levels?
+	
+	
 	#Create a bsub job to index the reference file ready for mapping
 	
 	smalt_index_command=SMALT_LOC+" index -k 13 -s 1 "+tmpname+"/"+tmpname+".index "+options.ref
@@ -407,34 +410,36 @@ if __name__ == "__main__":
 	
 	#Create a bsub job to join all of the assemblies and prepare everything for blasting against the reference core regions
 	
-	cleanup1_file=open(tmpname+"/"+tmpname+"_cleanup1.sh", "w")
+	prepare_core_blast_file=open(tmpname+"/"+tmpname+"_prepare_core_blast.sh", "w")
 	
-	add_bash_error_function(cleanup1_file)
+	add_bash_error_function(prepare_core_blast_file)
 	
-	print >> cleanup1_file, "cat "+' '.join(assembly_list)+' '+acc_file+' > '+tmpname+'/'+tmpname+'_all_seqs.fasta || error_exit "cat command failed! Aborting"'
-	print >> cleanup1_file, AGA_DIR+"extract_contig_lengths.py "+tmpname+'/'+tmpname+'_all_seqs.fasta > '+tmpname+'/'+tmpname+'_seq_lengths.txt || error_exit "extracting of contig lengths failed! Aborting"'
-	print >> cleanup1_file, "formatdb -p F -i "+core_file+' || error_exit "reference formatdb failed! Aborting"'
+	print >> prepare_core_blast_file, "cat "+' '.join(assembly_list)+' '+core_file+' '+acc_file+' > '+tmpname+'/'+tmpname+'_all_seqs.fasta || error_exit "cat command failed! Aborting"'
+	print >> prepare_core_blast_file, AGA_DIR+"extract_contig_lengths.py "+tmpname+'/'+tmpname+'_all_seqs.fasta > '+tmpname+'/'+tmpname+'_seq_lengths.txt || error_exit "extracting of contig lengths failed! Aborting"'
+	print >> prepare_core_blast_file, "formatdb -p F -i "+core_file+' || error_exit "reference formatdb failed! Aborting"'
 
-	cleanup1_file.close()
+	prepare_core_blast_file.close()
 	
 	#Run the bsub command once the SMALT mappingsa re all complete
 	
-	cleanup1_run_command="bash "+tmpname+"/"+tmpname+"_cleanup1.sh"
+	prepare_core_blast_run_command="bash "+tmpname+"/"+tmpname+"_prepare_core_blast.sh"
 	
-	job3 = farm.Bsub(tmpname+"/cleanup1_bsub.out", tmpname+"/cleanup1_bsub.err", tmpname+"_cleanup1", "normal", 1, cleanup1_run_command)
+	job3 = farm.Bsub(tmpname+"/prepare_core_blast_bsub.out", tmpname+"/prepare_core_blast_bsub.err", tmpname+"_prepare_core_blast", "normal", 1, prepare_core_blast_run_command)
 	job3.add_dependency(job2_id)
 	job3_id = job3.run()
 	
 	
 	#For each assembly, create a bash script to blast the assembly against the reference core and remove contigs that match (should this script also remove any overlapping contig ends that match the core?)
-	
+	noncorelist=[]
 	for i, assembly in enumerate(assembly_list):
 		core_blast_file=open(tmpname+"/"+tmpname+"_core_blast_"+str(i+1)+".sh", "w")
 	
 		add_bash_error_function(core_blast_file)
+		basename=tmpname+"/"+assembly.split("/")[-1].split(".")[0]
 		
-		print >> core_blast_file, "blastall -p blastn -i "+assembly+" -m 8 -e 1e-10 -o "+assembly+".core.blast -d "+core_file+' -F F || error_exit "core blast failed! Aborting"'
-		print >> core_blast_file, AGA_DIR+"filter_ref_contig_blast.py "+assembly+'core.blast '+tmpname+'/'+tmpname+'_seq_lengths.txt '+assembly+' > '+tmpname+'/'+assembly+'.noncore.fasta || error_exit "filtering of reference blast hits failed! Aborting"'
+		print >> core_blast_file, "blastall -p blastn -i "+assembly+" -m 8 -e 1e-10 -o "+basename+".core.blast -d "+core_file+' -F F || error_exit "core blast failed! Aborting"'
+		print >> core_blast_file, AGA_DIR+"filter_ref_contig_blast.py -b "+basename+'.core.blast -l '+tmpname+'/'+tmpname+'_seq_lengths.txt -c '+assembly+' > '+basename+'.noncore.fasta || error_exit "filtering of reference blast hits failed! Aborting"'
+		noncorelist.append(basename+'.noncore.fasta')
 	
 		core_blast_file.close()
 	
@@ -443,3 +448,49 @@ if __name__ == "__main__":
 	job4 = farm.Bsub(tmpname+"/core_blast_bsub.out", tmpname+"/core_blast_bsub.err", tmpname+"_core_blast", "normal", 1, core_blast_run_command, start=1, end=i+1)
 	job4.add_dependency(job3_id) 
 	job4_id = job4.run()
+	
+	
+	#Create a bsub job to join all of the noncore contigs and prepare everything for blasting against themselves
+	
+	prepare_noncore_blast_file=open(tmpname+"/"+tmpname+"_prepare_noncore_blast.sh", "w")
+	
+	add_bash_error_function(prepare_noncore_blast_file)
+	
+	print >> prepare_noncore_blast_file, "cat "+' '.join(noncorelist)+' '+acc_file+' > '+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta || error_exit "cat command failed! Aborting"'
+	print >> prepare_noncore_blast_file, AGA_DIR+"extract_contig_lengths.py "+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta > '+tmpname+'/'+tmpname+'_noncore_seq_lengths.txt || error_exit "extracting of contig lengths failed! Aborting"'
+	print >> prepare_noncore_blast_file, "formatdb -p F -i "+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta || error_exit "formatdb failed! Aborting"'
+
+	prepare_noncore_blast_file.close()
+	
+	#Run the bsub command once the SMALT mappingsa re all complete
+	
+	prepare_noncore_blast_run_command="bash "+tmpname+"/"+tmpname+"_prepare_noncore_blast.sh"
+	
+	job5 = farm.Bsub(tmpname+"/prepare_noncore_blast_bsub.out", tmpname+"/prepare_noncore_blast_bsub.err", tmpname+"_prepare_noncore_blast", "normal", 1, prepare_noncore_blast_run_command)
+	job5.add_dependency(job4_id)
+	job5_id = job5.run()
+	
+	#For each noncore fasta file, create a bash script to blast the assembly against the noncore database and remove contigs that match (should this script also remove any overlapping contig ends that match the core?)
+	
+	noncorelist.append(acc_file)
+	
+	finallist=[]
+	for i, noncorefile in enumerate(noncorelist):
+		noncore_blast_file=open(tmpname+"/"+tmpname+"_noncore_blast_"+str(i+1)+".sh", "w")
+	
+		add_bash_error_function(noncore_blast_file)
+		
+		basename=tmpname+"/"+noncorefile.split("/")[-1].split(".")[0]
+		
+		print >> noncore_blast_file, "blastall -p blastn -i "+noncorefile+" -m 8 -e 1e-10 -o "+basename+".noncore.blast -d "+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta -F F || error_exit "core blast failed! Aborting"'
+		print >> noncore_blast_file, AGA_DIR+"filter_contig_blast.py -b "+basename+'.noncore.blast -l '+tmpname+'/'+tmpname+'_noncore_seq_lengths.txt -c '+noncorefile+' > '+basename+'.final.fasta || error_exit "filtering of reference blast hits failed! Aborting"'
+		finallist.append(basename+'.noncore.fasta')
+	
+		noncore_blast_file.close()
+	
+	noncore_blast_run_command="bash "+tmpname+"/"+tmpname+"_noncore_blast_INDEX.sh"
+	
+	job6 = farm.Bsub(tmpname+"/noncore_blast_bsub.out", tmpname+"/noncore_blast_bsub.err", tmpname+"_noncore_blast", "normal", 1, noncore_blast_run_command, start=1, end=i+1)
+	job6.add_dependency(job5_id) 
+	job6_id = job6.run()
+	
