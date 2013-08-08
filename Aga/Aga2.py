@@ -5,7 +5,7 @@
 ##################
 
 import string, re
-import os, sys, random, math, time
+import os, sys, math, time
 from optparse import OptionParser, OptionGroup
 from random import *
 from Bio import SeqIO
@@ -295,18 +295,18 @@ if __name__ == "__main__":
 		name=""
 		
 		if fastqs[fastq]["read1"] and fastqs[fastq]["read2"]:
-#			print >> smalt_run_file, smalt_map_command, fastqs[fastq]["read1"].absolute_path, fastqs[fastq]["read2"].absolute_path, '|| error_exit "SMALT command failed! Aborting"'
+			print >> smalt_run_file, smalt_map_command, fastqs[fastq]["read1"].absolute_path, fastqs[fastq]["read2"].absolute_path, '|| error_exit "SMALT command failed! Aborting"'
 			name=fastqs[fastq]["read1"].base_name
 		elif fastqs[fastq]["read1"]:
-#			print >> smalt_run_file, smalt_map_command, fastqs[fastq]["read1"].absolute_path, '|| error_exit "SMALT command failed! Aborting"'
+			print >> smalt_run_file, smalt_map_command, fastqs[fastq]["read1"].absolute_path, '|| error_exit "SMALT command failed! Aborting"'
 			name=fastqs[fastq]["read1"].base_name
 		elif fastqs[fastq]["read2"]:
-#			print >> smalt_run_file, smalt_map_command, fastqs[fastq]["read2"].absolute_path, '|| error_exit "SMALT command failed! Aborting"'
+			print >> smalt_run_file, smalt_map_command, fastqs[fastq]["read2"].absolute_path, '|| error_exit "SMALT command failed! Aborting"'
 			name=fastqs[fastq]["read2"].base_name
-#		
-#		print >> smalt_run_file, SAMTOOLS_LOC+" sort "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam "+tmpname+"/"+name+' || error_exit "samtools sort command failed! Aborting"'
-#		print >> smalt_run_file, SAMTOOLS_LOC+" index "+tmpname+"/"+name+".bam"+' || error_exit "samtools index command failed! Aborting"'
-#		print >> smalt_run_file, "rm -f "+tmpname+"/"+tmpname+"_"+str(i+1)+'.bam || error_exit "rm command failed! Aborting"'
+		
+		print >> smalt_run_file, SAMTOOLS_LOC+" sort "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam "+tmpname+"/"+name+' || error_exit "samtools sort command failed! Aborting"'
+		print >> smalt_run_file, SAMTOOLS_LOC+" index "+tmpname+"/"+name+".bam"+' || error_exit "samtools index command failed! Aborting"'
+		print >> smalt_run_file, "rm -f "+tmpname+"/"+tmpname+"_"+str(i+1)+'.bam || error_exit "rm command failed! Aborting"'
 		
 		if fastqs[fastq]["read1"] and fastqs[fastq]["read2"]:
 			print >> smalt_run_file, AGA_DIR+"bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f pairedfastq -t atleastoneunmapped"+' || error_exit "bam_filter command failed! Aborting"'
@@ -483,7 +483,7 @@ if __name__ == "__main__":
 		basename=tmpname+"/"+noncorefile.split("/")[-1].split(".")[0]
 		
 		print >> noncore_blast_file, "blastall -p blastn -i "+noncorefile+" -m 8 -e 1e-10 -o "+basename+".noncore.blast -d "+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta -F F || error_exit "core blast failed! Aborting"'
-		print >> noncore_blast_file, AGA_DIR+"filter_contig_blast.py -b "+basename+'.noncore.blast -l '+tmpname+'/'+tmpname+'_noncore_seq_lengths.txt -c '+noncorefile+' > '+basename+'.final.fasta || error_exit "filtering of reference blast hits failed! Aborting"'
+		print >> noncore_blast_file, AGA_DIR+"filter_contig_blast.py -b "+basename+'.noncore.blast -l '+tmpname+'/'+tmpname+'_noncore_seq_lengths.txt -c '+noncorefile+' > '+basename+'.final.fasta || error_exit "filtering of assembly blast hits failed! Aborting"'
 		finallist.append(basename+'.noncore.fasta')
 	
 		noncore_blast_file.close()
@@ -493,4 +493,52 @@ if __name__ == "__main__":
 	job6 = farm.Bsub(tmpname+"/noncore_blast_bsub.out", tmpname+"/noncore_blast_bsub.err", tmpname+"_noncore_blast", "normal", 1, noncore_blast_run_command, start=1, end=i+1)
 	job6.add_dependency(job5_id) 
 	job6_id = job6.run()
+	
+	
+	#Create a bsub job to join all of the noncore contigs and prepare everything for blasting against themselves
+	
+	create_accessory_and_pan_genomes=open(tmpname+"/"+tmpname+"_create_accessory_and_pan_genomes.sh", "w")
+	
+	add_bash_error_function(create_accessory_and_pan_genomes)
+	
+	print >> create_accessory_and_pan_genomes, "cat "+' '.join(finallist)+' '+acc_file+' > '+options.prefix+'_accessory.mfa || error_exit "cat command failed! Aborting"'
+	print >> create_accessory_and_pan_genomes, "cat "+core_file+' '+' '.join(finallist)+' > '+options.prefix+'_pan.mfa || error_exit "cat command failed! Aborting"'
+	print >> create_accessory_and_pan_genomes, AGA_DIR+"better_blast.py -q "+tmpname+'/'+tmpname+'_pan.mfa -s '+tmpname+'/'+tmpname+'_pan.mfa -o '+options.prefix+"_self_blast"
+
+	create_accessory_and_pan_genomes.close()
+	
+	#Run the bsub command once the SMALT mappings are all complete
+	
+	create_accessory_and_pan_genomes_command="bash "+tmpname+"/"+tmpname+"_create_accessory_and_pan_genomes.sh"
+	
+	job7 = farm.Bsub(tmpname+"/create_accessory_and_pan_genomes_bsub.out", tmpname+"/create_accessory_and_pan_genomes_bsub.err", tmpname+"_create_accessory_and_pan_genomes", "normal", 1, create_accessory_and_pan_genomes_command)
+	job7.add_dependency(job6_id)
+	job7_id = job7.run()
+	
+	
+	
+	
+#cat the remaining contains together to get the accessory genome
+#cat *_final.fasta > Accessory_genome.fasta
+#
+#also create a pan genome
+#cat Ref_core.fasta Accessory_genome.fasta > Pan_genome.fasta
+#
+#map reads back to the pan/accessory genome
+#~/scripts/multiple_mappings_to_bam.py -r Accessory_genome.fasta -M 1 -X -E -z 0.95 *unmapped_[12].fastq
+#for f in *_SMALT/*.bam; do bsub ~/scripts/bam_to_coverage_plot.py -Q 5 -b $f -o ${f%.bam}.plot;done
+#mv *_SMALT/*.plot .
+#
+#Make a plot of the accessory genome presence/absence
+#~/scripts/reportlabtest.py -n -d area -y 100 *.plot Accessory_genome.fasta
+#
+#
+#identify each gene in accessory with prodigal
+#prodigal -a accessory_prodigal.faa -d accessory_prodigal.fasta -o accessory_prodigal.tab < accessory_oneseq.fasta
+#run these through orthomcl, but with e=1e-50 and inflation of 2
+#extract each cluster into a multifasta
+#align each of these
+#use the alignments as input to psi-blast vs nr database
+	
+	
 	

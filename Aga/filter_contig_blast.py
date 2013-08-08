@@ -111,10 +111,9 @@ if __name__ == "__main__":
 		line=line.strip()
 		words=line.split()
 		
-		print words[0]
 		
 		if words[0]==words[1] or float(words[2])<options.minid or float(words[3])<options.minlength:
-			print words
+#			print words
 			continue
 			
 		if words[0]!=lastquery:
@@ -137,10 +136,10 @@ if __name__ == "__main__":
 				if max_run>longest_run:
 					longest_run=max_run
 					
-			if keep:
-				print "Keep", lastquery, unmatched_run_score, longest_run, lengths[lastquery]#, match
-			elif not first_query:
-				print "Remove", lastquery, lastsubject, unmatched_run_score, longest_run, lengths[lastquery]#, failed_match
+#			if keep:
+#				print "Keep", lastquery, unmatched_run_score, longest_run, lengths[lastquery]#, match
+#			elif not first_query:
+#				print "Remove", lastquery, lastsubject, unmatched_run_score, longest_run, lengths[lastquery]#, failed_match
 			if not first_query and (not keep or lengths[lastquery]<options.minsize):
 				del strain_seqs[lastquery]
 			lastsubject=''
@@ -221,14 +220,14 @@ if __name__ == "__main__":
 		
 	if not first_query and (not keep or lengths[lastquery]<options.minsize):
 		
-		if keep:
-			print "Keep", lastquery, unmatched_run_score, longest_run, lengths[lastquery]#, match
-		elif not first_query:
-			print "Remove", lastquery, lastsubject, unmatched_run_score, longest_run, lengths[lastquery]#, failed_match
+#		if keep:
+#			print "Keep", lastquery, unmatched_run_score, longest_run, lengths[lastquery]#, match
+#		elif not first_query:
+#			print "Remove", lastquery, lastsubject, unmatched_run_score, longest_run, lengths[lastquery]#, failed_match
 		del strain_seqs[lastquery]
 		
 
 	for seq in strain_seqs:
 		if len(strain_seqs[seq])>options.minsize:
 			print ">"+seq
-#			print strain_seqs[seq]
+			print strain_seqs[seq]

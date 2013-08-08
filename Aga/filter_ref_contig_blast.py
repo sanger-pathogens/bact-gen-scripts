@@ -161,7 +161,6 @@ if __name__ == "__main__":
 			continue
 		
 		
-		
 		fromloc=int(words[6])
 		toloc=int(words[7])
 		
