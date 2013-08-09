@@ -205,7 +205,7 @@ if __name__ == "__main__":
 	
 	blast_command="blastall -p "+options.blastprog+" -i "+query_tmp_file_name+"INDEX -m 8 -e "+str(options.e)+" -o "+options.tmpdir+"/"+tmpname+".blastINDEX -d "+subject_tmp_file_name+" "+options.extras
 	
-	job1 = farm.Bsub(options.prefix+"_bb_bsub.out", options.prefix+"_bb_bsub.err", tmpname+"_blast", "normal", 0.5, blast_command, start=1, end=query_file_count)
+	job1 = farm.Bsub(options.tmpdir+"/"+tmpname+"_bb_bsub.out", options.tmpdir+"/"+tmpname+"_bb_bsub.err", tmpname+"_blast", "normal", 0.5, blast_command, start=1, end=query_file_count)
 	job1_id = job1.run()
 	
 	print "Job ID =", job1_id

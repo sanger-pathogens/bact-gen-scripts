@@ -10,7 +10,6 @@ import gzip
 import shutil
 from random import *
 import math
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 import farm
 
 ##########################
@@ -205,7 +204,7 @@ if __name__ == "__main__":
 	
 	blast_command="blastall -p "+options.blastprog+" -i "+query_tmp_file_name+"INDEX -m 8 -e "+str(options.e)+" -o "+options.tmpdir+"/"+tmpname+".blastINDEX -d "+subject_tmp_file_name+" "+options.extras
 	
-	job1 = farm.Bsub(options.prefix+"_bb_bsub.out", options.prefix+"_bb_bsub.err", tmpname+"_blast", "normal", 0.5, blast_command, start=1, end=query_file_count)
+	job1 = farm.Bsub(options.tmpdir+"/"+tmpname+"_bb_bsub.out", options.tmpdir+"/"+tmpname+"_bb_bsub.err", tmpname+"_blast", "normal", 0.5, blast_command, start=1, end=query_file_count)
 	job1_id = job1.run()
 	
 	print "Job ID =", job1_id
@@ -213,7 +212,7 @@ if __name__ == "__main__":
 	
 	
 	
-	job2 = farm.Bsub(options.prefix+"_bb_bsub.out", options.prefix+"_bb_bsub.err", tmpname+"_postprocess", "normal", 0.5, "~/scripts/post_process_better_blast.py "+options.tmpdir+" "+tmpname+" "+options.prefix+" "+str(query_file_count))
+	job2 = farm.Bsub(options.prefix+"_bb_bsub.out", options.prefix+"_bb_bsub.err", tmpname+"_postprocess", "normal", 0.5, "/nfs/users/nfs_s/sh16/scripts/post_process_better_blast.py "+options.tmpdir+" "+tmpname+" "+options.prefix+" "+str(query_file_count))
 	job2.add_dependency(job1_id) 
 	job2_id = job2.run()
 	print "Job ID =", job2_id

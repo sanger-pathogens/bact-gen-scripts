@@ -484,7 +484,7 @@ if __name__ == "__main__":
 		
 		print >> noncore_blast_file, "blastall -p blastn -i "+noncorefile+" -m 8 -e 1e-10 -o "+basename+".noncore.blast -d "+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta -F F || error_exit "core blast failed! Aborting"'
 		print >> noncore_blast_file, AGA_DIR+"filter_contig_blast.py -b "+basename+'.noncore.blast -l '+tmpname+'/'+tmpname+'_noncore_seq_lengths.txt -c '+noncorefile+' > '+basename+'.final.fasta || error_exit "filtering of assembly blast hits failed! Aborting"'
-		finallist.append(basename+'.noncore.fasta')
+		finallist.append(basename+'.final.fasta')
 	
 		noncore_blast_file.close()
 	
@@ -501,7 +501,7 @@ if __name__ == "__main__":
 	
 	add_bash_error_function(create_accessory_and_pan_genomes)
 	
-	print >> create_accessory_and_pan_genomes, "cat "+' '.join(finallist)+' '+acc_file+' > '+options.prefix+'_accessory.mfa || error_exit "cat command failed! Aborting"'
+	print >> create_accessory_and_pan_genomes, "cat "+' '.join(finallist)+' > '+options.prefix+'_accessory.mfa || error_exit "cat command failed! Aborting"'
 	print >> create_accessory_and_pan_genomes, "cat "+core_file+' '+' '.join(finallist)+' > '+options.prefix+'_pan.mfa || error_exit "cat command failed! Aborting"'
 	print >> create_accessory_and_pan_genomes, AGA_DIR+"better_blast.py -q "+tmpname+'/'+tmpname+'_pan.mfa -s '+tmpname+'/'+tmpname+'_pan.mfa -o '+options.prefix+"_self_blast"
 
