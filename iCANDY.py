@@ -4509,7 +4509,7 @@ if __name__ == "__main__":
 						
 						if control.use_default_colourlist:
 							use_default_colourlist=True
-						if use_default_colourlist and newtrack.datamax-newtrack.datamin<=len(default_rgb_colours)-2:
+						if use_default_colourlist and newtrack.datamax-newtrack.datamin<=len(default_rgb_colours):
 								for y, name in enumerate(colourslist[x]):
 									colourcode=name-1
 									colour_dict[x][name]=(float(colourconverter[default_rgb_colours[int(colourcode)]].red)*255, float(colourconverter[default_rgb_colours[int(colourcode)]].green)*255, float(colourconverter[default_rgb_colours[int(colourcode)]].blue)*255)
@@ -4547,7 +4547,7 @@ if __name__ == "__main__":
 					elif newtrack.datatype=="discrete":
 							if control.use_default_colourlist:
 								use_default_colourlist=True
-							if use_default_colourlist and len(colourslist[x])<=len(default_rgb_colours)-2:
+							if use_default_colourlist and len(colourslist[x])<=len(default_rgb_colours):
 								for y, name in enumerate(colourslist[x]):
 									colour_dict[x][name]=(float(colourconverter[default_rgb_colours[y]].red)*255, float(colourconverter[default_rgb_colours[y]].green)*255, float(colourconverter[default_rgb_colours[y]].blue)*255)
 									newtrack.key_data.append([name, colourconverter[default_rgb_colours[y]]])
