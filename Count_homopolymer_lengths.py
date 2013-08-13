@@ -24,7 +24,7 @@ def DoError(errorstring):
 ##############################
 
 def get_user_options():
-	usage = "usage: %prog [options]"
+	usage = "usage: %prog [options] <bam files>"
 	version="%prog 1.0. Written by Simon Harris, Wellcome Trust Sanger Institute, 2012"
 	parser = OptionParser(usage=usage, version=version)
 	
