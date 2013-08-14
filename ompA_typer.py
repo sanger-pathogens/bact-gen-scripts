@@ -92,22 +92,26 @@ tmpname='tmp'+"".join(choice(chars) for x in range(randint(8, 10)))
 
 if options.map:
 
-	funzip=False
-	runzip=False
-	if options.forward.split(".")[-1]=="gz":
-		print "Unzipping forward fastq file"
-		os.system("zcat "+options.forward+" > "+tmpname+"_1.fastq")
-		forward=tmpname+"_1.fastq"
-		funzip=True
-	else:
-		forward=options.forward
-	if options.reverse.split(".")[-1]=="gz":
-		print "Unzipping reverse fastq file"
-		os.system("zcat "+options.reverse+" > "+tmpname+"_2.fastq")
-		reverse=tmpname+"_2.fastq"
-		runzip=True
-	else:
-		reverse=options.reverse
+	#funzip=False
+	#runzip=False
+	#if options.forward.split(".")[-1]=="gz":
+	#	print "Unzipping forward fastq file"
+	#	os.system("zcat "+options.forward+" > "+tmpname+"_1.fastq")
+	#	forward=tmpname+"_1.fastq"
+	#	funzip=True
+	#else:
+	#	forward=options.forward
+	#if options.reverse.split(".")[-1]=="gz":
+	#	print "Unzipping reverse fastq file"
+	#	os.system("zcat "+options.reverse+" > "+tmpname+"_2.fastq")
+	#	reverse=tmpname+"_2.fastq"
+	#	runzip=True
+	#else:
+	#	reverse=options.reverse
+	
+	forward=options.forward
+	reverse=options.reverse
+	
 	if not os.path.isfile(options.serotypes+".fai"):
 		os.system(SAMTOOLS_DIR+"samtools faidx "+options.serotypes)
 	if not os.path.isfile(options.serotypes+".index.sma") or not os.path.isfile(options.serotypes+".index.smi"):
@@ -123,10 +127,10 @@ if options.map:
 	
 	
 	
-	if funzip:
-		os.system("rm -f "+forward)
-	if runzip:
-		os.system("rm -f "+reverse)
+	#if funzip:
+	#	os.system("rm -f "+forward)
+	#if runzip:
+	#	os.system("rm -f "+reverse)
 else:
 	print "Skipping mapping"
 	if options.bam!="" and os.path.isfile(options.bam):
