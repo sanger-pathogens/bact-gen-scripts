@@ -285,7 +285,7 @@ if __name__ == "__main__":
 	
 	for i, fastq in enumerate(fastqs):
 		if options.nomapid:
-			smalt_map_command=' '.join(map(str,[SMALT_LOC+" map -y "+str(options.nomapid)+" -x -r 0 -i", options.maxinsertsize, " -j", options.mininsertsize, " -f "+smaltoutput+" -o "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam", tmpname+"/"+tmpname+".index"]))
+			smalt_map_command=' '.join(map(str,[SMALT_LOC+" map -y "+str(options.nomapid)+" -x -r 0 -i", options.maxinsertsize, " -j", options.mininsertsize, " -f bam -o "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam", tmpname+"/"+tmpname+".index"]))
 		else:
 			smalt_map_command=' '.join(map(str,[SMALT_LOC+" map -x -r 0 -i", options.maxinsertsize, " -j", options.mininsertsize, " -f bam -o "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam", tmpname+"/"+tmpname+".index"]))
 		
@@ -332,7 +332,6 @@ if __name__ == "__main__":
 	job2_id = job2.run()
 	
 	
-	
 	#Pull out the core and accessory regions of the reference genome using the tab file (if provided)
 	
 	if options.prefix=="":
@@ -358,9 +357,10 @@ if __name__ == "__main__":
 #			FT   misc_feature    2825393..2826315
 			line=line.strip()
 			if len(line)>22 and line[:2]=="FT" and len(line[2:21].strip())>0:
-				try: ftloc=map(int,(line[21:].split("..")))
+				try: ftloc=map(int,(line[21:].replace("complement(","").replace(")","").split("..")))
 				except StandardError:
-					print line
+					print "Failed to read tab file"
+					print line[21:].split("..")
 					sys.exit()
 				note=""
 			elif len(line)>22 and line[:2]=="FT" and len(line[2:21].strip())==0 and ftloc!=-1:
@@ -407,6 +407,7 @@ if __name__ == "__main__":
 		copyfile(options.ref, core_file)
 		open(acc_file, 'w').close()
 			
+	
 	
 	#Create a bsub job to join all of the assemblies and prepare everything for blasting against the reference core regions
 	
