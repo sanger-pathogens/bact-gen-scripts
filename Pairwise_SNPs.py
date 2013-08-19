@@ -110,7 +110,7 @@ if __name__ == "__main__":
 			for y in range(x,len(site)):
 				if x!=y:
 					#print x,y, site[x],site[y], pairsnps[x][y]
-					if site[x]!=site[y] and site[x]!='-' and site[y]!='-':
+					if site[x]!=site[y] and site[x]!='-' and site[y]!='-' and site[x]!='N' and site[y]!='N':
 						pairsnps[x][y]=pairsnps[x][y]+1
 						if words[synpos].replace('/1','').replace('1/','')=='N':
 							synpairsnps[x][y]=synpairsnps[x][y]+1

@@ -40,7 +40,7 @@ def main():
 	group.add_option("-p", "--program", action="store", dest="blastprog", help="BLAST program to use (choose from blastn or tblastx) This script doesn't support protein BLASTs, and won't unless people ask very nicely. [Default= %default]", default="blastn", type="choice", choices=['blastn', 'tblastx'])
 	group.add_option("-e", "--evalue", action="store", dest="e", help="evalue cutoff for BLAST. [Default= %default]", default=0.00001, type="float")
 	group.add_option("-E", "--extras", action="store", dest="extras", help="Extra BLAST options to use. Note: These will not be sanity checked.", default="")
-	group.add_option("-d", "--tmpdir", action="store", dest="tmpdir", help="Temporary directory name. [Default= %default]", default="better_blast_tmp_dir")
+	group.add_option("-d", "--tmpdir", action="store", dest="tmpdir", help="Temporary directory prefix. [Default= %default]", default="better_blast_tmp_dir")
 	
 	parser.add_option_group(group)
 
@@ -91,7 +91,7 @@ if __name__ == "__main__":
 	
 	chars = string.ascii_letters + string.digits
 	tmpname='tmp'+"".join(choice(chars) for x in range(randint(8, 10)))
-	
+	options.tmpdir=options.tmpdir+"_"+tmpname
 	
 	if not os.path.exists(options.tmpdir):
 		try:
