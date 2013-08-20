@@ -234,28 +234,28 @@ for filename in sys.argv[filestart:]:
 #		print str(errors), str(insertions), str(deletions)
 #		print "Errors per mapped base\tInsertions per mapped base\tDeletions per mapped base"
 #		print str(errors/mappedlen), str(insertions/mappedlen), str(deletions/mappedlen)
-	
-	print "\nBreakdown of top 20 most common insertions"
-	ins=[]
-	for insertion in insertion_types:
-		ins.append([insertion_types[insertion],insertion])
-		#print insertion, insertion_types[insertion]
-	ins.sort()
-	ins.reverse()
-	for x, insertion in enumerate(ins):
-		print insertion[1], insertion[0]
-		if x==20:
-			break
-	
-	print "\nBreakdown of top 20 most common deletions"
-	dele=[]
-	for deletion in deletion_types:
-		dele.append([deletion_types[deletion],deletion])
-		#print insertion, insertion_types[insertion]
-	dele.sort()
-	dele.reverse()
-	for x, deletion in enumerate(dele):
-		print deletion[1], deletion[0]
-		if x==20:
-			break
+	if doerrors:
+		print "\nBreakdown of top 20 most common insertions"
+		ins=[]
+		for insertion in insertion_types:
+			ins.append([insertion_types[insertion],insertion])
+			#print insertion, insertion_types[insertion]
+		ins.sort()
+		ins.reverse()
+		for x, insertion in enumerate(ins):
+			print insertion[1], insertion[0]
+			if x==20:
+				break
+		
+		print "\nBreakdown of top 20 most common deletions"
+		dele=[]
+		for deletion in deletion_types:
+			dele.append([deletion_types[deletion],deletion])
+			#print insertion, insertion_types[insertion]
+		dele.sort()
+		dele.reverse()
+		for x, deletion in enumerate(dele):
+			print deletion[1], deletion[0]
+			if x==20:
+				break
 			
