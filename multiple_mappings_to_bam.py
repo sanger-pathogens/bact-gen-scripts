@@ -83,6 +83,7 @@ def get_user_options():
 	group.add_option("-Q", "--mapq", action="store", type="int", dest="mapq", help="Minimum mapping quality to call a SNP (see samtools help for more information) [default= %default]", default=30, metavar="INT")	
 	group.add_option("-d", "--depth", action="store", dest="depth", help="Minimum number of reads matching SNP [default= %default]", default=4, type="int")
 	group.add_option("-D", "--stranddepth", action="store", dest="stranddepth", help="Minimum number of reads matching SNP per strand [default= %default]", default=2, type="int")
+	group.add_option("-A", "--useanomolous", action="store_true", dest="anomolous", help="Use anomolous reads in mpileup (default is to not use them) ", default=False)
 	group.add_option("-B", "--BAQ", action="store_false", dest="BAQ", help="Turn off samtools base alignment quality option (BAQ) ", default=True)
 	group.add_option("-c", "--circular", action="store_false", dest="circular", help="Contigs are not circular, so do not try to fix them", default=True)
 	#parser.add_option("-q", "--quality", action="store", dest="quality", help="Minimum base quality [default= %default]", default=120, type="int")
@@ -538,10 +539,16 @@ class SNPanalysis:
 		
 		#produce the pileup file
 		
-		if options.BAQ:
-			print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -m", options.depth, " -DSugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+		if options.anomolous:
+			anomolous=" -A "
 		else:
-			print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -m", options.depth, " -DSugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+			anomolous=""
+		
+		
+		if options.BAQ:
+			print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -m", options.depth, anomolous, " -DSugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+		else:
+			print >> bashfile, SAMTOOLS_DIR+"samtools mpileup -d 1000 -m", options.depth, anomolous, " -DSugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 			
 		
 		print >> bashfile, BCFTOOLS_DIR+"bcftools view -bcg", self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"

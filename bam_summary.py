@@ -38,9 +38,9 @@ else:
 	doerrors=False
 	filestart=1
 if doerrors:
-	print "File\tContig\tContig length\tTotal Reads\tMean length\tMapped\tProper pairs\tUnmapped\tChimeras\tErrors\tInsertions\tDeletions\tErrors per mapped base\tInsertions per mapped base\tDeletions per mapped base\tMean depth\tStd depth\tMedian depth\tCount of unmapped bases in contig"
+	print "File\tContig\tContig length\tTotal Reads\tMean length\tMapped\tProper pairs\tUnmapped\tChimeras\tErrors\tInsertions\tDeletions\tErrors per mapped base\tInsertions per mapped base\tDeletions per mapped base\tMean depth\tStd depth\tMedian depth\tCount of unmapped bases in contig\t% ref mapped"
 else:
-	print "File\tContig\tContig length\tTotal\tMean length\tMapped\tProper pairs\tUnmapped\tChimeras"
+	print "File\tContig\tContig length\tTotal Reads\tMean length\tMapped\tProper pairs\tUnmapped\tChimeras\tInsertions\tDeletions\tInsertions per mapped base\tDeletions per mapped base\tMean depth\tStd depth\tMedian depth\tCount of unmapped bases in contig\t% ref mapped"
 
 for filename in sys.argv[filestart:]:
 	if filename.split(".")[-1]=="bam":
@@ -160,22 +160,45 @@ for filename in sys.argv[filestart:]:
 				else:
 					print cig
 		elif not read.is_unmapped:
+			start=read.pos
+			readpos=0
+			refpos=start
 			for cig in read.cigar:
 				if cig[0]==0:
 					mappedlen+=cig[1]
 					refstats[samfile.getrname(read.rname)]["mappedlen"]+=cig[1]
+					for x in range(0,cig[1]):
+						depth[samfile.getrname(read.rname)][refpos]+=1
+						readpos+=1
+						refpos+=1
+				elif cig[0]==1:
+					insertions+=1
+					refstats[samfile.getrname(read.rname)]["insertions"]+=1
+					readpos+=cig[1]
+				elif cig[0]==2:
+					deletions+=1
+					refstats[samfile.getrname(read.rname)]["deletions"]+=1
+					refpos+=cig[1]
+				elif cig[0]==4:
+					readpos+=cig[1]
+				elif cig[0]==5:
+					continue
+				else:
+					print cig
 
 	samfile.close()	
 			#print errors, errors/mappedlen, insertions, deletions
-	if doerrors:
-		totdepth=[]
-		depthstats={}
+	
+	totdepth=[]
+	depthstats={}
+	totlen=0.0
+	for x, ref in enumerate(refs):
+		totdepth+=depth[ref]
+		totlen+=lengths[x]
+		contiglength=float(lengths[x])
+		depthstats[ref]=[mean(depth[ref]), std(depth[ref]), median(depth[ref]), depth[ref].count(0), 100*((contiglength-depth[ref].count(0))/contiglength)]
 		
-		for ref in depth:
-			totdepth+=depth[ref]
-			depthstats[ref]=[mean(depth[ref]), std(depth[ref]), median(depth[ref]), depth[ref].count(0)]
-			
-		totdepthstats=[mean(totdepth), std(totdepth), median(totdepth), totdepth.count(0)]
+	totdepthstats=[mean(totdepth), std(totdepth), median(totdepth), totdepth.count(0), 100*((totlen-totdepth.count(0))/totlen)]
 	
 	
 	
@@ -185,14 +208,31 @@ for filename in sys.argv[filestart:]:
 			totaltoreport="-"
 		else:
 			totaltoreport=str(totallength/total)
+		
+		if mappedlen==0:
+			insertproportion="-"
+			deletionproportion="-"
+		else:
+			insertproportion=str(insertions/mappedlen)
+			deletionproportion=str(deletions/mappedlen)
+			
 		if len(refs)>1:
 			refname="All contigs"
 		else:
 			refname=refs[0]
-		print "\t".join([filename, refname, str(totreflen), str(total), totaltoreport, str(mapped), str(proper_pair), str(unmapped), str(chimera)])
+		print "\t".join([filename, refname, str(totreflen), str(total), totaltoreport, str(mapped), str(proper_pair), str(unmapped), str(chimera), str(insertions), str(deletions), insertproportion, deletionproportion, str(totdepthstats[0]), str(totdepthstats[1]), str(totdepthstats[2]), str(totdepthstats[3]), str(totdepthstats[4])])
 		if len(refs)>1:
 			for x, ref in enumerate(refs):
-				print "\t".join([filename, ref, str(lengths[x]), "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["proper_pair"]), "-", "-"])
+				
+				if refstats[ref]["mappedlen"]==0:
+					insertproportion="-"
+					deletionproportion="-"
+				else:
+					insertproportion=str(refstats[ref]["insertions"]/refstats[ref]["mappedlen"])
+					deletionproportion=str(refstats[ref]["deletions"]/refstats[ref]["mappedlen"])
+		
+		
+				print "\t".join([filename, ref, str(lengths[x]), "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["proper_pair"]), "-", "-", str(refstats[ref]["insertions"]), str(refstats[ref]["deletions"]), insertproportion, deletionproportion, str(depthstats[ref][0]), str(depthstats[ref][1]), str(depthstats[ref][2]), str(depthstats[ref][3]), str(depthstats[ref][4])])
 	else:
 		
 			
@@ -214,7 +254,7 @@ for filename in sys.argv[filestart:]:
 		else:
 			refname=refs[0]
 		
-		print "\t".join([filename, refname, str(totreflen), str(total), totaltoreport, str(mapped), str(proper_pair), str(unmapped), str(chimera), str(errors), str(insertions), str(deletions), errorproportion, insertproportion, deletionproportion, str(totdepthstats[0]), str(totdepthstats[1]), str(totdepthstats[2]), str(totdepthstats[3])])
+		print "\t".join([filename, refname, str(totreflen), str(total), totaltoreport, str(mapped), str(proper_pair), str(unmapped), str(chimera), str(errors), str(insertions), str(deletions), errorproportion, insertproportion, deletionproportion, str(totdepthstats[0]), str(totdepthstats[1]), str(totdepthstats[2]), str(totdepthstats[3]), str(totdepthstats[4])])
 		if len(refs)>1:
 			for x, ref in enumerate(refs):
 				
@@ -228,7 +268,7 @@ for filename in sys.argv[filestart:]:
 					deletionproportion=str(refstats[ref]["deletions"]/refstats[ref]["mappedlen"])
 		
 		
-				print "\t".join([filename, ref, str(lengths[x]), "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["proper_pair"]), "-", "-", str(refstats[ref]["errors"]), str(refstats[ref]["insertions"]), str(refstats[ref]["deletions"]), errorproportion, insertproportion, deletionproportion, str(depthstats[ref][0]), str(depthstats[ref][1]), str(depthstats[ref][2]), str(depthstats[ref][3])])
+				print "\t".join([filename, ref, str(lengths[x]), "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["proper_pair"]), "-", "-", str(refstats[ref]["errors"]), str(refstats[ref]["insertions"]), str(refstats[ref]["deletions"]), errorproportion, insertproportion, deletionproportion, str(depthstats[ref][0]), str(depthstats[ref][1]), str(depthstats[ref][2]), str(depthstats[ref][3]), str(depthstats[ref][4])])
 #	if doerrors:
 #		print "Errors\tInsertions\tDeletions\tMapped bases"
 #		print str(errors), str(insertions), str(deletions)
