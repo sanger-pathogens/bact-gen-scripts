@@ -315,6 +315,7 @@ if __name__ == "__main__":
 		else:
 			refnum=0
 			options.reference=alignment[refnum].id
+			print "No reference specified. Using first sequence in alignment as reference"
 		
 		
 		

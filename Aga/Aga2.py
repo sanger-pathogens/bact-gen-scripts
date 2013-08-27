@@ -309,10 +309,10 @@ if __name__ == "__main__":
 		print >> smalt_run_file, "rm -f "+tmpname+"/"+tmpname+"_"+str(i+1)+'.bam || error_exit "rm command failed! Aborting"'
 		
 		if fastqs[fastq]["read1"] and fastqs[fastq]["read2"]:
-			print >> smalt_run_file, AGA_DIR+"bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f pairedfastq -t atleastoneunmapped"+' || error_exit "bam_filter command failed! Aborting"'
+			print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f pairedfastq -t aga"+' || error_exit "bam_filter command failed! Aborting"'
 			print >> smalt_run_file, AGA_DIR+"velvet_assembly.sh -f "+tmpname+"/"+name+"_unmapped_1.fastq -r "+tmpname+"/"+name+"_unmapped_2.fastq -s "+tmpname+"/"+name+"_shuffled.fastq -n -p"+' || error_exit "velvet assembly command failed! Aborting"'
 		else:
-			print >> smalt_run_file, AGA_DIR+"bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f fastq -t atleastoneunmapped"+' || error_exit "bam_filter command failed! Aborting"'
+			print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f fastq -t aga"+' || error_exit "bam_filter command failed! Aborting"'
 			print >> smalt_run_file, AGA_DIR+"velvet_assembly.sh -f "+tmpname+"/"+name+"_unmapped.fastq -s "+tmpname+"/"+name+"_shuffled.fastq -n"+' || error_exit "velvet assembly command failed! Aborting"'
 		
 		print >> smalt_run_file, "mv "+tmpname+"/"+name+"_shuffled_velvet/contigs.fa "+tmpname+"/"+name+"_assembled.fasta"+' || error_exit "mv command failed! Aborting"'
