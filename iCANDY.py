@@ -641,7 +641,7 @@ def read_dendropy_tree(treefile):
 		if options.midpoint:
 			print "Midpoint rooting tree"
 			if t.schema=="beast-summary-tree":
-				print "Warning: Midpoint rooting a BEAST tree may destroy temporal information represented in node opsitions"
+				print "Warning: Midpoint rooting a BEAST tree may destroy temporal information represented in node positions"
 			t.reroot_at_midpoint(update_splits=True)
 			
 		#Ladderise the tree if the option is selected
@@ -661,7 +661,7 @@ def read_dendropy_tree(treefile):
 			t.update_splits(delete_outdegree_one=False)
 		root = t.seed_node
 		root_children = root.child_nodes()
-		print len(root_children)
+		
 		if len(root_children) != 2:
 			print "Tree rooted at node. Rerooting on first edge from that node."
 			t.reroot_at_edge(root_children[0].edge, update_splits=True)
