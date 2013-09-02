@@ -812,8 +812,11 @@ if __name__ == "__main__":
 	count=0
 	
 	host=gethostname().split("-")[0]
+	print "Running on host:", host
 	if host=="farm3":
 		JAVA_DIR=farm3_JAVA_DIR
+		if options.mem==0:
+			options.mem=2
 	else:
 		JAVA_DIR=pcs4_JAVA_DIR
 	
