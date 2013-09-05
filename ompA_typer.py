@@ -301,10 +301,20 @@ toprint=[]
 for serotype in serotypepercentid:
 	ref=serotype[2]
 	if ref==serotypepercentid[0][2]:
-		toprint=[options.forward.split("/")[-1].replace(".gz","").replace("_1.fastq",""), ref, 100*serotype[0], 100*(serotypeinfo[ref]["bases_covered"]/serotypeinfo[ref]["length"]),  serotypeinfo[ref]["base_coverage"]/serotypeinfo[ref]["bases_covered"],  serotypeinfo[ref]["base_coverage"]/serotypeinfo[ref]["length"], serotypeinfo[ref]["SNP"], []]
+		try:
+			part4=serotypeinfo[ref]["base_coverage"]/serotypeinfo[ref]["bases_covered"]
+		except ZeroDivisionError:
+			part4=0
+		toprint=[options.forward.split("/")[-1].replace(".gz","").replace("_1.fastq",""), ref, 100*serotype[0], 100*(serotypeinfo[ref]["bases_covered"]/serotypeinfo[ref]["length"]),  part4,  serotypeinfo[ref]["base_coverage"]/serotypeinfo[ref]["length"], serotypeinfo[ref]["SNP"], []]
 		refmatch=100*serotype[0]
 	elif 100*serotype[0]>refmatch-options.cutoff:
-		toprint[-1].append(','.join(map(str,[ref, 100*serotype[0], 100*(serotypeinfo[ref]["bases_covered"]/serotypeinfo[ref]["length"]),  serotypeinfo[ref]["base_coverage"]/serotypeinfo[ref]["bases_covered"],  serotypeinfo[ref]["base_coverage"]/serotypeinfo[ref]["length"], serotypeinfo[ref]["SNP"]])))
+		
+		try:
+			part4=serotypeinfo[ref]["base_coverage"]/serotypeinfo[ref]["bases_covered"]
+		except ZeroDivisionError:
+			part4=0
+		
+		toprint[-1].append(','.join(map(str,[ref, 100*serotype[0], 100*(serotypeinfo[ref]["bases_covered"]/serotypeinfo[ref]["length"]),  part4,  serotypeinfo[ref]["base_coverage"]/serotypeinfo[ref]["length"], serotypeinfo[ref]["SNP"]])))
 	
 	
 	
