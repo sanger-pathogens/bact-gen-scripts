@@ -15,7 +15,7 @@ from Si_general import *
 from Si_SeqIO import *
 from Si_SNPs_temp import *
 
-from socket import gethostname
+import subprocess
 
 
 
@@ -38,6 +38,27 @@ SSE3_PARALLEL_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-PTHRE
 gap_and_missing=set(["-", "N", "?"])
 missing_set=([ "N", "?"])
 
+
+####################
+# Get cluster name #
+####################
+
+def getclustername():
+	mycluster="unknown"
+	try:
+		lsid_output=subprocess.check_output(["lsid"])
+		
+		for line in lsid_output.split("\n"):
+			words=line.strip().split()
+			if len(words)>0:
+				if words[1]=="cluster":
+					mycluster=words[4]
+	
+		
+	except StandardError:
+		return mycluster
+	
+	return mycluster
 
 
 ##########################################
@@ -353,23 +374,7 @@ if __name__ == "__main__":
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
 
 	
 	#MEM(AA+GAMMA)    = (n-2) * m * (80 * 8) bytes
@@ -380,7 +385,7 @@ if __name__ == "__main__":
 	#1MB=1048576 bytes
 
 	
-	host=gethostname().split("-")[0]
+	host=getclustername()
 	print "Running on "+host
 	
 	if host=="farm3":
