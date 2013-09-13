@@ -75,7 +75,9 @@ def check_input_validity(options, args):
 ################		
 
 if __name__ == "__main__":
-
+	
+	maxlength=100000
+	
 	#Get command line arguments
 
 	(options, args) = main()
@@ -124,8 +126,8 @@ if __name__ == "__main__":
 	query_tmp_file=open(query_tmp_file_name+str(query_file_count), "w")
 	for query in query_seqs:
 		seqlength=len(str(query.seq))
-		if seqlength>50000:
-			num_fragments=int(math.ceil(float(seqlength)/50000))
+		if seqlength>maxlength:
+			num_fragments=int(math.ceil(float(seqlength)/maxlength))
 			fragment_length=int(math.ceil(float(seqlength)/num_fragments))
 			x=0
 			for x in xrange(num_fragments):
@@ -146,7 +148,7 @@ if __name__ == "__main__":
 				curr_file_len+=j-i
 				query_tot+=j-i
 		else:
-			if (curr_file_len+seqlength)>50000:
+			if (curr_file_len+seqlength)>maxlength:
 				query_tmp_file.close()
 				query_file_count+=1
 				curr_file_len=0
