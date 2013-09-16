@@ -261,7 +261,7 @@ if __name__ == "__main__":
 						break
 				
 				
-				if repbase not in ["A", "T"]:
+				if repbase not in ["A", "T", "C", "G"]:
 					continue
 				
 				if len(foundbases)>1:
@@ -315,7 +315,7 @@ if __name__ == "__main__":
 	print "Printing output files"
 	sys.stdout.flush()
 	for region in region_lengths:
-		
+		print region_lengths[region]
 		bases=[]
 		basecounts={}
 		for filename in region_lengths[region]:
