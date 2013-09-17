@@ -392,7 +392,7 @@ if __name__ == "__main__":
 		if options.threads>1:
 			if options.version=="AVX":
 				RAxML=AVX_PARALLEL_RAxML_DIR+" -T "+str(options.threads)
-				RAxML_DIR=SSE3_RAxML_DIR
+				RAxML_DIR=AVX_RAxML_DIR
 			elif options.version=="SSE3":
 				RAxML=SSE3_PARALLEL_RAxML_DIR+" -T "+str(options.threads)
 				RAxML_DIR=SSE3_RAxML_DIR
@@ -400,9 +400,11 @@ if __name__ == "__main__":
 				DoError("There shouldn't be any other options here")
 		else:
 			if options.version=="AVX":
-				RAxML=AVX_RAxML_DIR+" -T "+str(options.threads)
+				RAxML=AVX_RAxML_DIR
+				RAxML_DIR=AVX_RAxML_DIR
 			elif options.version=="SSE3":
-				RAxML=SSE3_RAxML_DIR+" -T "+str(options.threads)
+				RAxML=SSE3_RAxML_DIR
+				RAxML_DIR=SSE3_RAxML_DIR
 			else:
 				DoError("There shouldn't be any other options here")
 		print "Using "+options.version+" version of RAxML"

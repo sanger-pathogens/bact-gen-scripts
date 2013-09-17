@@ -22,8 +22,18 @@ from Si_SeqIO import *
 from Si_nexus import draw_ascii_tree, tree_to_string, midpoint_root
 import random
 import numpy
+import subprocess
 
 #Requires Biopython and Pysam
+
+
+####################
+# Set some globals #
+####################
+
+
+pcs4_RAxML_DIR="/software/pathogen/external/applications/RAxML/RAxML-7.0.4/raxmlHPC"
+farm3_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC"
 
 
 ##########################################
@@ -63,6 +73,28 @@ def main():
 def DoError(ErrorString):
 	print "!!!Error:", ErrorString,"!!!"
 	sys.exit()
+
+
+####################
+# Get cluster name #
+####################
+
+def getclustername():
+	mycluster="unknown"
+	try:
+		lsid_output=subprocess.check_output(["lsid"])
+		
+		for line in lsid_output.split("\n"):
+			words=line.strip().split()
+			if len(words)>0:
+				if words[1]=="cluster":
+					mycluster=words[4]
+	
+		
+	except StandardError:
+		return mycluster
+	
+	return mycluster
 
 
 ###################################################################
@@ -1441,7 +1473,14 @@ if __name__ == "__main__":
 				
 			print "Running tree with RAxML"
 			sys.stdout.flush()
-			os.system("/software/pathogen/external/applications/RAxML/RAxML-7.0.4/raxmlHPC -f d -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
+			
+			host=getclustername()
+			if host=="farm3":
+				RAxML=farm3_RAxML_DIR
+			else:
+				RAxML=pcs4_RAxML_DIR
+			
+			os.system(RAxML+" -f d -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
 			
 			os.system("mv RAxML_result."+"SNPS_"+prefix+" "+prefix+"_Initial.tre")
 			options.tree=prefix+"_Initial.tre"

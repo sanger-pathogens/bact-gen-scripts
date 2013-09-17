@@ -6,7 +6,7 @@
 ##################
 import os, sys
 sys.path.extend(map(os.path.abspath, ['/usr/lib/python2.4/site-packages/']))
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.5/site-packages/']))
+#sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.5/site-packages/']))
 from ghmm import *
 import ghmmwrapper
 from numpy import mean, median, max, std, bincount, argmax
