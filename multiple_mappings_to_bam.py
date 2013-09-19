@@ -468,7 +468,7 @@ class SNPanalysis:
 					cmdline="map -y "+str(options.nomapid)+" -x -r "+str(randrange(1,99999))+" -f "+smaltoutput+" -o "+self.runname+"/tmp1."+smaltoutputsuffix, tmpname+".index", self.fastqdir+self.name+".fastq"
 				else:
 					if newsmalt:
-						rbit="-r -1"
+						rbit=" -r -1"
 					else:
 						rbit=""
 					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+rbit+" -x -f "+smaltoutput+" -o "+self.runname+"/tmp1."+smaltoutputsuffix, tmpname+".index", self.fastqdir+self.name+".fastq"

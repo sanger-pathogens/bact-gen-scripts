@@ -87,7 +87,7 @@ if __name__ == "__main__":
 	check_input_validity(options, args)
 	
 	if options.prefix=="":
-		options.prefix=os.path.basename(options.query)+"_vs_"+os.path.basename(options.subject)
+		options.prefix=os.path.basename(options.subject)+"_vs_"+os.path.basename(options.query)
 	
 	#Create a temporary name
 	
@@ -115,8 +115,22 @@ if __name__ == "__main__":
 	
 	try:
 		query_seqs=read_seq_file(options.query)
+		if len(query_seqs)==0:
+			try:
+				query_seqs=[open_annotation(options.query)]
+			except StandardError:
+				DoError("Cannot read query file")
+		
 	except StandardError:
-		DoError("Cannot read query file")
+		try:
+			query_seqs=[open_annotation(options.query)]
+		except StandardError:
+			DoError("Cannot read query file")
+	
+	if len(query_seqs)==0:
+		print DoError("No query sequence found")
+	else:
+		print "Found", len(query_seqs), "query sequences"
 	
 	query_tot=0
 	query_tmp_file_name=options.tmpdir+"/"+tmpname+"_query.fasta"
@@ -175,6 +189,25 @@ if __name__ == "__main__":
 	except StandardError:
 		DoError("Cannot read subject file")
 	
+	try:
+		subject_seqs=read_seq_file(options.subject)
+		if len(subject_seqs)==0:
+			try:
+				subject_seqs=[open_annotation(options.subject)]
+			except StandardError:
+				DoError("Cannot read subject file")
+		
+	except StandardError:
+		try:
+			subject_seqs=[open_annotation(options.subject)]
+		except StandardError:
+			DoError("Cannot read subject file")
+	
+	if len(subject_seqs)==0:
+		print DoError("No subject sequence found")
+	else:
+		print "Found", len(subject_seqs), "subject sequences"
+	
 	subject_tot=0
 	subject_tmp_file_name=options.tmpdir+"/"+tmpname+"_subject.fasta"
 	subject_tmp_file=open(subject_tmp_file_name, "w")
@@ -221,7 +254,7 @@ if __name__ == "__main__":
 	sys.stdout.flush()
 	
 	print "Once these jobs are finished, you can run a comparison in act using:"
-	print "act", options.query, options.prefix+".crunch.gz", options.subject
+	print "act", options.subject, options.prefix+".crunch.gz", options.query
 	
 	job3 = farm.Bsub(options.prefix+"_bb_bsub.out", options.prefix+"_bb_bsub.err", tmpname+"_cleanup", "normal", 0.5, "rm -rf formatdb.log "+options.tmpdir)
 	job3.add_dependency(job2_id) 

@@ -268,6 +268,9 @@ if __name__ == "__main__":
 			print "Cannot understand file name of", arg+". Skipping..."
 		
 	
+	if len(fastqs)==0:
+		DoError("No fastq files found")
+	
 	#subsample the fastq files here to reduce coverage levels?
 	
 	
@@ -285,9 +288,9 @@ if __name__ == "__main__":
 	
 	for i, fastq in enumerate(fastqs):
 		if options.nomapid:
-			smalt_map_command=' '.join(map(str,[SMALT_LOC+" map -y "+str(options.nomapid)+" -x -r 0 -i", options.maxinsertsize, " -j", options.mininsertsize, " -f bam -o "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam", tmpname+"/"+tmpname+".index"]))
+			smalt_map_command=' '.join(map(str,[SMALT_LOC+" map -y "+str(options.nomapid)+" -x -r -1 -i", options.maxinsertsize, " -j", options.mininsertsize, " -f bam -o "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam", tmpname+"/"+tmpname+".index"]))
 		else:
-			smalt_map_command=' '.join(map(str,[SMALT_LOC+" map -x -r 0 -i", options.maxinsertsize, " -j", options.mininsertsize, " -f bam -o "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam", tmpname+"/"+tmpname+".index"]))
+			smalt_map_command=' '.join(map(str,[SMALT_LOC+" map -x -r -1 -i", options.maxinsertsize, " -j", options.mininsertsize, " -f bam -o "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam", tmpname+"/"+tmpname+".index"]))
 		
 		smalt_run_file=open(tmpname+"/"+tmpname+"_smalt_"+str(i+1)+".sh", "w")
 		add_bash_error_function(smalt_run_file)
@@ -310,16 +313,26 @@ if __name__ == "__main__":
 		
 		if options.tab!="":
 			tabcommand=" -T "+options.tab
-		
-		if fastqs[fastq]["read1"] and fastqs[fastq]["read2"]:
-			print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f pairedfastq"+tabcommand+" -t aga"+' || error_exit "bam_filter command failed! Aborting"'
-			print >> smalt_run_file, AGA_DIR+"velvet_assembly.sh -f "+tmpname+"/"+name+"_unmapped_1.fastq -r "+tmpname+"/"+name+"_unmapped_2.fastq -s "+tmpname+"/"+name+"_shuffled.fastq -n -p"+' || error_exit "velvet assembly command failed! Aborting"'
 		else:
-			print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f fastq"+tabcommand+" -t aga"+' || error_exit "bam_filter command failed! Aborting"'
+			tabcommand=""
+			
+		if fastqs[fastq]["read1"] and fastqs[fastq]["read2"]:
+			#print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f pairedfastq"+tabcommand+" -t aga"+' || error_exit "bam_filter command failed! Aborting"'
+#			print >> smalt_run_file, AGA_DIR+"velvet_assembly.sh -f "+tmpname+"/"+name+"_unmapped_1.fastq -r "+tmpname+"/"+name+"_unmapped_2.fastq -s "+tmpname+"/"+name+"_shuffled.fastq -n -p"+' || error_exit "velvet assembly command failed! Aborting"'
+			print >> smalt_run_file, AGA_DIR+"bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f pairedfastq"+tabcommand+" -t bothunmapped"+' || error_exit "bam_filter command failed! Aborting"'
+			print >> smalt_run_file, "spades.py -t 1 -1 "+tmpname+"/"+name+"_unmapped_1.fastq -2 "+tmpname+"/"+name+"_unmapped_2.fastq -o "+tmpname+"/"+name+"_spades"+' || error_exit "velvet assembly command failed! Aborting"'
+		else:
+			DoError("unpaired fastq file found. SPAdes cannot handle this.")
+#			print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f fastq"+tabcommand+" -t aga"+' || error_exit "bam_filter command failed! Aborting"'
+#			print >> smalt_run_file, AGA_DIR+"velvet_assembly.sh -f "+tmpname+"/"+name+"_unmapped.fastq -s "+tmpname+"/"+name+"_shuffled.fastq -n"+' || error_exit "velvet assembly command failed! Aborting"'
+			print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f fastq -t bothunmapped"+' || error_exit "bam_filter command failed! Aborting"'
 			print >> smalt_run_file, AGA_DIR+"velvet_assembly.sh -f "+tmpname+"/"+name+"_unmapped.fastq -s "+tmpname+"/"+name+"_shuffled.fastq -n"+' || error_exit "velvet assembly command failed! Aborting"'
 		
-		print >> smalt_run_file, "mv "+tmpname+"/"+name+"_shuffled_velvet/contigs.fa "+tmpname+"/"+name+"_assembled.fasta"+' || error_exit "mv command failed! Aborting"'
-		print >> smalt_run_file, "rm -rf "+tmpname+"/"+name+"_shuffled_velvet "+tmpname+"/"+name+"_shuffled.fastq "+tmpname+"/"+name+'_shuffled_velvet.log || error_exit "rm command failed! Aborting"'
+#		print >> smalt_run_file, "mv "+tmpname+"/"+name+"_shuffled_velvet/contigs.fa "+tmpname+"/"+name+"_assembled.fasta"+' || error_exit "mv command failed! Aborting"'
+#		print >> smalt_run_file, "rm -rf "+tmpname+"/"+name+"_shuffled_velvet "+tmpname+"/"+name+"_shuffled.fastq "+tmpname+"/"+name+'_shuffled_velvet.log || error_exit "rm command failed! Aborting"'
+		
+		print >> smalt_run_file, "mv "+tmpname+"/"+name+"_spades/contigs.fasta "+tmpname+"/"+name+"_assembled.fasta"+' || error_exit "mv command failed! Aborting"'
+		print >> smalt_run_file, "rm -rf "+tmpname+"/"+name+'_spades || error_exit "rm command failed! Aborting"'
 		assembly_list.append(tmpname+"/"+name+"_assembled.fasta")
 		
 		
