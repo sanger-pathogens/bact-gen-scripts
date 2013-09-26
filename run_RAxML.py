@@ -541,7 +541,10 @@ if __name__ == "__main__":
 			
 			#When the ml and bootstrap replicates are complete, put the bootstrap numbers onto the nodes of the ml tree
 			if options.number>1:
-				bsubcommand="echo \'x=$(grep \'Best\' RAxML_info.ml_"+options.suffix+" | awk \"{print \$6}\" |tr -d \':\' ) && cp RAxML_result.ml_"+options.suffix+".RUN.${x} RAxML_result.ml_"+options.suffix+" && "+RAxML+" -f b -t RAxML_result.ml_"+options.suffix+" -z RAxML_bootstrap.boot_"+options.suffix+" -s "+tmpname+".phy -m "+model+" -n "+options.suffix+"'"
+				if host=="farm3":
+					bsubcommand=RAxML+" -f b -t RAxML_bestTree.ml_"+options.suffix+" -z RAxML_bootstrap.boot_"+options.suffix+" -s "+tmpname+".phy -m "+model+" -n "+options.suffix+"'"
+				else:
+					bsubcommand="echo \'x=$(grep \'Best\' RAxML_info.ml_"+options.suffix+" | awk \"{print \$6}\" |tr -d \':\' ) && cp RAxML_result.ml_"+options.suffix+".RUN.${x} RAxML_result.ml_"+options.suffix+" && "+RAxML+" -f b -t RAxML_result.ml_"+options.suffix+" -z RAxML_bootstrap.boot_"+options.suffix+" -s "+tmpname+".phy -m "+model+" -n "+options.suffix+"'"
 				
 				bsub=' | bsub -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
 				if options.bsubout:
@@ -558,7 +561,10 @@ if __name__ == "__main__":
 					bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
 				if options.bsuberr:
 					bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
-				os.system(bsub+' '+RAxML_DIR+' -f b -t RAxML_result.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
+				if host=="farm3":
+					os.system(bsub+' '+RAxML_DIR+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
+				else:
+					os.system(bsub+' '+RAxML_DIR+' -f b -t RAxML_result.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
 					
 	
 			#Clean up all temporary files created	
