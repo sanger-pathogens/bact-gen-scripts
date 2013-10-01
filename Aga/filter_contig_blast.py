@@ -29,7 +29,7 @@ def main():
 	group.add_option("-l", "--lengths", action="store", dest="lengths", help="File containing contig length information", default="", metavar="FILE")
 	group.add_option("-o", "--output_prefix", action="store", dest="prefix", help="Output prefix", default="")
 	group.add_option("-c", "--contigs", action="store", dest="contigs", help="Contig sequence file", default="", metavar="FILE")
-	group.add_option("-s", "--minsize", action="store", dest="minsize", help="minimum size of non match within a contig to retain the contig", default=200, type="int", metavar="INT")
+	group.add_option("-s", "--minsize", action="store", dest="minsize", help="minimum size of non match within a contig to retain the contig", default=1000, type="int", metavar="INT")
 	group.add_option("-L", "--minmatchlength", action="store", dest="minlength", help="minimum length of blast match", default=100, type="int", metavar="INT")
 	group.add_option("-i", "--minid", action="store", dest="minid", help="Minimum identity threshold for a blast match", default=0.9, type="float", metavar="float")
 	parser.add_option_group(group)

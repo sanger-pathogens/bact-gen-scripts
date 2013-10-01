@@ -132,6 +132,11 @@ if __name__ == "__main__":
 	else:
 		print "Found", len(query_seqs), "query sequences"
 	
+	
+	for query in query_seqs:
+		if ">" in str(query.seq):
+			print DoError("Found > in sequence")
+			sys.exit()
 	query_tot=0
 	query_tmp_file_name=options.tmpdir+"/"+tmpname+"_query.fasta"
 	query_fragment_count=0
