@@ -8,7 +8,7 @@ import dendropy
 import string, re
 import os, sys
 import random
-from math import sqrt, pow, log, floor, sin
+from math import sqrt, pow, log, floor, sin, log10, ceil
 from numpy import repeat, convolve, mean, median
 from optparse import OptionParser, OptionGroup
 from Bio.Nexus import Trees, Nodes
@@ -2613,6 +2613,8 @@ class Track:
 		self.features=features[:]
 		self.scaled_features=features[:]
 		self.draw_feature_labels=False
+		self.feature_scale=False
+		self.feature_maxticks=7
 		self.feature_label_size=8
 		self.feature_label_angle=0
 		self.feature_label_font="Helvetica"
@@ -2899,6 +2901,7 @@ class Track:
 				scaled_start=(float(start)/length)*self.track_length
 				scaled_finish=(float(finish)/length)*self.track_length
 				scaledlocations.append((scaled_start,scaled_finish))
+				feature.scaled_feature_locations=[(start,finish)]
 				
 			
 			newfeature.feature_locations=scaledlocations
@@ -2951,7 +2954,7 @@ class Track:
 		
 		for featurenum in featuresort[::-1]:
 			feature=self.scaled_features[featurenum[1]]
-			
+			unscaled_feature=self.features[featurenum[1]]
 				
 			#if the feature is white, outline it in black so we can see it and outline features in black if selected in the options
 			if feature.strokecolour==colors.Color(1,1,1,1) or options.outline_features:
@@ -3031,7 +3034,116 @@ class Track:
 						joins.append(Line(self.track_position[0]+location[1], y1, self.track_position[0]+location[1]+(float(subfeature_locations[x+1][0]-location[1])/2), joinheight, strokeDashArray=[0.5, 1], strokeWidth=0.5))
 						joins.append(Line(self.track_position[0]+((location[1]+subfeature_locations[x+1][0])/2), joinheight, self.track_position[0]+location[1]+(float(subfeature_locations[x+1][0]-location[1])), y1, strokeDashArray=[0.5, 1], strokeWidth=0.5))
 						
-				
+			
+			
+					if self.feature_scale:
+						
+						
+						def round_to_1sf(x):
+						
+							return round(x, -int(floor(log10(x))))
+						
+						def round_up_to_1sf(x):
+						
+							multiplier=1
+							y=x
+							while y>10:
+								print y
+								multiplier=multiplier*10
+								y=y/10
+							
+							return ceil(y)*multiplier
+						
+						
+						feature_scaling_factor=(unscaled_feature.scaled_feature_locations[0][1]-unscaled_feature.scaled_feature_locations[0][0])/(feature.feature_locations[0][1]-feature.feature_locations[0][0])
+						if feature_scaling_factor*location[0]>self.end:
+							print feature_scaling_factor*location[0], feature_scaling_factor*self.track_position[0], self.beginning, self.end
+						
+						if self.end!=-1:
+							length=float(self.end-self.beginning)
+						else:
+							length=float(self.max_feature_length-self.beginning)
+						
+						if self.scale_position=="middle":
+							yposition=self.track_position[1]
+						elif self.scale_position=="top":
+							yposition=self.track_position[1]+((float(self.track_height)/2)*self.track_draw_proportion)
+						elif self.scale_position=="bottom":
+							yposition=self.track_position[1]-((float(self.track_height)/2)*self.track_draw_proportion)
+						else:
+							yposition=self.track_position[1]
+							
+						xAxis = XValueAxis() 
+						xAxis.setPosition(self.track_position[0]+location[0], yposition, location[1]-location[0])
+						xAxis.configure([(1,(location[1]-location[0])*feature_scaling_factor)])
+						xAxis.valueMax=(location[1]-location[0])*feature_scaling_factor
+						xAxis.valueMin=0
+						if self.tick_marks:
+							xAxis.tickDown=((float(self.track_height)/8)*self.track_draw_proportion)
+						else:
+							xAxis.visibleTicks=0
+						if self.minor_tick_marks:
+							xAxis.visibleSubTicks=1
+						if not self.tick_mark_labels:
+							xAxis.visibleLabels=0
+						xAxis.tickDown=1
+						xAxis.tickUp=0
+						xAxis.labels.boxAnchor = 'n'
+						#xAxis.labels.dy=((float(self.track_height)/6)*self.track_draw_proportion)+(inch*0.02)
+						#xAxis.labels.dy=(((float(self.track_height)/8)*self.track_draw_proportion)+(inch*0.02))*-1
+						xAxis.labels.dy=0
+						#xAxis.labels.angle=self.tick_mark_label_angle*-1
+						xAxis.labels.angle=0
+						xAxis.labels.fontName=self.tick_mark_label_font
+						if feature.fillcolour==colors.orange:
+							xAxis.labels.fillColor=colors.brown
+							xAxis.labels.strokeColor=colors.brown
+						elif feature.fillcolour==colors.brown:
+							xAxis.labels.fillColor=colors.orange
+							xAxis.labels.strokeColor=colors.orange
+		
+						xAxis.labels.fontSize=((float(self.track_height)/5)*self.track_draw_proportion)
+						if xAxis.labels.fontSize>self.tick_mark_label_size:
+							xAxis.labels.fontSize=self.tick_mark_label_size
+							
+						xAxis.configure([(1,((location[1]-get_text_width(xAxis.labels.fontName, xAxis.labels.fontSize, str(feature_scaling_factor*location[1])))-location[0])*feature_scaling_factor)])
+		
+						
+						max_text_len=get_text_width(xAxis.labels.fontName, xAxis.labels.fontSize, str(feature_scaling_factor*(location[1]-location[0])))
+						
+						maxticks=round_to_1sf((location[1]-location[0])/max_text_len)
+						tmp=(location[1]-location[0])/max_text_len
+						
+						if maxticks>self.feature_maxticks:
+							maxticks=self.feature_maxticks
+						if maxticks>0:
+							tickdistance=round_up_to_1sf((feature_scaling_factor*(location[1]-location[0]))/maxticks)
+							
+							valueSteps=[]
+							x=tickdistance
+							while x<feature_scaling_factor*(((location[1]-location[0]))-(get_text_width(xAxis.labels.fontName, xAxis.labels.fontSize, str(x))/2)):
+								valueSteps.append(x)
+								x+=tickdistance
+						else:
+							tickdistance=0
+							valueSteps=[]
+						
+						
+						if len(valueSteps)>0 and xAxis.labels.fontSize>4:
+						
+							#print xAxis.maximumTicks
+							#xAxis.maximumTicks=int(floor((location[1]-location[0])/get_text_width(xAxis.labels.fontName, xAxis.labels.fontSize, str(feature_scaling_factor*location[1]))))
+							#print xAxis.maximumTicks
+							#xAxis.minimumTickSpacing=get_text_width(xAxis.labels.fontName, xAxis.labels.fontSize, str(feature_scaling_factor*location[1]))
+							xAxis.valueSteps=valueSteps
+							xAxis.configure([(1,((location[1]-location[0])*feature_scaling_factor))])
+							#if (location[1]-location[0])>get_text_width(xAxis.labels.fontName, xAxis.labels.fontSize, str(feature_scaling_factor*location[1])):
+							d.add(xAxis) 
+							
+						
+					
+			
+			
 			if self.draw_feature_labels:
 				
 				fstart=feature.feature_locations[0][0]
@@ -4729,7 +4841,8 @@ if __name__ == "__main__":
 				newtrack.beginning=options.beginning
 				newtrack=add_sequence_file_to_diagram(fastarecord, name)
 				newtrack.scale=True
-				
+				if arg.split('.')[-1].lower()=="mfa":
+					newtrack.feature_scale=True
 				newtrack.scale_position="middle"
 				newtrack.name=name
 				newtrack.track_height=options.emblheight
