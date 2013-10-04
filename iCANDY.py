@@ -167,8 +167,8 @@ def main():
 	group.add_option("-H", "--plotheight", action="store", dest="plotheight", help="Relative track height of plot tracks to other tracks [default= %default]", default=2, metavar="int", type="int")
 	group.add_option("-d", "--default_plot_type", choices=["hist", "heat", "bar", "line", "area", "stackedarea"], type="choice", action="store", dest="plottype", help="Set the default plot type (for plots called plot or graph and bam files). Choose from "+", ".join(["hist", "heat", "bar", "line", "area", "stackedarea"])+" [default= %default]", default="line")
 	group.add_option("-X", "--scale_plots", action="store_true", dest="scale_plots_same", help="Use the same max and min scale for all plots", default=False)
-	group.add_option("-y", "--plot_min", action="store", dest="plot_max", help="Set a maximum value for plots", default="Inf", type="float")
-	group.add_option("-Y", "--plot_max", action="store", dest="plot_min", help="Set a minimum value for plots", default="Inf", type="float")
+	group.add_option("-y", "--plot_min", action="store", dest="plot_max", help="Set a maximum value for plots. Can be a number or coverage relative to the median (e.g. 2x)", default="Inf", type="string")
+	group.add_option("-Y", "--plot_max", action="store", dest="plot_min", help="Set a minimum value for plots. Can be a number or coverage relative to the median (e.g. 1x)", default="Inf", type="string")
 	group.add_option("-Z", "--log_plot", action="store_true", dest="log_plots", help="Show plots on a log scale (doesn't work yet)", default=False)
 	group.add_option("-w", "--plot_scales", action="store_true", dest="plot_scales", help="Show legend on heatmaps", default=False)
 	group.add_option("-3", "--heatmap_colour", default="bluered", choices=["redblue", "bluered", "blackwhite", "whiteblack"], type="choice", action="store", dest="heat_colour", help="Set the default plot type (for plots called plot or graph and bam files). Choose from "+", ".join(["redblue", "bluered", "blackwhite", "whiteblack"]))
@@ -183,6 +183,15 @@ def main():
 ###############################################
 # Check the command line options are sensible #
 ###############################################
+
+
+#############################
+# Remove values from a list #
+#############################
+
+def remove_zeros_from_list(the_list):
+   return [value for value in the_list if value != 0]
+
 
 
 #######################################################################
@@ -3048,7 +3057,6 @@ class Track:
 							multiplier=1
 							y=x
 							while y>10:
-								print y
 								multiplier=multiplier*10
 								y=y/10
 							
@@ -3056,8 +3064,8 @@ class Track:
 						
 						
 						feature_scaling_factor=(unscaled_feature.scaled_feature_locations[0][1]-unscaled_feature.scaled_feature_locations[0][0])/(feature.feature_locations[0][1]-feature.feature_locations[0][0])
-						if feature_scaling_factor*location[0]>self.end:
-							print feature_scaling_factor*location[0], feature_scaling_factor*self.track_position[0], self.beginning, self.end
+#						if feature_scaling_factor*location[0]>self.end:
+#							print feature_scaling_factor*location[0], feature_scaling_factor*self.track_position[0], self.beginning, self.end
 						
 						if self.end!=-1:
 							length=float(self.end-self.beginning)
@@ -3564,16 +3572,45 @@ class Plot:
 
 	def get_data_to_print(self):
 		
-		
+		print options.plot_min, options.plot_max
 		if options.plot_min!=float("Inf"):
-			valueMin = options.plot_min
-		elif self.plot_type=="bar":
+			try:
+				valueMin = float(options.plot_min)
+			except ValueError:
+				mincoverage=float(options.plot_min[:-1])
+				if self.plot_type in ["heat"]:
+					valueMin = median(remove_zeros_from_list(self.data[0]))*mincoverage
+					print median(self.data[0]), mincoverage, valueMin
+				else:
+					valueMin = float("Inf")
+					for x in xrange(len(self.data)):
+						curmin=median(remove_zeros_from_list(self.data[x]))*mincoverage
+						if curmin<valueMin:
+							valueMin=curmin
+#					valueMin = min(map(median,self.data))*mincoverage	
+					print min(map(median,self.data)), mincoverage, valueMin
+		elif self.plot_type in ["heat"]:
 			valueMin = min(self.data[0])
 		else:
 			valueMin = min(map(min,self.data))
 		if options.plot_max!=float("Inf"):
-			valueMax = options.plot_max 
-		elif self.plot_type=="bar":
+			valueMax = options.plot_max
+			try:
+				valueMax = float(options.plot_max)
+			except ValueError:
+				maxcoverage=float(options.plot_max[:-1])
+				if self.plot_type in ["heat"]:
+					valueMax = median(remove_zeros_from_list(self.data[0]))*maxcoverage
+					print median(self.data[0]), maxcoverage, valueMax
+				else:
+					valueMax = float("-Inf")
+					for x in xrange(len(self.data)):
+						curmax=median(remove_zeros_from_list(self.data[x]))*maxcoverage
+						if curmax>valueMax:
+							valueMax=curmax
+#					valueMax = max(map(median,self.data))*maxcoverage
+					print max(map(median,self.data)), maxcoverage, valueMax
+		elif self.plot_type in ["heat"]:
 			valueMax = max(self.data[0])
 		else:
 			valueMax = max(map(max,self.data))
@@ -3614,7 +3651,7 @@ class Plot:
 	
 	
 	def draw_heatmap(self, x, y, height, length):
-	
+		print options.plot_max
 		data, end, valueMin, valueMax=self.get_data_to_print()
 		
 		if len(data)==0 or end==self.beginning:
@@ -3643,8 +3680,18 @@ class Plot:
 			my_legend=ShadedRect()
 			
 #			sys.exit()
-			my_legend.fillColorStart=colors.Color(0,0,1)
-			my_legend.fillColorEnd=colors.Color(1,0,0)
+			if self.heat_colour=="blackwhite":
+				my_legend.fillColorStart=colors.Color(0,0,0)
+				my_legend.fillColorEnd=colors.Color(1,1,1)
+			elif self.heat_colour=="whiteblack":
+				my_legend.fillColorStart=colors.Color(1,1,1)
+				my_legend.fillColorEnd=colors.Color(0,0,0)
+			elif self.heat_colour=="bluered":
+				my_legend.fillColorStart=colors.Color(0,0,1)
+				my_legend.fillColorEnd=colors.Color(1,0,0)
+			elif self.heat_colour=="redblue":
+				my_legend.fillColorStart=colors.Color(1,0,0)
+				my_legend.fillColorEnd=colors.Color(0,0,1)
 			my_legend.height=self.legend_font_size
 			
 			
@@ -3797,8 +3844,8 @@ class Plot:
 		if self.end!=-1:
 			lp.xValueAxis.valueMax = self.end
 		
-		if options.plot_min!=float("Inf"):
-			lp.yValueAxis.valueMin = options.plot_min
+		if self.min_yaxis!=float("Inf"):
+			lp.yValueAxis.valueMin = round_to_n(self.min_yaxis, 2)
 		else:
 			lp.yValueAxis.valueMin = float("Inf")
 			for datum in data:
@@ -3806,15 +3853,16 @@ class Plot:
 				if datum_min<lp.yValueAxis.valueMin:
 					lp.yValueAxis.valueMin=datum_min
 
-		if options.plot_max!=float("Inf"):
-			lp.yValueAxis.valueMax = options.plot_max
+		if self.max_yaxis!=float("Inf"):
+			lp.yValueAxis.valueMax = round_to_n(self.max_yaxis, 2)
 		else:
 			lp.yValueAxis.valueMax = float("-Inf")
 			for datum in data:
 				datum_max= max(map(lambda x: x[1], datum))
 				if datum_max>lp.yValueAxis.valueMax:
 					lp.yValueAxis.valueMax=datum_max
-				
+		
+		
 			
 		
 		lp.yValueAxis.tickLeft=0
@@ -3915,16 +3963,16 @@ class Plot:
 		bc.barWidth=datalength/len(bc.data[0])
 		
 		bc.useAbsolute=1
-		if options.plot_min!=float("Inf"):
-			bc.valueAxis.valueMin = options.plot_min
-#		if self.min_yaxis!=float("Inf"):
-#			bc.valueAxis.valueMin = round_to_n(self.min_yaxis, 2)
+#		if options.plot_min!=float("Inf"):
+#			bc.valueAxis.valueMin = options.plot_min
+		if self.min_yaxis!=float("Inf"):
+			bc.valueAxis.valueMin = round_to_n(self.min_yaxis, 2)
 		else:
 			bc.valueAxis.valueMin = round_to_n(min(map(min,data)), 2)
-		if options.plot_max!=float("Inf"):
-			bc.valueAxis.valueMax = options.plot_max
-#		elif len(self.data)==1:
-#			bc.valueAxis.valueMax = round_to_n(self.max_yaxis, 2)
+#		if options.plot_max!=float("Inf"):
+#			bc.valueAxis.valueMax = options.plot_max
+		if self.max_yaxis!=float("Inf"):
+			bc.valueAxis.valueMax = round_to_n(self.max_yaxis, 2)
 		else:
 			maxsum=0.0
 			for datum in data:
@@ -3935,7 +3983,7 @@ class Plot:
 		bc.valueAxis.tickLeft=0
 		bc.valueAxis.tickRight=5
 		
-#		print bc.valueAxis.valueMax, max(map(max,self.data))
+		print self.min_yaxis, self.max_yaxis, bc.valueAxis.valueMin, bc.valueAxis.valueMax, max(map(max,self.data))
 #		bc.valueAxis.valueSteps=[bc.valueAxis.valueMin, bc.valueAxis.valueMax]
 		
 		
@@ -3955,6 +4003,7 @@ class Plot:
 
 	
 	def draw_plot(self, x, y, height, length):
+		
 #		self.raw_data_to_data(self)
 		if self.plot_type in ["line", "area", "stackedarea"]:
 			self.draw_line_plot(x, y, height, length)
@@ -4290,6 +4339,32 @@ if __name__ == "__main__":
 	elif options.figtree and options.transformation in ["acctran", "deltran"]:
 		print "Can only colour tree once. You have chosen to colour by Figtree colours and parsimony!"
 		sys.exit()
+	
+	try:
+		options.plot_max=float(options.plot_max)
+	except ValueError:
+		plotmaxvalue=options.plot_max[:-1]
+		plotmaxx=options.plot_max[-1]
+		try:
+			tmp=float(plotmaxvalue)
+		except ValueError:
+			DoError("Cannot understand your value for the plot maximum. Must be a float or float followed by x/X")
+		if plotmaxx not in ["x", "x"]:
+			DoError("Cannot understand your value for the plot maximum. Must be a float or float followed by x/X")
+		
+	
+	try:
+		options.plot_min=float(options.plot_min)
+	except ValueError:
+		plotminvalue=options.plot_min[:-1]
+		plotminx=options.plot_min[-1]
+		try:
+			tmp=float(plotminvalue)
+		except ValueError:
+			DoError("Cannot understand your value for the plot minimum. Must be a float or float followed by x/X")
+		if plotmaxx not in ["x", "x"]:
+			DoError("Cannot understand your value for the plot minimum. Must be a float or float followed by x/X")
+		
 	
 	#get a list of available fonts
 	gfont_list= Canvas(options.outputfile).getAvailableFonts()
@@ -5076,11 +5151,34 @@ if __name__ == "__main__":
 					plot.data=[minplotheight]
 			
 			if options.plot_min!=float("Inf"):
-				plot.min_yaxis=options.plot_min
+				try:
+					plot.min_yaxis= float(options.plot_min)				
+				except ValueError:
+					mincoverage=float(options.plot_min[:-1])
+					if plot.plot_type in ["heat"]:
+						plot.min_yaxis = median(remove_zeros_from_list(plot.data[0]))*mincoverage
+					else:
+						plot.min_yaxis = float("Inf")
+						for x in xrange(len(plot.data)):
+							curmin=median(remove_zeros_from_list(plot.data[x]))*mincoverage
+							if curmin<plot.min_yaxis:
+								plot.min_yaxis=curmin
+								
 			if options.plot_max!=float("Inf"):
-				plot.max_yaxis=options.plot_max
+				try:
+					plot.max_yaxis= float(options.plot_max)						
+				except ValueError:
+					maxcoverage=float(options.plot_max[:-1])
+					if plot.plot_type  in ["heat"]:
+						plot.max_yaxis = median(remove_zeros_from_list(plot.data[0]))*maxcoverage
+					else:
+						plot.max_yaxis = float("-Inf")
+						for x in xrange(len(plot.data)):
+							curmax=median(remove_zeros_from_list(plot.data[x]))*maxcoverage
+							if curmax>plot.max_yaxis:
+								plot.max_yaxis=curmax
+			print plot.max_yaxis, plot.min_yaxis
 				
-					
 			scalemax=round_to_n(plot.max_yaxis, 2)
 			scalemin=round_to_n(plot.min_yaxis, 2)
 			if get_text_width("Helvetica", 10, str(scalemax))>maxplot_scale_text:
@@ -5245,7 +5343,7 @@ if __name__ == "__main__":
 				if data[-1]>max_feature_length:
 					max_feature_length=data[-1]
 		
-			
+	
 	for track in my_tracks:
 		if my_tracks[track].max_feature_length<max_feature_length:
 				my_tracks[track].max_feature_length=max_feature_length

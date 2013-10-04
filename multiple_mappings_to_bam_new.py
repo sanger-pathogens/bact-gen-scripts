@@ -12,6 +12,7 @@ from optparse import OptionParser, OptionGroup
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+import subprocess
 
 
 
@@ -27,7 +28,8 @@ BWA_DIR=""
 #SMALT_DIR="smalt"
 MY_SCRIPTS_DIR="/nfs/users/nfs_s/sh16/scripts/"
 GATK_LOC="/software/vertres/bin-external/GenomeAnalysisTK-1.5-9-ga05a7f2/GenomeAnalysisTK.jar"
-JAVA_DIR="/software/jdk1.6.0_01/bin/"
+pcs4_JAVA_DIR="/software/jdk1.6.0_01/bin/"
+farm3_JAVA_DIR="/software/pathogen/external/apps/usr/local/jdk1.7.0_21/bin/"
 
 
 ##########################
@@ -38,6 +40,29 @@ def DoError(errorstring):
 	print "\nError:", errorstring
 	print "\nFor help use -h or --help\n"
 	sys.exit()
+
+
+####################
+# Get cluster name #
+####################
+
+def getclustername():
+	mycluster="unknown"
+	try:
+		lsid_output=subprocess.check_output(["lsid"])
+		
+		for line in lsid_output.split("\n"):
+			words=line.strip().split()
+			if len(words)>0:
+				if words[1]=="cluster":
+					mycluster=words[4]
+	
+		
+	except StandardError:
+		return mycluster
+	
+	return mycluster
+
 
 
 ##############################
@@ -831,7 +856,17 @@ if __name__ == "__main__":
 	os.system("samtools faidx "+options.ref)
 		
 	count=0
-
+	
+	host=getclustername()
+	
+	print "Running on host:", host
+	if host=="farm3":
+		JAVA_DIR=farm3_JAVA_DIR
+		if options.mem==0:
+			options.mem=2
+	else:
+		JAVA_DIR=pcs4_JAVA_DIR
+	
 	for pool in pools:
 		
 		if options.keep and options.pseudosequence and os.path.isfile(pool.runname+"/"+pool.name+".bam") and os.path.isfile(pool.runname+"/"+pool.name+".bcf") and os.path.isfile(pool.runname+"/"+pool.name+".mfa"):# and os.path.isfile(pool.runname+"/"+pool.name+"_indels.txt"):
@@ -901,9 +936,12 @@ if __name__ == "__main__":
 	if options.LSF==True:
 		if count>0:
 			if options.mem>0:
-				memkb=str(options.mem*1000000)
-				memmb=str(options.mem*1000)
-				os.system('echo \'bash ${LSB_JOBINDEX}'+tmpname+'_sbs.sh\' | bsub -R \'select[mem>'+memmb+'] rusage[mem='+memmb+']\' -q '+options.LSFQ+'  -J'+tmpname+'_'+options.program+'"[1-'+str(count)+']%'+str(options.nodes)+'"  -M '+memkb+' -o '+tmpname+options.program+'-%I.out -e '+tmpname+options.program+'-%I.err > '+tmpname+'jobid')# run all ssaha jobs in job array . add this to exclude a node: -R \'hname!=pcs4k\'
+				if host=="farm3":
+					memlimit=str(options.mem*1000)
+				else:
+					memlimit=str(options.mem*1000000)
+				memresource=str(options.mem*1000)
+				os.system('echo \'bash ${LSB_JOBINDEX}'+tmpname+'_sbs.sh\' | bsub -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -q '+options.LSFQ+'  -J'+tmpname+'_'+options.program+'"[1-'+str(count)+']%'+str(options.nodes)+'"  -M '+memlimit+' -o '+tmpname+options.program+'-%I.out -e '+tmpname+options.program+'-%I.err > '+tmpname+'jobid')# run all ssaha jobs in job array . add this to exclude a node: -R \'hname!=pcs4k\'
 			else:
 				os.system('echo \'bash ${LSB_JOBINDEX}'+tmpname+'_sbs.sh\' | bsub -q '+options.LSFQ+' -J'+tmpname+'_'+options.program+'"[1-'+str(count)+']%'+str(options.nodes)+'"" -o '+tmpname+options.program+'-%I.out -e '+tmpname+options.program+'-%I.err > '+tmpname+'jobid')
 			
@@ -917,18 +955,39 @@ if __name__ == "__main__":
 		
 		if options.pseudosequence:
 			if len(pools)>200:
-				if count==0:
-					os.system('echo '+joinstring+' | bsub -M 10000000 -q long -R \'select[mem>10000] rusage[mem=10000]\' -J'+tmpname+'_joining -o '+options.output+'_join.out -e '+options.output+'_join.err')
+				if host=="farm3":
+					memlimit=str(10*1000)
 				else:
-					os.system('echo '+joinstring+' | bsub -M 10000000 -q long -R \'select[mem>10000] rusage[mem=10000]\' -J'+tmpname+'_joining -w \'ended('+tmpname+'_'+options.program+')\' -o '+options.output+'_join.out -e '+options.output+'_join.err ')
-				os.system('echo '+summarystring+' | bsub -M 16000000 -q long -R \'select[mem>16000] rusage[mem=16000]\' -w \'ended('+tmpname+'_joining)\' -o '+options.output+'_sum.out -e '+options.output+'_sum.err')
+					memlimit=str(10*1000000)
+				memresource=str(10*1000)
+				if count==0:
+					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -q long -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J'+tmpname+'_joining -o '+options.output+'_join.out -e '+options.output+'_join.err')
+				else:
+					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -q long -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J'+tmpname+'_joining -w \'ended('+tmpname+'_'+options.program+')\' -o '+options.output+'_join.out -e '+options.output+'_join.err ')
+				
+				if host=="farm3":
+					memlimit=str(16*1000)
+				else:
+					memlimit=str(16*1000000)
+				memresource=str(16*1000)
+				os.system('echo '+summarystring+' | bsub -M '+memlimit+' -q long -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -w \'ended('+tmpname+'_joining)\' -o '+options.output+'_sum.out -e '+options.output+'_sum.err')
 			else:
-				if count==0:
-					os.system('echo '+joinstring+' | bsub -M 2000000 -R \'select[mem>2000] rusage[mem=2000]\' -J'+tmpname+'_joining -o '+options.output+'_join.out -e '+options.output+'_join.err')
+				if host=="farm3":
+					memlimit=str(2*1000)
 				else:
-					os.system('echo '+joinstring+' | bsub -M 2000000 -R \'select[mem>2000] rusage[mem=2000]\' -J'+tmpname+'_joining -w \'ended('+tmpname+'_'+options.program+')\' -o '+options.output+'_join.out -e '+options.output+'_join.err ')
-				os.system('echo '+summarystring+' | bsub -M 16000000 -q long -R \'select[mem>16000] rusage[mem=16000]\' -w \'ended('+tmpname+'_joining)\' -o '+options.output+'_sum.out -e '+options.output+'_sum.err')
-			
+					memlimit=str(2*1000000)
+				memresource=str(2*1000)
+				if count==0:
+					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J'+tmpname+'_joining -o '+options.output+'_join.out -e '+options.output+'_join.err')
+				else:
+					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J'+tmpname+'_joining -w \'ended('+tmpname+'_'+options.program+')\' -o '+options.output+'_join.out -e '+options.output+'_join.err ')
+				if host=="farm3":
+					memlimit=str(16*1000)
+				else:
+					memlimit=str(16*1000000)
+				memresource=str(16*1000)
+				os.system('echo '+summarystring+' | bsub -M '+memlimit+' -q long -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -w \'ended('+tmpname+'_joining)\' -o '+options.output+'_sum.out -e '+options.output+'_sum.err')
+
 		#os.system('bsub -w \'ended('+tmpname+'_'+program+')\' rm *'+tmpname+'_sbs.sh; for f in tmpname*.err; do if test ! -s $f;then rm $f ${f%.err}.out;fi;done')
 	
 	elif options.pseudosequence:

@@ -115,7 +115,7 @@ if __name__ == "__main__":
 		if words[0]==words[1] or float(words[2])<options.minid or float(words[3])<options.minlength:
 #			print words
 			continue
-			
+				
 		if words[0]!=lastquery:
 			if not first_subject:
 				unmatched_run=0
@@ -127,6 +127,8 @@ if __name__ == "__main__":
 						if unmatched_run>max_run:
 							max_run=unmatched_run
 						unmatched_run=0
+				if unmatched_run>max_run:
+					max_run=unmatched_run
 				
 				if (lengths[lastsubject]>lengths[lastquery] or (lengths[lastsubject]==lengths[lastquery] and lastsubject>lastquery)) and max_run<options.minsize:
 					keep=False
@@ -139,7 +141,9 @@ if __name__ == "__main__":
 #			if keep:
 #				print "Keep", lastquery, unmatched_run_score, longest_run, lengths[lastquery]#, match
 #			elif not first_query:
-#				print "Remove", lastquery, lastsubject, unmatched_run_score, longest_run, lengths[lastquery]#, failed_match
+#				if lastquery=="NODE_514_length_11876_cov_35.4221":
+#					print "Remove", lastquery, lastsubject, unmatched_run_score, longest_run, lengths[lastquery]#, failed_match
+					
 			if not first_query and (not keep or lengths[lastquery]<options.minsize):
 				del strain_seqs[lastquery]
 			lastsubject=''
@@ -157,16 +161,24 @@ if __name__ == "__main__":
 				for base in match:
 					if base=='0':
 						unmatched_run+=1
+#						if lastquery=="NODE_514_length_11876_cov_35.4221" and lastsubject=="NODE_251_length_15943_cov_30.1794":
+#							print unmatched_run
 					else:
 						if unmatched_run>max_run:
 							max_run=unmatched_run
 						unmatched_run=0
-				
+				if unmatched_run>max_run:
+					max_run=unmatched_run
+						
 				if (lengths[lastsubject]>lengths[lastquery] or (lengths[lastsubject]==lengths[lastquery] and lastsubject>lastquery)) and max_run<options.minsize:
 					keep=False
 					unmatched_run_score=max_run
 					failed_match=''.join(map(str,match))
-				
+#				if lastquery=="NODE_514_length_11876_cov_35.4221":
+#					if not keep:
+#						print failed_match
+#						print lastquery, lastsubject, max_run
+#						sys.exit()
 				if max_run>longest_run:
 					longest_run=max_run
 			first_subject=False
@@ -224,6 +236,8 @@ if __name__ == "__main__":
 #			print "Keep", lastquery, unmatched_run_score, longest_run, lengths[lastquery]#, match
 #		elif not first_query:
 #			print "Remove", lastquery, lastsubject, unmatched_run_score, longest_run, lengths[lastquery]#, failed_match
+#		sys.exit()
+
 		del strain_seqs[lastquery]
 		
 
