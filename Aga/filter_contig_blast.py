@@ -129,6 +129,7 @@ if __name__ == "__main__":
 						unmatched_run=0
 				if unmatched_run>max_run:
 					max_run=unmatched_run
+					
 				
 				if (lengths[lastsubject]>lengths[lastquery] or (lengths[lastsubject]==lengths[lastquery] and lastsubject>lastquery)) and max_run<options.minsize:
 					keep=False
@@ -161,24 +162,19 @@ if __name__ == "__main__":
 				for base in match:
 					if base=='0':
 						unmatched_run+=1
-#						if lastquery=="NODE_514_length_11876_cov_35.4221" and lastsubject=="NODE_251_length_15943_cov_30.1794":
-#							print unmatched_run
+						
 					else:
 						if unmatched_run>max_run:
 							max_run=unmatched_run
 						unmatched_run=0
 				if unmatched_run>max_run:
 					max_run=unmatched_run
-						
+					
 				if (lengths[lastsubject]>lengths[lastquery] or (lengths[lastsubject]==lengths[lastquery] and lastsubject>lastquery)) and max_run<options.minsize:
 					keep=False
 					unmatched_run_score=max_run
 					failed_match=''.join(map(str,match))
-#				if lastquery=="NODE_514_length_11876_cov_35.4221":
-#					if not keep:
-#						print failed_match
-#						print lastquery, lastsubject, max_run
-#						sys.exit()
+					
 				if max_run>longest_run:
 					longest_run=max_run
 			first_subject=False
@@ -221,6 +217,9 @@ if __name__ == "__main__":
 				if unmatched_run>max_run:
 					max_run=unmatched_run
 				unmatched_run=0
+		if unmatched_run>max_run:
+			max_run=unmatched_run
+			
 		
 		if (lengths[lastsubject]>lengths[lastquery] or (lengths[lastsubject]==lengths[lastquery] and lastsubject>lastquery)) and max_run<options.minsize:
 			keep=False
@@ -240,7 +239,6 @@ if __name__ == "__main__":
 
 		del strain_seqs[lastquery]
 		
-
 	for seq in strain_seqs:
 		if len(strain_seqs[seq])>options.minsize:
 			print ">"+seq

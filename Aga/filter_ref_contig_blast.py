@@ -126,6 +126,8 @@ if __name__ == "__main__":
 						if unmatched_run>max_run:
 							max_run=unmatched_run
 						unmatched_run=0
+				if unmatched_run>max_run:
+					max_run=unmatched_run
 				
 				if (lengths[lastsubject]>lengths[lastquery] or (lengths[lastsubject]==lengths[lastquery] and lastsubject>lastquery)) and max_run<options.minsize:
 					keep=False
@@ -180,6 +182,34 @@ if __name__ == "__main__":
 		
 		lastquery=words[0]
 		lastsubject=words[1]
+	
+	
+	
+	
+	if not first_subject:
+		unmatched_run=0
+		max_run=0
+		for base in match:
+			if base=='0':
+				unmatched_run+=1
+			else:
+				if unmatched_run>max_run:
+					max_run=unmatched_run
+				unmatched_run=0
+		if unmatched_run>max_run:
+			max_run=unmatched_run
+		
+		if (lengths[lastsubject]>lengths[lastquery] or (lengths[lastsubject]==lengths[lastquery] and lastsubject>lastquery)) and max_run<options.minsize:
+			keep=False
+			unmatched_run_score=max_run
+			failed_match=''.join(map(str,match))
+		
+		if max_run>longest_run:
+			longest_run=max_run
+	
+	
+	
+	
 		
 	if not first_query and (not keep or lengths[lastquery]<options.minsize) and lastquery in strain_seqs:	
 		del strain_seqs[lastquery]

@@ -171,7 +171,7 @@ def main():
 	group.add_option("-Y", "--plot_max", action="store", dest="plot_min", help="Set a minimum value for plots. Can be a number or coverage relative to the median (e.g. 1x)", default="Inf", type="string")
 	group.add_option("-Z", "--log_plot", action="store_true", dest="log_plots", help="Show plots on a log scale (doesn't work yet)", default=False)
 	group.add_option("-w", "--plot_scales", action="store_true", dest="plot_scales", help="Show legend on heatmaps", default=False)
-	group.add_option("-3", "--heatmap_colour", default="bluered", choices=["redblue", "bluered", "blackwhite", "whiteblack"], type="choice", action="store", dest="heat_colour", help="Set the default plot type (for plots called plot or graph and bam files). Choose from "+", ".join(["redblue", "bluered", "blackwhite", "whiteblack"]))
+	group.add_option("-3", "--heatmap_colour", default="bluered", choices=["redblue", "bluered", "blackwhite", "whiteblack", "redandblue"], type="choice", action="store", dest="heat_colour", help="Set the default plot type (for plots called plot or graph and bam files). Choose from "+", ".join(["redblue", "bluered", "blackwhite", "whiteblack"]))
 	group.add_option("-4", "--windows", action="store", dest="windows", help="Number of windows per line (be careful, making this value too high will make things very slow and memory intensive) [default= %default]", default=501, type="float")
 	
 	parser.add_option_group(group)
@@ -3578,7 +3578,7 @@ class Plot:
 				valueMin = float(options.plot_min)
 			except ValueError:
 				mincoverage=float(options.plot_min[:-1])
-				if self.plot_type in ["heat"]:
+				if self.plot_type in ["heat"] and self.heat_colour!="redandblue":
 					valueMin = median(remove_zeros_from_list(self.data[0]))*mincoverage
 					print median(self.data[0]), mincoverage, valueMin
 				else:
@@ -3589,7 +3589,7 @@ class Plot:
 							valueMin=curmin
 #					valueMin = min(map(median,self.data))*mincoverage	
 					print min(map(median,self.data)), mincoverage, valueMin
-		elif self.plot_type in ["heat"]:
+		elif self.plot_type in ["heat"] and self.heat_colour!="redandblue":
 			valueMin = min(self.data[0])
 		else:
 			valueMin = min(map(min,self.data))
@@ -3599,7 +3599,7 @@ class Plot:
 				valueMax = float(options.plot_max)
 			except ValueError:
 				maxcoverage=float(options.plot_max[:-1])
-				if self.plot_type in ["heat"]:
+				if self.plot_type in ["heat"] and self.heat_colour!="redandblue":
 					valueMax = median(remove_zeros_from_list(self.data[0]))*maxcoverage
 					print median(self.data[0]), maxcoverage, valueMax
 				else:
@@ -3610,7 +3610,7 @@ class Plot:
 							valueMax=curmax
 #					valueMax = max(map(median,self.data))*maxcoverage
 					print max(map(median,self.data)), maxcoverage, valueMax
-		elif self.plot_type in ["heat"]:
+		elif self.plot_type in ["heat"] and self.heat_colour!="redandblue":
 			valueMax = max(self.data[0])
 		else:
 			valueMax = max(map(max,self.data))
@@ -3716,34 +3716,75 @@ class Plot:
 			d.add(my_legend)
 
 		lastvalue=data[0][0]
+		if self.heat_colour=="redandblue":
+			lastredvalue=data[0][0]
+			try:
+				lastbluevalue=data[1][0]
+			except StandardError:
+				DoError("Can only use redandblue heatmap when there are at least 2 columns in the plot file")
 		draw_width=0.0
 		draw_start=0
 		for i,datum in enumerate(data[0]):
-			if valueMax-valueMin>0:
-				value=round(float(datum-valueMin)/(valueMax-valueMin),2)
-			else:
-				value=0.0
-			if value>1:
-				value=1.0
-			if value!=lastvalue:
-				if self.heat_colour=="blackwhite":
-					colour=colors.Color(lastvalue,lastvalue,lastvalue)
-				elif self.heat_colour=="whiteblack":
-					colour=colors.Color(1.0-lastvalue,1.0-lastvalue,1.0-lastvalue)
-				elif self.heat_colour=="bluered":
-					colour=colors.Color(lastvalue,0,1.0-lastvalue)
-				elif self.heat_colour=="redblue":
-					colour=colors.Color(1.0-lastvalue,0,lastvalue)
-				if not (self.heat_colour=="whiteblack" and lastvalue==0) and not (self.heat_colour=="blackwhite" and lastvalue==1):
-					d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
+			
+			if self.heat_colour=="redandblue":
+				try:
+					bluedatum=data[1][i]
+				except StandardError:
+					DoError("Can only use redandblue heatmap when there are at least 2 columns in the plot file")
+				if valueMax-valueMin>0:
+					redvalue=round(float(datum-valueMin)/(valueMax-valueMin),2)
+					bluevalue=round(float(bluedatum-valueMin)/(valueMax-valueMin),2)
+				else:
+					redvalue=0.0
+					bluevalue=0.0
+				if redvalue>1:
+					redvalue=1.0
+				if bluevalue>1:
+					bluevalue=1.0
+				if bluevalue!=lastbluevalue or redvalue!=lastredvalue:
+					rcolour=colors.Color(1.0,1.0-redvalue,1.0-redvalue)
+#					if colour!=colors.Color(0,0,0):
+#						d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
+					bcolour=colors.Color(1.0-bluevalue,1.0-bluevalue,1.0)
+#					if colour!=colors.Color(0,0,0):
+#						d.add(Rect(x+(draw_start*feature_width), y, draw_width, height/2, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
+					colour=colors.Color((1.0-bluevalue),((1.0-redvalue)+(1.0-bluevalue))/2,(1.0-redvalue))
+					print redvalue, bluevalue, rcolour, bcolour, colour
+					if colour!=colors.Color(0,0,0):
+						d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
 
-#				myrect=Rect(x+(draw_start*feature_width), y, draw_width+1, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0)
+					draw_width=0.0
+					draw_start=i
+					lastbluevalue=bluevalue
+					lastredvalue=redvalue		
+			
+			else:
 				
-#				print dir(myrect)
-#				sys.exit()
-				draw_width=0.0
-				draw_start=i
-				lastvalue=value
+				if valueMax-valueMin>0:
+					value=round(float(datum-valueMin)/(valueMax-valueMin),2)
+				else:
+					value=0.0
+				if value>1:
+					value=1.0
+				if value!=lastvalue:
+					if self.heat_colour=="blackwhite":
+						colour=colors.Color(lastvalue,lastvalue,lastvalue)
+					elif self.heat_colour=="whiteblack":
+						colour=colors.Color(1.0-lastvalue,1.0-lastvalue,1.0-lastvalue)
+					elif self.heat_colour=="bluered":
+						colour=colors.Color(lastvalue,0,1.0-lastvalue)
+					elif self.heat_colour=="redblue":
+						colour=colors.Color(1.0-lastvalue,0,lastvalue)
+					if not (self.heat_colour=="whiteblack" and lastvalue==0) and not (self.heat_colour=="blackwhite" and lastvalue==1):
+						d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
+	
+	#				myrect=Rect(x+(draw_start*feature_width), y, draw_width+1, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0)
+					
+	#				print dir(myrect)
+	#				sys.exit()
+					draw_width=0.0
+					draw_start=i
+					lastvalue=value
 			
 			draw_width+=feature_width
 			

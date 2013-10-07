@@ -135,6 +135,7 @@ if __name__ == "__main__":
 	
 	for query in query_seqs:
 		if ">" in str(query.seq):
+			print query.seq
 			print DoError("Found > in sequence")
 			sys.exit()
 	query_tot=0
