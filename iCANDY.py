@@ -60,6 +60,7 @@ colourconverter={'aliceblue':colors.aliceblue, 'antiquewhite':colors.antiquewhit
 
 
 default_rgb_colours=["blue", "red",  "limegreen", "aqua", "fuchsia", "orange", "green", "gray", "purple", "olive", "teal", "silver", "navy", "white", "black", "maroon", "yellow"]
+default_plot_colours=["blue", "red",  "limegreen", "aqua", "fuchsia", "orange", "green", "gray", "purple", "olive", "teal", "silver", "navy", "black", "maroon", "yellow"]
 
 
 
@@ -1462,9 +1463,8 @@ def add_embl_to_diagram(record, incfeatures=["CDS", "feature", "tRNA", "rRNA", "
 	# Function to get a name for a feature #
 	########################################
 	
-	def get_best_feature_name(feature):
+	def get_best_feature_name(feature, name_types=["gene", "primary_name", "systematic_id", "locus_tag", "label"]):
 		
-		name_types=["gene", "primary_name", "systematic_id", "locus_tag", "label"]
 		
 		for name in name_types:
 			if feature.qualifiers.has_key(name):
@@ -1557,11 +1557,13 @@ def add_embl_to_diagram(record, incfeatures=["CDS", "feature", "tRNA", "rRNA", "
 		#get gene locations (including subfeatures)
 		locations=iterate_subfeatures(feature, locations)
 		
-		if feature.type.lower()=="cds":
+		if feature.type.lower()=="cds" and emblfile:
 			new_track.add_feature(locations, fillcolour=colour, strokecolour=border, strokeweight=0.5, strand=feature.strand, arrows=int(options.arrows), label=get_best_feature_name(feature))
 			#gd_feature_set.add_feature(feature, color=colour, label=0, sigil=sigiltype, arrowhead_length=0.25, locations=locations)
+		elif feature.type.lower()=="cds":
+			new_track.add_feature(locations, fillcolour=colour, strokecolour=border, strokeweight=0.5, strand=feature.strand, arrows=int(options.arrows), label=get_best_feature_name(feature, name_types=["label"]))
 		else:
-			new_track.add_feature(locations, fillcolour=colour, strokecolour=border, label=get_best_feature_name(feature), arrows=int(options.arrows))
+			new_track.add_feature(locations, fillcolour=colour, strokecolour=border, arrows=int(options.arrows), label=get_best_feature_name(feature, name_types=["label"]))
 			#gd_feature_set.add_feature(feature, color=colour, label=0, strand=0, locations=locations)
 
 
@@ -3355,7 +3357,13 @@ class Plot:
 		self.alternate_colour=colors.blue
 		#self.heat_colour="whiteblack"
 		self.heat_colour="bluered"
-		self.line_colours=[colors.red, colors.blue, colors.green, colors.black, colors.magenta, colors.cyan, colors.yellow]
+		self.line_colours=[]
+		for color in default_plot_colours:
+			self.line_colours.append(colourconverter[color])
+#		self.line_colours=[colors.red, colors.blue, colors.green, colors.black, colors.magenta, colors.cyan, colors.yellow]#default_rgb_colours
+		self.line_label_colours=[]
+		for color in default_plot_colours:
+			self.line_label_colours.append(colourconverter[color])
 		self.strokeweight=0.5
 		self.raw_data=[]
 		self.data=[]
@@ -3374,7 +3382,7 @@ class Plot:
 		self.legend_font="Helvetica"
 		self.legend_font_size=8
 		self.reorder_data=True
-		self.transparency=0.80
+		self.transparency=0.60
 		self.data_order=[]
 		self.max_feature_length=0
 		
@@ -3493,11 +3501,21 @@ class Plot:
 			#remember to reorder the labels as well
 			labels=self.labels[:]
 			colours=self.line_colours[:]
-			for x, y in enumerate(data_order):
-				self.labels[x]=labels[y]
+			self.line_colours=[]
+			self.line_label_colours=[]
+			for x in xrange(len(colours)):
 				colours[x].alpha=self.transparency
-				self.line_colours[x]=colours[x]
+			for x, y in enumerate(data_order):
+#				self.labels[x]=labels[x]
+				z=x
+				while z>=len(colours):
+					z-=len(colours)
+				self.line_label_colours.append(colours[z])
 				
+				z=y
+				while z>=len(colours):
+					z-=len(colours)
+				self.line_colours.append(colours[z])	
 		else:
 			data_order=xrange(len(data))
 		
@@ -3839,10 +3857,10 @@ class Plot:
 			if self.plot_type=="stackedarea":
 				legend.colorNamePairs  = []
 				for i in xrange(len(data)):
-					legend.colorNamePairs.append((self.line_colours[i], self.labels[len(data)-(i+1)]))
+					legend.colorNamePairs.append((self.line_label_colours[i], self.labels[len(data)-(i+1)]))
 					#lp.lines[i].strokeColor=self.line_colours[len(lp.data)-(j+1)]
 			else:
-				legend.colorNamePairs  = [(self.line_colours[i], self.labels[i]) for i in xrange(len(data))]
+				legend.colorNamePairs  = [(self.line_label_colours[i], self.labels[i]) for i in xrange(len(data))]
 			
 			maxlabelwidth=0
 			for label in self.labels:
@@ -3964,7 +3982,7 @@ class Plot:
 			legend.fontName=self.legend_font
 			legend.fontSize=self.legend_font_size
 			legend.boxAnchor="nw"
-			legend.colorNamePairs  = [(self.line_colours[i], self.labels[i]) for i in xrange(len(data))]
+			legend.colorNamePairs  = [(self.line_label_colours[i], self.labels[i]) for i in xrange(len(data))]
 			
 			maxlabelwidth=0
 			for label in self.labels:
@@ -4147,7 +4165,51 @@ class control_options:
 		
 		
 		#plot options
-	
+		
+		self.plot_tick_marks=True
+		self.plot_tick_mark_number=5
+		self.plot_tick_mark_labels=True
+		self.plot_tick_mark_label_size=8
+		self.plot_tick_mark_label_angle=45
+		self.plot_scale=False
+		self.plot_transparency=0.60
+		
+#		self.plot_colours=[]
+#scale=False, tick_marks=True, tick_mark_number=5, tick_mark_labels=True, beginning=0, end=-1
+		
+#		self.label=""
+#		self.primary_colour=colors.red
+#		self.alternate_colour=colors.blue
+#		#self.heat_colour="whiteblack"
+#		self.heat_colour="bluered"
+#		self.line_colours=[]
+#		for color in default_plot_colours:
+#			self.line_colours.append(colourconverter[color])
+##		self.line_colours=[colors.red, colors.blue, colors.green, colors.black, colors.magenta, colors.cyan, colors.yellow]#default_rgb_colours
+#		self.line_label_colours=[]
+#		for color in default_plot_colours:
+#			self.line_label_colours.append(colourconverter[color])
+#		self.strokeweight=0.5
+#		self.raw_data=[]
+#		self.data=[]
+#		self.xdata=[]
+#		self.max_yaxis=float("-Inf")
+#		self.min_yaxis=float("Inf")
+#		self.window_size=1
+#		self.number_of_windows=options.windows
+#		self.plot_type="line"
+#		self.beginning=-1
+#		self.end=-1
+#		self.circular=True
+#		self.labels=[]
+#		self.legend=True
+#		self.autolegend=True
+#		self.legend_font="Helvetica"
+#		self.legend_font_size=8
+#		self.reorder_data=True
+#		self.transparency=0.60
+#		self.data_order=[]
+#		self.max_feature_length=0
 	
 	
 	
@@ -4245,6 +4307,16 @@ class control_options:
 			'bcf_minimum_feature_length': "int",
 			
 			
+			#plot file options
+			'plot_tick_marks': 'boolean',
+			'plot_tick_mark_number': 'int',
+			'plot_tick_mark_labels': 'boolean',
+			'plot_tick_mark_label_size': "float",
+			'plot_tick_mark_label_angle': "float",
+			'plot_scale': 'boolean',
+			'plot_transparency': "float",
+			
+			
 			#metadata column colour options
 
 			# use the default colour list if possible
@@ -4284,7 +4356,11 @@ class control_options:
 			'metadata_colour_start_value': 1,
 			'metadata_colour_end_value': 1,
 			'metadata_column_label_size': 20,
-			'metadata_column_label_angle': 360
+			'metadata_column_label_angle': 360,
+			'plot_tick_mark_number': 100,
+			'plot_tick_mark_label_size': 20,
+			'plot_tick_mark_label_angle': 360,
+			'plot_transparency': 1.0
 			}
 		
 		minimums={
@@ -4304,7 +4380,11 @@ class control_options:
 			'metadata_colour_start_value': 0,
 			'metadata_colour_end_value': 0,
 			'metadata_column_label_size': 1,
-			'metadata_column_label_angle': 0
+			'metadata_column_label_angle': 0,
+			'plot_tick_mark_number': 0,
+			'plot_tick_mark_label_size': 0,
+			'plot_tick_mark_label_angle': 0,
+			'plot_transparency': 0
 			}
 		
 		choices={
@@ -4833,6 +4913,7 @@ if __name__ == "__main__":
 				plot_type=options.plottype
 				newtrack.track_height=options.plotheight
 				newtrack.scale=False
+				
 				newtrack.add_bam_plot(arg, plot_type, options.fragments)
 			elif arg.split('.')[-1].lower() in ["bcf"]:
 				newtrack=add_bcf_to_diagram(arg)
@@ -4988,6 +5069,12 @@ if __name__ == "__main__":
 						newtrack.beginning=options.beginning
 						newtrack.name=new_tracks[track].name
 						name=newtrack.name
+						if options.labels>0:
+							track_count+=options.labels
+							newtrack.feature_label_angle=options.label_angle
+							newtrack.feature_label_track_height=options.labels
+							newtrack.draw_feature_labels=True
+
 						x=1
 						while name in my_tracks:
 							name=newtrack.name+"_"+str(x)
@@ -5019,6 +5106,11 @@ if __name__ == "__main__":
 					else:
 						name='.'.join(arg.split("/")[-1].split('.')[:-1])
 					newtrack.name=name
+					if options.labels>0:
+						track_count+=options.labels
+						newtrack.feature_label_angle=options.label_angle
+						newtrack.feature_label_track_height=options.labels
+						newtrack.draw_feature_labels=True
 					x=1
 					while name in my_tracks:
 						name='.'.join(arg.split('.')[:-1])+"_"+str(x)

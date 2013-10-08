@@ -45,7 +45,7 @@ def main():
 	parser.add_option("-b", "--bam", action="store", dest="bam", help="input file in sam or bam format (must have suffix .sam or .bam)", default="", metavar="FILE")
 	parser.add_option("-o", "--output", action="store", dest="output", help="output prefix for file name(s)", default="", metavar="FILE")
 	parser.add_option("-f", "--format", type="choice", dest="fileformat", choices=["fasta","fastq","pairedfastq","sam","bam"], action="store", help="output file format (sam, bam, fastq, pairedfastq, or fasta) [default=%default]", default="pairedfastq", metavar="FORMAT")
-	parser.add_option("-t", "--type", action="store", type="choice", dest="outputtype", choices=["unmapped","mapped", "paired", "all","contigs", "minusdup"], help="reads to output (all, mapped, paired, unmapped, minusdup or contigs). Note 1: for pairedfastq output, mapped includes all reads where one of the pair is mapped. paired includes only those reads where the reads are in a proper pair. For other output formats the mapped option will only print the individual mapped reads and paired requires the reads to be mapped in proper pairs. Note 2: the contigs option requires the -c option to be set (see below). [default=%default]", default="unmapped", metavar="FILE")
+	parser.add_option("-t", "--type", action="store", type="choice", dest="outputtype", choices=["unmapped","mapped", "paired", "all","contigs", "minusdup", "onemapped"], help="reads to output (all, mapped, paired, unmapped, minusdup, onemapped or contigs). Note 1: for pairedfastq output, mapped includes all reads where one of the pair is mapped. paired includes only those reads where the reads are in a proper pair. For other output formats the mapped option will only print the individual mapped reads and paired requires the reads to be mapped in proper pairs. Note 2: the contigs option requires the -c option to be set (see below). [default=%default]", default="unmapped", metavar="FILE")
 	parser.add_option("-c", "--contigs", action="store", dest="contigs", help="comma separated list of contigs for which mapped reads should be output. Note there should be no whitespace within the list", default="")
 	
 	
@@ -255,6 +255,15 @@ if __name__ == "__main__":
 				printread=True
 			
 		elif read.is_unmapped and options.outputtype=="unmapped":
+			if options.fileformat=="pairedfastq":
+				if readname in firstofpair:
+					printread=True
+				else:
+					firstofpair[readname]=read
+			else:
+				printread=True
+		
+		elif (not read.is_unmapped or not read.mate_is_unmapped) and options.outputtype=="onemapped":
 			if options.fileformat=="pairedfastq":
 				if readname in firstofpair:
 					printread=True
