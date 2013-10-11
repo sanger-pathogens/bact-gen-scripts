@@ -78,7 +78,7 @@ def read_dendropy_tree(treefile):
 				token = self.stream_tokenizer.read_next_token()
 				
 		
-		dendropy.dataio.nexusreader_py.NexusReader._parse_taxlabels_statement=_parse_taxlabels_statement	
+		dendropy.dataio.nexusreader_py.NexusReader._parse_taxlabels_statement=_parse_taxlabels_statement
 #		opened=False
 #		for treeschema in ["beast-summary-tree", "nexus", "newick"]:
 #			try:
@@ -115,44 +115,46 @@ def read_dendropy_tree(treefile):
 			else:
 				subsamplecount=options.subsample
 			count+=1
-			print count
+#			print count, "trees read"
 			sys.stdout.flush()
 			
-			
+			internal_node_count={}
 			
 			for node in tree.preorder_node_iter():
 #				if not hasattr(node, 'annotations'):
 #					continue
-				if node.parent_node:
+
 #					print dir(node)
 #					print node.comments
 #					print node.annotations
 #					sys.exit()
 					
-					for x, a in enumerate(node.annotations):
-						if isinstance(a.value, str):
-							a.value=a.value.replace('"','')
-							try:
-								node.annotations[x].value=float(a.value)
-							except:
-								node.annotations[x].value=a.value
-						elif isinstance(a.value, list):
-							for y in xrange(len(a.value)):
-								if isinstance(a.value[y], str):
-									a.value[y]=a.value[y].replace('"','')
-									node.annotations[x].value[y]=a.value[y]
-							
-							try:
-								node.annotations[x].value=map(float,node.annotations[x].value)
-							except:	
-								break
-					
-					#print a.label, a.value, a.name
-					annotations={}
-					for a in node.annotations:
-						annotations[a.name]=a.value
+				for x, a in enumerate(node.annotations):
+					if isinstance(a.value, str):
+						a.value=a.value.replace('"','')
+						try:
+							node.annotations[x].value=float(a.value)
+						except:
+							node.annotations[x].value=a.value
+					elif isinstance(a.value, list):
+						for y in xrange(len(a.value)):
+							if isinstance(a.value[y], str):
+								a.value[y]=a.value[y].replace('"','')
+								node.annotations[x].value[y]=a.value[y]
 						
-					
+						try:
+							node.annotations[x].value=map(float,node.annotations[x].value)
+						except:	
+							node.annotations[x].value=a.value
+				
+				#print a.label, a.value, a.name
+				annotations={}
+				for a in node.annotations:
+					annotations[a.name]=a.value
+#					print annotations
+
+				if node.parent_node:
+				
 					for x, a in enumerate(node.parent_node.annotations):
 						if isinstance(a.value, str):
 							a.value=a.value.replace('"','')
@@ -169,7 +171,7 @@ def read_dendropy_tree(treefile):
 							try:
 								node.parent_node.annotations[x].value=map(float,node.parent_node.annotations[x].value)
 							except:	
-								break
+								node.parent_node.annotations[x].value=a.value
 					
 					#print a.label, a.value, a.name
 					parent_annotations={}
@@ -179,6 +181,7 @@ def read_dendropy_tree(treefile):
 						
 					
 					if options.trait in annotations:
+						
 						if not annotations[options.trait] in trait_data:
 							trait_data[annotations[options.trait]]=[]
 						if options.value!="":
@@ -193,24 +196,41 @@ def read_dendropy_tree(treefile):
 								sys.exit()
 						if options.count_changes:
 							parent_state=parent_annotations[options.trait]
+							
+							if not parent_state in internal_node_count:
+								internal_node_count[parent_state]=0
+							internal_node_count[parent_state]+=1
+							
 							daughter_state=annotations[options.trait]
 							if not parent_state in state_changes:
 								state_changes[parent_state]={}
+#							if not daughter_state in state_changes:
+#								state_changes[daughter_state]={}
 							if not daughter_state in state_changes[parent_state]:
 								state_changes[parent_state][daughter_state]=[]
+#							if not parent_state in state_changes[daughter_state]:
+#								state_changes[daughter_state][parent_state]=[]	
 							while len(state_changes[parent_state][daughter_state])<(count):
 								state_changes[parent_state][daughter_state].append(0)
 							
 							state_changes[parent_state][daughter_state][-1]+=1
-
+				
+				elif options.trait in annotations:
+					print "Root Node:"
+					print annotations[options.trait]
+				
+			print "\nInternal Nodes:"
+			for internal_state in internal_node_count:
+				print internal_state, internal_node_count[internal_state]
 					
-
 			#print(tree.as_ascii_plot(plot_metric='length'))
 			#print dir(tree)
 #			if count>999:
 #				break
 		
-#		print state_changes, trait_data
+	#	print state_changes, trait_data
+		
+	
 		
 		if count==0:
 			print "No trees visited. Perhaps you subsampled too much?"
@@ -249,11 +269,20 @@ def read_dendropy_tree(treefile):
 				for to_state in state_changes[from_state]:
 					if not to_state in all_states:
 						all_states.append(to_state)
-			
+			print "\nChanges:"
 			for from_state in all_states:
+				if not from_state in state_changes:
+					continue
 				for to_state in all_states:
+					if not to_state in state_changes[from_state]:
+						continue
+					print from_state, "->", to_state, state_changes[from_state][to_state][0]
 					data.append(state_changes[from_state][to_state])
 					labels.append(from_state.replace('"','')+'->'+to_state.replace('"',''))
+			
+			
+			return
+			
 			pylab.figure()
 			n, bins, patches = pylab.hist(data, bins=100, histtype = 'step')
 			pylab.xlabel(options.trait)

@@ -27,6 +27,7 @@ import subprocess
 #Requires Biopython and Pysam
 
 
+
 ####################
 # Set some globals #
 ####################
@@ -1480,7 +1481,7 @@ if __name__ == "__main__":
 			else:
 				RAxML=pcs4_RAxML_DIR
 			
-			os.system(RAxML+" -f d -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
+			os.system(RAxML+" -f d -p "+str(randrange(1,99999))+" -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
 			
 			os.system("mv RAxML_result."+"SNPS_"+prefix+" "+prefix+"_Initial.tre")
 			options.tree=prefix+"_Initial.tre"
@@ -1493,7 +1494,7 @@ if __name__ == "__main__":
 
 			treestats=os.popen('grep "Likelihood" RAxML_info.SNPS_'+prefix).read()
 			
-			negloglike=float(treestats.strip().split(":")[1].replace("-",""))
+			negloglike=float(treestats.strip().split(":")[1].split()[0].replace("-",""))
 
 			print "RAxML -log likelihood =", negloglike
 		else:

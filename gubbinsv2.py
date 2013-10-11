@@ -20,11 +20,33 @@ import math
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 from Si_SeqIO import *
 from Si_nexus import draw_ascii_tree, tree_to_string, midpoint_root
-import random
+from random import randrange
 import numpy
+import subprocess
 
 #Requires Biopython and Pysam
 
+
+####################
+# Get cluster name #
+####################
+
+def getclustername():
+	mycluster="unknown"
+	try:
+		lsid_output=subprocess.check_output(["lsid"])
+		
+		for line in lsid_output.split("\n"):
+			words=line.strip().split()
+			if len(words)>0:
+				if words[1]=="cluster":
+					mycluster=words[4]
+	
+		
+	except StandardError:
+		return mycluster
+	
+	return mycluster
 
 ##########################################
 # Function to Get command line arguments #
@@ -1445,7 +1467,15 @@ if __name__ == "__main__":
 				
 			print "Running tree with RAxML"
 			sys.stdout.flush()
-			os.system("/software/pathogen/external/applications/RAxML/RAxML-7.0.4/raxmlHPC -f d -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
+			cluster=getclustername()
+			
+			if cluster in ["farm2", "pcs4"]:
+				os.system("rm -f RAxML*SNPS_"+prefix)
+				os.system("/software/pathogen/external/applications/RAxML/RAxML-7.0.4/raxmlHPC -f d -p "+str(randrange(1,99999))+"  -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
+			else:
+				os.system("rm -f RAxML*SNPS_"+prefix)
+#				print "/software/pathogen/external/apps/usr/bin/raxmlHPC -f d -p "+str(randrange(1,99999))+" -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix
+				os.system("/software/pathogen/external/apps/usr/bin/raxmlHPC -f d -p "+str(randrange(1,99999))+" -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
 			options.tree="RAxML_result."+"SNPS_"+prefix
 			
 			#extract stats from raxml output files
@@ -1456,7 +1486,7 @@ if __name__ == "__main__":
 
 			treestats=os.popen('grep "Likelihood" RAxML_info.SNPS_'+prefix).read()
 			
-			negloglike=float(treestats.strip().split(":")[1].replace("-",""))
+			negloglike=float(treestats.strip().split(":")[1].split()[0].replace("-",""))
 
 			print "RAxML -log likelihood =", negloglike
 		else:

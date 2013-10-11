@@ -499,6 +499,13 @@ def set_text_width(font, size, length, text):
 ##########################################
 
 def get_colours_for_list(data_list, data_type="discrete", data_max=float("-Inf"), data_min=float("Inf"), direction="anticlockwise", start_angle=0.0, end_angle=240, start_saturation=0.8, end_saturation=0.8, start_value=0.9, end_value=0.9):
+	s_start=control.metadata_colour_start_saturation
+	s_end=control.metadata_colour_end_saturation
+	v_start=control.metadata_colour_start_value
+	v_end=control.metadata_colour_end_value
+	start_angle=control.metadata_colour_start_angle
+	end_angle=control.metadata_colour_end_angle
+	direction=control.metadata_colour_direction
 	
 	colour_db={}
 	if data_type=="continuous" and data_max==float("-Inf"):
@@ -984,9 +991,9 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			else:
 				gap=fontsize
 			vertposbottom=treebase-gap
-			d.add(Line(horizontalpos, vertposbottom, horizontalpos+branchlength, vertposbottom, strokeWidth=linewidth))
+			d.add(Line(horizontalpos, vertposbottom, horizontalpos+branchlength, vertposbottom, strokeDashArray=[1, 2], strokeWidth=linewidth))
 			vertpostop=treetop+gap
-			d.add(Line(horizontalpos, vertpostop, horizontalpos+branchlength, vertpostop, strokeWidth=linewidth))
+			d.add(Line(horizontalpos, vertpostop, horizontalpos+branchlength, vertpostop, strokeDashArray=[1, 2], strokeWidth=linewidth))
 			
 			if hasattr(treeObject, "max_leaf_sampling_date"):
 				max_date=float(treeObject.max_leaf_sampling_date)
@@ -996,7 +1003,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				min_date=max_depth
 				
 			date_range=max_depth
-			date_chunks=date_range
+			date_chunks=floor(date_range)
 			if date_chunks>10:
 				while date_chunks>10:
 					date_chunks=date_chunks/10
