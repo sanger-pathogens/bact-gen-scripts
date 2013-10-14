@@ -144,6 +144,7 @@ def main():
 	
 	group = OptionGroup(parser, "Bcf options")
 	group.add_option("-v", "--varianttype", action="store", dest="bcfvariants", choices=["a","A","i","I","s","S", "h", "H"], help="bcf variants to show. Letter code for types of variant to include: a/A=include all i/I:just indels, s/S:just SNPs, h/H just heterozygotous sites. Lower case means exclude non-variant sites, upper case means include them [default= %default]", default="A", type="choice")
+	group.add_option("-9", "--depth", action="store", dest="depth", help="Minimum depth to include as covered in bcf file [default= %default]", default=0, type="float")
 	parser.add_option_group(group)
 	
 	group = OptionGroup(parser, "Plot Options")
@@ -841,8 +842,8 @@ def add_bcf_to_diagram(filename):
 		
 		#Calculate the ref/alt ratios
 #		BASEINFO["INFO"]["DP4ratios"]={}
-#		if not "DP4" in BASEINFO["INFO"]:
-#			BASEINFO["INFO"]["DP4"]=[0,0,0,0]
+		if not "DP4" in BASEINFO["INFO"]:
+			BASEINFO["INFO"]["DP4"]=[0,0,0,0]
 #			BASEINFO["INFO"]["DP4ratios"]["fref"]=0.0
 #			BASEINFO["INFO"]["DP4ratios"]["rref"]=0.0
 #			BASEINFO["INFO"]["DP4ratios"]["falt"]=0.0
@@ -865,7 +866,7 @@ def add_bcf_to_diagram(filename):
 		
 	
 		
-		
+#		print BASEINFO["INFO"]
 		
 #		if BASEINFO["QUAL"]<options.QUAL:
 #			#print options.QUAL, BASEINFO["QUAL"]
@@ -873,8 +874,8 @@ def add_bcf_to_diagram(filename):
 #		elif  BASEINFO["INFO"]["MQ"]<options.MQUAL:
 #			#print options.MQUAL, BASEINFO["INFO"]["MQ"]
 #			keep=False
-#		elif not SNP and BASEINFO["INFO"]["DP4"][0]+BASEINFO["INFO"]["DP4"][1]<options.depth:
-#			keep=False
+		if not SNP and BASEINFO["INFO"]["DP4"][0]+BASEINFO["INFO"]["DP4"][1]<options.depth:
+			keep=False
 #		elif not SNP and BASEINFO["INFO"]["DP4"][0]<options.stranddepth:
 #			keep=False
 #		elif not SNP and BASEINFO["INFO"]["DP4"][1]<options.stranddepth:
@@ -883,8 +884,8 @@ def add_bcf_to_diagram(filename):
 #			keep=False
 #		elif not SNP and BASEINFO["INFO"]["DP4ratios"]["rref"]<options.ratio:
 #			keep=False
-#		elif SNP and BASEINFO["INFO"]["DP4"][2]+BASEINFO["INFO"]["DP4"][3]<options.depth:
-#			keep=False
+		elif SNP and BASEINFO["INFO"]["DP4"][2]+BASEINFO["INFO"]["DP4"][3]<options.depth:
+			keep=False
 #		elif SNP and BASEINFO["INFO"]["DP4"][2]<options.stranddepth:
 #			keep=False
 #		elif SNP and BASEINFO["INFO"]["DP4"][3]<options.stranddepth:

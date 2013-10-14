@@ -2611,7 +2611,7 @@ class Figure:
 
 
 class Track:
-	def __init__(self, track_position=[-1,-1], track_height=0, track_length=0, track_draw_proportion=0.75, scale=False, tick_marks=True, tick_mark_number=5, tick_mark_labels=True, minor_tick_marks=True, minor_tick_mark_number=3, features=[], beginning=0, end=-1, minimum_feature_length=0.1):
+	def __init__(self, track_position=[-1,-1], track_height=0, track_length=0, track_draw_proportion=0.75, scale=False, tick_marks=True, tick_mark_number=5, tick_mark_labels=True, minor_tick_marks=True, minor_tick_mark_number=3, features=[], beginning=0, end=-1, minimum_feature_length=0.5):
 	
 		self.track_position=track_position#horizontal and vertical position of centre of track
 		self.track_height=track_height#height of space allocated for track
