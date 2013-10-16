@@ -5,6 +5,7 @@
 #################################
 
 import string, re
+import getpass
 import os, sys
 import random
 from math import sqrt, pow, log
@@ -505,7 +506,7 @@ def add_sequence_file_to_diagram(fastarecord, name):
 # Function to add an embl file to a track #
 ###########################################
 
-def add_embl_to_diagram(record, incfeatures=["CDS", "feature", "tRNA", "rRNA", "repeat_region"], emblfile=True, name=""):
+def add_embl_to_diagram(record, incfeatures=["CDS", "feature", "tRNA", "rRNA", "repeat_region", "fasta_record"], emblfile=True, name=""):
 	
 	########################################
 	# Function to get a name for a feature #
@@ -3790,6 +3791,11 @@ if __name__ == "__main__":
 		c.showPage()
 	c.save()
 	print "Done"
+	
+	if getpass.getuser()=="kb14":
+		print "PS: Kate, that cheese stinks!"
+	if getpass.getuser()=="am24":
+		print "PS: Chillax dude!"
 	
 	
 	
