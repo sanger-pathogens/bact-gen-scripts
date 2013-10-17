@@ -302,14 +302,15 @@ if __name__ == "__main__":
 		name=""
 		
 		if fastqs[fastq]["read1"] and fastqs[fastq]["read2"]:
-			smalt_map_bit= smalt_map_command, fastqs[fastq]["read1"].absolute_path, fastqs[fastq]["read2"].absolute_path, '|| error_exit "SMALT command failed! Aborting"'
+			smalt_map_bit= smalt_map_command+" "+fastqs[fastq]["read1"].absolute_path+" "+fastqs[fastq]["read2"].absolute_path+" "+'|| error_exit "SMALT command failed! Aborting"'
 			name=fastqs[fastq]["read1"].base_name
 		elif fastqs[fastq]["read1"]:
-			smalt_map_bit= smalt_map_command, fastqs[fastq]["read1"].absolute_path, '|| error_exit "SMALT command failed! Aborting"'
+			smalt_map_bit= smalt_map_command+" "+astqs[fastq]["read1"].absolute_path+" "+'|| error_exit "SMALT command failed! Aborting"'
 			name=fastqs[fastq]["read1"].base_name
 		elif fastqs[fastq]["read2"]:
-			smalt_map_bit= smalt_map_command, fastqs[fastq]["read2"].absolute_path, '|| error_exit "SMALT command failed! Aborting"'
+			smalt_map_bit= smalt_map_command+" "+fastqs[fastq]["read2"].absolute_path+" "+'|| error_exit "SMALT command failed! Aborting"'
 			name=fastqs[fastq]["read2"].base_name
+		
 		
 		if options.mapped!="":
 			if not os.path.isfile(options.mapped+"/"+name+".bam"):
