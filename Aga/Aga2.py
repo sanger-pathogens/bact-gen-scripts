@@ -349,8 +349,10 @@ if __name__ == "__main__":
 		
 #		print >> smalt_run_file, "mv "+tmpname+"/"+name+"_shuffled_velvet/contigs.fa "+tmpname+"/"+name+"_assembled.fasta"+' || error_exit "mv command failed! Aborting"'
 #		print >> smalt_run_file, "rm -rf "+tmpname+"/"+name+"_shuffled_velvet "+tmpname+"/"+name+"_shuffled.fastq "+tmpname+"/"+name+'_shuffled_velvet.log || error_exit "rm command failed! Aborting"'
-		
-		print >> smalt_run_file, "mv "+tmpname+"/"+name+"_spades/contigs.fasta "+tmpname+"/"+name+"_assembled.fasta"+' || error_exit "mv command failed! Aborting"'
+		if options.assembler=="velvet":
+			print >> smalt_run_file, "mv "+tmpname+"/"+name+"_shuffled_velvet/contigs.fa "+tmpname+"/"+name+"_assembled.fasta"+' || error_exit "mv command failed! Aborting"'
+		elif options.assembler=="spades":
+			print >> smalt_run_file, "mv "+tmpname+"/"+name+"_spades/contigs.fasta "+tmpname+"/"+name+"_assembled.fasta"+' || error_exit "mv command failed! Aborting"'
 		print >> smalt_run_file, "rm -rf "+tmpname+"/"+name+'_spades || error_exit "rm command failed! Aborting"'
 		assembly_list.append(tmpname+"/"+name+"_assembled.fasta")
 		

@@ -117,7 +117,7 @@ if options.map:
 	if not os.path.isfile(options.serotypes+".index.sma") or not os.path.isfile(options.serotypes+".index.smi"):
 		os.system(SMALT_DIR+"smalt index -k 13 -s 1 "+options.serotypes+".index "+options.serotypes)
 	 
-	os.system(SMALT_DIR+"smalt map  -y 0.5 -r 12345 -f samsoft -o "+tmpname+".sam "+options.serotypes+".index "+forward+" "+reverse)
+	os.system(SMALT_DIR+"smalt map  -y 0.5 -d 0 -f samsoft -o "+tmpname+".sam "+options.serotypes+".index "+forward+" "+reverse)
 	#os.system(SMALT_DIR+"smalt map  -y 0.5 -d -1 -f samsoft -o "+tmpname+".sam "+options.serotypes+".index "+forward+" "+reverse)
 	os.system(SAMTOOLS_DIR+"samtools view -F 4 -b -S "+tmpname+".sam -t "+options.serotypes+".fai > "+tmpname+".1.bam")
 	os.system("rm -f "+tmpname+".sam")

@@ -3747,10 +3747,10 @@ class Plot:
 				lastbluevalue=data[1][0]
 			except StandardError:
 				DoError("Can only use redandblue heatmap when there are at least 2 columns in the plot file")
-		draw_width=0.0
+		draw_width=feature_width
 		draw_start=0
-		for i,datum in enumerate(data[0]):
-			
+		for i,datum in enumerate(data[0][1:]):
+			print datum, data[1][i]
 			if self.heat_colour=="redandblue":
 				try:
 					bluedatum=data[1][i]
@@ -3767,19 +3767,26 @@ class Plot:
 				if bluevalue>1:
 					bluevalue=1.0
 				if bluevalue!=lastbluevalue or redvalue!=lastredvalue:
-					rcolour=colors.Color(1.0,1.0-redvalue,1.0-redvalue)
+					rcolour=colors.Color(1.0,1.0-lastredvalue,1.0-lastredvalue)
 #					if colour!=colors.Color(0,0,0):
 #						d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
-					bcolour=colors.Color(1.0-bluevalue,1.0-bluevalue,1.0)
+					bcolour=colors.Color(1.0-lastbluevalue,1.0-lastbluevalue,1.0)
 #					if colour!=colors.Color(0,0,0):
 #						d.add(Rect(x+(draw_start*feature_width), y, draw_width, height/2, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
-					colour=colors.Color((1.0-bluevalue),((1.0-redvalue)+(1.0-bluevalue))/2,(1.0-redvalue))
-					print redvalue, bluevalue, rcolour, bcolour, colour
+					#colour=colors.Color((1.0-lastbluevalue),((1.0-lastredvalue)+(1.0-lastbluevalue))/2,(1.0-lastredvalue))
+					
+					if lastredvalue and lastbluevalue>0.5:
+						greenvalue=1.0-((lastredvalue)+(lastbluevalue)/2)
+					else:
+						greenvalue=1.0-((lastredvalue)+(lastbluevalue)/2)
+					greenvalue=0.5
+					colour=colors.Color(lastredvalue,greenvalue,lastbluevalue)
+					print lastredvalue, greenvalue, lastbluevalue, data[0][i-1], data[1][i-1], colour, (1.0-lastbluevalue),((1.0-lastredvalue)+(1.0-lastbluevalue))/2,(1.0-lastredvalue)
 					if colour!=colors.Color(0,0,0):
 						d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
 
 					draw_width=0.0
-					draw_start=i
+					draw_start=i+1
 					lastbluevalue=bluevalue
 					lastredvalue=redvalue		
 			
@@ -3808,7 +3815,7 @@ class Plot:
 	#				print dir(myrect)
 	#				sys.exit()
 					draw_width=0.0
-					draw_start=i
+					draw_start=i+1
 					lastvalue=value
 			
 			draw_width+=feature_width
@@ -3822,6 +3829,9 @@ class Plot:
 			colour=colors.Color(value,0,1.0-value)
 		elif self.heat_colour=="redblue":
 			colour=colors.Color(1.0-value,0,value)
+		elif self.heat_colour=="redandblue":
+			#colour=colors.Color((1.0-bluevalue),((1.0-redvalue)+(1.0-bluevalue))/2,(1.0-redvalue))
+			colour=colors.Color((1.0-bluevalue),min([(1.0-redvalue),(1.0-bluevalue)]),(1.0-redvalue))
 		if not (self.heat_colour=="whiteblack" and value==0) and not (self.heat_colour=="blackwhite" and value==1):
 			d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
 		
