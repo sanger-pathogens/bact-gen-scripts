@@ -60,7 +60,7 @@ colourconverter={'aliceblue':colors.aliceblue, 'antiquewhite':colors.antiquewhit
 
 
 default_rgb_colours=["blue", "red",  "limegreen", "aqua", "fuchsia", "orange", "green", "gray", "purple", "olive", "teal", "silver", "navy", "white", "black", "maroon", "yellow"]
-default_plot_colours=["blue", "red",  "limegreen", "aqua", "fuchsia", "orange", "green", "gray", "purple", "olive", "teal", "silver", "navy", "black", "maroon", "yellow"]
+default_plot_colours=["red", "blue",  "limegreen", "aqua", "fuchsia", "orange", "green", "gray", "purple", "olive", "teal", "silver", "navy", "black", "maroon", "yellow"]
 
 
 
@@ -3382,7 +3382,7 @@ class Plot:
 		self.plot_type="line"
 		self.beginning=-1
 		self.end=-1
-		self.circular=True
+		self.circular=False
 		self.labels=[]
 		self.legend=True
 		self.autolegend=True
@@ -3455,6 +3455,7 @@ class Plot:
 				currpos+=1
 				if currpos>endpos:
 					break
+					
 			if newplot:
 				words=line.strip().split()
 				while float(words[0])>currpos and float(words[0])<=endpos:# and float(words[0])>=self.beginning:
@@ -3482,6 +3483,8 @@ class Plot:
 					break
 				data[0].append(float(words[0]))
 		
+		
+		
 		while currpos<totallength:
 			for x in xrange(len(data)):
 				data[x].append(0)
@@ -3496,8 +3499,7 @@ class Plot:
 		
 		self.calculate_windowsize(data)
 		
-		
-		if len(data)>1 and self.reorder_data:# and self.plot_type!="stackedarea" :
+		if len(data)>1 and self.reorder_data and self.plot_type not in ["stackedarea", "heat"] :
 			data_order=[]
 			datameans=[]
 			for x, datum in enumerate(data):
@@ -3529,17 +3531,17 @@ class Plot:
 		self.data=[]
 		self.xdata=[]
 		
+		
 		for x in data_order:
 			windowdata=[]
 			xdata=[]
-#			mymax=0
+			
 			
 			if self.end>len(data[x]):
 				end=len(data[x])
 			else:
 				end=self.end
-#			self.window_size=3
-#			print self.end
+				
 			if self.plot_type in ["line", "area", "stackedarea"]:
 				for y in xrange(0,len(data[x]),self.window_size):
 					
@@ -3556,8 +3558,6 @@ class Plot:
 					#print windowstart, windowend, y, len(data[x]), data[x][windowstart:windowend], region
 					windowdata.append(mean(region))
 					xdata.append(y)
-#					
-#				windowdata.insert(0,(0, mean(region)))
 					
 			elif self.plot_type in ["bar", "heat"]:
 				bardata=[]
@@ -3573,12 +3573,18 @@ class Plot:
 					elif windowstart<0:
 						region=data[x][len(data[x])-windowstart:]+data[x][:windowend]
 					
-#					print windowstart, windowend
 					bardata.append(mean(region))
 					barxdata.append(y)
-#				bardata.insert(0,mean(region))
-#				print bardata
+				
+				if len(bardata)>0:
+					if self.circular:
+						windowdata.append(mean([bardata[0], bardata[-1]]))
+					else:
+						windowdata.append(bardata[0])
+					xdata.append(barxdata[0])
+				
 				for y in xrange(len(bardata)-1):
+					#print y, y+1
 					if y+1<len(bardata):
 						windowdata.append(mean([bardata[y], bardata[y+1]]))
 						xdata.append(barxdata[y+1])
@@ -3587,8 +3593,7 @@ class Plot:
 			
 			self.data.append(windowdata)
 			self.xdata.append(xdata)
-	
-	
+			
 	
 	def clear_data(self):
 		self.raw_data=[]
@@ -3597,7 +3602,7 @@ class Plot:
 
 	def get_data_to_print(self):
 		
-		print options.plot_min, options.plot_max
+		
 		if options.plot_min!=float("Inf"):
 			try:
 				valueMin = float(options.plot_min)
@@ -3613,7 +3618,7 @@ class Plot:
 						if curmin<valueMin:
 							valueMin=curmin
 #					valueMin = min(map(median,self.data))*mincoverage	
-					print min(map(median,self.data)), mincoverage, valueMin
+
 		elif self.plot_type in ["heat"] and self.heat_colour!="redandblue":
 			valueMin = min(self.data[0])
 		else:
@@ -3634,7 +3639,7 @@ class Plot:
 						if curmax>valueMax:
 							valueMax=curmax
 #					valueMax = max(map(median,self.data))*maxcoverage
-					print max(map(median,self.data)), maxcoverage, valueMax
+
 		elif self.plot_type in ["heat"] and self.heat_colour!="redandblue":
 			valueMax = max(self.data[0])
 		else:
@@ -3676,7 +3681,7 @@ class Plot:
 	
 	
 	def draw_heatmap(self, x, y, height, length):
-		print options.plot_max
+		
 		data, end, valueMin, valueMax=self.get_data_to_print()
 		
 		if len(data)==0 or end==self.beginning:
@@ -3749,11 +3754,12 @@ class Plot:
 				DoError("Can only use redandblue heatmap when there are at least 2 columns in the plot file")
 		draw_width=feature_width
 		draw_start=0
+		
 		for i,datum in enumerate(data[0][1:]):
-			print datum, data[1][i]
+		
 			if self.heat_colour=="redandblue":
 				try:
-					bluedatum=data[1][i]
+					bluedatum=data[1][i+1]
 				except StandardError:
 					DoError("Can only use redandblue heatmap when there are at least 2 columns in the plot file")
 				if valueMax-valueMin>0:
@@ -3767,22 +3773,25 @@ class Plot:
 				if bluevalue>1:
 					bluevalue=1.0
 				if bluevalue!=lastbluevalue or redvalue!=lastredvalue:
-					rcolour=colors.Color(1.0,1.0-lastredvalue,1.0-lastredvalue)
-#					if colour!=colors.Color(0,0,0):
-#						d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
-					bcolour=colors.Color(1.0-lastbluevalue,1.0-lastbluevalue,1.0)
-#					if colour!=colors.Color(0,0,0):
-#						d.add(Rect(x+(draw_start*feature_width), y, draw_width, height/2, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
-					#colour=colors.Color((1.0-lastbluevalue),((1.0-lastredvalue)+(1.0-lastbluevalue))/2,(1.0-lastredvalue))
+					#rcolour=colors.Color(1.0,1.0-lastredvalue,1.0-lastredvalue)
+					#bcolour=colors.Color(1.0-lastbluevalue,1.0-lastbluevalue,1.0)
 					
-					if lastredvalue and lastbluevalue>0.5:
-						greenvalue=1.0-((lastredvalue)+(lastbluevalue)/2)
+					
+					red=max([lastredvalue, 1.0-lastbluevalue])
+					blue=max([lastbluevalue, 1.0-lastredvalue])
+					
+					if lastredvalue<0.5 and lastbluevalue<0.5:
+						green=mean([1-lastredvalue, 1-lastbluevalue])
 					else:
-						greenvalue=1.0-((lastredvalue)+(lastbluevalue)/2)
-					greenvalue=0.5
-					colour=colors.Color(lastredvalue,greenvalue,lastbluevalue)
-					print lastredvalue, greenvalue, lastbluevalue, data[0][i-1], data[1][i-1], colour, (1.0-lastbluevalue),((1.0-lastredvalue)+(1.0-lastbluevalue))/2,(1.0-lastredvalue)
-					if colour!=colors.Color(0,0,0):
+						green=mean([1-lastredvalue, 1-lastbluevalue])
+						
+					colour=colors.Color(red,green,blue)
+					colour=colors.Color(lastredvalue, 0, lastbluevalue)
+					
+					colour=colors.PCMYKColor(lastbluevalue*100, lastredvalue*100,0,0)
+					
+					print lastredvalue, green, lastbluevalue, data[0][i], data[1][i], colour, (1.0-lastbluevalue),((1.0-lastredvalue)+(1.0-lastbluevalue))/2,(1.0-lastredvalue)
+					if colour!=colors.Color(1,1,1):
 						d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
 
 					draw_width=0.0
@@ -3831,7 +3840,9 @@ class Plot:
 			colour=colors.Color(1.0-value,0,value)
 		elif self.heat_colour=="redandblue":
 			#colour=colors.Color((1.0-bluevalue),((1.0-redvalue)+(1.0-bluevalue))/2,(1.0-redvalue))
-			colour=colors.Color((1.0-bluevalue),min([(1.0-redvalue),(1.0-bluevalue)]),(1.0-redvalue))
+			#colour=colors.Color((1.0-bluevalue),min([(1.0-redvalue),(1.0-bluevalue)]),(1.0-redvalue))
+			#colour=colors.Color(lastredvalue,0,lastbluevalue,1)
+			colour=colors.PCMYKColor(lastbluevalue*100, lastredvalue*100,0,0)
 		if not (self.heat_colour=="whiteblack" and value==0) and not (self.heat_colour=="blackwhite" and value==1):
 			d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
 		
