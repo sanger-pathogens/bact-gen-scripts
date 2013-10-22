@@ -36,6 +36,7 @@ def main():
 	parser.add_option("-o", "--output", action="store", dest="output", help="output file prefix", default="")
 #	parser.add_option("-m", "--muscle", action="store_true", dest="muscle", help="Try to align regions with muscle [default=%default]", default=False)
 	parser.add_option("-c", "--curate", action="store_true", dest="curate", help="Manually curate added insertions using seaview [default=%default]", default=False)
+	parser.add_option("-t", "--textfile", action="store", dest="textfile", help="textfile containing input mfa files", default="")
 	
 	return parser.parse_args()
 
@@ -71,6 +72,15 @@ if __name__ == "__main__":
 		fasta=SeqIO.parse(open(options.ref), "fasta")
 	except StandardError:
 		DoError("Cannot open file "+options.ref)
+		
+	if options.textfile!="" and not os.path.isfile(options.textfile):
+		DoError("Cannot find file "+options.textfile)
+		
+	
+	for line in open(options.textfile, "rU"):
+		line=line.strip()
+		args.append(line)	
+	
 	
 	reforder=[]
 	refseq={}

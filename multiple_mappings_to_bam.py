@@ -846,6 +846,7 @@ if __name__ == "__main__":
 	else:
 		JAVA_DIR=pcs4_JAVA_DIR
 	
+	
 	for pool in pools:
 		
 		if options.keep and options.pseudosequence and os.path.isfile(pool.runname+"/"+pool.name+".bam") and os.path.isfile(pool.runname+"/"+pool.name+".bcf") and os.path.isfile(pool.runname+"/"+pool.name+".mfa"):# and os.path.isfile(pool.runname+"/"+pool.name+"_indels.txt"):
@@ -888,10 +889,13 @@ if __name__ == "__main__":
 	
 	if options.pseudosequence:
 		argstring=[]
+		mfafile=open(tmpname+"_mfas.txt", "w")
 		for pool in pools:	
 			argstring.append(pool.runname+"/"+pool.name+".mfa")
+			print >> mfafile, pool.runname+"/"+pool.name+".mfa"
+		mfafile.close()
 		if options.indels:
-			joinstring=MY_SCRIPTS_DIR+"join_dna_files_with_indels.py -r "+options.ref+" -o "+options.output+".aln "+' '.join(argstring) #*_ssaha/*_test.mfa
+			joinstring=MY_SCRIPTS_DIR+"join_dna_files_with_indels.py -r "+options.ref+" -o "+options.output+".aln -t "+tmpname+"_mfas.txt" #*_ssaha/*_test.mfa
 		else:
 			if not options.incref:
 				joinstring="'cat "+' '.join(argstring)+" > "+options.output+".aln'"

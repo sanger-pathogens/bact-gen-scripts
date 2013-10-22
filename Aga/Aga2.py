@@ -321,7 +321,9 @@ if __name__ == "__main__":
 				print >> smalt_run_file, "rm -f "+tmpname+"/"+tmpname+"_"+str(i+1)+'.bam || error_exit "rm command failed! Aborting"'
 			else:
 				if options.mapped+"/"+name+".bam" != tmpname+"/"+name+".bam":
-					os.system("cp -s "+options.mapped+"/"+name+".bam "+tmpname+"/"+name+".bam")
+					os.system("cd "+tmpname)
+					os.system("cp -s "+options.mapped+"/"+name+".bam .")
+					os.system("cd ..")
 		else:
 			print >> smalt_run_file, smalt_map_bit
 			print >> smalt_run_file, SAMTOOLS_LOC+" sort "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam "+tmpname+"/"+name+' || error_exit "samtools sort command failed! Aborting"'
