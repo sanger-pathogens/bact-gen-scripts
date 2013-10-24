@@ -23,6 +23,59 @@ def main():
 	return parser.parse_args()
 
 
+def parse_CDHitEST_clstr_file(filehandle):
+	clusters={}
+	clusternumber=0
+	
+	print "Reading clusters from CD-Hit Output..."
+	
+	for line in filehandle:
+		line=line.strip()
+		if len(line.split())==2 and line.split()[0]==">Cluster":
+			try:
+				clusternumber=int(line.split()[1])+1
+				clusters[clusternumber]=[]
+			except ValueError:
+				print "Error: Expecting integer in >Cluster line of CD-Hit cluster file."
+				sys.exit()
+		
+		else:
+			if clusternumber==0 or not clusternumber in clusters:
+				print "Expecting line starting with >Cluster"
+				print line
+				sys.exit()
+			
+			words=line.split("...")[0].split()
+			if line.split()[-1]=="*":
+				strand="+"
+				ref_seq=True
+				percentid=100
+			else:
+				ref_seq=False
+				if len(line.split()[-1].split('/'))!=2:
+				       print "Cannot read strand/percentid"
+				       print line
+				       sys.exit()
+				strand=line.split()[-1].split('/')[0]
+				try:
+				       percentid=float(line.split()[-1].split('/')[1].replace("%",""))
+				except ValueError:
+				       print "Cannot read strand/percentid"
+				       print line
+				       sys.exit()
+			
+			if len(words)>2 and words[2][0]==">":
+				clusters[clusternumber].append({"name":words[2][1:], "strand":strand, "key":ref_seq, "percent_id":percentid})
+				
+			else:
+				print "Error: Expecting to find gene name in third column of line"
+		
+		
+	print "Found", len(clusters), "clusters"
+
+	return clusters
+
+
 
 ################
 # Main program #
@@ -49,35 +102,9 @@ if __name__ == "__main__":
 		print "Error: Clustering failed. Please check the format of your sequence database file."
 		sys.exit()
 	
-	clusters={}
-	clusternumber=0
-	
-	print "Reading clusters from CD-Hit Output..."
-	
-	for line in open(options.db+"_clusters.clstr", "rU"):
-		line=line.strip()
-		if len(line.split())==2 and line.split()[0]==">Cluster":
-			try:
-				clusternumber=int(line.split()[1])+1
-				clusters[clusternumber]=[]
-			except ValueError:
-				print "Error: Expecting integer in >Cluster line of CD-Hit cluster file."
-				sys.exit()
-		
-		else:
-			if clusternumber==0 or not clusternumber in clusters:
-				print "Expecting line starting with >Cluster"
-				print line
-				sys.exit()
-			
-			words=line.split("...")[0].split()
-			if len(words)>2 and words[2][0]==">":
-				clusters[clusternumber].append(words[2][1:])
-			else:
-				print "Error: Expecting to find gene name in third column of line"
-		
-		
-	print "Found", len(clusters), "clusters"
+	clusters=parse_CDHitEST_clstr_file(open(options.db+"_clusters.clstr", "rU"))
+
+	print clusters
 	
 	print "Creating cluster fasta directory..."
 	
