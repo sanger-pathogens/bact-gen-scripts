@@ -96,6 +96,44 @@ def check_input_validity(options, args):
 
 
 
+def read_metadata(filehandle, name_column=1, unit_column=2, value_column=3, header=False, name_heading="", unit_heading="", value_heading="", split_value="\t"):
+	
+	metadata={}
+	for x, line in enumerate(filehandle):
+		line=line.strip()
+		if x==0 and header:
+			headings=line.split(split_value)
+			for colcount, colhead in enumearate(headings):
+				if unit_heading!="" and colhead==unit_heading:
+					unit_column=colcount+1
+				elif value_heading!="" and colhead==value_heading:
+					value_column=colcount+1
+				elif name_heading!="" and colhead==name_heading:
+					name_column=colcount+1
+		
+		else:
+			columns=line.split()
+			if len(clolumns)<max([unit_column, value_column]):
+				print 'metadata has rows without correct number of columns...skipping:'
+				print line
+			else:
+				name=columns[name_column]
+				if name in metadata:
+					DoError("Repeated names in metadata")
+				metadata["name"]={}
+				
+				unit=columns[unit_column].lower()
+				if not unit in ["days", "months", "years"]:
+					DoError("Time unit must be days, months or years!")
+				
+				try:
+					value=float(columns[value_column])
+				except ValueError:
+					DoError("Time value column must be a float!")
+	
+
+
+
 if __name__ == "__main__":
 		#argv=sys.argv[1:]
 		#ref, inputfile, outfile, tabfile, align, embl, raxml, graphs, bootstrap, model, chisquare, recomb=getOptions(argv)
