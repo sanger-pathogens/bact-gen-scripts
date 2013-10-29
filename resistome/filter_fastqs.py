@@ -183,7 +183,7 @@ if __name__ == "__main__":
 	
 	print "seqtk return value:", returnval
 	
-	returnval=os.system(' '.join(["seqtk subseq -l 1000 ", options.ffastq, "tmp.lst", ">", options.rfastq.split(".")[0]+"_subset.fastq"]))
+	returnval=os.system(' '.join(["seqtk subseq -l 1000 ", options.rfastq, "tmp.lst", ">", options.rfastq.split(".")[0]+"_subset.fastq"]))
 	
 	print "seqtk return value:", returnval
 	options.db="test.txt"
