@@ -1614,7 +1614,8 @@ if __name__ == "__main__":
 			
 			#run paml
 			
-			os.system("/nfs/users/nfs_m/mh10/software/paml41/bin/baseml > "+prefix+"temp.tmp")
+			#os.system("/nfs/users/nfs_m/mh10/software/paml41/bin/baseml > "+prefix+"temp.tmp")
+			os.system("baseml > "+prefix+"temp.tmp")
 
 		elif options.usepreviouspamlrun:
 			print "Using previous paml run"

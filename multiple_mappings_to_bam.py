@@ -851,7 +851,7 @@ if __name__ == "__main__":
 		
 		if options.keep and options.pseudosequence and os.path.isfile(pool.runname+"/"+pool.name+".bam") and os.path.isfile(pool.runname+"/"+pool.name+".bcf") and os.path.isfile(pool.runname+"/"+pool.name+".mfa"):# and os.path.isfile(pool.runname+"/"+pool.name+"_indels.txt"):
 			print "\n"+pool.runname, "contains a .bam, .bcf and .mfa file already. As you selected the keep option, it will not be mapped again.",
-		elif options.keep and os.path.isfile(pool.runname+"/"+pool.name+".bam") and os.path.isfile(pool.runname+"/"+pool.name+".bcf"):# and os.path.isfile(pool.runname+"/"+pool.name+"_indels.txt"):
+		elif options.keep and not options.pseudosequence and os.path.isfile(pool.runname+"/"+pool.name+".bam") and os.path.isfile(pool.runname+"/"+pool.name+".bcf"):# and os.path.isfile(pool.runname+"/"+pool.name+"_indels.txt"):
 			print "\n"+pool.runname, "contains a .bam, and .bcf file already. As you selected the keep option, it will not be mapped again.",
 		else:
 			count+=1

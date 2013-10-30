@@ -58,8 +58,10 @@ if __name__ == "__main__":
 	if options.output=="":
 		DoError("Output file (-o) required")
 	
-	if len(args)==0:
-		DoError("No dna files to align have been specified")
+	if options.textfile=="":
+		DoError("No textfile of input mfa files selected")
+	if not os.path.isfile(options.textfile):
+		DoError("Cannot find file "+options.textfile)
 	
 	#Read the reference file
 	
