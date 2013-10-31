@@ -34,7 +34,7 @@ def get_user_options(args=[]):
 	#do not allow arguments to be interspersed. e.g. -a -b arg1 agr2. MUST be -a arg1 -b arg2.
 	parser.disable_interspersed_args()
 	
-	parser.add_option("-q", "--queue", action="store", dest="LSFQ", help="LSF queue to submit to. [Default= %default]", default="normal", type="choice", choices=["normal","long", "basement", "hugemem"])
+	parser.add_option("-q", "--queue", action="store", dest="LSFQ", help="LSF queue to submit to. [Default= %default]", default="normal", type="choice", choices=["normal","long", "basement", "hugemem", "yesterday"])
 	parser.add_option("-m", "--memory", action="store", dest="mem", help="Amount of memory required for analysis (Gb). [Default= None]", default=False, type="float")
 	parser.add_option("-p", "--processors", action="store", dest="CPUs", help="Number of processors to use on each node. [Default= %default]", default=1, type="int")
 	parser.add_option("-c", "--c", action="store_true", dest="checkpoint", help="Checkpoint your job (so it can be restarted if it dies due to hardware failure). [Default= False]", default=False)

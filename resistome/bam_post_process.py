@@ -27,6 +27,10 @@ def main():
 	return parser.parse_args()
 
 
+EITHER_PERCENT_CUTOFF=80
+HIGH_PERCENT_CUTOFF=10
+MIN_READS=4
+
 ################
 # Main program #
 ################		
@@ -68,29 +72,70 @@ if __name__ == "__main__":
 	contiglocs={}
 	totallength=0
 	indelreads={}
-	
-	for x, ref in enumerate(refs):
-		contiglocs[ref]=totallength
-		totallength+=lengths[x]
-		indelreads[ref]={"insertion":0, "deletion":0, "clipped":0}
-	
-	
-	for read in samfile:
-		
-		if not read.is_unmapped:
-			
-			for cig in read.cigar:
-				if cig[0]==1:
-					indelreads[refs[read.tid]]["insertion"]+=1
-				elif cig[0]==2:
-					indelreads[refs[read.tid]]["deletion"]+=1
-				elif cig[0]==4:
-					indelreads[refs[read.tid]]["clipped"]+=1
-	
-	for ref in indelreads:
-		if indelreads[ref]["clipped"]>0 or indelreads[ref]["deletion"]>0 or indelreads[ref]["insertion"]>0:
-			print ref,  indelreads[ref]
-	sys.exit()
+
+# This code identifies clipped reads and the position they are clipped at	
+#	for x, ref in enumerate(refs):
+#		contiglocs[ref]=totallength
+#		totallength+=lengths[x]
+#		indelreads[x]={"insertion":0, "deletion":0, "clipped":{"start":{}, "end":{}}}
+#	
+#	
+#	for read in samfile:
+#		
+#		if not read.is_unmapped:
+#			refpos=read.pos	
+#			for x, cig in enumerate(read.cigar):
+#				if cig[0]==0:
+#					refpos+=cig[1]
+#				elif cig[0]==1:
+#					indelreads[read.tid]["insertion"]+=1
+#				elif cig[0]==2:
+#					indelreads[read.tid]["deletion"]+=1
+#					refpos+=cig[1]
+#				elif cig[0]==4:
+#					#indelreads[read.tid]["clipped"]+=1
+#					#if refpos<lengths[read.tid] and refpos!=0:
+#					if x==0:
+#						#print "start", read.tid, refpos-cig[1], cig[1], refpos, lengths[read.tid]
+#						if not refpos in indelreads[read.tid]["clipped"]["start"]:
+#							indelreads[read.tid]["clipped"]["start"][refpos]=0
+##							if not read.is_proper_pair:
+##								print  "start", refs[read.tid], refpos, lengths[read.tid], "unpaired"
+#						indelreads[read.tid]["clipped"]["start"][refpos]+=1
+#					elif x==len(read.cigar)-1:
+#						#print "end", refs[read.tid], refpos, lengths[read.tid]
+#						if not refpos-1 in indelreads[read.tid]["clipped"]["end"]:
+#							indelreads[read.tid]["clipped"]["end"][refpos-1]=0
+##							if not read.is_proper_pair:
+##								print "end", refs[read.tid], refpos, lengths[read.tid], "unpaired"
+#						indelreads[read.tid]["clipped"]["end"][refpos-1]+=1
+#					else:
+#						print "middle", read.tid, refpos-cig[1], cig[1], refpos, lengths[read.tid]
+#						
+#					#refpos+=cig[1]
+#			
+#
+#	
+#	for refnum in indelreads:
+#		ref=refs[refnum]
+#		reflen=lengths[refnum]
+#		#print ref,  indelreads[refnum]
+#		if len(indelreads[refnum]["clipped"]["start"])>0:
+#			for pos in indelreads[refnum]["clipped"]["start"]:
+#				if pos!=0 and indelreads[refnum]["clipped"]["start"][pos]>4:
+#					#print pos, indelreads[refnum]["clipped"]["start"][pos], reflen
+#					for pileupcolumn in samfile.pileup(ref, pos, pos+1, truncate=True):
+#						if float(indelreads[refnum]["clipped"]["start"][pos])/pileupcolumn.n>0.1:
+#							print ref, "start", reflen, pileupcolumn.pos, pileupcolumn.n, indelreads[refnum]["clipped"]["start"][pos], float(indelreads[refnum]["clipped"]["start"][pos])/pileupcolumn.n
+#		
+#		if len(indelreads[refnum]["clipped"]["end"])>0:
+#			for pos in indelreads[refnum]["clipped"]["end"]:
+#				#print pos, indelreads[refnum]["clipped"]["end"][pos], reflen
+#				if pos+1!=reflen and indelreads[refnum]["clipped"]["end"][pos]>4:
+#					for pileupcolumn in samfile.pileup(ref, pos, pos+1, truncate=True):
+#						if float(indelreads[refnum]["clipped"]["end"][pos])/pileupcolumn.n>0.1:
+#							print ref, "end", reflen, pileupcolumn.pos+1, pileupcolumn.n, indelreads[refnum]["clipped"]["end"][pos], float(indelreads[refnum]["clipped"]["end"][pos])/pileupcolumn.n
+
 	
 	
 	
@@ -220,15 +265,15 @@ if __name__ == "__main__":
 		if mapped==1:
 			
 			for y, base in enumerate(high_quality_coverage):
-				if base>0 and low_quality_coverage[y]>0:
+				if base>MIN_READS and low_quality_coverage[y]>MIN_READS:
 					high_percent+=1
 					both_percent+=1
 					low_percent+=1
 					either_percent+=1
-				elif base>0:
+				elif base>MIN_READS:
 					high_percent+=1
 					either_percent+=1
-				elif low_quality_coverage[y]>0:
+				elif low_quality_coverage[y]>MIN_READS:
 					low_percent+=1
 					either_percent+=1
 			
@@ -237,11 +282,40 @@ if __name__ == "__main__":
 			both_percent=(both_percent/lengths[x])*100
 			either_percent=(either_percent/lengths[x])*100
 			
-		if high_percent!=0:
-			print refs[x], high_percent, low_percent, both_percent, either_percent
+		if high_percent>HIGH_PERCENT_CUTOFF and either_percent>EITHER_PERCENT_CUTOFF:
+			print "KEEP", refs[x], high_percent, low_percent, both_percent, either_percent
 			genes_to_keep.append(refs[x])
+#		else:
+#			print "REJECT", refs[x], high_percent, low_percent, both_percent, either_percent
+			
+	output=open("tmp.lst", "w")
+	for gene in genes_to_keep:
+		print >> output, gene
+	output.close()
+	options.db="Filtered_resistome_candidates.fasta"
+	
+	returnval=os.system(' '.join(["seqtk subseq -l 1000 test.fasta tmp.lst", ">", "Filtered_resistome_candidates.fasta"]))
+	
+	print "seqtk return value:", returnval
 	
 	
+	returnval=os.system("smalt index -k 13 -s 1 index "+options.db)
+	
+	print "smalt index return value:", returnval
+	
+	returnval=os.system(' '.join(["smalt map", "-r 0", "-o", "tmp2.bam", "-f bam", "index", "5275_1#5_1_subset.fastq", "5275_1#5_2_subset.fastq"]))
+	
+	print "smalt map return value:", returnval
+	
+	returnval=os.system("samtools sort tmp2.bam tmp2_sort")
+	
+	print "samtools sort return value:", returnval
+	
+	returnval=os.system("samtools index tmp2_sort.bam")
+
+	print "samtools index return value:", returnval
+	
+	sys.exit()
 	for gene in genes_to_keep:
 		print gene
 		returnval=os.system("~sh16/scripts/resistome/bam_filter.py -t contigs -c "+gene+" -f pairedfastq -o tmp_"+gene+" -b "+options.bamfile)

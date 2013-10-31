@@ -3526,7 +3526,12 @@ class Plot:
 					z-=len(colours)
 				self.line_colours.append(colours[z])	
 		else:
-			data_order=xrange(len(data))
+			
+			if self.plot_type=="stackedarea":
+				data_order=xrange(len(data)-1,-1,-1)
+			else:
+				data_order=xrange(len(data))
+		
 		
 		self.data=[]
 		self.xdata=[]
@@ -3593,6 +3598,7 @@ class Plot:
 			
 			self.data.append(windowdata)
 			self.xdata.append(xdata)
+		
 			
 	
 	def clear_data(self):
@@ -3882,13 +3888,14 @@ class Plot:
 			legend.fontName=self.legend_font
 			legend.fontSize=self.legend_font_size
 			legend.boxAnchor="nw"
-			if self.plot_type=="stackedarea":
-				legend.colorNamePairs  = []
-				for i in xrange(len(data)):
-					legend.colorNamePairs.append((self.line_label_colours[i], self.labels[len(data)-(i+1)]))
-					#lp.lines[i].strokeColor=self.line_colours[len(lp.data)-(j+1)]
-			else:
-				legend.colorNamePairs  = [(self.line_label_colours[i], self.labels[i]) for i in xrange(len(data))]
+#			if self.plot_type=="stackedarea":
+#				legend.colorNamePairs  = []
+#				for i in xrange(len(data)):
+#					legend.colorNamePairs.append((self.line_label_colours[i], self.labels[len(data)-(i+1)]))
+#					#lp.lines[i].strokeColor=self.line_colours[len(lp.data)-(j+1)]
+#			else:
+#				legend.colorNamePairs  = [(self.line_label_colours[i], self.labels[i]) for i in xrange(len(data))]
+			legend.colorNamePairs  = [(self.line_label_colours[i], self.labels[i]) for i in xrange(len(data))]
 			
 			maxlabelwidth=0
 			for label in self.labels:

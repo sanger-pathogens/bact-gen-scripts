@@ -96,19 +96,19 @@ if __name__ == "__main__":
 	
 	print "Clustering genes with CD-Hit est..."
 	
-	returnval=os.system("cd-hit-est -i "+options.db+" -o "+options.db+"_clusters -d 10000")
+	returnval=os.system("cd-hit-est -aS 0.9 -i "+options.db+" -o "+options.db+"_clusters -d 10000")
 	
 	if returnval!=0 or not os.path.isfile(options.db+"_clusters.clstr"):
 		print "Error: Clustering failed. Please check the format of your sequence database file."
 		sys.exit()
 	
-	clusters=parse_CDHitEST_clstr_file(open(options.db+"_clusters.clstr", "rU"))
-
-	print clusters
-	
-	print "Creating cluster fasta directory..."
-	
-	os.system("mkdir resistome_cluster_directory")
+#	clusters=parse_CDHitEST_clstr_file(open(options.db+"_clusters.clstr", "rU"))
+#
+#	print clusters
+#	
+#	print "Creating cluster fasta directory..."
+#	
+#	os.system("mkdir resistome_cluster_directory")
 	
 	
 	

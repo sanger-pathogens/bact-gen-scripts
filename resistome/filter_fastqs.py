@@ -141,8 +141,8 @@ if __name__ == "__main__":
 		elif x==1:
 			readlength=len(line.strip())
 
-	if readlength<=20:
-		DoError("Read length must be greater than 20")
+	if readlength<=options.minmatch:
+		DoError("Read length must be greater than minimum match selected: "+str(options.minmatch))
 
 	print "Read length is", readlength
 	idcutoff=str(options.minmatch/float(readlength))
@@ -186,12 +186,12 @@ if __name__ == "__main__":
 	returnval=os.system(' '.join(["seqtk subseq -l 1000 ", options.rfastq, "tmp.lst", ">", options.rfastq.split(".")[0]+"_subset.fastq"]))
 	
 	print "seqtk return value:", returnval
-	options.db="test.txt"
+	options.db="test.fasta"
 	returnval=os.system("smalt index -k 13 -s 1 index "+options.db)
 	
 	print "smalt index return value:", returnval
 	
-	returnval=os.system(' '.join(["smalt map", "-d 0", "-o", "tmp.bam", "-f bam", "index", options.ffastq.split(".")[0]+"_subset.fastq", options.rfastq.split(".")[0]+"_subset.fastq"]))
+	returnval=os.system(' '.join(["smalt map", "-d 0", "-y", idcutoff, "-o", "tmp.bam", "-f bam", "index", options.ffastq.split(".")[0]+"_subset.fastq", options.rfastq.split(".")[0]+"_subset.fastq"]))
 	
 	print "smalt map return value:", returnval
 	
@@ -199,7 +199,11 @@ if __name__ == "__main__":
 	
 	print "samtools sort return value:", returnval
 	
-	returnval=os.system("samtools index tmp_sort.bam")
+	returnval=os.system("~sh16/scripts/resistome/filter_doubleclipped_reads.py -b tmp_sort.bam -o tmp_filtered.bam")
+
+	print "filter_doubleclipped_reads.py return value:", returnval
+	
+	returnval=os.system("samtools index tmp_filtered.bam")
 
 	print "samtools index return value:", returnval
 	
