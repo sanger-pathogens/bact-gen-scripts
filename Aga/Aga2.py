@@ -119,7 +119,7 @@ class fastq:
 			self.lane=split_name[1]
 			if split_name[2]=="1":
 				self.is_read1=True
-			elif split_name[3]=="2":
+			elif split_name[2]=="2":
 				self.is_read2=True
 			self.base_name="_".join(self.base_name.split("_")[:-1])
 		
