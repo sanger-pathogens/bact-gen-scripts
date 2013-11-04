@@ -22,6 +22,7 @@ def main():
 	parser.add_option("-e", "--exclude", action="store", dest="exclude", help="File containing list of MLE files to exclude (e.g. if they have failed to converge)", default="")
 	parser.add_option("-s", "--suffix", action="store", dest="suffix", help="Suffix for MLE files (used to identify correct files. [default = %default]", default=".MLE.log")
 	parser.add_option("-S", "--separator", action="store", dest="separator", help="Separator used to split repeat identifier suffix from file name prefix. [default = %default]", default="_")
+	parser.add_option("-n", "--nosplit", action="store_false", dest="split", help="Do not split read on separator.", default=True)
 	parser.add_option("-d", "--directory", action="store", dest="directory", help="Directory containing MLE files. Default is current working directory", default="")
 	#Could add more options in here so people can specify similarities etc.
 	
@@ -104,15 +105,17 @@ if __name__ == "__main__":
 				print >> sys.stderr, "Theta has not reached zero in", file
 				print >> sys.stderr, "Skipping", file
 				continue
-			
-			prefix=filename.rstrip(options.suffix)
-			if len(prefix.split(options.separator))<2:
-				print >> sys.stderr, "File", filename, "cannot be split by separator:", options.separator
-				print >> sys.stderr, prefix.split(options.separator)
-				continue
+		       	prefix=filename.rstrip(options.suffix)
+			if options.split:
+				if len(prefix.split(options.separator))<2:
+					print >> sys.stderr, "File", filename, "cannot be split by separator:", options.separator
+					print >> sys.stderr, "Using", prefix, "..."
+					rootname=prefix
+				else:
+					rootname=options.separator.join(prefix.split(options.separator)[:-1])
 			else:
-				rootname=options.separator.join(prefix.split(options.separator)[:-1])
-			
+				rootname=prefix
+
 			if not rootname in mlefiles:
 				mlefiles[rootname]=[]
 			mlefiles[rootname].append(filename)
