@@ -165,6 +165,13 @@ if __name__ == "__main__":
 		else:
 			print options.exclude
 	
+	toexclude=[]
+	for line in open(options.exclude):
+		toexclude.append(line.strip().split()[0])
+	
+	if len(toexclude)>0:
+		print "Found", len(toexclude), "filenames to exclude"
+	
 	if options.directory=="":
 		options.directory=os.getcwd()
 	elif not os.path.isdir(options.directory):
@@ -173,9 +180,12 @@ if __name__ == "__main__":
 		
 	mlefiles={}
 	for file in os.listdir(options.directory):
+		
 		filename=options.directory+"/"+file
 		if os.path.isfile(filename) and filename[-1*len(options.suffix):]==options.suffix:
-			
+			if file in toexclude or file.rstrip(options.suffix) in toexclude:
+				print "Excluding", file
+				continue
 			tail = subprocess.check_output(["tail", "-n", "1", filename])
 			words=tail.strip().split('\t')
 			if len(words)!=6:
@@ -193,16 +203,16 @@ if __name__ == "__main__":
 				print >> sys.stderr, "Theta has not reached zero in", file
 				print >> sys.stderr, "Skipping", file
 				continue
-		       	prefix=filename.rstrip(options.suffix)
+		       	prefix=file.rstrip(options.suffix)
 			if options.split:
 				if len(prefix.split(options.separator))<2:
-					print >> sys.stderr, "File", filename, "cannot be split by separator:", options.separator
+					print >> sys.stderr, "File", file, "cannot be split by separator:", options.separator
 					print >> sys.stderr, "Using", prefix, "..."
-					rootname=prefix
+					rootname=options.directory+"/"+prefix
 				else:
-					rootname=options.separator.join(prefix.split(options.separator)[:-1])
+					rootname=options.directory+"/"+options.separator.join(prefix.split(options.separator)[:-1])
 			else:
-				rootname=prefix
+				rootname=options.directory+"/"+prefix
 
 			if not rootname in mlefiles:
 				mlefiles[rootname]=[]
@@ -229,12 +239,12 @@ if __name__ == "__main__":
 				intraSS.append([name.split("/")[-1], SS_value])
 			
 		
-#		print "Marginal Likelihood Estimations:"
-#		print '\t'.join(["File", "PS MLE", "SSS MLE"])
-#		for x in xrange(len(intraPS)):
-#			print '\t'.join(map(str,[intraPS[x][0], intraPS[x][1], intraSS[x][1]]))
-#		
-#		print "Bayes Factors:"
+		print "Marginal Likelihood Estimations:"
+		print '\t'.join(["File", "PS MLE", "SSS MLE"])
+		for x in xrange(len(intraPS)):
+			print '\t'.join(map(str,[intraPS[x][0], intraPS[x][1], intraSS[x][1]]))
+		
+		print "Bayes Factors:"
 		print '\t'.join(["File 1", "File 2", "PS BF", "PS comment", "SSS BF", "SSS comment"])
 		for x in xrange(len(intraPS)):
 				for y in xrange(x+1, len(intraPS)):
