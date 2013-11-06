@@ -166,8 +166,9 @@ if __name__ == "__main__":
 			print options.exclude
 	
 	toexclude=[]
-	for line in open(options.exclude):
-		toexclude.append(line.strip().split()[0])
+	if options.exclude!="":
+		for line in open(options.exclude):
+			toexclude.append(line.strip().split()[0])
 	
 	if len(toexclude)>0:
 		print "Found", len(toexclude), "filenames to exclude"

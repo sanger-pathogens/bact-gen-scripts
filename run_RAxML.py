@@ -429,6 +429,8 @@ if __name__ == "__main__":
 	if options.version=="AVX":
 		bsubcommand.append("-R 'avx'")
 	
+	#bsubcommand.append("-R \"select[hname!='pcs4l']\"")
+	
 	if options.mem>0:
 		if host=="farm3":
 			bsubcommand.append("-M "+str(options.mem)+'000 -R \'select[mem>'+str(options.mem)+'000] rusage[mem='+str(options.mem)+'000]\'')
