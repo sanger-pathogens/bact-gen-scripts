@@ -860,7 +860,7 @@ if __name__ == "__main__":
 	host=getclustername()
 	
 	print "Running on host:", host
-	if host=="farm3":
+	if host=="farm3" or host=="pcs5":
 		JAVA_DIR=farm3_JAVA_DIR
 		if options.mem==0:
 			options.mem=2
@@ -936,7 +936,7 @@ if __name__ == "__main__":
 	if options.LSF==True:
 		if count>0:
 			if options.mem>0:
-				if host=="farm3":
+				if host=="farm3" or host=="pcs5":
 					memlimit=str(options.mem*1000)
 				else:
 					memlimit=str(options.mem*1000000)
@@ -955,7 +955,7 @@ if __name__ == "__main__":
 		
 		if options.pseudosequence:
 			if len(pools)>200:
-				if host=="farm3":
+				if host=="farm3" or host=="pcs5":
 					memlimit=str(10*1000)
 				else:
 					memlimit=str(10*1000000)
@@ -965,14 +965,14 @@ if __name__ == "__main__":
 				else:
 					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -q long -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J'+tmpname+'_joining -w \'ended('+tmpname+'_'+options.program+')\' -o '+options.output+'_join.out -e '+options.output+'_join.err ')
 				
-				if host=="farm3":
+				if host=="farm3" or host=="pcs5":
 					memlimit=str(16*1000)
 				else:
 					memlimit=str(16*1000000)
 				memresource=str(16*1000)
 				os.system('echo '+summarystring+' | bsub -M '+memlimit+' -q long -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -w \'ended('+tmpname+'_joining)\' -o '+options.output+'_sum.out -e '+options.output+'_sum.err')
 			else:
-				if host=="farm3":
+				if host=="farm3" or host=="pcs5":
 					memlimit=str(2*1000)
 				else:
 					memlimit=str(2*1000000)
@@ -981,7 +981,7 @@ if __name__ == "__main__":
 					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J'+tmpname+'_joining -o '+options.output+'_join.out -e '+options.output+'_join.err')
 				else:
 					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J'+tmpname+'_joining -w \'ended('+tmpname+'_'+options.program+')\' -o '+options.output+'_join.out -e '+options.output+'_join.err ')
-				if host=="farm3":
+				if host=="farm3" or host=="pcs5":
 					memlimit=str(16*1000)
 				else:
 					memlimit=str(16*1000000)

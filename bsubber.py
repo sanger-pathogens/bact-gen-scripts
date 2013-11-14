@@ -135,7 +135,7 @@ if __name__ == "__main__":
 		cpustring="-n "+str(options.CPUs)
 	
 	if options.mem>0:
-		if host=="farm3":
+		if host=="farm3" or host=="pcs5":
 			memlimit=str(int(options.mem*1000))
 		else:
 			memlimit=str(int(options.mem*1000000))

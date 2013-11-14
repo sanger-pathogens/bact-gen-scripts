@@ -2371,6 +2371,7 @@ class Plot:
 		elif self.plot_type in ["bar", "heat"]:
 			for x, data in enumerate(self.data):
 				currdata=[]
+				end=self.beginning
 				for y, datum in enumerate(data):
 					if self.xdata[x][y]>=self.beginning and self.xdata[x][y]<=self.end:
 						if datum>self.max_yaxis:

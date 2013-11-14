@@ -388,7 +388,7 @@ if __name__ == "__main__":
 	host=getclustername()
 	print "Running on "+host
 	
-	if host=="farm3":
+	if host=="farm3" or host=="pcs5":
 		if options.threads>1:
 			if options.version=="AVX":
 				RAxML=AVX_PARALLEL_RAxML_DIR+" -T "+str(options.threads)
@@ -432,7 +432,7 @@ if __name__ == "__main__":
 	#bsubcommand.append("-R \"select[hname!='pcs4l']\"")
 	
 	if options.mem>0:
-		if host=="farm3":
+		if host=="farm3" or host=="pcs5":
 			bsubcommand.append("-M "+str(options.mem)+'000 -R \'select[mem>'+str(options.mem)+'000] rusage[mem='+str(options.mem)+'000]\'')
 		else:
 			bsubcommand.append("-M "+str(options.mem)+'000000 -R \'select[mem>'+str(options.mem)+'000] rusage[mem='+str(options.mem)+'000]\'')
@@ -543,7 +543,7 @@ if __name__ == "__main__":
 			
 			#When the ml and bootstrap replicates are complete, put the bootstrap numbers onto the nodes of the ml tree
 			if options.number>1:
-				if host=="farm3":
+				if host=="farm3" or host=="pcs5":
 					bsubcommand=RAxML+" -f b -t RAxML_bestTree.ml_"+options.suffix+" -z RAxML_bootstrap.boot_"+options.suffix+" -s "+tmpname+".phy -m "+model+" -n "+options.suffix+"'"
 				else:
 					bsubcommand="echo \'x=$(grep \'Best\' RAxML_info.ml_"+options.suffix+" | awk \"{print \$6}\" |tr -d \':\' ) && cp RAxML_result.ml_"+options.suffix+".RUN.${x} RAxML_result.ml_"+options.suffix+" && "+RAxML+" -f b -t RAxML_result.ml_"+options.suffix+" -z RAxML_bootstrap.boot_"+options.suffix+" -s "+tmpname+".phy -m "+model+" -n "+options.suffix+"'"
@@ -555,7 +555,7 @@ if __name__ == "__main__":
 					bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
 				os.system(bsubcommand+bsub)
 			else:
-				if host=="farm3":
+				if host=="farm3" or host=="pcs5":
 					bsub='bsub -M 2000 -R \'select[mem>2000] rusage[mem=2000]\' -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
 				else:
 					bsub='bsub -M 2000000 -R \'select[mem>2000] rusage[mem=2000]\' -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
@@ -563,7 +563,7 @@ if __name__ == "__main__":
 					bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
 				if options.bsuberr:
 					bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
-				if host=="farm3":
+				if host=="farm3" or host=="pcs5":
 					os.system(bsub+' '+RAxML_DIR+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
 				else:
 					os.system(bsub+' '+RAxML_DIR+' -f b -t RAxML_result.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
