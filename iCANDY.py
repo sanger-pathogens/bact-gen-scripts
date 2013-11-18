@@ -1405,10 +1405,12 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 					column_name_x_pos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
 					column_name_y_pos=treetop+(vertical_scaling_factor/2)
 					colpos=0
-					if options.taxon_names:
+					if options.taxon_names and (len(colour_column_names)==1 or colour_column_names[1]!=colour_column_names[0]):
 						
 						draw_column_label(treewidth+xoffset+((max_name_width-gubbins_length)/2), column_name_y_pos, labelfontsize, colour_column_names[0])
 						colpos=1
+					elif len(colour_column_names)>1 and colour_column_names[1]==colour_column_names[0]:
+						colpos+=1
 					for x in xrange(colpos,len(colour_column_names)):
 						
 						draw_column_label(column_name_x_pos+(block_length/2), column_name_y_pos, labelfontsize, colour_column_names[x])
@@ -2468,11 +2470,12 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	if control.metadata_column_labels:
 		try:
 			if colour_column_names:
+				print options.taxon_names, colour_column_names
 				if options.aligntaxa==2:
 					column_name_x_pos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
 					column_name_y_pos=treetop+(vertical_scaling_factor/2)
 					colpos=0
-					if options.taxon_names:
+					if options.taxon_names and (len(colour_column_names)==1 or colour_column_names[1]!=colour_column_names[0]):
 						
 						draw_column_label(treewidth+xoffset+((max_name_width-gubbins_length)/2), column_name_y_pos, labelfontsize, colour_column_names[0])
 					
@@ -4875,17 +4878,57 @@ if __name__ == "__main__":
 								red, green, blue = hsv_to_rgb(h,s,v)
 								colour_dict[x][name]=(float(red)*255, float(green)*255, float(blue)*255)
 								
-							h=(start_angle/360)+(direction_multiplier*(((0.0/360)*rotation_degrees)))
-							v=v_start+(0.0*(v_end-v_start))
-							s=s_start+(0.0*(s_end-s_start))
-							red, green, blue = hsv_to_rgb(h,s,v)
-							newtrack.key_data.append([newtrack.datamin, colors.Color(float(red), float(green), float(blue))])
-							newtrack.key_data.append(["==>", colors.Color(0,0,0)])
-							h=(start_angle/360)+(direction_multiplier*(((1.0/360)*rotation_degrees)))
-							v=v_start+(1.0*(v_end-v_start))
-							s=s_start+(1.0*(s_end-s_start))
-							red, green, blue = hsv_to_rgb(h,s,v)
-							newtrack.key_data.append([newtrack.datamax, colors.Color(float(red), float(green), float(blue))])
+							minh=(start_angle/360)+(direction_multiplier*(((0.0/360)*rotation_degrees)))
+							minv=v_start+(0.0*(v_end-v_start))
+							mins=s_start+(0.0*(s_end-s_start))
+							minred, mingreen, minblue = hsv_to_rgb(minh,mins,minv)
+							newtrack.key_data.append([newtrack.datamin, colors.Color(float(minred), float(mingreen), float(minblue))])
+							
+							maxh=(start_angle/360)+(direction_multiplier*(((1.0/360)*rotation_degrees)))
+							maxv=v_start+(1.0*(v_end-v_start))
+							maxs=s_start+(1.0*(s_end-s_start))
+							maxred, maxgreen, maxblue = hsv_to_rgb(maxh,maxs,maxv)
+							
+							
+							numbits=7
+							redbit=(maxred-minred)/(numbits+1)
+							bluebit=(maxblue-minblue)/(numbits+1)
+							greenbit=(maxgreen-mingreen)/(numbits+1)
+							bit=(newtrack.datamax-newtrack.datamin)/(numbits+1)
+							print minred, mingreen, minblue
+							print maxred, maxgreen, maxblue
+							print redbit, greenbit, bluebit
+							
+							for i in xrange(0,numbits):
+								print colors.Color(minred+((i+1)*redbit),mingreen+((i+1)*greenbit),minblue+((i+1)*bluebit))
+								value=newtrack.datamin+((i+1)*bit)
+								proportion=((float(value)-newtrack.datamin)/((newtrack.datamax-newtrack.datamin)))
+								
+								h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
+								v=v_start+(proportion*(v_end-v_start))
+								s=s_start+(proportion*(s_end-s_start))
+								if h<0:
+									h=1.0+h
+								red, green, blue = hsv_to_rgb(h,s,v)
+								newtrack.key_data.append(["#", colors.Color(red,green,blue)])
+							
+#							value=newtrack.datamin+((numbits)*bit)
+#							proportion=((float(value)-newtrack.datamin)/((newtrack.datamax-newtrack.datamin)))
+#							
+#							h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
+#							v=v_start+(proportion*(v_end-v_start))
+#							s=s_start+(proportion*(s_end-s_start))
+#							if h<0:
+#								h=1.0+h
+#							red, green, blue = hsv_to_rgb(h,s,v)
+#							newtrack.key_data.append([">", colors.Color(red,green,blue)])
+								#newtrack.key_data.append(["=", colors.Color(minred+((i+1)*redbit),mingreen+((i+1)*greenbit),minblue+((i+1)*bluebit))])
+							#print colors.Color(minred+(numbits*redbit),mingreen+(numbits*greenbit),minblue+(numbits*bluebit))
+							#newtrack.key_data.append([">", colors.Color(minred+(numbits*redbit),mingreen+(numbits*greenbit),minblue+(numbits*bluebit))])
+							
+							#newtrack.key_data.append(["==>", colors.Color(0,0,0)])
+							
+							newtrack.key_data.append([newtrack.datamax, colors.Color(float(maxred), float(maxgreen), float(maxblue))])
 						
 					elif newtrack.datatype=="discrete":
 							if control.use_default_colourlist:
