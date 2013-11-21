@@ -10,7 +10,7 @@ import os, sys
 from optparse import OptionParser, OptionGroup
 from socket import gethostname
 import shlex
-
+import subprocess
 
 ##########################
 # Error message function #
@@ -78,6 +78,26 @@ def check_input_validity(options, args):
 		
 	return
 
+####################
+# Get cluster name #
+####################
+
+def getclustername():
+	mycluster="unknown"
+	try:
+		lsid_output=subprocess.check_output(["lsid"])
+		
+		for line in lsid_output.split("\n"):
+			words=line.strip().split()
+			if len(words)>0:
+				if words[1]=="cluster":
+					mycluster=words[4]
+	
+		
+	except StandardError:
+		return mycluster
+	
+	return mycluster
 
 		
 ########
@@ -87,8 +107,8 @@ def check_input_validity(options, args):
 
 if __name__ == "__main__":
 
-	host=gethostname().split("-")[0]
-
+	host=getclustername()
+	print "Running on", host
 	(options, args)=get_user_options()
 	
 	if len(args)==1:
