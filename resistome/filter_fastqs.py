@@ -18,6 +18,7 @@ def main():
 	parser.add_option("-f", "--forwardfastq", action="store", dest="ffastq", help="Input forward fastq files", default="")
 	parser.add_option("-r", "--reversefastq", action="store", dest="rfastq", help="Input reverse fastq files", default="")
 	parser.add_option("-d", "--database", action="store", dest="db", help="Database of files to search for", default="")
+	parser.add_option("-o", "--output", action="store", dest="output", help="Output file prefix. [Default = %default]", default="Resistome")
 	parser.add_option("-m", "--minmatch", action="store", dest="minmatch", help="minimum match length to retain", default=25.0, type="float")
 	#Could add more options in here so people can specify similarities etc.
 	
@@ -113,8 +114,12 @@ if __name__ == "__main__":
 	elif not os.path.isfile(options.db):
 		DoError("Cannot find file "+options.db)
 	
-
-	fastaname=options.ffastq.split(".")[0]+"_resistome.fasta"
+	
+	ffastqname=options.ffastq.split("/")[-1]
+	rfastqname=options.rfastq.split("/")[-1]
+	
+	fastaname=ffastqname.split(".")[0]+"_resistome.fasta"
+	
 	
 	print "Extracting fastq files to fasta"
 
@@ -168,44 +173,69 @@ if __name__ == "__main__":
 					genes.add(x["name"])
 					print x["name"]+":", len(clusters[cluster])-1, "read matches"
 				else:
-					reads.add(x["name"].strip("/1").strip("/2"))
+					reads.add(x["name"].rstrip("1").rstrip("2").rstrip("/"))
 
 	print len(reads), "reads in", len(genes), "genes"
-
+	
 	output=open("tmp.lst", "w")
 	for read in reads:
 		print >> output, read+"/1"
 		print >> output, read+"/2"
 		
 	output.close()
-	
-	returnval=os.system(' '.join(["seqtk subseq -l 1000 ", options.ffastq, "tmp.lst", ">", options.ffastq.split(".")[0]+"_subset.fastq"]))
-	
-	print "seqtk return value:", returnval
-	
-	returnval=os.system(' '.join(["seqtk subseq -l 1000 ", options.rfastq, "tmp.lst", ">", options.rfastq.split(".")[0]+"_subset.fastq"]))
+	print "seqtk subseq -l 1000 ", options.ffastq, "tmp.lst", ">", ffastqname.split(".")[0]+"_subset.fastq"
+	returnval=os.system(' '.join(["seqtk subseq -l 1000 ", options.ffastq, "tmp.lst", ">", ffastqname.split(".")[0]+"_subset.fastq"]))
 	
 	print "seqtk return value:", returnval
-	options.db="test.fasta"
+	if returnval!=0:
+		print "Error: seqtk on forward reads failed."
+		print "COMMAND: seqtk subseq -l 1000 ", options.ffastq, "tmp.lst", ">", ffastqname.split(".")[0]+"_subset.fastq"
+		sys.exit()
+	
+	returnval=os.system(' '.join(["seqtk subseq -l 1000 ", options.rfastq, "tmp.lst", ">", rfastqname.split(".")[0]+"_subset.fastq"]))
+	
+	print "seqtk return value:", returnval
+	if returnval!=0 :
+		print "Error: seqtk on reverse reads failed."
+		print "COMMAND: seqtk subseq -l 1000 ", options.rfastq, "tmp.lst", ">", rfastqname.split(".")[0]+"_subset.fastq"
+		sys.exit()
+	#options.db="test.fasta"
 	returnval=os.system("smalt index -k 13 -s 1 index "+options.db)
 	
 	print "smalt index return value:", returnval
+	if returnval!=0:
+		print "Error: smalt index of reference failed."
+		sys.exit()
 	
-	returnval=os.system(' '.join(["smalt map", "-d 0", "-y", idcutoff, "-o", "tmp.bam", "-f bam", "index", options.ffastq.split(".")[0]+"_subset.fastq", options.rfastq.split(".")[0]+"_subset.fastq"]))
+	returnval=os.system(' '.join(["smalt map", "-d 0", "-y", idcutoff, "-o", "tmp.bam", "-f bam", "index", ffastqname.split(".")[0]+"_subset.fastq", rfastqname.split(".")[0]+"_subset.fastq"]))
 	
 	print "smalt map return value:", returnval
+	
+	if returnval!=0:
+		print "Error: smalt mapping failed."
+		sys.exit()
 	
 	returnval=os.system("samtools sort tmp.bam tmp_sort")
 	
 	print "samtools sort return value:", returnval
 	
-	returnval=os.system("~sh16/scripts/resistome/filter_doubleclipped_reads.py -b tmp_sort.bam -o tmp_filtered.bam")
+	if returnval!=0:
+		print "Error: samtools sorting failed."
+		sys.exit()
+	
+	returnval=os.system("~sh16/scripts/resistome/filter_doubleclipped_reads.py -b tmp_sort.bam -o "+options.output+"_filtered.bam")
 
 	print "filter_doubleclipped_reads.py return value:", returnval
 	
-	returnval=os.system("samtools index tmp_filtered.bam")
+	if returnval!=0:
+		print "Error: filtering of double-clipped reads failed."
+		sys.exit()
+	
+	returnval=os.system("samtools index "+options.output+"_filtered.bam")
 
 	print "samtools index return value:", returnval
-	
+	if returnval!=0:
+		print "Error: samtools indexing of bam failed."
+		sys.exit()
 	
 	

@@ -135,7 +135,7 @@ if __name__ == "__main__":
 #			lastcolumn+=1
 #			zerocount+=1
 		#print len(depths)
-		print poscount, totlen, lengths[x], lastcolumn
+#		print poscount, totlen, lengths[x], lastcolumn
 		while lastcolumn+1<lengths[x]:
 			poscount+=1
 #			if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
@@ -144,7 +144,7 @@ if __name__ == "__main__":
 #				print >> output, ' '.join([str(poscount), "0"])
 			lastcolumn+=1
 			zerocount+=1
-		print poscount
+#		print poscount
 		if lastcolumn+1==lengths[x]:
 			if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
 				print >> output, ' '.join([str(totlen), "0", "0"])
