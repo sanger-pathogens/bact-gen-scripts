@@ -1262,7 +1262,10 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-gubbins_length), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 			
 			
-			
+			if vertical_scaling_factor>2:
+				spacer=2
+			else:
+				spacer=vertical_scaling_factor
 			#print metadata blocks
 			for x, name_colour in enumerate(name_colours[colpos:]):
 				if block_length==0:
@@ -1273,10 +1276,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				elif options.names_as_shapes in ["square", "rectangle", "auto"]:
 					d.add(Rect(block_xpos, vertpos-(vertical_scaling_factor/2), block_length, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
 						
-				if vertical_scaling_factor>2:
-					spacer=2
-				else:
-					spacer=vertical_scaling_factor
+				
 				block_xpos+=block_length+spacer
 			
 			
@@ -1401,6 +1401,10 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 	if control.metadata_column_labels:
 		try:
 			if colour_column_names:
+				if vertical_scaling_factor>2:
+					spacer=2
+				else:
+					spacer=vertical_scaling_factor
 				if options.aligntaxa==2:
 					column_name_x_pos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
 					column_name_y_pos=treetop+(vertical_scaling_factor/2)
@@ -1412,10 +1416,11 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 					elif len(colour_column_names)>1 and colour_column_names[1]==colour_column_names[0]:
 						colpos+=1
 					for x in xrange(colpos,len(colour_column_names)):
-						
+					
 						draw_column_label(column_name_x_pos+(block_length/2), column_name_y_pos, labelfontsize, colour_column_names[x])
 						column_name_x_pos += block_length
-						column_name_x_pos += vertical_scaling_factor
+						column_name_x_pos += spacer
+						
 		except NameError:
 			pass
 	
@@ -2470,7 +2475,11 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	if control.metadata_column_labels:
 		try:
 			if colour_column_names:
-				print options.taxon_names, colour_column_names
+				#print options.taxon_names, colour_column_names
+				if vertical_scaling_factor>2:
+					spacer=2
+				else:
+					spacer=vertical_scaling_factor
 				if options.aligntaxa==2:
 					column_name_x_pos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
 					column_name_y_pos=treetop+(vertical_scaling_factor/2)
@@ -2481,10 +2490,10 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 					
 						colpos=1
 					for x in xrange(colpos,len(colour_column_names)):
-						
+						#print spacer, column_name_x_pos
 						draw_column_label(column_name_x_pos+(block_length/2), column_name_y_pos, labelfontsize, colour_column_names[x])
 						column_name_x_pos += block_length
-						column_name_x_pos += vertical_scaling_factor
+						column_name_x_pos += spacer
 		except NameError:
 			pass
 			
