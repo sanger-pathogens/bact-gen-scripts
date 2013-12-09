@@ -1476,7 +1476,7 @@ if __name__ == "__main__":
 			sys.stdout.flush()
 			
 			host=getclustername()
-			if host=="farm3":
+			if host in ["farm3", "pcs5"]:
 				RAxML=farm3_RAxML_DIR
 			else:
 				RAxML=pcs4_RAxML_DIR
