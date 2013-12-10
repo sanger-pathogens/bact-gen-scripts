@@ -727,6 +727,7 @@ def read_dendropy_tree(treefile):
 			
 		#parse leaf annotation information
 		for leaf in t.leaf_iter():
+			#print leaf.taxon
 			for x, a in enumerate(leaf.taxon.annotations):
 				if isinstance(a.value, str):
 					a.value=a.value.replace('"','')
