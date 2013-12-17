@@ -1175,7 +1175,9 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 							name_colours=[a.value]
 			else:
 				name_colours=[colors.black]
-				
+		
+			
+		
 		#If a node is hilighted, draw the hilight box now
 		if clade_hilight!=None:
 			max_down_leaf_vertpos=float("-Inf")
@@ -1416,6 +1418,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 						colpos=1
 					elif len(colour_column_names)>1 and colour_column_names[1]==colour_column_names[0]:
 						colpos+=1
+					
 					for x in xrange(colpos,len(colour_column_names)):
 					
 						draw_column_label(column_name_x_pos+(block_length/2), column_name_y_pos, labelfontsize, colour_column_names[x])
@@ -2185,7 +2188,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 		
 	
 	def drawbranch(node,horizontalpos):
-		
+	
 		vertpos=treeObject.node(node).data.comment["vertpos"]+yoffset
 		
 		horizontalpos+=xoffset
@@ -2286,7 +2289,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 				#d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-gubbins_length), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 				#d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeWidth=linewidth/2, strokeColor=name_colours[0]))
-			
+			 
 			for x, name_colour in enumerate(name_colours[colpos:]):
 #				if options.aligntaxa==1:
 #					if options.names_as_shapes=="circle":
@@ -4648,11 +4651,18 @@ if __name__ == "__main__":
 #		except StandardError:
 #			print "Could not understand columns selected:", options.columns
 #			columns=[1]
-		
+
 		if options.colour_columns:
 			try: 
 				colour_columns=[]
 				cols=options.colour_columns.split(",")
+				if cols[0]in ["","-","0"]:
+					if len(cols)==1:
+						cols=[]
+					else:
+						colour_columns.append(0)
+						cols=cols[1:]
+						
 				for col in cols:
 					if len(col.split(".."))==1:
 						try:
@@ -4686,8 +4696,12 @@ if __name__ == "__main__":
 		if len(colour_columns)>0:
 			colour_column_names=[]
 			for column in colour_columns:
-				if column<1:
-					print "column numbers must be positive and greater than zero"
+				if column==0:
+					colour_column_names.append("")
+					colourslist.append([])
+					continue
+				elif column<1:
+					print "column numbers must be greater than zero"
 					sys.exit()
 				colourslist.append([])
 				if len(lines[0].strip().split(","))>=column:
@@ -4709,6 +4723,8 @@ if __name__ == "__main__":
 				namecolours[words[0].strip()]={}
 				if len(colour_columns)>0:
 					for x, column in enumerate(colour_columns):
+						if column==0:
+							continue
 						try:
 							colour_column_entry=int(words[column-1].strip())
 						except ValueError:
@@ -4744,10 +4760,11 @@ if __name__ == "__main__":
 				newtrack.name="metadata_key"+str(x)
 				metadata_keylist.append("metadata_key"+str(x))
 				newtrack.is_key=True
-				if len(colour_column_names[x].split(":")[0])>0:
-					newtrack.key_data=[["Key ("+colour_column_names[x].split(":")[0]+"):", colors.Color(0, 0, 0)]]
-				else:
-					newtrack.key_data=[["Key:", colors.Color(0, 0, 0)]]
+				if colour_column!=0:
+					if len(colour_column_names[x].split(":")[0])>0:
+						newtrack.key_data=[["Key ("+colour_column_names[x].split(":")[0]+"):", colors.Color(0, 0, 0)]]
+					else:
+						newtrack.key_data=[["Key:", colors.Color(0, 0, 0)]]
 				words=colour_column_names[x].split(":")
 				
 				if get_text_width(control.metadata_column_label_font, control.metadata_column_label_size, words[0])>max_length_col_name:
@@ -4905,9 +4922,9 @@ if __name__ == "__main__":
 							bluebit=(maxblue-minblue)/(numbits+1)
 							greenbit=(maxgreen-mingreen)/(numbits+1)
 							bit=(newtrack.datamax-newtrack.datamin)/(numbits+1)
-							print minred, mingreen, minblue
-							print maxred, maxgreen, maxblue
-							print redbit, greenbit, bluebit
+#							print minred, mingreen, minblue
+#							print maxred, maxgreen, maxblue
+#							print redbit, greenbit, bluebit
 							
 							for i in xrange(0,numbits):
 								print colors.Color(minred+((i+1)*redbit),mingreen+((i+1)*greenbit),minblue+((i+1)*bluebit))
@@ -4959,6 +4976,7 @@ if __name__ == "__main__":
 									red, green, blue = hsv_to_rgb(h,s,v)
 									colour_dict[x][name]=(float(red)*255, float(green)*255, float(blue)*255)
 									newtrack.key_data.append([name, colors.Color(float(red), float(green), float(blue))])
+									
 								
 					
 					
