@@ -114,6 +114,7 @@ def Create_SNP_alignment(alignment, SNPlocations):
 		
 		for base in SNPlocations:
 			SNPseq=SNPseq+record.seq[base].replace("-","?")
+			
 		
 		SNPalignment.add_sequence(record.id, SNPseq)
 		
@@ -525,7 +526,7 @@ def detect_recombination_using_moving_windows_old(binsnps, treeobject, node, dau
 					loc=loc+1
 			
 			if inblock=="y":
-				print binsnps[nongapposns[x]:nongapposns[position]:-1]
+#				print binsnps[nongapposns[x]:nongapposns[position]:-1]
 #				print "here"
 #				sys.exit()
 				if nongapposns[(x-loc)]+1>blockstart:
@@ -1412,6 +1413,11 @@ if __name__ == "__main__":
 		if options.wholedata:
 			SNPalignment=newalignment
 		else:
+			lochandle=open(prefix+"_iteration_"+str(iteration)+"_alignment_locations.txt","w")
+			print >>lochandle, "SNP alignment position\tFull alignment position"
+			for x, SNPbase in enumerate(SNPlocations):
+				print >>lochandle, '\t'.join(map(str,[x+1, SNPbase]))
+			lochandle.close()
 			SNPalignment=Create_SNP_alignment(newalignment, SNPlocations)
 		
 		#print a phylip file of the SNP alignment
