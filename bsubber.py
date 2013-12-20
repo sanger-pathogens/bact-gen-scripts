@@ -160,7 +160,8 @@ if __name__ == "__main__":
 		else:
 			memlimit=str(int(options.mem*1000000))
 		memresource=str(int(options.mem*1000))
-		rlist.append('select[mem>'+memresource+'] rusage[mem='+memresource+']')
+		if not options.restart:
+			rlist.append('select[mem>'+memresource+'] rusage[mem='+memresource+']')
 		memstring="-M "+memlimit
 	
 	if options.checkpoint:

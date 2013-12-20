@@ -142,6 +142,8 @@ def Find_SNP_and_gap_locations(alignment):
 	count=0
 	total=0.0
 	
+	constants={'A':0, 'C':0, 'G':0, 'T':0, 'N':0}
+	
 	for x in range(0,alignment.get_alignment_length()):
 
 		count=count+1
@@ -165,11 +167,17 @@ def Find_SNP_and_gap_locations(alignment):
 			if len(foundbases)>1:
 				SNPlocations.append(x)
 				break
+			
+		if len(foundbases)==1:
+			constants[foundbases[0]]+=1
+		elif len(foundbases)==0:
+			constants["N"]+=1
+	
 	
 
 	print "100.00% complete\n"#Found %d SNP locations" % len(SNPlocations),
 	sys.stdout.flush()
-	return SNPlocations, gaplocations
+	return SNPlocations, gaplocations, constants
 
 
 
@@ -189,7 +197,7 @@ def Find_SNP_locations(alignment, startinglocations):
 	
 	count=0
 	total=0.0
-	
+	constants={'A':0, 'C':0, 'G':0, 'T':0, 'N':0}
 	for x in startinglocations:
 
 		count=count+1
@@ -210,11 +218,14 @@ def Find_SNP_locations(alignment, startinglocations):
 			if len(foundbases)>1:
 				SNPlocations.append(x)
 				break
-	
+		if len(foundbases)==1:
+			constants[foundbases[0]]+=1
+		elif len(foundbases)==0:
+			constants["N"]+=1
 
 	print "100.00% complete\n"#Found %d SNP locations" % len(SNPlocations),
 	sys.stdout.flush()
-	return SNPlocations
+	return SNPlocations, constants
 
 
 
@@ -1127,6 +1138,7 @@ def tree_recurse(node,treeobject):
 						binsnps[AllSNPlocations[x]]=2
 					except StandardError:
 						print x, len(AllSNPlocations), len(binsnps)
+						sys.exit()
 					
 				elif pamlsequences[nodenames[1]][x]!=pamlsequences[daughternames[daughter][1]][x] and pamlsequences[daughternames[daughter][1]][x]!="N" and pamlsequences[nodenames[1]][x]!="N":
 					binsnps[AllSNPlocations[x]]=1
@@ -1295,7 +1307,7 @@ def add_node_names_to_tree(tree, pamltree):
 		downstreamnamelist=[]
 		for taxon in downstreamtaxa:
 			downstreamnamelist.append(taxon.split("_")[1])
-			print downstreamnamelist
+			#print downstreamnamelist
 		
 		downstreamnamelist.sort()
 		paml_node_names[' '.join(downstreamnamelist)]=nodename
@@ -1402,11 +1414,24 @@ if __name__ == "__main__":
 		#locate sites with a SNP
 		
 		if iteration==1:
-			SNPlocations, gaplocations=Find_SNP_and_gap_locations(newalignment)
+			SNPlocations, gaplocations, constants=Find_SNP_and_gap_locations(newalignment)
+			lochandle=open(prefix+"_iteration_"+str(iteration)+"_constant_sites.txt","w")
+			print >>lochandle, "A\tC\tG\tT\tN"
+			constantslist=[]
+			for base in ['A','C','G','T', 'N']:
+				constantslist.append(constants[base])
+			print >>lochandle, '\t'.join(map(str,constantslist))
+			lochandle.close()
 		else:
-			SNPlocations=Find_SNP_locations(newalignment, AllSNPlocations)
+			SNPlocations, constants=Find_SNP_locations(newalignment, AllSNPlocations)
 			gaplocations=Allgaplocations.copy()
-
+			lochandle=open(prefix+"_iteration_"+str(iteration)+"_extra_constant_sites.txt","w")
+			print >>lochandle, "A\tC\tG\tT\tN"
+			constantslist=[]
+			for base in ['A','C','G','T', 'N']:
+				constantslist.append(constants[base])
+			print >>lochandle, '\t'.join(map(str,constantslist))
+			lochandle.close()
 		
 		
 		#create alignment of just the SNP sites
@@ -1416,7 +1441,7 @@ if __name__ == "__main__":
 			lochandle=open(prefix+"_iteration_"+str(iteration)+"_alignment_locations.txt","w")
 			print >>lochandle, "SNP alignment position\tFull alignment position"
 			for x, SNPbase in enumerate(SNPlocations):
-				print >>lochandle, '\t'.join(map(str,[x+1, SNPbase]))
+				print >>lochandle, '\t'.join(map(str,[x+1, SNPbase+1]))
 			lochandle.close()
 			SNPalignment=Create_SNP_alignment(newalignment, SNPlocations)
 		
@@ -1541,6 +1566,7 @@ if __name__ == "__main__":
 		elif options.outgroup!="None":
 			print "Midpoint rooting tree"
 			midpoint_root(tree)
+			
 			daughters=tree.node(tree.root).succ
 			if len(daughters)>2:
 				print "too many daughters in rooted tree"
@@ -1555,6 +1581,7 @@ if __name__ == "__main__":
 		newtree=tree
 #		treestring=tree_to_string(tree, support_as_branchlengths=False,branchlengths_only=True,plain=False,plain_newick=False,collapse=True, cutoff=1.0/(len(SNPlocations)+1), treename=False, comments=False, node_names=True)
 		treestring=tree_to_string(tree, False, True, True, True,collapse=True, cutoff=1.0/(len(SNPlocations)+1))
+		
 		
 		for name in sequencenames.keys():
 			treestring=treestring.replace(name+":", sequencenames[name]+":")

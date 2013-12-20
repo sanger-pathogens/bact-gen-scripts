@@ -806,7 +806,7 @@ def tree_to_string(treeObject, support_as_branchlengths=False,branchlengths_only
 				#partstring="".join(["("]*(len(newsubtrees)-1))
 				partstring="("
 				partstring=partstring+newsubtrees[0]+','
-				print newsubtrees
+				#print newsubtrees
 				for newsubtree in newsubtrees[1:]:
 					partstring=partstring+newsubtree+","
 				if partstring[-1]==",":
@@ -814,7 +814,7 @@ def tree_to_string(treeObject, support_as_branchlengths=False,branchlengths_only
 				#partstring=":".join(partstring.split(":")[:-1])
 				
 				partstring=partstring+")"
-				print partstring
+				#print partstring
 #				sys.exit()
 				#print '%s%s' % (partstring,make_info_string(treeObject.node(node).data))
 				return '%s%s' % (partstring,make_info_string(treeObject.node(node).data))

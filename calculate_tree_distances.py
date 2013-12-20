@@ -65,8 +65,10 @@ if len(sys.argv)!=2:
 	sys.exit()
 
 treelist=read_dendropy_tree(sys.argv[1])
+
 print '\t'.join(["Tree 1", "Tree 2", "Robinson Foulds Distance", "Weighted Robinson Foulds Distance", "Euclidean Distance"])
 for x, t1 in enumerate(treelist):
+	
 	for y in xrange(x+1, len(treelist)):
 		
 		t2=treelist[y]

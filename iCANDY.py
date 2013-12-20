@@ -5579,7 +5579,7 @@ if __name__ == "__main__":
 			max_feature_length=max_track_feature_length
 		for plot in my_tracks[track].plots:
 			for data in plot.xdata:
-				if data[-1]>max_feature_length:
+				if len(data)>0 and data[-1]>max_feature_length:
 					max_feature_length=data[-1]
 		
 	
