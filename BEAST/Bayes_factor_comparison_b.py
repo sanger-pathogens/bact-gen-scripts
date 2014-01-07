@@ -45,11 +45,13 @@ def calculate_path_sampling(infilelist, name):
 	
 	try:
 		psbeast = subprocess.check_output([BEAST_LOC+"beast", tfname], stderr=subprocess.STDOUT)
-	except subprocess.CalledProcessError:
+	except subprocess.CalledProcessError, e:
 		if cluster in ["farm3", "pcs5"]:
 			print "\n\n!!!BEAST failed to run. As you are on farm3 or pcs5, you will need to bsub the job!!!\n"
 		else:
 			print "\n\n!!!BEAST failed to run!!!\n"
+		print "Returncode =", e.returncode
+		print e.output
 		os.unlink(tfname)
 		sys.exit()
 			

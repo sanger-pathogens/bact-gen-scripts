@@ -65,9 +65,9 @@ if __name__ == "__main__":
 	
 	cluster=getclustername()
 #	print "Running on cluster:", cluster
-	if cluster in ["farm3", "pcs5"]:
+	if cluster in ["farm3"]:
 		BEAST_LOC=""
-	elif cluster in ["farm2", "pcs4"]:
+	elif cluster in ["farm2", "pcs4", "pcs5"]:
 		BEAST_LOC="/nfs/users/nfs_s/sh16/BEASTv1.7.4/bin/"
 	
 	if options.exclude!="":
@@ -124,7 +124,10 @@ if __name__ == "__main__":
 	PS=[]
 	SS=[]
 	
-	for mlefile in mlefiles:
+	mlefilesort=mlefiles.keys()
+	mlefilesort.sort()
+	
+	for mlefile in mlefilesort:
 		mlefiles[mlefile].sort()
 		
 		tf = tempfile.NamedTemporaryFile(delete=False) 
@@ -137,13 +140,22 @@ if __name__ == "__main__":
 		print >> tf, '</beast>'
 		tf.close()
 		
+		print '<beast>'
+		print '\t<pathSamplingAnalysis fileName="'+' '.join(mlefiles[mlefile])+'">'
+		print '\t\t<likelihoodColumn name="pathLikelihood.delta"/>'
+		print '\t\t<thetaColumn name="pathLikelihood.theta"/>'     
+		print '\t</pathSamplingAnalysis>'
+		print '</beast>'
+		
 		try:
 			psbeast = subprocess.check_output([BEAST_LOC+"beast", tfname], stderr=subprocess.STDOUT)
-		except subprocess.CalledProcessError:
-			if cluster in ["farm3", "pcs5"]:
-				print "\n\n!!!BEAST failed to run. As you are on farm3 or pcs5, you will need to bsub the job!!!\n"
+		except subprocess.CalledProcessError, e:
+			if cluster in ["farm3"]:
+				print "\n\n!!!BEAST failed to run. As you are on farm3, you will need to bsub the job!!!\n"
 			else:
 				print "\n\n!!!BEAST failed to run!!!\n"
+			print "Returncode =", e.returncode
+			print e.output
 			sys.exit()
 				
 		for line in psbeast.split("\n"):
