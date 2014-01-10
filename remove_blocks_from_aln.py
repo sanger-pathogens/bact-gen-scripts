@@ -34,6 +34,7 @@ def Usage():
 	print '-s <char>\tSymbol to use for removed regions (default = N)'
 	print '-h\t\tshow this help'
 	print 'Written by Simon R Harris, Wellcome Trust Sanger Institute, UK. 2010'
+	print "\nPLEASE NOTE: This script is no longer supported. There is now a version with the same name supported by the pathogen informatics team which should be in your PATH. Please use that version in future.s"
 
 
 
@@ -246,3 +247,4 @@ if __name__ == "__main__":
 	
 	print "Original alignment length:", len(sequences[sequence]), "New alignment length:", len(newsequences[sequence])
 	print "Done."
+	print "\nPLEASE NOTE: This script is no longer supported. There is now a version with the same name supported by the pathogen informatics team which should be in your PATH. Please use that version in future.s"

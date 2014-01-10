@@ -1739,7 +1739,7 @@ if __name__ == "__main__":
 				gapstart=0
 				lastgapbase=0
 				ingapblock=False
-				for gapbase in Allgaplocations[name]:
+				for gapbase in gaplocations[name]:
 					if not ingapblock:
 						start=gapbase
 						ingapblock=True
