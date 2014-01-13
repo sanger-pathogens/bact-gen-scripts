@@ -20,6 +20,8 @@ from colorsys import hsv_to_rgb
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 from Si_general import *
 from Si_SeqIO import *
+sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/Tangled-master']))
+import detangle
 from Si_nexus import midpoint_root, tree_to_string
 from Bio import SeqIO
 from Bio.SeqFeature import SeqFeature, FeatureLocation
@@ -97,6 +99,7 @@ def main():
 	group = OptionGroup(parser, "Tree Output Options")
 	
 	group.add_option("-t", "--tree", action="store", dest="tree", help="tree file to align tab files to", default="")
+	group.add_option("-9", "--tree2", action="store", dest="tree2", help="second tree to create tanglegram on right side", default="")
 	group.add_option("-2", "--proportion", action="store", dest="treeproportion", help="Proportion of page to take up with the tree", default=0.3, type='float')
 	group.add_option("-s", "--support", action="store", dest="tree_support", help="Scale tree branch widths by value. For newick trees this can be any value stored in the tree. Otherwise, use 'support' to scale by branch support values (if present)", default="")
 	group.add_option("-7", "--height_HPD", action="store_true", dest="show_height_HPD", help="show branch 95% HPD heights (if present in tree) [default= %default]", default=False)
@@ -5400,10 +5403,6 @@ if __name__ == "__main__":
 				
 				
 				
-				
-				
-				
-				
 		
 		
 	elif options.taxon_list!="":
@@ -5421,7 +5420,30 @@ if __name__ == "__main__":
 					track_count+=1
 					
 
-	
+	if options.tree!="" and options.tree2!="":
+		if not os.path.isfile(options.tree2):
+			print "Cannot find file:", options.tree
+			options.tree=""
+		else:
+			
+			tree2=read_dendropy_tree(options.tree2)
+			
+		if tree.label==None:
+			tree.label="tree1"
+		if tree2.label==None:
+			tree2.label="tree2"
+		
+		
+		tangled_trees={}
+		tangled_tree_list=[]
+		for i in [tree, tree2]:
+			treestring= i.as_newick_string()
+			tr = detangle.tree('tree ' + i.label + ' = [&U] ' + str(i.as_newick_string()))
+			tangled_trees[tr.name]=tr
+			tangled_tree_list.append(tr)
+		
+		detangle.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = 1)
+		sys.exit()
 
 
 

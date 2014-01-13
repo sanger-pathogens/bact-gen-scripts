@@ -1,0 +1,31 @@
+#NEXUS 
+
+Begin trees;  [Treefile saved Tue Mar 27 15:20:07 2012]
+
+	Translate
+		1 Bactrosaurus,
+		2 Aralosaurus,
+		3 Tsintaosaurus,
+		4 Jaxartosaurus,
+		5 Amurosaurus,
+		6 Corythosaurus,
+		7 Hypacrosaurus,
+		8 Olorotitan,
+		9 Lambeosaurus,
+		10 Parasaurolophus,
+		11 Charonosaurus,
+		12 Sahaliyania,
+		13 Wulagasaurus,
+		14 Maiasaura,
+		15 Brachylophosaurus,
+		16 Gryposaurus,
+		17 Kerberosaurus,
+		18 Saurolophus,
+		19 Prosaurolophus,
+		20 Anatotitan,
+		21 Edmontosaurus
+		;
+tree PAUP1 = [&U] (1,((2,(3,(4,(5,(((6,7,8),9),(10,11),12))))),(13,((14,15),(16,((17,(18,20)),(19,21)))))));
+tree PAUP2 = [&U] (1,((2,(3,(4,(5,((6,7,8),9,(10,11),12))))),(13,((14,15),(16,((17,(18,19)),(20,21)))))));
+tree PAUP3 = [&U] (1,((2,(3,(4,(5,((6,7,8,9,12),(10,11)))))),(13,((14,15),(20,((17,(18,19)),(16,21)))))));
+End;
