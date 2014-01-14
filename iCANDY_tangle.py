@@ -714,11 +714,11 @@ def read_dendropy_tree(treefile):
 			
 		#Ladderise the tree if the option is selected
 		if options.ladderise=="left":
-			print "ladderising tree to the left"
+			print "Ladderising tree to the left"
 			#ladderise the tree right
 			t.ladderize(ascending=False)
 		elif options.ladderise=="right":
-			print "ladderising tree to the right"
+			print "Ladderising tree to the right"
 			#ladderise the tree right
 			t.ladderize(ascending=True)
 		
@@ -960,7 +960,11 @@ def deltran_parsimony_reconstruction(t, transformation="deltran"):
 # Function to draw the tree #
 #############################
 
-def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5):
+def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5, direction="forward", xmax=0.0, left_tree_proportion=-1):
+	
+	
+	if left_tree_proportion==-1:
+		left_tree_proportion=xoffset
 	
 #	vertical_scaling_factor=5
 	def make_edge_lengths_equal():#Updated for dendropy
@@ -1286,7 +1290,10 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 					d.add(Rect(HPDmin+branchlength, vertpos-(vertical_scaling_factor*0.4), HPDmax-HPDmin, vertical_scaling_factor*0.8, fillColor=colors.lightblue, strokeColor=None, strokeWidth=0))
 		
 		#draw the horizontal part of the branch
-		d.add(Line(horizontalpos-(vlinewidth/2), vertpos, (horizontalpos-(vlinewidth/2))+branchlength, vertpos, strokeWidth=linewidth, strokeColor=branch_colour))
+		if direction=="forward":
+			d.add(Line(horizontalpos-(vlinewidth/2), vertpos, (horizontalpos-(vlinewidth/2))+branchlength, vertpos, strokeWidth=linewidth, strokeColor=branch_colour))
+		elif direction=="reverse":
+			d.add(Line(xmax-(horizontalpos-(vlinewidth/2)), vertpos, xmax-((horizontalpos-(vlinewidth/2))+branchlength), vertpos, strokeWidth=linewidth, strokeColor=branch_colour))
 		
 		#If the user has chosen to show branchlengths on branches, draw them now
 		if options.show_branchlengths and node.edge_length>0:
@@ -1294,7 +1301,11 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 
 
 		#draw the vertical part of the branch that goes to the parent node
-		d.add(Line(horizontalpos, node.vertpos+yoffset, horizontalpos, node.parent_node.vertpos+yoffset, strokeWidth=vlinewidth, strokeColor=branch_colour))
+		if direction=="forward":
+			d.add(Line(horizontalpos, node.vertpos+yoffset, horizontalpos, node.parent_node.vertpos+yoffset, strokeWidth=vlinewidth, strokeColor=branch_colour))
+		elif direction=="reverse":
+			d.add(Line(xmax-horizontalpos, node.vertpos+yoffset, xmax-horizontalpos, node.parent_node.vertpos+yoffset, strokeWidth=vlinewidth, strokeColor=branch_colour))
+		
 		
 			
 		if node.is_leaf():
@@ -1320,13 +1331,22 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			#Add the taxon names if present
 			if options.taxon_names:
 				if options.aligntaxa==2:
-					d.add(String(treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
+					if direction=="forward":
+						d.add(String(treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
+					elif direction=="reverse":
+						d.add(String(xmax-(treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2))-get_text_width('Helvetica', fontsize, str(node.taxon)), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
 					block_xpos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)+namewidth
 				elif options.aligntaxa==1:
-					d.add(String(treewidth+(fontsize/2)+xoffset, vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fillColor=name_colours[0], fontSize=fontsize, fontName='Helvetica'))
+					if direction=="forward":
+						d.add(String(treewidth+(fontsize/2)+xoffset, vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fillColor=name_colours[0], fontSize=fontsize, fontName='Helvetica'))
+					elif direction=="reverse":
+						d.add(String(xmax-(treewidth+(fontsize/2)+xoffset)-get_text_width('Helvetica', fontsize, str(node.taxon)), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fillColor=name_colours[0], fontSize=fontsize, fontName='Helvetica'))
 					block_xpos=treewidth+(fontsize/2)+xoffset+(fontsize/2)+namewidth
 				else:
-					d.add(String(horizontalpos+branchlength+(fontsize/2), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
+					if direction=="forward":
+						d.add(String(horizontalpos+branchlength+(fontsize/2), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
+					elif direction=="reverse":
+						d.add(String((xmax-(horizontalpos+branchlength+(fontsize/2)))-get_text_width('Helvetica', fontsize, str(node.taxon)), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
 					block_xpos=horizontalpos+branchlength+(fontsize/2)+namewidth
 			else:
 				if options.aligntaxa==2:
@@ -1340,27 +1360,39 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			# draw dashed lines
 			
 			if options.aligntaxa==1:
-				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+				if direction=="forward":
+					d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+				elif direction=="reverse":
+					d.add(Line(xmax-(horizontalpos+branchlength), vertpos, xmax-(treewidth+xoffset), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 			elif options.aligntaxa==2:
-				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-gubbins_length), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+				if direction=="forward":
+					d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-gubbins_length), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+				elif direction=="reverse":
+					d.add(Line(xmax-(horizontalpos+branchlength), vertpos, xmax-(treewidth+xoffset+(max_name_width-gubbins_length)), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 			
 			
-			if vertical_scaling_factor>2:
-				spacer=2
-			else:
-				spacer=vertical_scaling_factor
-			#print metadata blocks
-			for x, name_colour in enumerate(name_colours[colpos:]):
-				if block_length==0:
-					break
-
-				if options.names_as_shapes=="circle":
-					d.add(Circle(cx=block_xpos+block_length, cy=vertpos, r=(block_length/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-				elif options.names_as_shapes in ["square", "rectangle", "auto"]:
-					d.add(Rect(block_xpos, vertpos-(vertical_scaling_factor/2), block_length, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-						
-				
-				block_xpos+=block_length+spacer
+			if direction=="reverse" and hasattr(node, "matching_node"):
+				print node.matching_node.vertpos, node.vertpos
+				d.add(Line(treewidth+xoffset+(max_name_width), node.matching_node.vertpos, xmax-(treewidth+xoffset+(max_name_width)), node.vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+			
+			
+			if direction=="forward":
+				if vertical_scaling_factor>2:
+					spacer=2
+				else:
+					spacer=vertical_scaling_factor
+				#print metadata blocks
+				for x, name_colour in enumerate(name_colours[colpos:]):
+					if block_length==0:
+						break
+	
+					if options.names_as_shapes=="circle":
+						d.add(Circle(cx=block_xpos+block_length, cy=vertpos, r=(block_length/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
+					elif options.names_as_shapes in ["square", "rectangle", "auto"]:
+						d.add(Rect(block_xpos, vertpos-(vertical_scaling_factor/2), block_length, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
+							
+					
+					block_xpos+=block_length+spacer
 			
 			
 		
@@ -4661,7 +4693,7 @@ if __name__ == "__main__":
 	
 	
 	if len(args)==0 and options.tree!="":
-		options.treeproportion=1
+		options.treeproportion=1.0
 	elif len(args)==0:
 		print "Found nothing to draw"
 		sys.exit()
@@ -5386,7 +5418,7 @@ if __name__ == "__main__":
 				
 				if terminal in metadatanames:
 					terminal=metadatanames[terminal]
-					terminal_node.taxon=terminal
+					terminal_node.taxon.label=terminal
 #				totalbr+=tree.sum_branchlength(root=tree.root, node=terminal_node)
 #			if totalbr==0:
 #				
@@ -5419,7 +5451,10 @@ if __name__ == "__main__":
 				if not terminal in track_names:
 					track_count+=1
 					
-
+	
+	
+	#If there is a second tree given as input, read it and untangle it
+	
 	if options.tree!="" and options.tree2!="":
 		if not os.path.isfile(options.tree2):
 			print "Cannot find file:", options.tree
@@ -5427,7 +5462,11 @@ if __name__ == "__main__":
 		else:
 			
 			tree2=read_dendropy_tree(options.tree2)
-			
+		
+		
+		internalcount=1
+		
+		
 		if tree.label==None:
 			tree.label="tree1"
 		if tree2.label==None:
@@ -5436,14 +5475,74 @@ if __name__ == "__main__":
 		
 		tangled_trees={}
 		tangled_tree_list=[]
+		print "Untangling tree 2"
 		for i in [tree, tree2]:
-			treestring= i.as_newick_string()
-			tr = detangle.tree('tree ' + i.label + ' = [&U] ' + str(i.as_newick_string()))
+			treestring= i.as_string('newick')
+			tr = detangle.tree('tree ' + i.label + ' = [&U] ' + treestring)
 			tangled_trees[tr.name]=tr
 			tangled_tree_list.append(tr)
+		#detangle.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = 1)
 		
-		detangle.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = 1)
-		sys.exit()
+		t2_taxon_count=0
+		for leaf in tree2.leaf_iter():
+				t2_taxon_count+=1	
+		t2_vertical_scaling_factor=float(height-(margin+topmargin))/(t2_taxon_count)
+		
+		for x, leaf in enumerate(tree2.leaf_iter()):
+			leaf.vertpos=margin+((t2_taxon_count-x)*t2_vertical_scaling_factor)
+			
+		tree2names=[]
+		tree2_name_to_node={}
+		for terminal_node in tree2.leaf_iter():
+			terminal=str(terminal_node.taxon)
+			terminal=terminal.strip("'")
+			terminal=terminal.strip('"')
+			tree2names.append(terminal)
+			
+			if terminal in tree_name_to_node:
+				terminal_node.matching_node=tree_name_to_node[terminal]
+				
+			if terminal in namecolours and len(namecolours[terminal])>0:
+				terminal_node.name_colour=[]
+				if len(colour_columns)>0:
+					for x in xrange(len(colour_columns)):
+						if x in namecolours[terminal]:
+							namecolour=namecolours[terminal][x]
+							terminal_node.name_colour.append(colour_dict[x][namecolour])
+						else:
+							terminal_node.name_colour.append((0,0,0))
+							namecolours[terminal][x]="-"
+				else:
+					terminal_node.name_colour.append((0,0,0))
+					namecolours[terminal][0]="-"
+			else:
+				namecolours[terminal]={}
+				terminal_node.name_colour=[]
+				if len(colour_columns)>0:
+					for x in xrange(len(colour_columns)):
+						terminal_node.name_colour.append((0,0,0))
+						namecolours[terminal][x]="-"
+#					else:
+#						terminal_node.name_colour.append((0,0,0))
+#						namecolours[terminal][0]="-"
+			
+			if terminal in metadatanames:
+				terminal=metadatanames[terminal]
+				terminal_node.taxon.label=terminal
+			
+			
+#				totalbr+=tree.sum_branchlength(root=tree.root, node=terminal_node)
+#			if totalbr==0:
+#				
+#				def make_branches_equal(node):
+#					for daughter in tree.node(node).succ:
+#						make_branches_equal(daughter)
+#						tree.node(daughter).data.branchlength=1
+#				make_branches_equal(tree.root)
+	
+		if options.transformation in ["acctran", "deltran"]:
+			#parsimony_reconstruction(tree, namecolours, colour_dict[0], transformation=options.transformation)
+			deltran_parsimony_reconstruction(tree, transformation=options.transformation)
 
 
 
@@ -5577,10 +5676,19 @@ if __name__ == "__main__":
 	
 	#if we have a tree to put in, we compare the name and tree widths and use the largest as the proportion of the page to leave for names/trees
 	
+	if options.tree2!="":
+		options.treeproportion=options.treeproportion/2
+		
+	
 	if options.treeproportion<name_proportion or options.tree=="":
 		left_proportion=name_proportion
+		if options.tree2!="":
+			right_proportion=name_proportion
 	else:
 		left_proportion=options.treeproportion
+		if options.tree2!="":
+			right_proportion=options.treeproportion*0.8
+	
 	
 	
 	#Set the orders of the tracks	
@@ -5735,7 +5843,9 @@ if __name__ == "__main__":
 				my_tracks[track].draw_track()
 			
 			if options.tree!="":
-				draw_dendropy_tree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3)
+				draw_dendropy_tree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3, direction="forward")
+			if options.tree2!="":
+				draw_dendropy_tree(tree2, height-(margin*2), (width-(margin*2))*right_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3, direction="reverse", xmax=width, left_tree_proportion=margin)
 				#drawtree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3)
 
 		

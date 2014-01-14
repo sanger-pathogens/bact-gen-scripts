@@ -55,8 +55,10 @@ class tree:
         self.root = None
         if not line is None:
             self.name = line[5:line.find(' ',6)]
+            self.has_brlens=False
             self.parse(line[line.find('(',6)+1:].strip(';'))
             self.twist_apply_list = self.non_leaves()
+            
         #print self.twist_apply_list
 
     def parse(self, line):
@@ -64,7 +66,7 @@ class tree:
         self.root = node();
         cur = self.root;
         stack = [self.root];
-	if g_verbose:
+        if g_verbose:
 	        print line
         while len(curstr) > 0:
             if curstr[0] == '(':
@@ -76,22 +78,51 @@ class tree:
             elif curstr[0] == ',':
                 curstr = curstr[1:]
             elif curstr[0] == ')':
-                cur = stack.pop()
                 curstr = curstr[1:]
+                if curstr[0]==":":
+                    self.has_brlens=True
+                    comma = curstr.find(',')
+                    paren = curstr.find(')')
+                    if comma==-1:
+                    	comma=paren
+                    if paren==-1:
+                    	paren=comma
+                    brlen=curstr[1:min(comma,paren)]
+                    newstart=min(comma,paren)
+                    cur.brlen=float(brlen)
+                cur = stack.pop()
+                curstr = curstr[newstart:]
+#            elif curstr[0] == ':':
+#                cur = stack.pop()
+#                curstr = curstr[1:]
             else:
                 comma = curstr.find(',')
                 paren = curstr.find(')')
+                colon = curstr.find(':')
+                foundcolon=False
                 if comma == -1:
                     comma = paren
                 if paren == -1:
                     paren = comma
-                if min(comma,paren) > -1:
-                    name = curstr[0:min(comma,paren)]
-                    cur.add(node(name))
+                if colon==-1:
+                    colon=comma
+                if colon < min(comma,paren):
+                    foundcolon=True
+                    self.has_brlens=True
+                
+                if min(comma,paren,colon) > -1:
+                    name = curstr[0:min(comma,paren,colon)]
+                    if foundcolon:
+                        brlen=float(curstr[colon+1:min(comma,paren)])
+                    else:
+                    	brlen=float(0.0)
+                    	
+                    if colon!=0:
+	                    cur.add(node(name, brlen))
                     curstr = curstr[min(comma,paren):]
                 else:
                     curstr = ''
-
+   
     def init_from_phylo(self, phylo):
         self.name = phylo.name
         self.root = node()
@@ -136,7 +167,8 @@ class tree:
         pass
 
     def writable(self):
-        return self.root.writable()
+        return self.root.writable(self.has_brlens)
+    
 
     def max_depth(self):
         current = self.root
@@ -158,10 +190,11 @@ class node:
          It remembers a twist value, and applies it as a rotation to the list of children
          when returning it.
     """
-    def __init__(self, name=None):
+    def __init__(self, name=None, brlen=0.0):
         self.children = []
         self.twist = 0
         self.name = name
+        self.brlen=brlen
 
     def set_twist(self, n):
         self.twist = n
@@ -200,17 +233,22 @@ class node:
             for n in d:
                 n.output(depth+1)               
 
-    def writable(self):
+    def writable(self, has_brlens):
         if len(self.children) == 0:
-            return self.name
+            if has_brlens:
+            	return self.name+":"+str(self.brlen)
+            else:
+                return self.name
         else:
             ret = "("
             d = self.get_children()
             for n in d:
-                ret = ret + n.writable() + ","
+                ret = ret + n.writable(has_brlens) + ","
             ret = ret.rstrip(",") + ")"
-	    print ret
+            if has_brlens:
+            	ret=ret+":"+str(self.brlen)
             return ret
+            
 
 def tangle_count_all(trees):
     """ This function applies a tangle counting function to every combination of trees
