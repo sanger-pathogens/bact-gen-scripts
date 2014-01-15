@@ -21,7 +21,7 @@ sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/'])
 from Si_general import *
 from Si_SeqIO import *
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/Tangled-master']))
-import detangle
+import detangle_dendropy
 from Si_nexus import midpoint_root, tree_to_string
 from Bio import SeqIO
 from Bio.SeqFeature import SeqFeature, FeatureLocation
@@ -1141,13 +1141,19 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 		else:
 			vertpos=treebase-fontsize
 			branchlength=round_to_n(max_branch_depth/10, 2)*horizontal_scaling_factor
+			
 			horizontalpos=xoffset+round_to_n(max_branch_depth/10, 2)*horizontal_scaling_factor
 			scalestring = str(round_to_n(max_branch_depth/10, 2))
 			scalefontsize=fontsize
 			if scalefontsize<6:
 				scalefontsize=6
-			d.add(Line(horizontalpos, vertpos, horizontalpos+branchlength, vertpos, strokeWidth=linewidth))
-			d.add(String(horizontalpos+(float(branchlength)/2), vertpos-(scalefontsize+1), scalestring, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
+			if direction=="forward":
+				d.add(Line(horizontalpos, vertpos, horizontalpos+branchlength, vertpos, strokeWidth=linewidth))
+				d.add(String(horizontalpos+(float(branchlength)/2), vertpos-(scalefontsize+1), scalestring, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
+			else:
+				d.add(Line(xmax-horizontalpos, vertpos, xmax-(horizontalpos+branchlength), vertpos, strokeWidth=linewidth))
+				d.add(String(xmax-(horizontalpos+(float(branchlength)/2)), vertpos-(scalefontsize+1), scalestring, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
+				
 	
 		
 	
@@ -1319,14 +1325,15 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				gubbins_length += namewidth
 				colpos=1
 			
-			for x in xrange(colpos,len(name_colours)):
-				gubbins_length += block_length
-				if vertical_scaling_factor>2:
-					spacer=2
-				else:
-					spacer=vertical_scaling_factor
-				if x!=0:
-					gubbins_length += spacer
+			if direction=="forward":
+				for x in xrange(colpos,len(name_colours)):
+					gubbins_length += block_length
+					if vertical_scaling_factor>2:
+						spacer=2
+					else:
+						spacer=vertical_scaling_factor
+					if x!=0:
+						gubbins_length += spacer
 			
 			#Add the taxon names if present
 			if options.taxon_names:
@@ -1372,8 +1379,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			
 			
 			if direction=="reverse" and hasattr(node, "matching_node"):
-				print node.matching_node.vertpos, node.vertpos
-				d.add(Line(treewidth+xoffset+(max_name_width), node.matching_node.vertpos, xmax-(treewidth+xoffset+(max_name_width)), node.vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+				d.add(Line(left_tree_proportion+margin, node.matching_node.vertpos, xmax-(treewidth+xoffset+(max_name_width)), node.vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 			
 			
 			if direction=="forward":
@@ -1525,17 +1531,19 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 					column_name_y_pos=treetop+(vertical_scaling_factor/2)
 					colpos=0
 					if options.taxon_names and (len(colour_column_names)==1 or colour_column_names[1]!=colour_column_names[0]):
-						
-						draw_column_label(treewidth+xoffset+((max_name_width-gubbins_length)/2), column_name_y_pos, labelfontsize, colour_column_names[0])
+						if direction=="forward":
+							draw_column_label(treewidth+xoffset+((max_name_width-gubbins_length)/2), column_name_y_pos, labelfontsize, colour_column_names[0])
+						elif direction=="reverse":
+							draw_column_label(xmax-(treewidth+xoffset+((max_name_width-gubbins_length)/2)), column_name_y_pos, labelfontsize, colour_column_names[0])
 						colpos=1
 					elif len(colour_column_names)>1 and colour_column_names[1]==colour_column_names[0]:
 						colpos+=1
 					
-					for x in xrange(colpos,len(colour_column_names)):
-					
-						draw_column_label(column_name_x_pos+(block_length/2), column_name_y_pos, labelfontsize, colour_column_names[x])
-						column_name_x_pos += block_length
-						column_name_x_pos += spacer
+					if direction=="forward":
+						for x in xrange(colpos,len(colour_column_names)):
+							draw_column_label(column_name_x_pos+(block_length/2), column_name_y_pos, labelfontsize, colour_column_names[x])
+							column_name_x_pos += block_length
+							column_name_x_pos += spacer
 						
 		except NameError:
 			pass
@@ -5362,6 +5370,8 @@ if __name__ == "__main__":
 	treenames=[]
 	tree_name_to_node={}
 	listnames=[]
+	new_to_old_isolates_names={}
+	old_to_new_isolates_names={}
 	
 	if options.tree!="":
 		if not os.path.isfile(options.tree):
@@ -5384,7 +5394,7 @@ if __name__ == "__main__":
 #			order=get_leaf_nodes(tree)
 			
 			for terminal_node in tree.leaf_iter():
-				terminal=str(terminal_node.taxon)
+				terminal=str(terminal_node.taxon.label)
 				terminal=terminal.strip("'")
 				terminal=terminal.strip('"')
 				treenames.append(terminal)
@@ -5418,6 +5428,8 @@ if __name__ == "__main__":
 				
 				if terminal in metadatanames:
 					terminal=metadatanames[terminal]
+					new_to_old_isolates_names[terminal]=terminal_node.taxon.label
+					old_to_new_isolates_names[terminal_node.taxon.label]=terminal
 					terminal_node.taxon.label=terminal
 #				totalbr+=tree.sum_branchlength(root=tree.root, node=terminal_node)
 #			if totalbr==0:
@@ -5461,7 +5473,7 @@ if __name__ == "__main__":
 			options.tree=""
 		else:
 			
-			tree2=read_dendropy_tree(options.tree2)
+			tree2_tangled=read_dendropy_tree(options.tree2)
 		
 		
 		internalcount=1
@@ -5469,19 +5481,65 @@ if __name__ == "__main__":
 		
 		if tree.label==None:
 			tree.label="tree1"
-		if tree2.label==None:
-			tree2.label="tree2"
+		if tree2_tangled.label==None:
+			tree2_tangled.label="tree2"
 		
 		
+		for terminal_node in tree.leaf_iter():
+			terminal_node.taxon.label=new_to_old_isolates_names[terminal_node.taxon.label]
+		
+		if options.ladderise!=None:
+			untangle_type="tree2"
+		else:
+			untangle_type="both"
+#		untangle_type="none"
 		tangled_trees={}
 		tangled_tree_list=[]
-		print "Untangling tree 2"
-		for i in [tree, tree2]:
-			treestring= i.as_string('newick')
-			tr = detangle.tree('tree ' + i.label + ' = [&U] ' + treestring)
-			tangled_trees[tr.name]=tr
-			tangled_tree_list.append(tr)
-		#detangle.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = 1)
+		
+		if untangle_type=="none":
+			print "No trees will be untangled"
+			tree2=tree2_tangled
+			tree1=tree
+		elif untangle_type=="tree1":
+			print "Untangling tree 1"
+			for i in [tree2_tangled, tree]:
+				tangled_trees[i.label]=i
+				tangled_tree_list.append(i)
+			tree2, tree1=detangle_dendropy.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = True, verbose=False)
+		elif untangle_type=="tree2":
+			print "Untangling tree 2"
+			for i in [tree, tree2_tangled]:
+				tangled_trees[i.label]=i
+				tangled_tree_list.append(i)
+			tree1, tree2=detangle_dendropy.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = True, verbose=False)
+		elif untangle_type=="both":
+			print "Untangling both trees"
+			for i in [tree, tree2_tangled]:
+				tangled_trees[i.label]=i
+				tangled_tree_list.append(i)
+			tree1, tree2=detangle_dendropy.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = False, verbose=False)
+		else:
+			tree2=tree2_tangled
+			tree1=tree
+			
+		tree=tree1
+		
+		treenames=[]
+		for terminal_node in tree.leaf_iter():
+			terminal=str(terminal_node.taxon)
+			terminal=terminal.strip("'")
+			terminal=terminal.strip('"')
+		
+#			if terminal in new_to_old_isolates_names:
+#				treenames.append(new_to_old_isolates_names[terminal])
+#			else:
+#				treenames.append(terminal)
+			treenames.append(terminal)
+
+			
+		for terminal_node in tree.leaf_iter():
+			terminal_node.taxon.label=old_to_new_isolates_names[terminal_node.taxon.label]
+		
 		
 		t2_taxon_count=0
 		for leaf in tree2.leaf_iter():
@@ -5489,7 +5547,7 @@ if __name__ == "__main__":
 		t2_vertical_scaling_factor=float(height-(margin+topmargin))/(t2_taxon_count)
 		
 		for x, leaf in enumerate(tree2.leaf_iter()):
-			leaf.vertpos=margin+((t2_taxon_count-x)*t2_vertical_scaling_factor)
+			leaf.vertpos=margin+((t2_taxon_count-x)*t2_vertical_scaling_factor)-(float(t2_vertical_scaling_factor)/2)
 			
 		tree2names=[]
 		tree2_name_to_node={}
@@ -5506,7 +5564,7 @@ if __name__ == "__main__":
 				terminal_node.name_colour=[]
 				if len(colour_columns)>0:
 					for x in xrange(len(colour_columns)):
-						if x in namecolours[terminal]:
+						if x in namecolours[terminal] and namecolours[terminal][x]!="-":
 							namecolour=namecolours[terminal][x]
 							terminal_node.name_colour.append(colour_dict[x][namecolour])
 						else:
@@ -5845,7 +5903,7 @@ if __name__ == "__main__":
 			if options.tree!="":
 				draw_dendropy_tree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3, direction="forward")
 			if options.tree2!="":
-				draw_dendropy_tree(tree2, height-(margin*2), (width-(margin*2))*right_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3, direction="reverse", xmax=width, left_tree_proportion=margin)
+				draw_dendropy_tree(tree2, height-(margin*2), (width-(margin*2))*right_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3, direction="reverse", xmax=width, left_tree_proportion=(width-(margin*2))*left_proportion)
 				#drawtree(tree, height-(margin*2), (width-(margin*2))*left_proportion, margin, ((((options.fragments-fragment)*track_count)*vertical_scaling_factor)), maxplot_scale_text+3)
 
 		
