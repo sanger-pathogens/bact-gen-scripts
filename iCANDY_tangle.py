@@ -21,6 +21,7 @@ sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/'])
 from Si_general import *
 from Si_SeqIO import *
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/Tangled-master']))
+import detangle_dendropyb
 import detangle_dendropy
 from Si_nexus import midpoint_root, tree_to_string
 from Bio import SeqIO
@@ -5431,6 +5432,9 @@ if __name__ == "__main__":
 					new_to_old_isolates_names[terminal]=terminal_node.taxon.label
 					old_to_new_isolates_names[terminal_node.taxon.label]=terminal
 					terminal_node.taxon.label=terminal
+				else:
+					new_to_old_isolates_names[terminal]=terminal
+					old_to_new_isolates_names[terminal]=terminal
 #				totalbr+=tree.sum_branchlength(root=tree.root, node=terminal_node)
 #			if totalbr==0:
 #				
@@ -5505,19 +5509,19 @@ if __name__ == "__main__":
 			for i in [tree2_tangled, tree]:
 				tangled_trees[i.label]=i
 				tangled_tree_list.append(i)
-			tree2, tree1=detangle_dendropy.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = True, verbose=False)
+			tree2, tree1=detangle_dendropyb.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = True, verbose=True)
 		elif untangle_type=="tree2":
 			print "Untangling tree 2"
 			for i in [tree, tree2_tangled]:
 				tangled_trees[i.label]=i
 				tangled_tree_list.append(i)
-			tree1, tree2=detangle_dendropy.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = True, verbose=False)
+			tree1, tree2=detangle_dendropyb.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = True, verbose=True)
 		elif untangle_type=="both":
 			print "Untangling both trees"
 			for i in [tree, tree2_tangled]:
 				tangled_trees[i.label]=i
 				tangled_tree_list.append(i)
-			tree1, tree2=detangle_dendropy.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = False, verbose=False)
+			tree1, tree2=detangle_dendropyb.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = False, verbose=True)
 		else:
 			tree2=tree2_tangled
 			tree1=tree
