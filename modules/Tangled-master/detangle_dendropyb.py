@@ -51,20 +51,30 @@ g_verbose=False
             
 
 def tangle_count_all(trees, Final=False):
-    """ This function applies a tangle counting function to every combination of trees
-    """
-    l=[]
-    for tr in trees.itervalues():
-    	leaves=[]
-    	for leaf in tr.tree_twisted_leaves():
-    		leaves.append(leaf)
-    	l.append(leaves)
-        if Final:
-            print leaves
-    count = 0
-    for (a,b) in itertools.combinations(l,2):
-        count = count + tangle_count(a,b)
-    return count
+	""" This function applies a tangle counting function to every combination of trees
+	"""
+	l=[]
+	for trnum, tr in enumerate(trees.itervalues()):
+		leaves=[]
+		for leaf in tr.tree_twisted_leaves():
+			if trnum==0:
+				leaves.append(leaf)
+			else:
+				for leaflist in l:
+					leafset=set(leaflist)
+					if leaf in leafset:
+						leaves.append(leaf)
+						
+		l.append(leaves)
+		if Final:
+			print leaves
+	count = 0
+	for (a,b) in itertools.combinations(l,2):
+		count = count + tangle_count(a,b)
+	return count
+    
+    
+
     
 def tangle_count(a, b):
     """ This function computes a tangle count by counting the number of times a
@@ -82,19 +92,26 @@ def tangle_count(a, b):
     return count
 
 def flatness_count_all(trees):
-    """ This function computes a penalty based on the angle of the lines"""
-    l=[]
-    for tr in trees.itervalues():
-    	leaves=[]
-    	for leaf in tr.tree_twisted_leaves():
-    		leaves.append(leaf)
-    	l.append(leaves)
+	""" This function computes a penalty based on the angle of the lines"""
+	l=[]
+	for trnum, tr in enumerate(trees.itervalues()):
+		leaves=[]
+		for leaf in tr.tree_twisted_leaves():
+			if trnum==0:
+				leaves.append(leaf)
+			else:
+				for leaflist in l:
+					leafset=set(leaflist)
+					if leaf in leafset:
+						leaves.append(leaf)
+						
+		l.append(leaves)
 #    l = [tr.leaves for tr in trees.itervalues()]
-    count = 0
-    for (a,b) in itertools.combinations(l,2):
-        count = count + flatness_count(a,b)
+	count = 0
+	for (a,b) in itertools.combinations(l,2):
+		count = count + flatness_count(a,b)
         
-    return count
+	return count
 
 def flatness_count(a, b):
     """ This function computes an angle penalty """
@@ -111,20 +128,27 @@ def flatness_count(a, b):
     return count
 
 def alpha_count_all(trees):
-    """ This function computes a penalty for mis-alphabetized trees
-    """
-    l=[]
-    for tr in trees.itervalues():
-    	leaves=[]
-    	for leaf in tr.tree_twisted_leaves():
-    		leaves.append(leaf)
-    	l.append(leaves)
-    count = 0
-    for a in l:
-        for i  in range(1,len(a)-1):
-            if a[i] < a[i-1]:
-                count += 1
-    return count
+	""" This function computes a penalty for mis-alphabetized trees
+	"""
+	l=[]
+	for trnum, tr in enumerate(trees.itervalues()):
+		leaves=[]
+		for leaf in tr.tree_twisted_leaves():
+			if trnum==0:
+				leaves.append(leaf)
+			else:
+				for leaflist in l:
+					leafset=set(leaflist)
+					if leaf in leafset:
+						leaves.append(leaf)
+			
+		l.append(leaves)
+	count = 0
+	for a in l:
+		for i  in range(1,len(a)-1):
+			if a[i] < a[i-1]:
+				count += 1
+	return count
 
 def write(filename, tree_list):
     with open(filename, 'w') as f:
@@ -143,7 +167,7 @@ def minimize_this(trees):
     values to adjust the importance of alphabetizing vs. tangling
     or you can add your own measure to be minimized. """
     #return tangle_count_all() + (alpha_count_all()*0.5)
-    #print flatness_count_all(trees) + tangle_count_all(trees)  + (alpha_count_all(trees)*0.5)
+    #print flatness_count_all(trees), tangle_count_all(trees), (alpha_count_all(trees)*0.5)
     return flatness_count_all(trees) + tangle_count_all(trees)  + (alpha_count_all(trees)*0.5)
 
 
@@ -287,154 +311,199 @@ def add_twist_functions(tree):
 
 
 tree_list = []
-g_starting_intensity = 10
-g_number_of_iterations_before_reducing_intensity = 50
-g_max_count = 5000
-g_max_iterations_without_improvement = 5000
+g_starting_intensity = 50
+g_number_of_iterations_before_reducing_intensity = 5
+g_max_count = 100
+g_max_iterations_without_improvement = 5
 g_intensity_reduction = 0.95
 g_skip_first_tree = False
 
 def process_trees(tree_list, starting_intensity=g_starting_intensity,
-    number_of_iterations_before_reducing_intensity=g_number_of_iterations_before_reducing_intensity,
-    max_count = g_max_count,
-    max_iterations_without_improvement = g_max_iterations_without_improvement,
-    intensity_reduction = g_intensity_reduction,
-    skip_first_tree = g_skip_first_tree,
-    output_filename = g_output_filename, verbose = g_verbose):
-    """Calculate an initial minimization function value,
-    then iteratively take each tree in turn,
-    apply _intensity_ random twists to it, and compare the
-    overall result with *all* trees for the minimization function.
-    Slowly reduce the intensity over time as continued operation
-    at a given intensity level ceases to produce improvement.
-    """
-    first_tree = None
-    trees = {}
-    twists = {}
-    orders = {}
-    
-    for x, tr in enumerate(tree_list):
-        if first_tree == None:
-            first_tree = tr.label
-        if verbose:
-            print tr
-            
-        trees[tr.label] = tr
-        tr=add_twist_functions(tr)
-        tree_list[x]=tr
-        #twists[tr.label] = tr.get_twists()
-        orders[tr.label] = tr.get_orders()
+	number_of_iterations_before_reducing_intensity=g_number_of_iterations_before_reducing_intensity,
+	max_count = g_max_count,
+	max_iterations_without_improvement = g_max_iterations_without_improvement,
+	intensity_reduction = g_intensity_reduction,
+	skip_first_tree = g_skip_first_tree,
+	output_filename = g_output_filename, verbose = g_verbose):
+	"""Calculate an initial minimization function value,
+	then iteratively take each tree in turn,
+	apply _intensity_ random twists to it, and compare the
+	overall result with *all* trees for the minimization function.
+	Slowly reduce the intensity over time as continued operation
+	at a given intensity level ceases to produce improvement.
+	"""
+	first_tree = None
+	trees = {}
+	twists = {}
+	orders = {}
 	
-    
-    if verbose:
-	    print tangle_count_all(trees)
-    #write(output_filename,tree_list)
-
-    best = minimize_this(trees)
-    count = 1
-    intensity = starting_intensity
-    last_success = 0
-    flip = 1
-    while intensity > 0 and count < max_count:
+	for x, tr in enumerate(tree_list):
+		if first_tree == None:
+			first_tree = tr.label
+#		if verbose:
+#			print tr
+		    
+		trees[tr.label] = tr
+		tr=add_twist_functions(tr)
+		tree_list[x]=tr
+		#twists[tr.label] = tr.get_twists()
+		orders[tr.label] = tr.get_orders()
+	
+	
+	if verbose:
+		print "Starting tree =", tangle_count_all(trees)
+		sys.stdout.flush()
+	#write(output_filename,tree_list)
+	
+	best = minimize_this(trees)
+	count = 0
+	intensity = starting_intensity
+	last_success = 0
+	flip = 1
+	while intensity > 0 and count < max_count:
         
-    	if verbose:
-	        print "Iteration " + str(count) + ", Intensity " + str(intensity) + ", Optimize " + str(best) + ", Tangle Count " + str(tangle_count_all(trees, Final=False))
-        for i in range(0,len(trees)):
-            if not skip_first_tree or trees[trees.keys()[i]].label <> first_tree:
-                #t = list(twists[twists.keys()[i]])
-                #t2 = list(t)
-		o = copy.deepcopy(orders[orders.keys()[i]])
-		o2 = copy.deepcopy(o)
-		#print o
-		#print o2
-		
-		totcount=0
-		posdict={}
-		for x in range(len(o)):
-		    z=totcount
-		    for y in range(len(o[x])):
-		        posdict[totcount]=x
-			totcount+=1
+		if verbose:
+			if count>0:
+				print "Iteration " + str(count) + ", Optimize " + str(best) + ", Tangle Count " + str(tangle_count_all(trees, Final=False))
+				sys.stdout.flush()
+		for i in range(0,len(trees)):
+			if not skip_first_tree or trees[trees.keys()[i]].label <> first_tree:
 		    
-		used_nums=[]
-                for j in range(0,intensity):
-                    #t[random.randint(0,len(t)-1)] += 1
-		    
-		    r=random.randint(0,totcount-1)
-		    randnum=posdict[r]
-		    #print r, posdict[r],
-		    
-		    #if randnum in used_nums and len(o[randnum])>2:
-		    #    continue
-		    #else:
-		    #    used_nums.append(randnum)
-		    
-		    if len(o[randnum])==2:
-		        o[randnum].reverse()
-		    
-		    elif len(o[randnum])>2:
-		        randpos=random.randint(0,len(o[randnum])-2)
-			randnewpos=randpos
-			while randnewpos==randpos:
-    			    randnewpos=random.randint(0,len(o[randnum])-2)
-			   
-			if randnewpos>randpos:
-		            posvalue=o[randnum][randpos]
-			    while randpos<randnewpos:
-			        o[randnum][randpos]=o[randnum][randpos+1]
-				randpos+=1
-			    o[randnum][randnewpos]=posvalue
-			else:
-			    posvalue=o[randnum][randpos]
-			    while randpos>randnewpos:
-			        o[randnum][randpos]=o[randnum][randpos-1]
-				randpos-=1
-			    o[randnum][randnewpos]=posvalue
-			#print posvalue
-			
-		
-		#print o
-		#sys.exit()
-                #trees[trees.keys()[i]].apply_twists(t)
-		trees[trees.keys()[i]].apply_orders(o)
-                cur = minimize_this(trees)
-		#print cur, best
-		
-                if cur < best:
-                    """ If we succeeded in finding a better result, preserve it """
-                    last_success = 0
-                    #twists[twists.keys()[i]] = t
-		    orders[orders.keys()[i]] = copy.deepcopy(o)
-                    best = cur
-                    #write("result" + str(flip) + ".dat",tree_list)
-                    flip = 3 - flip 
-                else:
-                    """ Our new result is no better, keep the old tree """
-                    #trees[trees.keys()[i]].apply_twists(t2)
-		    #print o2
-		    trees[orders.keys()[i]].apply_orders(o2)
-                    last_success += 1
-                if last_success > number_of_iterations_before_reducing_intensity and intensity > 1:
-                    intensity = int(intensity * intensity_reduction)
-                    last_success = 0
-                if last_success > max_iterations_without_improvement and intensity == 1:
-                    intensity = 0
-        count += 1
-    print best, str(tangle_count_all(trees, Final=True))
+				o = copy.deepcopy(orders[orders.keys()[i]])
+				o2 = copy.deepcopy(o)
+				
+				totcount=0
+				posdict={}
+				for x in range(len(o)):
+					z=totcount
+					for y in range(len(o[x])):
+						posdict[totcount]=[x,y]
+						totcount+=1
+				
+				
+				used_nums=[]
+				
+				keylist=posdict.keys()
+				random.shuffle(keylist)
+				#for j in range(0,intensity):
+		                    #t[random.randint(0,len(t)-1)] += 1
+				  
 
-    for i in range(0,len(tree_list)):
-        if not skip_first_tree or i > 0:
+				for r in keylist:
+					#r=random.randint(0,totcount-1)
+					randnum=posdict[r]
+				    #print r, posdict[r],
+				    
+#					if randnum in used_nums and len(o[randnum])>2:
+#						continue
+#					else:
+#						used_nums.append(randnum)
+					
+#					if len(o[randnum])==2:
+#						o[randnum].reverse()
+#					
+#					elif len(o[randnum])>2:
+#						randpos=random.randint(0,len(o[randnum])-2)
+#						randnewpos=randpos
+#						while randnewpos==randpos:
+#							randnewpos=random.randint(0,len(o[randnum])-2)
+#						
+#						if randnewpos>randpos:
+#							posvalue=o[randnum][randpos]
+#							while randpos<randnewpos:
+#								o[randnum][randpos]=o[randnum][randpos+1]
+#							randpos+=1
+#							o[randnum][randnewpos]=posvalue
+#						else:
+#							posvalue=o[randnum][randpos]
+#							while randpos>randnewpos:
+#								o[randnum][randpos]=o[randnum][randpos-1]
+#							randpos-=1
+#							o[randnum][randnewpos]=posvalue
+					
+					#oldorder=copy.deepcopy(o[randnum[0]])
+					value=o[randnum[0]][randnum[1]]
+					order_minus_node=o[randnum[0]][:randnum[1]]+o[randnum[0]][randnum[1]+1:]
+					
+					
+					
+					neworders=copy.deepcopy(o)
+					neworder=[value]+order_minus_node
+					neworders[randnum[0]]=neworder
+					trees[trees.keys()[i]].apply_orders(neworders)
+					curbest = minimize_this(trees)
+					curbestpos=randnum[1]
+					#print j, value, neworders[randnum[0]], curbest, curbestpos
+					bestorder=copy.deepcopy(neworders)
+					for x in range(0,len(neworders[randnum[0]])-1):
+						neworders[randnum[0]][x]=neworders[randnum[0]][x+1]
+						neworders[randnum[0]][x+1]=value
+						trees[trees.keys()[i]].apply_orders(neworders)
+						curval = minimize_this(trees)
+						#print j, value, neworders[randnum[0]], curbest, curbestpos
+						if curval<curbest:
+							curbest=curval
+							curbestpos=x
+							bestorder=copy.deepcopy(neworders)
+					
+					#print bestorder	
+					o=copy.deepcopy(bestorder)
+					totcount=r
+#					print posdict
+					while totcount in posdict and posdict[totcount][0]==randnum[0]:
+						totcount-=1
+					totcount+=1
+					for y in o[randnum[0]]:
+						posdict[totcount]=[randnum[0],y]
+						totcount+=1
+#					print posdict
+#					print r, randnum
+#					print o[randnum[0]]
+#					sys.exit()
+		
+		#print o
+				#sys.exit()
+				#trees[trees.keys()[i]].apply_twists(t)
+				trees[trees.keys()[i]].apply_orders(o)
+				cur = minimize_this(trees)
+				#print cur, best
+				
+				if cur < best:
+					""" If we succeeded in finding a better result, preserve it """
+					last_success = 0
+					#twists[twists.keys()[i]] = t
+					orders[orders.keys()[i]] = copy.deepcopy(o)
+					best = cur
+					#write("result" + str(flip) + ".dat",tree_list)
+					flip = 3 - flip 
+				else:
+					""" Our new result is no better, keep the old tree """
+					#trees[trees.keys()[i]].apply_twists(t2)
+					#print o2
+					trees[orders.keys()[i]].apply_orders(o2)
+					last_success += 1
+#				if last_success > number_of_iterations_before_reducing_intensity and intensity > 1:
+#					intensity = int(intensity * intensity_reduction)
+#					last_success = 0
+				if last_success >= max_iterations_without_improvement:# and intensity == 1:
+					intensity = 0
+				count += 1
+				
+	print "Final tree =", best, str(tangle_count_all(trees, Final=False))
+
+	for i in range(0,len(tree_list)):
+		if not skip_first_tree or i > 0:
 #            prelist=[]
 #            for node in tree_list[i].leaf_iter():
 #            	prelist.append(node.taxon.label)
 #            print prelist
-            tree_list[i].rotate_nodes()
+			tree_list[i].rotate_nodes()
 #            prelist=[]
 #            for node in tree_list[i].leaf_iter():
 #            	prelist.append(node.taxon.label)
 #            print prelist
         
-    return (tree_list[0], tree_list[1])
+	return (tree_list[0], tree_list[1])
     
     
 #    write(output_filename,tree_list)

@@ -100,7 +100,7 @@ def main():
 	group.add_option("-2", "--proportion", action="store", dest="treeproportion", help="Proportion of page to take up with the tree", default=0.3, type='float')
 	group.add_option("-s", "--support", action="store", dest="tree_support", help="Scale tree branch widths by value. For newick trees this can be any value stored in the tree. Otherwise, use 'support' to scale by branch support values (if present)", default="")
 	group.add_option("-7", "--height_HPD", action="store_true", dest="show_height_HPD", help="show branch 95% HPD heights (if present in tree) [default= %default]", default=False)
-	group.add_option("-6", "--brlens", action="store_true", dest="show_branchlengths", help="Label branches with branchlengths", default=False)
+	group.add_option("-6", "--brlabels", action="store", dest="branch_labels", help="Label branches with value. For newick trees this can be any value stored in the tree. Otherwise, use 'support' to label with branch support values (if present), or 'brlen' to label with branch lengths.", default="")
 	group.add_option("-M", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root tree", default=False)
 	group.add_option("-L", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="ladderise tree (choose from right or left) [default= %default]", type="choice", default=None)
 	group.add_option("-z", "--names_as_shapes", action="store", choices=['circle', 'square', 'rectangle', 'auto'], dest="names_as_shapes", help="Use shapes rather than taxon names in tree (choose from circle) [default= %default]", type="choice", default="auto")
@@ -692,8 +692,9 @@ def read_dendropy_tree(treefile):
 		
 		#some code here to make the branch lengths equal - not actually possible to choose this yet
 		t.draw_scale=True
-		if options.show_branchlengths:
+		if options.branch_labels=="brlen":
 			t.draw_scale=False
+			
 		
 		equal_branches=False
 		if equal_branches:
@@ -1169,6 +1170,26 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 		
 		horizontalpos=(node.distance_from_root()*horizontal_scaling_factor)+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
 		
+		brlabel=''
+		
+		if options.branch_labels!="":
+			if options.branch_labels=="brlen" and node.edge_length>0:
+				brlabel=str(node.edge_length).rstrip('0').rstrip('.')
+			elif options.branch_labels=="support" and node.edge_length>0.0001:
+				if (treeObject.schema=="nexus" and hasattr(node, "posterior") and node.posterior!=None):
+					brlabel=str(float(node.posterior)).rstrip('0').rstrip('.')
+				elif hasattr(node, "label") and node.label!=None:
+					brlabel=str(float(node.label)).rstrip('0').rstrip('.')
+			else:
+				if hasattr(node, "annotations"):
+					for a in node.annotations:
+						if a.name==options.branch_labels:
+							try:
+								brlabel=str(float(a.value)).rstrip('0').rstrip('.')
+							except:
+								brlabel=''
+		
+		
 		if options.tree_support!="":
 			max_width=vertical_scaling_factor*0.8
 			
@@ -1286,8 +1307,8 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 		d.add(Line(horizontalpos-(vlinewidth/2), vertpos, (horizontalpos-(vlinewidth/2))+branchlength, vertpos, strokeWidth=linewidth, strokeColor=branch_colour))
 		
 		#If the user has chosen to show branchlengths on branches, draw them now
-		if options.show_branchlengths and node.edge_length>0:
-			d.add(String((horizontalpos-(linewidth/2))+(branchlength/2), vertpos+linewidth, str(node.edge_length).rstrip('0').rstrip('.'), textAnchor='middle', fontSize=fontsize*0.9, fillColor='black', fontName='Helvetica'))
+		if brlabel!="":
+			d.add(String((horizontalpos-(linewidth/2))+(branchlength/2), vertpos+linewidth, brlabel, textAnchor='middle', fontSize=fontsize*0.9, fillColor='black', fontName='Helvetica'))
 
 
 		#draw the vertical part of the branch that goes to the parent node
@@ -2298,7 +2319,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 			branchlength=linewidth
 		d.add(Line(horizontalpos-(linewidth/2), vertpos, (horizontalpos-(linewidth/2))+branchlength, vertpos, strokeWidth=linewidth, strokeColor=branch_colour))
 		
-		if options.show_branchlengths and treeObject.node(node).data.branchlength>0:
+		if options.branch_labels!="" and treeObject.node(node).data.branchlength>0:
 			d.add(String((horizontalpos-(linewidth/2))+(branchlength/2), vertpos+linewidth, str(treeObject.node(node).data.branchlength).rstrip('0').rstrip('.'), textAnchor='middle', fontSize=fontsize*0.9, fillColor='black', fontName='Helvetica'))
 		
 		
@@ -2544,7 +2565,7 @@ def drawtree(treeObject, treeheight, treewidth, xoffset, yoffset, name_offset=5)
 	treebase+=yoffset
 	treetop+=yoffset
 	
-	if not options.show_branchlengths:
+	if tree.draw_scale:
 		draw_scale()
 	
 	if fontsize>6:
