@@ -53,17 +53,22 @@ g_verbose=False
 def tangle_count_all(trees, Final=False):
 	""" This function applies a tangle counting function to every combination of trees
 	"""
+	setlist=[]
+	for tr in trees.itervalues():
+		trset=set([])
+		for tax in tr.taxon_set:
+			trset.add(tax.label)
+		setlist.append(trset)
+	
+	inboth=setlist[0].union(setlist[1])
+		
+	
 	l=[]
 	for trnum, tr in enumerate(trees.itervalues()):
 		leaves=[]
 		for leaf in tr.tree_twisted_leaves():
-			if trnum==0:
+			if leaf in inboth:
 				leaves.append(leaf)
-			else:
-				for leaflist in l:
-					leafset=set(leaflist)
-					if leaf in leafset:
-						leaves.append(leaf)
 						
 		l.append(leaves)
 		if Final:
@@ -93,17 +98,22 @@ def tangle_count(a, b):
 
 def flatness_count_all(trees):
 	""" This function computes a penalty based on the angle of the lines"""
+	setlist=[]
+	for tr in trees.itervalues():
+		trset=set([])
+		for tax in tr.taxon_set:
+			trset.add(tax.label)
+		setlist.append(trset)
+	
+	inboth=setlist[0].union(setlist[1])
+		
+	
 	l=[]
 	for trnum, tr in enumerate(trees.itervalues()):
 		leaves=[]
 		for leaf in tr.tree_twisted_leaves():
-			if trnum==0:
+			if leaf in inboth:
 				leaves.append(leaf)
-			else:
-				for leaflist in l:
-					leafset=set(leaflist)
-					if leaf in leafset:
-						leaves.append(leaf)
 						
 		l.append(leaves)
 #    l = [tr.leaves for tr in trees.itervalues()]
@@ -130,18 +140,23 @@ def flatness_count(a, b):
 def alpha_count_all(trees):
 	""" This function computes a penalty for mis-alphabetized trees
 	"""
+	setlist=[]
+	for tr in trees.itervalues():
+		trset=set([])
+		for tax in tr.taxon_set:
+			trset.add(tax.label)
+		setlist.append(trset)
+	
+	inboth=setlist[0].union(setlist[1])
+		
+	
 	l=[]
 	for trnum, tr in enumerate(trees.itervalues()):
 		leaves=[]
 		for leaf in tr.tree_twisted_leaves():
-			if trnum==0:
+			if leaf in inboth:
 				leaves.append(leaf)
-			else:
-				for leaflist in l:
-					leafset=set(leaflist)
-					if leaf in leafset:
-						leaves.append(leaf)
-			
+						
 		l.append(leaves)
 	count = 0
 	for a in l:
@@ -175,78 +190,90 @@ def minimize_this(trees):
 
 def add_twist_functions(tree):
 
-    
-    tree.twist_apply_list=[]
-    tree.order_apply_list=[]
-    for node in tree.preorder_internal_node_iter():
+	tree.twist_apply_list=[]
+	tree.order_apply_list=[]
+	for node in tree.preorder_internal_node_iter():
         
-        node.twist=0
-        tree.twist_apply_list.append(node)
-	tree.order_apply_list.append(node)
-	node.order=[]
-	for x, child in enumerate(node.child_nodes()):
-	    node.order.append(x)
+		node.twist=0
+		tree.twist_apply_list.append(node)
+		tree.order_apply_list.append(node)
+		
+		node.order=[]
+		
+		for x, child in enumerate(node.child_nodes()):
+			node.order.append(x)
         
-        def set_twist(self, n):
-            self.twist = n
-        node.set_twist = types.MethodType( set_twist, node )
+		def set_twist(self, n):
+			self.twist = n
+		node.set_twist = types.MethodType( set_twist, node )
 	
-	def set_order(self, order):
-            self.order=order
-	node.set_order = types.MethodType( set_order, node)
+		def set_order(self, order):
+			self.order=order
+		node.set_order = types.MethodType( set_order, node)
 	    
-        def get_twisted_children(self):
-            child_list=[]
-            for child in self.child_nodes():
-            	child_list.append(child)
-            d = deque(child_list)
-            d.rotate(self.twist)
-            return d
+		def get_twisted_children(self):
+			child_list=[]
+			for child in self.child_nodes():
+				child_list.append(child)
+			d = deque(child_list)
+			d.rotate(self.twist)
+			return d
         
-        node.get_twisted_children = types.MethodType( get_twisted_children, node )
+		node.get_twisted_children = types.MethodType( get_twisted_children, node )
         
-	def get_reordered_children(self):
-	    child_list=[]
-	    for child in self.child_nodes():
-	        child_list.append(child)
-	    d=[]
-	    for order in self.order:
-	        d.append(child_list[order])
-	    return d
+		def get_reordered_children(self):
+			child_list=[]
+			for child in self.child_nodes():
+				child_list.append(child)
+			d=[]
+			for order in self.order:
+				d.append(child_list[order])
+			return d
         
-	node.get_reordered_children = types.MethodType( get_reordered_children, node)
+		node.get_reordered_children = types.MethodType( get_reordered_children, node)
+		
+		def get_ordered_names(self):
+			child_list=[]
+			for child in self.child_nodes():
+				child_list.append(child)
+			d=[]
+			for order in self.order:
+				if child_list[order].is_leaf():
+					d.append(child_list[order].taxon.label)
+				else:
+					d.append(str(child_list[order]))
+			return d
+        
+		node.get_ordered_names = types.MethodType( get_ordered_names, node)
 	
-        def rotate_twists(self):
-            for i in range(0,self.twist):
-                self._child_nodes.reverse()
+		def rotate_twists(self):
+			for i in range(0,self.twist):
+				self._child_nodes.reverse()
         
-        node.rotate_twists = types.MethodType( rotate_twists, node )
+		node.rotate_twists = types.MethodType( rotate_twists, node )
 	
 	
-	def rotate_orders(self):
-	    child_list=[]
-	    tmp1=[]
-	    for child in self.child_nodes():
-	        if child.is_leaf():
-		   tmp1.append(child.taxon.label) 
-	    	child_list.append(self.remove_child(child))
+		def rotate_orders(self):
+			child_list=[]
+			for child in self.child_nodes():
+				if child.is_leaf():
+					child_list.append(self.remove_child(child))
 	    #print tmp1
-	    ordered_child_list=[]
-	    for childnum in self.order:
-	        ordered_child_list.append(child_list[childnum])
-	    self.set_child_nodes(ordered_child_list)
-	    new_child_list=[]
-	    tmp2=[]
-	    for child in self.child_nodes():
-	        if child.is_leaf():
-		    tmp2.append(child.taxon.label)
-	        new_child_list.append(child)
+			ordered_child_list=[]
+			for childnum in self.order:
+				ordered_child_list.append(child_list[childnum])
+			self.set_child_nodes(ordered_child_list)
+			new_child_list=[]
+	    
+			for child in self.child_nodes():
+				if child.is_leaf():
+					new_child_list.append(child)
 	    #print tmp2
 	    
-        node.rotate_orders = types.MethodType( rotate_orders, node)
+		node.rotate_orders = types.MethodType( rotate_orders, node)
 	
     
-    for x, node in enumerate(tree.postorder_node_iter()):
+	for x, node in enumerate(tree.postorder_node_iter()):
         
         #def twisted_leaves(self, d):   
         #    if self.is_leaf():
@@ -256,57 +283,61 @@ def add_twist_functions(tree):
         #        for n in c:
         #            n.twisted_leaves(d)
         
-	def twisted_leaves(self, d):
-	    if self.is_leaf():
-	        d.append(self.taxon.label)
-	    else:
-	        c = self.get_reordered_children()
-		for n in c:
-		    n.twisted_leaves(d)
+		def twisted_leaves(self, d):
+			if self.is_leaf():
+				d.append(self.taxon.label)
+			else:
+				c = self.get_reordered_children()
+				for n in c:
+					n.twisted_leaves(d)
 	
 	
-        node.twisted_leaves = types.MethodType( twisted_leaves, node )
+		node.twisted_leaves = types.MethodType( twisted_leaves, node )
         
 
 	
-    def get_twists(self):
-        return [x.twist for x in self.twist_apply_list]
+	def get_twists(self):
+		return [x.twist for x in self.twist_apply_list]
 	
-    tree.get_twists = types.MethodType( get_twists, tree )
+	tree.get_twists = types.MethodType( get_twists, tree )
     
-    def get_orders(self):
-        return [x.order for x in self.order_apply_list]
+	def get_orders(self):
+		return [x.order for x in self.order_apply_list]
 
-    tree.get_orders = types.MethodType( get_orders, tree)
+	tree.get_orders = types.MethodType( get_orders, tree)
 	
-    def apply_twists(self, twists):
-        for i in range(0,min(len(self.twist_apply_list),len(twists))):
-            self.twist_apply_list[i].set_twist(twists[i])
+	def get_ordered_names(self):
+		return [x.get_ordered_names() for x in self.order_apply_list]
+
+	tree.get_ordered_names = types.MethodType( get_ordered_names, tree)
+	
+	def apply_twists(self, twists):
+		for i in range(0,min(len(self.twist_apply_list),len(twists))):
+			self.twist_apply_list[i].set_twist(twists[i])
     
-    tree.apply_twists = types.MethodType( apply_twists, tree )
+	tree.apply_twists = types.MethodType( apply_twists, tree )
     
-    def apply_orders(self, orders):
-        for i in range(0,min(len(self.order_apply_list),len(orders))):
-            self.order_apply_list[i].set_order(orders[i])
+	def apply_orders(self, orders):
+		for i in range(0,min(len(self.order_apply_list),len(orders))):
+			self.order_apply_list[i].set_order(orders[i])
             
-    tree.apply_orders = types.MethodType( apply_orders, tree )
+	tree.apply_orders = types.MethodType( apply_orders, tree )
     
-    def tree_twisted_leaves(self):
-        d = deque()
-        self.seed_node.twisted_leaves(d)
-        return d
+	def tree_twisted_leaves(self):
+		d = deque()
+		self.seed_node.twisted_leaves(d)
+		return d
         
-    tree.tree_twisted_leaves = types.MethodType( tree_twisted_leaves, tree )
+	tree.tree_twisted_leaves = types.MethodType( tree_twisted_leaves, tree )
     
-    def rotate_nodes(self):
-        for node in self.postorder_internal_node_iter():
-        	#node.rotate_twists()
-		node.rotate_orders()
+	def rotate_nodes(self):
+		for node in self.postorder_internal_node_iter():
+			node.rotate_orders()
     
     
-    tree.rotate_nodes = types.MethodType( rotate_nodes, tree )
+	tree.rotate_nodes = types.MethodType( rotate_nodes, tree )
     
-    return tree
+	return tree
 
 
 
@@ -336,6 +367,11 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 	trees = {}
 	twists = {}
 	orders = {}
+	ordered_names = {}
+	
+	if len(tree_list)>2:
+		print "Can only cope with 2 trees"
+		sys.exit()
 	
 	for x, tr in enumerate(tree_list):
 		if first_tree == None:
@@ -348,6 +384,7 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 		tree_list[x]=tr
 		#twists[tr.label] = tr.get_twists()
 		orders[tr.label] = tr.get_orders()
+		ordered_names[tr.label] = tr.get_ordered_names()
 	
 	
 	if verbose:
@@ -370,14 +407,16 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 			if not skip_first_tree or trees[trees.keys()[i]].label <> first_tree:
 		    
 				o = copy.deepcopy(orders[orders.keys()[i]])
+				on = trees[trees.keys()[i]].get_ordered_names()
 				o2 = copy.deepcopy(o)
 				
 				totcount=0
 				posdict={}
+				dict_to_dict={}
 				for x in range(len(o)):
 					z=totcount
 					for y in range(len(o[x])):
-						posdict[totcount]=[x,y]
+						posdict[totcount]=[x,y,on[x][y], totcount]
 						totcount+=1
 				
 				
@@ -388,10 +427,15 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 				#for j in range(0,intensity):
 		                    #t[random.randint(0,len(t)-1)] += 1
 				  
-
+				moved_set=set([])
+				randnum_set=set([])
+#				print len(keylist),
 				for r in keylist:
 					#r=random.randint(0,totcount-1)
 					randnum=posdict[r]
+#					moved_set.add(randnum[3])
+#					randnum_set.add(r)
+#					print r, randnum[2]
 				    #print r, posdict[r],
 				    
 #					if randnum in used_nums and len(o[randnum])>2:
@@ -454,7 +498,9 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 						totcount-=1
 					totcount+=1
 					for y in o[randnum[0]]:
-						posdict[totcount]=[randnum[0],y]
+						oldposdict=posdict[totcount]
+						#print totcount, randnum[0],y,randnum[2],randnum[3], oldposdict
+						posdict[totcount]=[randnum[0],y,oldposdict[2],oldposdict[3]]
 						totcount+=1
 #					print posdict
 #					print r, randnum
@@ -462,8 +508,8 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 #					sys.exit()
 		
 		#print o
-				#sys.exit()
-				#trees[trees.keys()[i]].apply_twists(t)
+#				print len(moved_set)
+#				sys.exit()
 				trees[trees.keys()[i]].apply_orders(o)
 				cur = minimize_this(trees)
 				#print cur, best

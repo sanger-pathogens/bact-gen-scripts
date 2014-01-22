@@ -551,15 +551,17 @@ def get_colours_for_list(data_list, data_type="discrete", data_max=float("-Inf")
 	s_end=control.metadata_colour_end_saturation
 	v_start=control.metadata_colour_start_value
 	v_end=control.metadata_colour_end_value
-	start_angle=control.metadata_colour_start_angle
-	end_angle=control.metadata_colour_end_angle
-	direction=control.metadata_colour_direction
+#	start_angle=control.metadata_colour_start_angle
+#	end_angle=control.metadata_colour_end_angle
+#	direction=control.metadata_colour_direction
+	
+	print start_angle, end_angle, direction
 	
 	colour_db={}
 	if data_type=="continuous" and data_max==float("-Inf"):
-		data_max=max(colour_list)
+		data_max=max(data_list)
 	if data_type=="continuous" and data_min==float("Inf"):
-		data_min=min(colour_list)
+		data_min=min(data_list)
 	
 	if direction=="clockwise" and start_angle>end_angle:
 		rotation_degrees=start_angle-end_angle
@@ -592,6 +594,7 @@ def get_colours_for_list(data_list, data_type="discrete", data_max=float("-Inf")
 			proportion=((float(value)-data_min)/((data_max-data_min)))
 			
 			h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
+			
 			v=v_start+(proportion*(v_end-v_start))
 			s=s_start+(proportion*(s_end-s_start))
 			red, green, blue = hsv_to_rgb(h,s,v)
@@ -868,8 +871,8 @@ def read_dendropy_tree(treefile):
 					for a in node.annotations:
 						if a.name==options.colour_by_annotation and a.value not in annotation_list:
 							annotation_list.append(a.value)	
-							
-			colour_dictionary=get_colours_for_list(annotation_list)
+			annotation_list.sort()
+			colour_dictionary=get_colours_for_list(annotation_list, data_type="continuous", start_angle=240.0, end_angle=0.0)
 			
 			for node in t.postorder_node_iter():
 				if hasattr(node, "annotations"):
