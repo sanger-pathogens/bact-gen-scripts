@@ -508,8 +508,10 @@ if __name__ == "__main__":
 			sys.stdout.flush()
 			
 			if options.number>1:
+				print bsub+' -J "'+tmpname+'_ml" '+RAxML+' -f d -s '+tmpname+'.phy -N '+str(options.number)+' -m '+mlmodel+' -n ml_'+options.suffix
 				os.system(bsub+' -J "'+tmpname+'_ml" '+RAxML+' -f d -s '+tmpname+'.phy -N '+str(options.number)+' -m '+mlmodel+' -n ml_'+options.suffix)
 			else:
+				print bsub+' -J "'+tmpname+'_ml" '+RAxML+' -f d -s '+tmpname+'.phy -m '+mlmodel+' -n ml_'+options.suffix
 				os.system(bsub+' -J "'+tmpname+'_ml" '+RAxML+' -f d -s '+tmpname+'.phy -m '+mlmodel+' -n ml_'+options.suffix)
 			outputname="RAxML_result."+tmpname
 			
@@ -564,6 +566,7 @@ if __name__ == "__main__":
 				if options.bsuberr:
 					bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
 				if host=="farm3" or host=="pcs5":
+					print bsub+' '+RAxML_DIR+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix
 					os.system(bsub+' '+RAxML_DIR+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
 				else:
 					os.system(bsub+' '+RAxML_DIR+' -f b -t RAxML_result.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
