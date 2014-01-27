@@ -922,7 +922,7 @@ if __name__ == "__main__":
 			#print len(tmpCDSseq), len(refCDSseq), len(CDSbasenumbers)
 			
 			dnbydsstats[sequence], snptypes[sequence], AAfromtypes[sequence], AAtotypes[sequence]=dnbyds(refCDSseq, tmpCDSseq, CDSbasenumbers)
-			
+			#print dnbydsstats[sequence]
 			#N, S, dN, dS, pN, pS, varianceS, varianceN, z, (len(CDS)-gapcount), Nd, Sd
 			
 			if dnbydsstats[sequence][3]!=0:

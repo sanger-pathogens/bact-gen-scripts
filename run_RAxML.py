@@ -478,7 +478,7 @@ if __name__ == "__main__":
 		else:
 			print "Using parsimony tree"
 		
-		os.system(bsub+' -J "'+tmpname+'_dist" '+RAxML_DIR+' -f x -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
+		os.system(bsub+' -J "'+tmpname+'_dist" '+RAxML+' -f x -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
 		os.system('bsub -w \'ended('+tmpname+'_dist)\' rm -rf \'*'+tmpname+'*\'')
 	#If they want to make a tree rather than distances
 	else:
