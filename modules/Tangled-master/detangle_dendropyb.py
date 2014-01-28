@@ -260,6 +260,7 @@ def add_twist_functions(tree):
 					child_list.append(self.remove_child(child))
 	    #print tmp1
 			ordered_child_list=[]
+			print child_list
 			for childnum in self.order:
 				ordered_child_list.append(child_list[childnum])
 			self.set_child_nodes(ordered_child_list)
