@@ -256,20 +256,20 @@ def add_twist_functions(tree):
 		def rotate_orders(self):
 			child_list=[]
 			for child in self.child_nodes():
-				if child.is_leaf():
-					child_list.append(self.remove_child(child))
-	    #print tmp1
+				#if child.is_leaf():
+				child_list.append(self.remove_child(child))
+	    	
 			ordered_child_list=[]
-			print child_list
+#			print child_list, self.order
 			for childnum in self.order:
 				ordered_child_list.append(child_list[childnum])
 			self.set_child_nodes(ordered_child_list)
-			new_child_list=[]
-	    
-			for child in self.child_nodes():
-				if child.is_leaf():
-					new_child_list.append(child)
-	    #print tmp2
+#			new_child_list=[]
+#	    
+#			for child in self.child_nodes():
+#				if child.is_leaf():
+#					new_child_list.append(child)
+		   
 	    
 		node.rotate_orders = types.MethodType( rotate_orders, node)
 	
