@@ -611,6 +611,8 @@ if __name__ == "__main__":
 	append=curseqlist.append
 	for linea in open(options.inputfile, "rU"):
 		linea=linea.strip()
+		if len(linea)==0:
+			continue
 		if linea[0]==">":
 			if count>-1:
 				sequence=''.join(curseqlist)

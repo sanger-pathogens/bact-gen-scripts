@@ -388,34 +388,25 @@ if __name__ == "__main__":
 	host=getclustername()
 	print "Running on "+host
 	
-	if host=="farm3" or host=="pcs5":
-		if options.threads>1:
-			if options.version=="AVX":
-				RAxML=AVX_PARALLEL_RAxML_DIR+" -T "+str(options.threads)
-				RAxML_DIR=AVX_RAxML_DIR
-			elif options.version=="SSE3":
-				RAxML=SSE3_PARALLEL_RAxML_DIR+" -T "+str(options.threads)
-				RAxML_DIR=SSE3_RAxML_DIR
-			else:
-				DoError("There shouldn't be any other options here")
+	if options.threads>1:
+		if options.version=="AVX":
+			RAxML=AVX_PARALLEL_RAxML_DIR+" -T "+str(options.threads)
+			RAxML_DIR=AVX_RAxML_DIR
+		elif options.version=="SSE3":
+			RAxML=SSE3_PARALLEL_RAxML_DIR+" -T "+str(options.threads)
+			RAxML_DIR=SSE3_RAxML_DIR
 		else:
-			if options.version=="AVX":
-				RAxML=AVX_RAxML_DIR
-				RAxML_DIR=AVX_RAxML_DIR
-			elif options.version=="SSE3":
-				RAxML=SSE3_RAxML_DIR
-				RAxML_DIR=SSE3_RAxML_DIR
-			else:
-				DoError("There shouldn't be any other options here")
-		print "Using "+options.version+" version of RAxML"
-	elif options.threads>1:
-		print "Parallelisation only available on farm3. Setting threads to 1"	
-		RAxML=RAxML_DIR
-		options.version="SSE3"
-		options.threads=1
+			DoError("There shouldn't be any other options here")
 	else:
-		RAxML=RAxML_DIR
-		options.version="SSE3"
+		if options.version=="AVX":
+			RAxML=AVX_RAxML_DIR
+			RAxML_DIR=AVX_RAxML_DIR
+		elif options.version=="SSE3":
+			RAxML=SSE3_RAxML_DIR
+			RAxML_DIR=SSE3_RAxML_DIR
+		else:
+			DoError("There shouldn't be any other options here")
+	print "Using "+options.version+" version of RAxML"
 		
 	
 	bsubcommand=["bsub"]
@@ -432,10 +423,7 @@ if __name__ == "__main__":
 	#bsubcommand.append("-R \"select[hname!='pcs4l']\"")
 	
 	if options.mem>0:
-		if host=="farm3" or host=="pcs5":
-			bsubcommand.append("-M "+str(options.mem)+'000 -R \'select[mem>'+str(options.mem)+'000] rusage[mem='+str(options.mem)+'000]\'')
-		else:
-			bsubcommand.append("-M "+str(options.mem)+'000000 -R \'select[mem>'+str(options.mem)+'000] rusage[mem='+str(options.mem)+'000]\'')
+		bsubcommand.append("-M "+str(options.mem)+'000 -R \'select[mem>'+str(options.mem)+'000] rusage[mem='+str(options.mem)+'000]\'')
 	
 	if options.threads>1:
 		bsubcommand.append('-n '+str(options.threads)+' -R "span[hosts=1]"')
@@ -530,12 +518,9 @@ if __name__ == "__main__":
 			
 			print bsub
 			
-			if host=="pcs4":
-				os.system(bootstrapstring+' | '+bsub+' -J "'+tmpname+'_boot[1-'+str(numjobs)+']%15"')
-			else:
-				os.system(bootstrapstring+' | '+bsub+' -J "'+tmpname+'_boot[1-'+str(numjobs)+']"')
+			os.system(bootstrapstring+' | '+bsub+' -J "'+tmpname+'_boot[1-'+str(numjobs)+']"')
 				
-			bsub='" | bsub -w \'ended('+tmpname+'_boot)\' -J "'+tmpname+'_cat"'
+			bsub='" | bsub -M 100 -R \'select[mem>100] rusage[mem=100]\' -w \'ended('+tmpname+'_boot)\' -J "'+tmpname+'_cat"'
 			if options.bsubout:
 				bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
 			if options.bsuberr:
@@ -545,37 +530,30 @@ if __name__ == "__main__":
 			
 			#When the ml and bootstrap replicates are complete, put the bootstrap numbers onto the nodes of the ml tree
 			if options.number>1:
-				if host=="farm3" or host=="pcs5":
-					bsubcommand=RAxML+" -f b -t RAxML_bestTree.ml_"+options.suffix+" -z RAxML_bootstrap.boot_"+options.suffix+" -s "+tmpname+".phy -m "+model+" -n "+options.suffix+"'"
-				else:
-					bsubcommand="echo \'x=$(grep \'Best\' RAxML_info.ml_"+options.suffix+" | awk \"{print \$6}\" |tr -d \':\' ) && cp RAxML_result.ml_"+options.suffix+".RUN.${x} RAxML_result.ml_"+options.suffix+" && "+RAxML+" -f b -t RAxML_result.ml_"+options.suffix+" -z RAxML_bootstrap.boot_"+options.suffix+" -s "+tmpname+".phy -m "+model+" -n "+options.suffix+"'"
+			
+				bsubcommand=RAxML+" -f b -t RAxML_bestTree.ml_"+options.suffix+" -z RAxML_bootstrap.boot_"+options.suffix+" -s "+tmpname+".phy -m "+model+" -n "+options.suffix+"'"
 				
-				bsub=' | bsub -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
+				bsub=' | bsub -M 100 -R \'select[mem>100] rusage[mem=100]\'  -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
 				if options.bsubout:
 					bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
 				if options.bsuberr:
 					bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
 				os.system(bsubcommand+bsub)
 			else:
-				if host=="farm3" or host=="pcs5":
-					bsub='bsub -M 2000 -R \'select[mem>2000] rusage[mem=2000]\' -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
-				else:
-					bsub='bsub -M 2000000 -R \'select[mem>2000] rusage[mem=2000]\' -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
+				bsub='bsub -M 2000 -R \'select[mem>2000] rusage[mem=2000]\' -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
 				if options.bsubout:
 					bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
 				if options.bsuberr:
 					bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
-				if host=="farm3" or host=="pcs5":
-					print bsub+' '+RAxML_DIR+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix
-					os.system(bsub+' '+RAxML_DIR+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
-				else:
-					os.system(bsub+' '+RAxML_DIR+' -f b -t RAxML_result.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
-					
+				
+				print bsub+' '+RAxML_DIR+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix
+				os.system(bsub+' '+RAxML_DIR+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
+				
 	
 			#Clean up all temporary files created	
-			os.system('bsub -w \'ended('+tmpname+'_join)\' rm -rf \'*'+tmpname+'*\'')
+			os.system('bsub -M 100 -R \'select[mem>100] rusage[mem=100]\' -w \'ended('+tmpname+'_join)\' rm -rf \'*'+tmpname+'*\'')
 		elif not options.fast and options.bootstrap==0:
 			#Clean up all temporary files created	
-			os.system('bsub -w \'ended('+tmpname+'_ml)\' rm -rf \'*'+tmpname+'*\'')
+			os.system('bsub -M 100 -R \'select[mem>100] rusage[mem=100]\' -w \'ended('+tmpname+'_ml)\' rm -rf \'*'+tmpname+'*\'')
 		
 
