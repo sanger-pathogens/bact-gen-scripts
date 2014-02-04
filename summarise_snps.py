@@ -1122,20 +1122,21 @@ if __name__ == "__main__":
 						if options.tabfile==True and sequences[ref][j]!='-':
 							tabstring=tabstring+name+'='+sequences[name][j]+' '
 							if options.embl!='':
-								if snptypes[name].has_key(aln_pos_to_ref_pos[j]):
-									if snptypes[name][aln_pos_to_ref_pos[j]]=='S':
+								if snptypes[name].has_key(j):
+									if snptypes[name][j]=='S':
 										tabstring=tabstring+'(synonymous) '
-									elif snptypes[name][aln_pos_to_ref_pos[j]]=='N':
+									elif snptypes[name][j]=='N':
 										tabstring=tabstring+'(non-synonymous) '
-									elif snptypes[name][aln_pos_to_ref_pos[j]]=='-':
+									elif snptypes[name][j]=='-':
 										tabstring=tabstring+'(gap in SNP codon) '
-									elif snptypes[name][aln_pos_to_ref_pos[j]]=='2':
+									elif snptypes[name][j]=='2':
 										tabstring=tabstring+'(SNP codon is STOP) '
-									elif snptypes[name][aln_pos_to_ref_pos[j]]=='3':
+									elif snptypes[name][j]=='3':
 										tabstring=tabstring+'(ref codon is STOP) '
 									if name in AAfromtypes and name in AAtotypes:
-										if aln_pos_to_ref_pos[j] in AAfromtypes[name] and aln_pos_to_ref_pos[j] in AAtotypes[name]:
-											tabstring=tabstring+'(AA '+AAfromtypes[name][aln_pos_to_ref_pos[j]]+'->'+AAtotypes[name][aln_pos_to_ref_pos[j]]+') '
+										if j in AAfromtypes[name] and j in AAtotypes[name]:
+											tabstring=tabstring+'(AA '+AAfromtypes[name][j]+'->'+AAtotypes[name][j]+') '
+								
 						outstring=outstring+'\t'+sequences[name][j]#+str(name.mapped[key][j][1])
 						
 						#if sequences[name][j] not in sitesnpbases:
