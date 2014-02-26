@@ -202,46 +202,26 @@ def remove_zeros_from_list(the_list):
 ##########################################
 
 def xldate_as_datetime(xldate, datemode=0):
-    if datemode not in (0, 1):
-        print "Error with Excel date mode", xldate
-        sys.exit()
-    if xldate == 0.00:
-        return datetime.time(0, 0, 0)
-#    if xldate < 0.00:
-#        print "Error with Excel date", xldate
-#        sys.exit()
-    xldays = int(xldate)
-    frac = xldate - xldays
-    seconds = int(round(frac * 86400.0))
-    assert 0 <= seconds <= 86400
-    if seconds == 86400:
-        seconds = 0
-        xldays += 1
-    if xldays >= 100000:
-        print "Error with Excel date", xldate
-        sys.exit()
-
-    if xldays == 0:
-        # second = seconds % 60; minutes = seconds // 60
-        minutes, second = divmod(seconds, 60)
-        # minute = minutes % 60; hour    = minutes // 60
-        hour, minute = divmod(minutes, 60)
-        return datetime.time(hour, minute, second)
-
-#    if xldays < 61 and datemode == 0:
-#        print "Error with Excel date. here", xldate
-#        sys.exit()
 	
-	print datetime.datetime.fromordinal(xldays + 693594 + 1462 * datemode)
-	sys.exit()
-	
-    return datetime.datetime.fromordinal(xldays + 693594 + 1462 * datemode)
+	if datemode not in (0, 1):
+		print "Error with Excel date mode", xldate
+		sys.exit()
+		
+	xldays = int(xldate)+1
 
-#    return (
-#        datetime.datetime.fromordinal(xldays + 693594 + 1462 * datemode)
-#        + datetime.timedelta(seconds=seconds)
-#        )
-        
+	if xldays >= 1000000:
+		print "Error with Excel date", xldate
+		print "Cannot handle dates above 25/11/4637 (equals 999999 days post 1900)"
+		sys.exit()
+	
+	if (xldays + 693594 + (1462 * datemode))<=0:
+		print "Error with Excel date", xldate
+		print "Cannot handle dates below 1/1/1 (equals 693594 days pre 1900)"
+		sys.exit()
+	
+	return datetime.datetime.fromordinal(xldays + 693594 + (1462 * datemode))
+
+
 
 #######################################################################
 # Function to reconstruct a character across the tree using parsimony #
@@ -1111,7 +1091,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 					datetime=xldate_as_datetime(float(scale_date))
 					scale_date=str(datetime.day)+"/"+str(datetime.month)+"/"+str(datetime.year)
 			else:
-				scale_date=str(int(mix_date))
+				scale_date=str(int(max_date))
 			
 			if get_text_width('Helvetica', scalefontsize, scale_date)/1.9<chunklength/2 and get_text_width('Helvetica', scalefontsize, scale_date)/1.9<horizontalpos:
 				d.add(String(horizontalpos, vertposbottom-(scalefontsize+1), scale_date, textAnchor='middle', fontSize=scalefontsize, fontName='Helvetica'))
@@ -4674,11 +4654,19 @@ if __name__ == "__main__":
 #	sys.exit()
 	
 	#options.plottype="line"
-	
-	if options.orientation=="landscape":
-		height, width = pagesize
-	else:
+	x,y=pagesize
+	if options.page=="custom":
 		width, height = pagesize
+	elif options.orientation=="landscape":
+		if x<y:
+			height, width = pagesize
+		else:
+			width, height = pagesize
+	else:
+		if x>y:
+			height, width = pagesize
+		else:
+			width, height = pagesize
 	
 	
 	if len(args)==0 and options.tree!="":
