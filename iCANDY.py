@@ -2781,7 +2781,7 @@ class Track:
 			newplot.heat_colour=options.heat_colour
 		
 		self.plots.append(newplot)
-		
+
 	
 	
 	def add_bam_plot(self, filename, plot_type="line", fragments=1):
@@ -3717,7 +3717,7 @@ class Plot:
 				mincoverage=float(options.plot_min[:-1])
 				if self.plot_type in ["heat"] and self.heat_colour!="redandblue":
 					valueMin = median(remove_zeros_from_list(self.data[0]))*mincoverage
-					print median(self.data[0]), mincoverage, valueMin
+					#print median(self.data[0]), mincoverage, valueMin
 				else:
 					valueMin = float("Inf")
 					for x in xrange(len(self.data)):
@@ -3727,7 +3727,12 @@ class Plot:
 #					valueMin = min(map(median,self.data))*mincoverage	
 
 		elif self.plot_type in ["heat"] and self.heat_colour!="redandblue":
-			valueMin = min(self.data[0])
+			try:
+				valueMin = min(self.data[0])
+			except TypeError:
+				print self.data
+				print "Error reading plot file"
+				sys.exit()
 		else:
 			valueMin = min(map(min,self.data))
 		if options.plot_max!=float("Inf"):
@@ -5473,14 +5478,14 @@ if __name__ == "__main__":
 				plot.max_yaxis = round_to_n(maxsum, 2)
 			else:
 				if len(plot.data)==0:
-					plot.data=[minplotheight]
+					plot.data=[[minplotheight]]
 				try:
 					plot.max_yaxis=max(map(max,plot.data))
 					plot.min_yaxis=min(map(min,plot.data))
 				except ValueError:
 					plot.max_yaxis=minplotheight
 					plot.min_yaxis=minplotheight
-					plot.data=[minplotheight]
+					plot.data=[[minplotheight]]
 			
 			if options.plot_min!=float("Inf"):
 				try:
