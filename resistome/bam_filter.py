@@ -12,7 +12,7 @@ from optparse import OptionParser
 
 def DoError(ErrorString):
 	print "!!!Error:", ErrorString,"!!!"
-	return 1
+	sys.exit(1)
 
 
 #############################################
@@ -45,7 +45,7 @@ def main():
 	parser.add_option("-b", "--bam", action="store", dest="bam", help="input file in sam or bam format (must have suffix .sam or .bam)", default="", metavar="FILE")
 	parser.add_option("-o", "--output", action="store", dest="output", help="output prefix for file name(s)", default="", metavar="FILE")
 	parser.add_option("-f", "--format", type="choice", dest="fileformat", choices=["fasta","fastq","pairedfastq","sam","bam"], action="store", help="output file format (sam, bam, fastq, pairedfastq, or fasta) [default=%default]", default="pairedfastq", metavar="FORMAT")
-	parser.add_option("-t", "--type", action="store", type="choice", dest="outputtype", choices=["unmapped","mapped", "paired", "all","contigs", "minusdup", "onemapped"], help="reads to output (all, mapped, paired, unmapped, minusdup, onemapped or contigs). Note 1: for pairedfastq output, mapped includes all reads where one of the pair is mapped. paired includes only those reads where the reads are in a proper pair. For other output formats the mapped option will only print the individual mapped reads and paired requires the reads to be mapped in proper pairs. Note 2: the contigs option requires the -c option to be set (see below). [default=%default]", default="unmapped", metavar="FILE")
+	parser.add_option("-t", "--type", action="store", type="choice", dest="outputtype", choices=["unmapped","mapped", "paired", "all","contigs", "minusdup", "onemapped", "contigsonemapped"], help="reads to output (all, mapped, paired, unmapped, minusdup, onemapped, contigs or contigsonemapped). Note 1: for pairedfastq output, mapped includes all reads where one of the pair is mapped. paired includes only those reads where the reads are in a proper pair. For other output formats the mapped option will only print the individual mapped reads and paired requires the reads to be mapped in proper pairs. Note 2: the contigs option requires the -c option to be set (see below). [default=%default]", default="unmapped", metavar="FILE")
 	parser.add_option("-c", "--contigs", action="store", dest="contigs", help="comma separated list of contigs for which mapped reads should be output. Note there should be no whitespace within the list", default="")
 	
 	
@@ -66,7 +66,7 @@ def check_input_validity(options, args):
 		DoError('Cannot find file '+options.bam)
 	if options.output=="":
 		DoError('No output file name (-o) selected')
-	if options.outputtype=="contigs" and len(options.contigs)==0:
+	if options.outputtype in ["contigs", "contigsonemapped"] and len(options.contigs)==0:
 		DoError('Contigs options (-c) must be used when contigs is selected as read output type')
 	if len(options.contigs)>0:
 		options.contiglist=options.contigs.split(',')
@@ -174,7 +174,7 @@ if __name__ == "__main__":
 	
 	
 	#if the contigs option has been chosen, check that the contigs specified are in the sam header
-	if options.outputtype=="contigs":
+	if options.outputtype in ["contigs", "contigsonemapped"]:
 		for contig in options.contiglist:
 			if not contig in refs:
 				options.contiglist.remove(contig)
@@ -187,7 +187,7 @@ if __name__ == "__main__":
 		print "Adding sam headers"
 		newrefs=[]
 		newlengths=[]
-		if options.outputtype=="contigs":
+		if options.outputtype in ["contigs", "contigsonemapped"]:
 			
 			for x, ref in enumerate(refs):
 				if ref in options.contiglist:
@@ -263,7 +263,7 @@ if __name__ == "__main__":
 			else:
 				printread=True
 		
-		elif (not read.is_unmapped or not read.mate_is_unmapped) and options.outputtype=="onemapped":
+		elif (not read.is_unmapped or not read.mate_is_unmapped) and (options.outputtype=="onemapped" or (options.outputtype=="contigsonemapped" and refs[read.rname] in options.contiglist)):
 			if options.fileformat=="pairedfastq":
 				if readname in firstofpair:
 					printread=True
