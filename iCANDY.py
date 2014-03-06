@@ -5247,6 +5247,23 @@ if __name__ == "__main__":
 				newtrack.scale_position="middle"
 				newtrack.name=name
 				newtrack.track_height=options.emblheight
+				
+				newtrack.track_draw_proportion=control.embl_track_draw_proportion
+				newtrack.scale=control.embl_scale
+				newtrack.scale_position=control.embl_scale_position
+				newtrack.tick_marks=control.embl_tick_marks
+				newtrack.tick_mark_number=control.embl_tick_mark_number
+				newtrack.tick_mark_labels=control.embl_tick_mark_labels
+				newtrack.tick_mark_label_font=control.embl_tick_mark_label_font
+				newtrack.tick_mark_label_size=control.embl_tick_mark_label_size
+				newtrack.tick_mark_label_angle=control.embl_tick_mark_label_angle
+				newtrack.minor_tick_marks=control.embl_minor_tick_marks
+				newtrack.minor_tick_mark_number=control.embl_minor_tick_mark_number
+				newtrack.draw_feature_labels=control.embl_draw_feature_labels
+				newtrack.feature_label_size=control.embl_feature_label_size
+				newtrack.feature_label_angle=control.embl_feature_label_angle
+				newtrack.feature_label_font=control.embl_feature_label_font
+				
 				if options.labels>0:
 					track_count+=options.labels
 					newtrack.feature_label_angle=options.label_angle

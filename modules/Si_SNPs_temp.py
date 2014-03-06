@@ -712,6 +712,7 @@ class SNP():
 						self.codon_type="P"
 						break
 					daughter_CDS_seq=revcomp(daughter_seq[feature['location'][0]:feature['location'][1]])
+
 					
 				
 					self.position_in_CDS=((feature['location'][1]-1)-self.position)

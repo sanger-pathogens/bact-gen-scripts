@@ -174,6 +174,9 @@ if __name__ == "__main__":
 					print x["name"]+":", len(clusters[cluster])-1, "read matches"
 				else:
 					reads.add(x["name"].rstrip("1").rstrip("2").rstrip("/"))
+		else:
+			print "No matches found"
+			sys.exit()
 
 	print len(reads), "reads in", len(genes), "genes"
 	
@@ -234,54 +237,22 @@ if __name__ == "__main__":
 	returnval=os.system("samtools index "+options.output+".bam")
 
 	print "samtools index return value:", returnval
+	
 	if returnval!=0:
 		print "Error: samtools indexing of bam failed."
 		sys.exit()
 	
+	
 	for proposed in genes:
 		print "Analysing "+proposed
-		returnval=os.system('~sh16/scripts/resistome/bam_filter.py -f pairedfastq -t contigsonemapped -c '+proposed+' -b '+options.output+'.bam -o tmp_proposed')
 		
-		returnval=os.system('sga preprocess --pe-mode 1 -o SGA.fastq tmp_proposed_1.fastq tmp_proposed_1.fastq')
+		returnval=os.system('grep -A 1 ">'+proposed+'" '+options.db+' > '+proposed+'_ref.fasta')
+		
+		returnval=os.system('~sh16/scripts/resistome/bam_filter.py -f pairedfastq -t contigsonemapped -c '+proposed+' -b '+options.output+'.bam -o tmp_proposed')
+		returnval=os.system('smalt index index '+proposed+'_ref.fasta')
 		if returnval!=0:
 			continue
-		returnval=os.system('sga index -a ropebwt --no-reverse SGA.fastq')
-		if returnval!=0:
-			continue
-		returnval=os.system('sga correct -k 41 --discard --learn -o SGA.ec.k41.fastq SGA.fastq')
-		if returnval!=0:
-			continue
-		returnval=os.system('sga index -a ropebwt SGA.ec.k41.fastq')
-		if returnval!=0:
-			continue
-		returnval=os.system('sga filter --homopolymer-check --low-complexity-check SGA.ec.k41.fastq')
-		if returnval!=0:
-			continue
-		returnval=os.system('sga fm-merge -m 41 -o SGA.merged.fasta SGA.ec.k41.filter.pass.fa')
-		if returnval!=0:
-			continue
-		returnval=os.system('sga index -d 1000000 SGA.merged.fasta')
-		if returnval!=0:
-			continue
-		returnval=os.system('sga rmdup SGA.merged.fasta')
-		if returnval!=0:
-			continue
-		returnval=os.system('sga overlap -m 41 SGA.merged.rmdup.fa')
-		if returnval!=0:
-			continue
-		returnval=os.system('sga assemble -m 55 -g 0 -r 10 -o SGA.assmble.55 SGA.merged.rmdup.asqg.gz')
-		if returnval!=0:
-			continue
-		returnval=os.system("numcontigs=$(grep -c '>' SGA.merged.rmdup.fa)")
-		if returnval!=0:
-			continue
-		returnval=os.system("echo $numcontigs contigs found for "+proposed)
-		if returnval!=0:
-			continue
-		returnval=os.system('smalt index SGA.merged.rmdup.index SGA.merged.rmdup.fa')
-		if returnval!=0:
-			continue
-		returnval=os.system('smalt map -x -r 0 -o '+proposed+'.sam SGA.merged.rmdup.index tmp_proposed_1.fastq tmp_proposed_1.fastq')
+		returnval=os.system('smalt map -x -r 0 -o '+proposed+'.sam index tmp_proposed_1.fastq tmp_proposed_2.fastq')
 		if returnval!=0:
 			continue
 		returnval=os.system('samtools view -S -b -o tmp.bam -h '+proposed+'.sam')
@@ -293,15 +264,84 @@ if __name__ == "__main__":
 		returnval=os.system('samtools index '+proposed+'.bam')
 		if returnval!=0:
 			continue
-		returnval=os.system('sga-bam2de.pl -n 5 --prefix libPE '+proposed+'.bam')
+		returnval=os.system('~sh16/scripts/resistome/extract_clipping_info.py -b '+proposed+'.bam')
 		if returnval!=0:
 			continue
-		returnval=os.system('sga-astat.py -b $numcontigs -m 20 '+proposed+'.bam > libPE.astat')
+		returnval=os.system('~sh16/scripts/iCANDY.py '+proposed+'.bam starts.plot '+proposed+'_ref.fasta -d area -l 1 -g 0 -w -Y 0 -o '+proposed+'_coverage.pdf')
 		if returnval!=0:
 			continue
-		returnval=os.system('sga scaffold -m 50 --pe libPE.de -a libPE.astat -o scaffolds.n5.scaf SGA.merged.rmdup.fa')
-		if returnval!=0:
-			continue
-		returnval=os.system('sga scaffold2fasta -m 55 -a SGA.merged.rmdup.asqg.gz -o '+proposed+'scaffolds.n55.fa -d 1 --use-overlap --write-unplaced scaffolds.n5.scaf')
+			
+		
+#		sys.exit()
+		
+		
+		
+		
+		
+#		returnval=os.system('sga preprocess --pe-mode 1 -o SGA.fastq tmp_proposed_1.fastq tmp_proposed_1.fastq')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('sga index -a ropebwt --no-reverse SGA.fastq')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('sga correct -k 41 --discard --learn -o SGA.ec.k41.fastq SGA.fastq')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('sga index -a ropebwt SGA.ec.k41.fastq')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('sga filter --homopolymer-check --low-complexity-check SGA.ec.k41.fastq')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('sga fm-merge -m 41 -o '+proposed+'.merged.fasta SGA.ec.k41.filter.pass.fa')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('sga index -d 1000000 '+proposed+'.merged.fasta')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('sga rmdup '+proposed+'.merged.fasta')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('sga overlap -m 41 '+proposed+'.merged.rmdup.fa')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('sga assemble -m 55 -g 0 -r 10 -o '+proposed+'.assemble.55 '+proposed+'.merged.rmdup.asqg.gz')
+#		if returnval!=0:
+#			continue
+#		numcontigs=0
+#		for line in open(proposed+'.merged.rmdup.fa',"rU"):
+#			if len(line)>0 and line[0]==">":
+#				numcontigs+=1
+#		if numcontigs==0:
+#			print "No contigs found for", proposed
+#			continue
+#		else:
+#			print numcontigs, "found for", proposed
+#			
+#		returnval=os.system('smalt index SGA.merged.rmdup.index '+proposed+'.merged.rmdup.fa')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('smalt map -x -r 0 -o '+proposed+'.sam SGA.merged.rmdup.index tmp_proposed_1.fastq tmp_proposed_1.fastq')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('samtools view -S -b -o tmp.bam -h '+proposed+'.sam')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('samtools sort tmp.bam '+proposed)
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('samtools index '+proposed+'.bam')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('sga-bam2de.pl -n 5 --prefix libPE '+proposed+'.bam')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('sga-astat.py -b '+str(numcontigs)+' -m 20 '+proposed+'.bam > libPE.astat')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('sga scaffold -m 50 --pe libPE.de -a libPE.astat -o scaffolds.n5.scaf '+proposed+'.merged.rmdup.fa')
+#		if returnval!=0:
+#			continue
+#		returnval=os.system('sga scaffold2fasta -m 55 -a SGA.merged.rmdup.asqg.gz -o '+proposed+'scaffolds.n55.fa -d 1 --use-overlap --write-unplaced scaffolds.n5.scaf')
 		
 

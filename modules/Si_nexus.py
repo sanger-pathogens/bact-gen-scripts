@@ -1951,22 +1951,34 @@ def get_SNPs_from_tree(treeObject, node=-1, sequence_Objecttype="sequence", tran
 ################################################################
 	
 	
-def branchlengths_to_SNP_count(treeObject, node=-1, lengthtype="SNP_locations"):
-	
+def branchlengths_to_SNP_count(treeObject, node=-1, lengthtype="SNP_locations", SNP_type=""):
+#	print SNP_type
 	if node==-1:
 		node=treeObject.root
 	
 	daughters=treeObject.node(node).get_succ()
 		
 	for daughter in daughters:
-		treeObject=branchlengths_to_SNP_count(treeObject, daughter, lengthtype)	
+		treeObject=branchlengths_to_SNP_count(treeObject, daughter, lengthtype, SNP_type)	
 	
 	data=treeObject.node(node).get_data()
 	if data.comment.has_key(lengthtype):
 		SNPcount=0
 		for SNP in data.comment[lengthtype]:
-			if not data.comment[lengthtype][SNP].recombination:
-				SNPcount+=1
+		
+			if SNP_type=="":
+				if not data.comment[lengthtype][SNP].recombination:
+					SNPcount+=1
+			
+			else:
+#				print data.comment[lengthtype][SNP].SNP_type, data.comment[lengthtype][SNP].codon_type, SNPcount,
+				if not data.comment[lengthtype][SNP].recombination and data.comment[lengthtype][SNP].codon_type==SNP_type:
+					SNPcount+=1
+#				print SNPcount
+				
+				
+				
+				
 		data.branchlength=SNPcount
 		#data.branchlength=len(data.comment[lengthtype])
 	else:

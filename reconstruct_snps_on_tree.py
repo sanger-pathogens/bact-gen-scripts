@@ -477,7 +477,39 @@ if __name__ == "__main__":
 			handle=open(prefix+"_dNdS.txt","w")
 			calculate_branch_dNdS(tree, handle)
 			handle.close()
-	
+			
+		Stree=branchlengths_to_SNP_count(tree, SNP_type="S")#, lengthtype="insertion_locations")
+		Stree=support_to_node_names(Stree)
+		Streestring= tree_to_string(Stree, False, False, False, False)
+		length=get_total_tree_length(Stree)
+		print "Total tree length =", length
+		print "Printing tree with SNPs reconstructed"
+		print Streestring
+		handle = open(prefix+"_synonymous_"+options.transformation+"_steps"+".tre", "w")
+		print >> handle, Streestring
+		handle.close()
+		
+		Ntree=branchlengths_to_SNP_count(tree, SNP_type="N")#, lengthtype="insertion_locations")
+		Ntree=support_to_node_names(Ntree)
+		Ntreestring= tree_to_string(Ntree, False, False, False, False)
+		length=get_total_tree_length(Ntree)
+		print "Total tree length =", length
+		print "Printing tree with SNPs reconstructed"
+		print Ntreestring
+		handle = open(prefix+"_nonsynonymous_"+options.transformation+"_steps"+".tre", "w")
+		print >> handle, Ntreestring
+		handle.close()
+		
+		Itree=branchlengths_to_SNP_count(tree, SNP_type="I")#, lengthtype="insertion_locations")
+		Itree=support_to_node_names(Itree)
+		Itreestring= tree_to_string(Itree, False, False, False, False)
+		length=get_total_tree_length(Itree)
+		print "Total tree length =", length
+		print "Printing tree with SNPs reconstructed"
+		print Itreestring
+		handle = open(prefix+"_intergenic_"+options.transformation+"_steps"+".tre", "w")
+		print >> handle, Itreestring
+		handle.close()
 
 	print "Printing tab files"
 	sys.stdout.flush()
@@ -490,6 +522,8 @@ if __name__ == "__main__":
 	handle.close()
 	
 	
+
+	
 	
 	tree=branchlengths_to_SNP_count(tree)#, lengthtype="insertion_locations")
 	tree=support_to_node_names(tree)
@@ -498,7 +532,7 @@ if __name__ == "__main__":
 	print "Total tree length =", length
 	print "Printing tree with SNPs reconstructed"
 	print treestring
-	handle = open(prefix+"_parsimony_steps"+".tre", "w")
+	handle = open(prefix+"_"+options.transformation+"_steps"+".tre", "w")
 	print >> handle, treestring
 	handle.close()
 	
