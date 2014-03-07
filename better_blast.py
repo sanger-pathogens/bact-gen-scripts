@@ -39,6 +39,7 @@ def main():
 	group.add_option("-Q", "--queue", action="store", dest="queue", help="Queue to bsub to (choose from normal, long or basement). [Default= %default]", default="normal", type="choice", choices=['normal', 'long', 'basement'])
 	group.add_option("-p", "--program", action="store", dest="blastprog", help="BLAST program to use (choose from blastn or tblastx) This script doesn't support protein BLASTs, and won't unless people ask very nicely. [Default= %default]", default="blastn", type="choice", choices=['blastn', 'tblastx'])
 	group.add_option("-e", "--evalue", action="store", dest="e", help="evalue cutoff for BLAST. [Default= %default]", default=0.00001, type="float")
+	group.add_option("-f", "--filter", action="store_true", dest="filter", help="Turn off BLAST low complexity filter", default=False)
 	group.add_option("-E", "--extras", action="store", dest="extras", help="Extra BLAST options to use. Note: These will not be sanity checked.", default="")
 	group.add_option("-d", "--tmpdir", action="store", dest="tmpdir", help="Temporary directory prefix. [Default= %default]", default="better_blast_tmp_dir")
 	
@@ -227,6 +228,10 @@ if __name__ == "__main__":
 		subject_fragment_count+=1
 	subject_tmp_file.close()
 	
+	if options.filter:
+		filter_string=" -F F "
+	else:
+		filter_string=" -F T "
 	
 	print "formatting subject database"
 	sys.stdout.flush()
@@ -239,11 +244,10 @@ if __name__ == "__main__":
 		DoError("formatdb command "+formatdb_command+" failed with exit value "+str(formatdb_returnval))
 
 
-
 	print "Running blast jobs over lsf"
 	sys.stdout.flush()
 	
-	blast_command="blastall -p "+options.blastprog+" -i "+query_tmp_file_name+"INDEX -m 8 -e "+str(options.e)+" -o "+options.tmpdir+"/"+tmpname+".blastINDEX -d "+subject_tmp_file_name+" "+options.extras
+	blast_command="blastall -p "+options.blastprog+" -i "+query_tmp_file_name+"INDEX -m 8 -e "+str(options.e)+" -o "+options.tmpdir+"/"+tmpname+".blastINDEX -d "+subject_tmp_file_name+filter_string+" "+options.extras
 	
 	job1 = farm.Bsub(options.tmpdir+"/"+tmpname+"_bb_bsub.out", options.tmpdir+"/"+tmpname+"_bb_bsub.err", tmpname+"_blast", "normal", 0.5, blast_command, start=1, end=query_file_count)
 	job1_id = job1.run()
