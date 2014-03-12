@@ -87,7 +87,7 @@ def read_dendropy_tree(treefile):
 				old_head_node = target_edge.head_node
 				old_tail_node = target_edge.tail_node
 				old_tail_node.remove_child(old_head_node)
-				new_seed_node = Node()
+				new_seed_node = dendropy.dataobject.Node()
 				new_seed_node.add_child(old_head_node, edge_length=head_node_edge_len)
 				old_tail_node.add_child(new_seed_node, edge_length=tail_node_edge_len)
 				self.reseed_at(new_seed_node, update_splits=False, delete_outdegree_one=delete_outdegree_one)
