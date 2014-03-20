@@ -788,6 +788,7 @@ def read_dendropy_tree(treefile):
 						node.annotations[x].value=float(a.value)
 					except:
 						node.annotations[x].value=a.value
+					print node.annotations[x]
 				elif isinstance(a.value, list):
 					for y in xrange(len(a.value)):
 						if isinstance(a.value[y], str):
