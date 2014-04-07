@@ -4,10 +4,20 @@ import sys, os
 from Bio.Data import CodonTable
 import math
 
-geneticcode={'TTT':'F', 'TTC':'F', 'TTA':'L', 'TTG':'L', 'TCT': 'S', 'TCC': 'S','TCA': 'S','TCG': 'S', 'TAT': 'Y','TAC': 'Y', 'TAA': '*', 'TAG': '*', 'TGT': 'C', 'TGC': 'C', 'TGA': '*', 'TGG': 'W', 'CTT': 'L','CTC': 'L','CTA': 'L','CTG': 'L', 'CCT': 'P', 'CCC': 'P', 'CCA': 'P', 'CCG': 'P', 'CAT': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q', 'CGT': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R', 'ATT': 'I', 'ATC': 'I', 'ATA': 'I', 'ATG': 'M', 'ACT': 'T', 'ACC': 'T', 'ACA': 'T', 'ACG': 'T', 'AAT': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K', 'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GTT': 'V', 'GTC': 'V', 'GTA': 'V', 'GTG': 'V', 'GCT': 'A', 'GCC': 'A', 'GCA': 'A', 'GCG': 'A', 'GAT': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E', 'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'}
+#standard genetic code
+geneticcode_1={'TTT':'F', 'TTC':'F', 'TTA':'L', 'TTG':'L', 'TCT': 'S', 'TCC': 'S','TCA': 'S','TCG': 'S', 'TAT': 'Y','TAC': 'Y', 'TAA': '*', 'TAG': '*', 'TGT': 'C', 'TGC': 'C', 'TGA': '*', 'TGG': 'W', 'CTT': 'L','CTC': 'L','CTA': 'L','CTG': 'L', 'CCT': 'P', 'CCC': 'P', 'CCA': 'P', 'CCG': 'P', 'CAT': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q', 'CGT': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R', 'ATT': 'I', 'ATC': 'I', 'ATA': 'I', 'ATG': 'M', 'ACT': 'T', 'ACC': 'T', 'ACA': 'T', 'ACG': 'T', 'AAT': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K', 'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GTT': 'V', 'GTC': 'V', 'GTA': 'V', 'GTG': 'V', 'GCT': 'A', 'GCC': 'A', 'GCA': 'A', 'GCG': 'A', 'GAT': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E', 'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'}
+#mycoplasma genetic code
+geneticcode_4={'TTT':'F', 'TTC':'F', 'TTA':'L', 'TTG':'L', 'TCT': 'S', 'TCC': 'S','TCA': 'S','TCG': 'S', 'TAT': 'Y','TAC': 'Y', 'TAA': '*', 'TAG': '*', 'TGT': 'C', 'TGC': 'C', 'TGA': 'W', 'TGG': 'W', 'CTT': 'L','CTC': 'L','CTA': 'L','CTG': 'L', 'CCT': 'P', 'CCC': 'P', 'CCA': 'P', 'CCG': 'P', 'CAT': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q', 'CGT': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R', 'ATT': 'I', 'ATC': 'I', 'ATA': 'I', 'ATG': 'M', 'ACT': 'T', 'ACC': 'T', 'ACA': 'T', 'ACG': 'T', 'AAT': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K', 'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GTT': 'V', 'GTC': 'V', 'GTA': 'V', 'GTG': 'V', 'GCT': 'A', 'GCC': 'A', 'GCA': 'A', 'GCG': 'A', 'GAT': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E', 'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'}
+
+
+
+geneticcodes=[geneticcode_1,geneticcode_1,geneticcode_1,geneticcode_4]
 
 start_codons=["ATG", "GTG", "TTG", "ATT", "CTG", "ATC", "ATA"]
-stop_codons=["TGA", "TAA", "TAG"]
+stop_codons_1=["TGA", "TAA", "TAG"]
+stop_codons_4=["TAA", "TAG"]
+
+stop_codons=[stop_codons_1,stop_codons_1,stop_codons_1,stop_codons_4]
 
 snptypelong={"S":"Synonymous", "N":"Nonsynonymous", "P":"Pseudogene", "M":"STIP (stop codon to non-stop codon)", "O":"SNOP (non-stop codon to stop condon)", "*":"STOP (stop codon to stop codon)", "I":"Intergenic"}
 
@@ -16,13 +26,15 @@ snptype={"S":"Synonymous", "N":"Nonsynonymous", "P":"Pseudogene", "M":"STIP", "O
 snptype_to_colours={"S":"3", "N":"2", "P":"11", "M":"4", "O":"5", "*":"6", "I":"1"}
 
 
-def translate(sequence):
+def translate(sequence, genetic_code_number=1):
 	
 	aa_sequence=""
-	
+	if not genetic_code_number in [1,4]:
+		print "Currently only supports genetics codes 1 and 4"
+		return 1
 	for i in range(0,len(sequence),3):
-		if geneticcode.has_key(sequence[i:i+3].upper()):
-			aa_sequence=aa_sequence+geneticcode[sequence[i:i+3].upper()]
+		if geneticcodes[genetic_code_number-1].has_key(sequence[i:i+3].upper()):
+			aa_sequence=aa_sequence+geneticcodes[genetic_code_number-1][sequence[i:i+3].upper()]
 		else:
 			aa_sequence=aa_sequence+"X"
 	
@@ -125,8 +137,13 @@ def countcodonchanges(codon, SNPcodon, geneticcode, sd, nd, loopsd=0, loopnd=0, 
 # Algorithm to calculate dN/dS and related stats for two aligned sequences #
 ############################################################################
 
-def dnbyds(CDS, SNPseq):
-	
+def dnbyds(CDS, SNPseq, genetic_code_number=1):
+
+	if not genetic_code_number in [1,4]:
+		print "Currently only supports genetics codes 1 and 4"
+		return 1
+
+	geneticcode=geneticcodes[self.genetic_code_number-1]
 	#geneticcode={'TTT':'Phe', 'TTC':'Phe', 'TTA':'Leu', 'TTG':'Leu', 'TCT': 'Ser', 'TCC': 'Ser','TCA': 'Ser','TCG': 'Ser', 'TAT': 'Tyr','TAC': 'Tyr', 'TAA': 'STOP', 'TAG': 'STOP', 'TGT': 'Cys', 'TGC': 'Cys', 'TGA': 'STOP', 'TGG': 'Trp', 'CTT': 'Leu','CTC': 'Leu','CTA': 'Leu','CTG': 'Leu', 'CCT': 'Pro', 'CCC': 'Pro', 'CCA': 'Pro', 'CCG': 'Pro', 'CAT': 'His', 'CAC': 'His', 'CAA': 'Gin', 'CAG': 'Gin', 'CGT': 'Arg', 'CGC': 'Arg', 'CGA': 'Arg', 'CGG': 'Arg', 'ATT': 'Ile', 'ATC': 'Ile', 'ATA': 'Ile', 'ATG': 'Met', 'ACT': 'Thr', 'ACC': 'Thr', 'ACA': 'Thr', 'ACG': 'Thr', 'AAT': 'Asn', 'AAC': 'Asn', 'AAA': 'Lys', 'AAG': 'Lys', 'AGT': 'Ser', 'AGC': 'Ser', 'AGA': 'Arg', 'AGG': 'Arg', 'GTT': 'Val', 'GTC': 'Val', 'GTA': 'Val', 'GTG': 'Val', 'GCT': 'Ala', 'GCC': 'Ala', 'GCA': 'Ala', 'GCG': 'Ala', 'GAT': 'Asp', 'GAC': 'Asp', 'GAA': 'Glu', 'GAG': 'Glu', 'GGT': 'Gly', 'GGC': 'Gly', 'GGA': 'Gly', 'GGG': 'Gly'}
 	#geneticcode={'TTT':'F', 'TTC':'F', 'TTA':'L', 'TTG':'L', 'TCT': 'S', 'TCC': 'S','TCA': 'S','TCG': 'S', 'TAT': 'Y','TAC': 'Y', 'TAA': '*', 'TAG': '*', 'TGT': 'C', 'TGC': 'C', 'TGA': '*', 'TGG': 'W', 'CTT': 'L','CTC': 'L','CTA': 'L','CTG': 'L', 'CCT': 'P', 'CCC': 'P', 'CCA': 'P', 'CCG': 'P', 'CAT': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q', 'CGT': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R', 'ATT': 'I', 'ATC': 'I', 'ATA': 'I', 'ATG': 'M', 'ACT': 'T', 'ACC': 'T', 'ACA': 'T', 'ACG': 'T', 'AAT': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K', 'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GTT': 'V', 'GTC': 'V', 'GTA': 'V', 'GTG': 'V', 'GCT': 'A', 'GCC': 'A', 'GCA': 'A', 'GCG': 'A', 'GAT': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E', 'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'}
 	
@@ -584,6 +601,7 @@ class SNP():
 		self.codon_type="" #synonymous, nonsynonymous, intergenic, from_stop, to_stop, pseudogene
 		self.recombination=False
 		self.addrecombination=False
+		self.genetic_code_number=1
 		
 		
 		
@@ -726,16 +744,16 @@ class SNP():
 				
 				self.parent_codon=str(parent_CDS_seq[int(math.floor(float(self.position_in_CDS))/3)*3:int((math.floor(float(self.position_in_CDS)/3)*3)+3)])
 				
-				if geneticcode.has_key(self.parent_codon):
-					self.parent_aminoacid=geneticcode[self.parent_codon]
+				if geneticcodes[self.genetic_code_number-1].has_key(self.parent_codon):
+					self.parent_aminoacid=geneticcodes[self.genetic_code_number-1][self.parent_codon]
 				else:
 					self.parent_aminoacid="X"
 					
 				
 				self.daughter_codon=str(daughter_CDS_seq[int(math.floor(float(self.position_in_CDS)/3)*3):int((math.floor(float(self.position_in_CDS)/3)*3)+3)])
 				
-				if geneticcode.has_key(self.daughter_codon):
-					self.daughter_aminoacid=geneticcode[self.daughter_codon]
+				if geneticcodes[self.genetic_code_number-1].has_key(self.daughter_codon):
+					self.daughter_aminoacid=geneticcodes[self.genetic_code_number-1][self.daughter_codon]
 				else:
 					self.daughter_aminoacid="X"
 				
@@ -768,7 +786,7 @@ class SNP():
 
 
 
-def find_gene_limits(sequence, predicted_start, predicted_end):
+def find_gene_limits(sequence, predicted_start, predicted_end, genetic_code_number=1):
 	#print sequence[:predicted_end]
 	gap_list=set(["-"])
 	missing_list=set(["?","X","N"])
@@ -812,10 +830,10 @@ def find_gene_limits(sequence, predicted_start, predicted_end):
 	end=start
 	
 	
-	while codon not in stop_codons:
+	while codon not in stop_codons[genetic_code_number-1]:
 		#print codon, end, predicted_end-1
 		if end>=predicted_end-1:
-			for stop_codon in stop_codons:
+			for stop_codon in stop_codons[genetic_code_number-1]:
 				may_be_stop=True
 				for x, base in enumerate(codon):
 					if  base!=stop_codon[x] and base not in missing_list:
@@ -855,7 +873,7 @@ def find_gene_limits(sequence, predicted_start, predicted_end):
 
 
 
-def find_gene_limits_new(sequence, predicted_start, predicted_end):
+def find_gene_limits_new(sequence, predicted_start, predicted_end, genetic_code_number=1):
 	#print sequence[:predicted_end]
 	gap_list=set(["-"])
 	missing_list=set(["?","X","N"])
@@ -878,7 +896,7 @@ def find_gene_limits_new(sequence, predicted_start, predicted_end):
 	
 	codon=""
 	
-	while codon not in stop_codons:
+	while codon not in stop_codons[genetic_code_number-1]:
 		codon=""
 	
 		codon_bases=["","",""]
@@ -892,7 +910,7 @@ def find_gene_limits_new(sequence, predicted_start, predicted_end):
 		
 		codon=''.join(codon_bases)
 		
-		if len(codon)<3 or codon in stop_codons:
+		if len(codon)<3 or codon in stop_codons[genetic_code_number-1]:
 			break
 #		print codon
 		if start_codon_posn==-1:
@@ -917,7 +935,7 @@ def find_gene_limits_new(sequence, predicted_start, predicted_end):
 		
 		
 		if len(set(codon_bases).intersection(set(missing_list)))>0:
-			for stop_codon in stop_codons:
+			for stop_codon in stop_codons[genetic_code_number-1]:
 					may_be_stop=True
 					for x, base in enumerate(codon_bases):
 						if  base!=stop_codon[x] and base not in missing_list:
@@ -932,7 +950,7 @@ def find_gene_limits_new(sequence, predicted_start, predicted_end):
 		
 		start=end
 	
-	if codon in stop_codons:
+	if codon in stop_codons[genetic_code_number-1]:
 		stop_codon_posn=end
 	
 	

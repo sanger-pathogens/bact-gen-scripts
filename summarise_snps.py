@@ -79,6 +79,7 @@ def get_user_options():
 	group.add_option("-f", "--fast", action="store_true", dest="fast", help="Use fast bootstrap method", default=False)
 	group.add_option("-l", "--LSF", action="store_true", dest="LSF", help="Run bootstrap replicates over LSF (does not apply with fast bootstrap method)", default=False)
 	group.add_option("-g", "--gaps", action="store_true", dest="gaps", help="Gaps (-) are real", default=False)
+	group.add_option("-G", "--genetic_code", action="store", dest="genetic_code_number", help="Genetic code number to use. Choose from 1: Standard, 4: Mycoplasma. Default is 1", default=False, type="choice", choices=[1, 4])
 	parser.add_option_group(group)
 	
 	return parser.parse_args()
@@ -244,7 +245,7 @@ def countcodonchanges(codon, SNPcodon, geneticcode, sd, nd, loopsd=0, loopnd=0, 
 			
 			#print  SNPcodon, newSNPcodon, geneticcode[SNPcodon], geneticcode[newSNPcodon]
 			
-			if geneticcode[newSNPcodon]=='STOP':
+			if geneticcode[newSNPcodon]=='*':
 				continue
 			elif geneticcode[SNPcodon]==geneticcode[newSNPcodon]:
 				newloopnd=loopnd
@@ -272,9 +273,17 @@ def countcodonchanges(codon, SNPcodon, geneticcode, sd, nd, loopsd=0, loopnd=0, 
 #####################################################
 
 
-def dnbyds(CDS, SNPseq, CDSbasenumbers):
+def dnbyds(CDS, SNPseq, CDSbasenumbers, genetic_code_number=1):
 	
-	geneticcode={'TTT':'Phe', 'TTC':'Phe', 'TTA':'Leu', 'TTG':'Leu', 'TCT': 'Ser', 'TCC': 'Ser','TCA': 'Ser','TCG': 'Ser', 'TAT': 'Tyr','TAC': 'Tyr', 'TAA': 'STOP', 'TAG': 'STOP', 'TGT': 'Cys', 'TGC': 'Cys', 'TGA': 'STOP', 'TGG': 'Trp', 'CTT': 'Leu','CTC': 'Leu','CTA': 'Leu','CTG': 'Leu', 'CCT': 'Pro', 'CCC': 'Pro', 'CCA': 'Pro', 'CCG': 'Pro', 'CAT': 'His', 'CAC': 'His', 'CAA': 'Gln', 'CAG': 'Gln', 'CGT': 'Arg', 'CGC': 'Arg', 'CGA': 'Arg', 'CGG': 'Arg', 'ATT': 'Ile', 'ATC': 'Ile', 'ATA': 'Ile', 'ATG': 'Met', 'ACT': 'Thr', 'ACC': 'Thr', 'ACA': 'Thr', 'ACG': 'Thr', 'AAT': 'Asn', 'AAC': 'Asn', 'AAA': 'Lys', 'AAG': 'Lys', 'AGT': 'Ser', 'AGC': 'Ser', 'AGA': 'Arg', 'AGG': 'Arg', 'GTT': 'Val', 'GTC': 'Val', 'GTA': 'Val', 'GTG': 'Val', 'GCT': 'Ala', 'GCC': 'Ala', 'GCA': 'Ala', 'GCG': 'Ala', 'GAT': 'Asp', 'GAC': 'Asp', 'GAA': 'Glu', 'GAG': 'Glu', 'GGT': 'Gly', 'GGC': 'Gly', 'GGA': 'Gly', 'GGG': 'Gly'}
+	#standard genetic code
+	geneticcode_1={'TTT':'F', 'TTC':'F', 'TTA':'L', 'TTG':'L', 'TCT': 'S', 'TCC': 'S','TCA': 'S','TCG': 'S', 'TAT': 'Y','TAC': 'Y', 'TAA': '*', 'TAG': '*', 'TGT': 'C', 'TGC': 'C', 'TGA': '*', 'TGG': 'W', 'CTT': 'L','CTC': 'L','CTA': 'L','CTG': 'L', 'CCT': 'P', 'CCC': 'P', 'CCA': 'P', 'CCG': 'P', 'CAT': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q', 'CGT': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R', 'ATT': 'I', 'ATC': 'I', 'ATA': 'I', 'ATG': 'M', 'ACT': 'T', 'ACC': 'T', 'ACA': 'T', 'ACG': 'T', 'AAT': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K', 'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GTT': 'V', 'GTC': 'V', 'GTA': 'V', 'GTG': 'V', 'GCT': 'A', 'GCC': 'A', 'GCA': 'A', 'GCG': 'A', 'GAT': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E', 'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'}
+	#mycoplasma genetic code
+	geneticcode_4={'TTT':'F', 'TTC':'F', 'TTA':'L', 'TTG':'L', 'TCT': 'S', 'TCC': 'S','TCA': 'S','TCG': 'S', 'TAT': 'Y','TAC': 'Y', 'TAA': '*', 'TAG': '*', 'TGT': 'C', 'TGC': 'C', 'TGA': 'W', 'TGG': 'W', 'CTT': 'L','CTC': 'L','CTA': 'L','CTG': 'L', 'CCT': 'P', 'CCC': 'P', 'CCA': 'P', 'CCG': 'P', 'CAT': 'H', 'CAC': 'H', 'CAA': 'Q', 'CAG': 'Q', 'CGT': 'R', 'CGC': 'R', 'CGA': 'R', 'CGG': 'R', 'ATT': 'I', 'ATC': 'I', 'ATA': 'I', 'ATG': 'M', 'ACT': 'T', 'ACC': 'T', 'ACA': 'T', 'ACG': 'T', 'AAT': 'N', 'AAC': 'N', 'AAA': 'K', 'AAG': 'K', 'AGT': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R', 'GTT': 'V', 'GTC': 'V', 'GTA': 'V', 'GTG': 'V', 'GCT': 'A', 'GCC': 'A', 'GCA': 'A', 'GCG': 'A', 'GAT': 'D', 'GAC': 'D', 'GAA': 'E', 'GAG': 'E', 'GGT': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'}
+	
+	
+	
+	geneticcodes=[geneticcode_1,geneticcode_1,geneticcode_1,geneticcode_4]
+	geneticcode=geneticcodes[genetic_code_number-1]
 	
 	codonsynonyms={}
 	
@@ -290,7 +299,7 @@ def dnbyds(CDS, SNPseq, CDSbasenumbers):
 					newcodon=codon[:x]+y+codon[x+1:]
 					if geneticcode[newcodon]==geneticcode[codon]:
 						numsyn=numsyn+1
-					elif geneticcode[newcodon]=='STOP':
+					elif geneticcode[newcodon]=='*':
 						numnotstop=numnotstop-1
 			codonsynonyms[codon]=codonsynonyms[codon]+(numsyn/numnotstop)
 	
@@ -338,9 +347,9 @@ def dnbyds(CDS, SNPseq, CDSbasenumbers):
 					newSNPcodon=codon[:y]+SNPcodon[y]+codon[y+1:]
 					if 'N' in codon or 'N' in newSNPcodon or '-' in codon or '-' in newSNPcodon:
 						SNPtype[codonposn[y]]='-'
-					elif geneticcode[newSNPcodon]=='STOP':
+					elif geneticcode[newSNPcodon]=='*':
 						SNPtype[codonposn[y]]='2'
-					elif geneticcode[newSNPcodon]=='STOP':
+					elif geneticcode[newSNPcodon]=='*':
 						SNPtype[codonposn[y]]='3'
 					elif geneticcode[newSNPcodon] == geneticcode[codon]:
 						SNPtype[codonposn[y]]='S'
@@ -354,7 +363,7 @@ def dnbyds(CDS, SNPseq, CDSbasenumbers):
 			gapcount=gapcount+3
 			continue
 		
-#		if geneticcode[codon]=='STOP' or geneticcode[SNPcodon]=='STOP':
+#		if geneticcode[codon]=='*' or geneticcode[SNPcodon]=='*':
 #			continue
 #			print codon, x
 		
@@ -923,7 +932,7 @@ if __name__ == "__main__":
 			tmpCDSseq, refCDSseq, CDSbasenumbers=concatenate_CDS_sequences(record, sequence, ref)
 			#print len(tmpCDSseq), len(refCDSseq), len(CDSbasenumbers)
 			
-			dnbydsstats[sequence], snptypes[sequence], AAfromtypes[sequence], AAtotypes[sequence]=dnbyds(refCDSseq, tmpCDSseq, CDSbasenumbers)
+			dnbydsstats[sequence], snptypes[sequence], AAfromtypes[sequence], AAtotypes[sequence]=dnbyds(refCDSseq, tmpCDSseq, CDSbasenumbers, genetic_code_number=options.genetic_code_number)
 			#print dnbydsstats[sequence]
 			#N, S, dN, dS, pN, pS, varianceS, varianceN, z, (len(CDS)-gapcount), Nd, Sd
 			
@@ -1068,8 +1077,17 @@ if __name__ == "__main__":
 							snpcolour='4'
 						if snptype=='-' and snptypes[name][j]!='-':
 							snptype=snptypes[name][j]
+							if snptype=='2':
+								snptype='SNOP'
+							elif snptype=='3':
+								snptype='STIP'
 						elif snptypes[name][j] not in snptype and snptypes[name][j]!='-':
-							snptype=snptype+'/'+snptypes[name][j]
+							snptmp=snptypes[name][j]
+							if snptmp=='2':
+								snptype='SNOP'
+							elif snptmp=='3':
+								snptype='STIP'
+							snptype=snptype+'/'+snptmp
 						if record.features[embldata[j]].qualifiers.has_key("pseudo"):
 							snpcolour='11'
 							snptypes[name][j]="P"
