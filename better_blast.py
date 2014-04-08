@@ -54,7 +54,9 @@ def main():
 ################################
 
 def check_input_validity(options, args):
-
+	
+	options.formatdb=True
+	
 	if options.query=='':
 		DoError('No query file selected')
 	elif not os.path.isfile(options.query):
@@ -62,7 +64,22 @@ def check_input_validity(options, args):
 	if options.subject=='':
 		DoError('No subject file selected')
 	elif not os.path.isfile(options.subject):
-		DoError('Cannot find file '+options.subject)
+		if options.subject=="nt":
+			options.subject="/data/blastdb/Supported/nt"
+			options.formatdb=False
+			maxlength=20000
+		elif options.subject=="nr":
+			options.subject="/data/blastdb/Supported/nr"
+			options.blastprog="blastx"
+			options.formatdb=False
+			maxlength=20000
+		elif options.subject=="refseq":
+			options.subject="/data/blastdb/Supported/refseq"
+			options.blastprog="blastx"
+			options.formatdb=False
+			maxlength=20000
+		else:	
+			DoError('Cannot find file '+options.subject)
 	if options.tmpdir=='':
 		options.tmpdir="better_blast_tmp_dir"
 	
@@ -133,7 +150,7 @@ if __name__ == "__main__":
 	else:
 		print "Found", len(query_seqs), "query sequences"
 	
-	
+	mem=0.5
 	for query in query_seqs:
 		if ">" in str(query.seq):
 			print query.seq
@@ -184,72 +201,76 @@ if __name__ == "__main__":
 	query_tmp_file.close()
 	query_info_file.close()
 	
-	
-	print "Preprocessing subject fasta file"
-	sys.stdout.flush()
-	
-	subject_info_file_name=options.tmpdir+"/"+tmpname+".subjectinfo"
-	subject_info_file=open(subject_info_file_name, "w")
-	
-	try:
-		subject_seqs=read_seq_file(options.subject)
-	except StandardError:
-		DoError("Cannot read subject file")
-	
-	try:
-		subject_seqs=read_seq_file(options.subject)
-		if len(subject_seqs)==0:
-			try:
-				subject_seqs=[open_annotation(options.subject)]
-			except StandardError:
-				DoError("Cannot read subject file")
-		
-	except StandardError:
-		try:
-			subject_seqs=[open_annotation(options.subject)]
-		except StandardError:
-			DoError("Cannot read subject file")
-	
-	if len(subject_seqs)==0:
-		print DoError("No subject sequence found")
-	else:
-		print "Found", len(subject_seqs), "subject sequences"
-	
-	subject_tot=0
-	subject_tmp_file_name=options.tmpdir+"/"+tmpname+"_subject.fasta"
-	subject_tmp_file=open(subject_tmp_file_name, "w")
-	subject_fragment_count=0
-	for subject in subject_seqs:
-		seqlength=len(str(subject.seq))
-		print >> subject_info_file, '\t'.join(["s"+str(subject_fragment_count), subject.id, str(subject_tot)])
-		print >> subject_tmp_file, ">s"+str(subject_fragment_count)
-		print >> subject_tmp_file, str(subject.seq)
-		subject_tot+=seqlength
-		subject_fragment_count+=1
-	subject_tmp_file.close()
-	
 	if options.filter:
 		filter_string=" -F F "
 	else:
 		filter_string=" -F T "
 	
-	print "formatting subject database"
-	sys.stdout.flush()
+	if options.formatdb:
+		print "Preprocessing subject fasta file"
+		sys.stdout.flush()
+		
+		subject_info_file_name=options.tmpdir+"/"+tmpname+".subjectinfo"
+		subject_info_file=open(subject_info_file_name, "w")
+		
+		try:
+			subject_seqs=read_seq_file(options.subject)
+		except StandardError:
+			DoError("Cannot read subject file")
+		
+		try:
+			subject_seqs=read_seq_file(options.subject)
+			if len(subject_seqs)==0:
+				try:
+					subject_seqs=[open_annotation(options.subject)]
+				except StandardError:
+					DoError("Cannot read subject file")
+			
+		except StandardError:
+			try:
+				subject_seqs=[open_annotation(options.subject)]
+			except StandardError:
+				DoError("Cannot read subject file")
+		
+		if len(subject_seqs)==0:
+			print DoError("No subject sequence found")
+		else:
+			print "Found", len(subject_seqs), "subject sequences"
+		
+		subject_tot=0
+		subject_tmp_file_name=options.tmpdir+"/"+tmpname+"_subject.fasta"
+		subject_tmp_file=open(subject_tmp_file_name, "w")
+		subject_fragment_count=0
+		for subject in subject_seqs:
+			seqlength=len(str(subject.seq))
+			print >> subject_info_file, '\t'.join(["s"+str(subject_fragment_count), subject.id, str(subject_tot)])
+			print >> subject_tmp_file, ">s"+str(subject_fragment_count)
+			print >> subject_tmp_file, str(subject.seq)
+			subject_tot+=seqlength
+			subject_fragment_count+=1
+		subject_tmp_file.close()
+		
+		
+		
+		print "formatting subject database"
+		sys.stdout.flush()
+		
+		formatdb_command="formatdb -p F -i "+subject_tmp_file_name
+		formatdb_args = shlex.split(formatdb_command)
+		formatdb_returnval=subprocess.call(formatdb_args)
 	
-	formatdb_command="formatdb -p F -i "+subject_tmp_file_name
-	formatdb_args = shlex.split(formatdb_command)
-	formatdb_returnval=subprocess.call(formatdb_args)
-
-	if formatdb_returnval!=0:
-		DoError("formatdb command "+formatdb_command+" failed with exit value "+str(formatdb_returnval))
-
+		if formatdb_returnval!=0:
+			DoError("formatdb command "+formatdb_command+" failed with exit value "+str(formatdb_returnval))
+	else:
+		subject_tmp_file_name=options.subject
+		mem=8
 
 	print "Running blast jobs over lsf"
 	sys.stdout.flush()
 	
 	blast_command="blastall -p "+options.blastprog+" -i "+query_tmp_file_name+"INDEX -m 8 -e "+str(options.e)+" -o "+options.tmpdir+"/"+tmpname+".blastINDEX -d "+subject_tmp_file_name+filter_string+" "+options.extras
 	
-	job1 = farm.Bsub(options.tmpdir+"/"+tmpname+"_bb_bsub.out", options.tmpdir+"/"+tmpname+"_bb_bsub.err", tmpname+"_blast", "normal", 0.5, blast_command, start=1, end=query_file_count)
+	job1 = farm.Bsub(options.tmpdir+"/"+tmpname+"_bb_bsub.out", options.tmpdir+"/"+tmpname+"_bb_bsub.err", tmpname+"_blast", "normal", mem, blast_command, start=1, end=query_file_count)
 	job1_id = job1.run()
 	
 	print "Job ID =", job1_id
@@ -263,8 +284,9 @@ if __name__ == "__main__":
 	print "Job ID =", job2_id
 	sys.stdout.flush()
 	
-	print "Once these jobs are finished, you can run a comparison in act using:"
-	print "act", options.subject, options.prefix+".crunch.gz", options.query
+	if options.formatdb:
+		print "Once these jobs are finished, you can run a comparison in act using:"
+		print "act", options.subject, options.prefix+".crunch.gz", options.query
 	
 	job3 = farm.Bsub(options.prefix+"_bb_bsub.out", options.prefix+"_bb_bsub.err", tmpname+"_cleanup", "normal", 0.5, "rm -rf formatdb.log "+options.tmpdir)
 	job3.add_dependency(job2_id) 

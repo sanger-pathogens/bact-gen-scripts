@@ -57,6 +57,7 @@ def get_user_options():
 	group = OptionGroup(parser, "Required")
 	group.add_option("-i", "--input", action="store", dest="inputfile", help="Input file name", default="")
 	group.add_option("-o", "--output", action="store", dest="outfile", help="Output file name", default="")
+	group.add_option("-d", "--dates", action="store", dest="dates", help="Dates csv file name (Nmae,date)", default="")
 	group.add_option("-n", "--nons", action="store_true", dest="nons", help="Exclude sites which are constant other than Ns", default=False)
 	group.add_option("-g", "--gaps", action="store_true", dest="gaps", help="Gaps (-) are real", default=False)
 	parser.add_option_group(group)
@@ -76,6 +77,8 @@ def check_input_validity(options, args):
 	elif not os.path.isfile(options.inputfile):
 		DoError('Cannot find file '+options.inputfile)
 	
+	if options.dates!='' and not os.path.isfile(options.dates):
+		DoError('Cannot find file '+options.dates)
 	
 	if options.outfile=='':
 		options.outfile=options.ref.split("/")[-1].split(".")[0]
@@ -140,7 +143,22 @@ if __name__ == "__main__":
 	for line in lines:
 		words=line.strip().split('\n')
 		sequences[words[0].split()[0]]=''.join(words[1:])
-
+	
+	
+	
+	if options.dates!="":
+		dates={}
+		for line in open(options.dates):
+			words=line.strip().split(',')
+			if len(words)<2:
+				continue
+			if words[0] in sequences.keys():
+				
+				try:
+					dates[words[0]]=float(words[1])
+				except TypeError:
+					continue
+	print dates
 
 	alnlen=len(sequences[sequences.keys()[0]])
 
