@@ -74,6 +74,7 @@ if __name__ == "__main__":
 	
 	
 	namedict={}
+	foundnames=[]
 	for line in open(options.info,'rU'):
 		newname=""
 		if options.tab:
@@ -90,21 +91,31 @@ if __name__ == "__main__":
 				x=int(column)
 			except Standarderror:
 				continue
+			
 			if len(words)<int(column):
 				continue
 			elif len(words[int(column)-1])==0:
-				continue
-			if count==1:
-				newname=words[int(column)-1].replace(' ','_').replace(':','_').replace('(', '_').replace(')','_')
-				count=count+1
+				newname=words[0]
 			else:
-				newname=newname+'_'+words[int(column)-1].replace(' ','_').replace(':','_').replace('(', '_').replace(')','_')
+				if count==1:
+					newname=words[int(column)-1].replace(' ','_').replace(':','_').replace('(', '_').replace(')','_')
+					count=count+1
+				else:
+					newname=newname+'_'+words[int(column)-1].replace(' ','_').replace(':','_').replace('(', '_').replace(')','_')
 		
 		if len(newname)>0:
 			if newname[-1]=='_':
 				newname=newname[:-1]
-			
-			namedict[words[0].replace("_"," ")]=newname
+			while newname in foundnames:
+				try:
+					namesuffix=int(newname.split("#")[-1])
+					newname='#'.join(newname.split("#")[:-1])
+				except StandardError:
+					namesuffix=0
+				newname=newname+"#"+str(namesuffix+1)
+			foundnames.append(newname)
+			namedict[words[0]]=newname
+	
 	
 	
 	if not os.path.isfile(options.tree):
@@ -114,7 +125,7 @@ if __name__ == "__main__":
 		opened=False
 		for treeschema in ["beast-summary-tree", "nexus", "newick"]:
 			try:
-				t = dendropy.Tree.get_from_path(options.tree, schema=treeschema)
+				t = dendropy.Tree.get_from_path(options.tree, schema=treeschema, preserve_underscores=True)
 				opened=True
 				break
 			except dendropy.utility.error.DataParseError:
