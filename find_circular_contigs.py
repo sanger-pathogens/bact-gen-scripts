@@ -120,20 +120,23 @@ if __name__ == "__main__":
 
 	
 	#Iterate through input file and fix appropriate lines
-	for ref in refs:
+	for x, ref in enumerate(refs):
 		count=0
 		ccount=0
 		for read in samfile.fetch(ref, 0, insert):
 		
-			if not read.is_unmapped and not read.mate_is_unmapped and not read.is_proper_pair:
+			if not read.is_unmapped and not read.mate_is_unmapped:
 			
-				if read.is_reverse:
+				if read.is_reverse and not (read.pos>read.mpos and read.tid==read.rnext):
 					count+=1
 			
-					if not read.mate_is_reverse and (read.mpos+read.rlen)>(lengths[read.rname]-(insert-read.pos)):
+					if not read.mate_is_reverse and (read.mpos+read.rlen)>(lengths[read.rname]-(insert-read.pos)) and read.pos<read.mpos and read.tid==read.rnext:
 						ccount+=1
 					#print read.pos, read.mpos, read.is_proper_pair, read.insertsize
-
-		print ref+":", ccount/2, "("+str((float(ccount)/count)*100)+"% of relevant mapped reads) pairs provide evidence for circularity." 
+		if count>0:
+			print "Contig "+str(x+1), ref+":", ccount/2, "("+str((float(ccount)/count)*100)+"%) of relevant mapped read pairs provide evidence for circularity."
+		else:
+			print "Contig "+str(x+1), ref+":", ccount/2, "(0%) of relevant mapped read pairs provide evidence for circularity."
+			
 		    	
 			

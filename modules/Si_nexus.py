@@ -3148,7 +3148,7 @@ def print_summary(treeObject, handle, node=-1):
 #				elif SNP_type=="old_SNP_locations" and not SNP.recombination:
 #					print "Shouldn't get here!"
 				
-				print >> handle, '\t'.join(map(str,[SNP.position+1,"SNP","1", node_node, daughter_node,SNP.parent_base[0], SNP.daughter_base[0], SNP.parent_aminoacid, SNP.daughter_aminoacid, SNP.codon_type, SNP.CDSname, SNP.location.strand, SNP.position_in_CDS+1, ', '.join(homoplasyline), ', '.join(oldhomoplasyline), ', '.join(recs)]))
+				print >> handle, '\t'.join(map(str,[SNP.position+1,"SNP","1", node_node, daughter_node,SNP.parent_base[0], SNP.daughter_base[0], SNP.parent_aminoacid, SNP.daughter_aminoacid, SNP.codon_type, SNP.CDSname, SNP.strand, SNP.position_in_CDS+1, ', '.join(homoplasyline), ', '.join(oldhomoplasyline), ', '.join(recs)]))
 
 
 			
