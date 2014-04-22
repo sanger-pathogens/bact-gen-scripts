@@ -936,15 +936,18 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 			
 		if window>float(lennogaps)/10:
 			window=int(float(lennogaps)/10)
-		#print lennogaps, totalsnps, window
+		downstreamnamelist=[]
+		for taxon in downstreamtaxa:
+			downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
+		print node, downstreamnamelist, lennogaps, totalsnps, window
 		
-		#print float(lennogaps)/(totalsnps), (totalsnps/float(lennogaps))
+		print float(lennogaps)/(totalsnps), (totalsnps/float(lennogaps))
 		
 		threshold=1-(0.05/(float(lennogaps)/(window/10)))
 		cutoff=0
 		pvalue=0.0
 		while pvalue<=threshold:
-			#print window, cutoff, pvalue, threshold, totalsnps, reduce_factorial(float(window),cutoff), reduce_factorial(window,cutoff), reduce_factorial(cutoff,cutoff)
+			print window, cutoff, pvalue, threshold, totalsnps, reduce_factorial(float(window),cutoff), reduce_factorial(window,cutoff), reduce_factorial(cutoff,cutoff)
 			part1=reduce_factorial(window,cutoff)-reduce_factorial(cutoff,cutoff)
 			part2=math.log((float(totalsnps)/lennogaps),10)*cutoff
 			part3=math.log((1.0-(float(totalsnps)/lennogaps)),10)*(window-cutoff)
@@ -1008,7 +1011,12 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 					x+=1
 				pvalue=1.0-round(pvalue,10)
 				pvaluethreshold=(0.05/float(lennogaps))
-				#print blocklen, pvaluethreshold, snpcount, pvalue, oldtotalsnps, 1-threshold
+				
+				downstreamnamelist=[]
+				for taxon in downstreamtaxa:
+					downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
+				
+				print node, downstreamnamelist, blocklen, pvaluethreshold, snpcount, pvalue, oldtotalsnps, 1-threshold
 				if pvalue<pvaluethreshold:
 					blocks.append([newblocks[0][1], newblocks[0][2], newblocks[0][0], snpcount, pvalue])
 					added=True
@@ -1099,10 +1107,10 @@ def tree_recurse(node,treeobject):
 	
 
 	if isroot:
-		tree_recurse(node,pamltree)
+		tree_recurse(node,treeobject)
 	for daughter in daughters:
 		if not gaplocations.has_key(daughternames[daughter][0]):
-			tree_recurse(daughter,pamltree)
+			tree_recurse(daughter,treeobject)
 	
 	
 	#identify missing sites in non-terminal nodes
@@ -1131,10 +1139,13 @@ def tree_recurse(node,treeobject):
 		
 		numsnps=0
 		
-		for x in range(0,pamlalignment.get_alignment_length()):
-				
+		downstreamtaxa=treeobject.get_taxa(daughter)
+		downstreamnames=[]
+		for downtax in downstreamtaxa:
+			downstreamnames.append(sequencenames[downtax.split("_")[1]])
 			
-				
+		for x in range(0,pamlalignment.get_alignment_length()):
+
 					
 				if pamlsequences[nodenames[1]][x]=="?" or pamlsequences[daughternames[daughter][1]][x]=="?":# or pamlsequences[nodenames[1]][x]=="N" or pamlsequences[daughternames[daughter][1]][x]=="N":
 					try:
@@ -1152,10 +1163,7 @@ def tree_recurse(node,treeobject):
 						print >> snplocout, str(AllSNPlocations[x]+1)+",node_"+str(nodenames[1])+"->node_"+str(daughternames[daughter][1])+","+pamlsequences[nodenames[1]][x]+","+pamlsequences[daughternames[daughter][1]][x]
 						print >>snptabout, "FT   SNP             "+str(AllSNPlocations[x]+1)
 						print >>snptabout, 'FT                   /node="'+str(nodenames[1])+'->'+str(daughternames[daughter][1])+'"'
-						downstreamtaxa=treeobject.get_taxa(daughter)
-						downstreamnames=[]
-						for downtax in downstreamtaxa:
-							downstreamnames.append(sequencenames[downtax.split("_")[1]])
+						
 						print >>snptabout, 'FT                   /taxa="'+', '.join(downstreamnames)+'"'
 						print >>snptabout, 'FT                   /SNP="'+pamlsequences[nodenames[1]][x]+'->'+pamlsequences[daughternames[daughter][1]][x]+'"'
 						print >>snptabout, 'FT                   /colour=1'
@@ -1163,10 +1171,7 @@ def tree_recurse(node,treeobject):
 						print >> snplocout, str(AllSNPlocations[x]+1)+",node_"+str(nodenames[1])+"->"+str(sequencenames[daughternames[daughter][1]])+","+pamlsequences[nodenames[1]][x]+","+pamlsequences[daughternames[daughter][1]][x]
 						print >>snptabout, "FT   SNP             "+str(AllSNPlocations[x]+1)
 						print >>snptabout, 'FT                   /node="'+str(nodenames[1])+'->'+str(sequencenames[daughternames[daughter][1]])+'"'
-						downstreamtaxa=treeobject.get_taxa(daughter)
-						downstreamnames=[]
-						for downtax in downstreamtaxa:
-							downstreamnames.append(sequencenames[downtax.split("_")[1]])
+						
 						print >>snptabout, 'FT                   /taxa="'+', '.join(downstreamnames)+'"'
 						print >>snptabout, 'FT                   /SNP="'+pamlsequences[nodenames[1]][x]+'->'+pamlsequences[daughternames[daughter][1]][x]+'"'
 						print >>snptabout, 'FT                   /colour=1'
@@ -1177,6 +1182,7 @@ def tree_recurse(node,treeobject):
 		
 		y=0
 		z=0
+		
 		
 		
 		#create files to convert positions back once the 2s have been removed from binsnps
@@ -1192,7 +1198,9 @@ def tree_recurse(node,treeobject):
 			elif binsnp==0:
 				nongapposns[y]=x
 				y=y+1
-		
+				
+		if isroot:
+			print snpposns
 
 		if numsnps>options.minsnps:
 			#print
