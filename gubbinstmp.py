@@ -972,8 +972,9 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 		
 		
 		added=False
-		if len(newblocks)>0:
-			newblocks.sort()			
+		testblock=0
+		newblocks.sort()
+		while len(newblocks)>testblock and added==False:
 			
 			snpcount=0
 			oldtotalsnps=totalsnps
@@ -1012,6 +1013,7 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 				if pvalue<pvaluethreshold:
 					blocks.append([newblocks[0][1], newblocks[0][2], newblocks[0][0], snpcount, pvalue])
 					added=True
+			testblock+=1
 
 	
 	for block in blocks:

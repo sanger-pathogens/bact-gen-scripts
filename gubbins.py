@@ -7,7 +7,9 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Nexus import Trees, Nodes
 from Bio.Align import AlignInfo
+from Bio.Align import MultipleSeqAlignment
 from Bio.Align.Generic import Alignment
+from Bio.Alphabet import generic_dna
 from Bio.Alphabet import IUPAC, Gapped
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from optparse import OptionParser
@@ -105,19 +107,20 @@ def getclustername():
 
 def Create_SNP_alignment(alignment, SNPlocations):
 	
-	alphabet = Gapped(IUPAC.unambiguous_dna)
-
-	SNPalignment = Alignment(alphabet)
+	#alphabet = Gapped(IUPAC.unambiguous_dna)
 
 	
+
+	seqlist=[]
 	for record in alignment:
 		SNPseq=""
 		
 		for base in SNPlocations:
 			SNPseq=SNPseq+record.seq[base].replace("-","?")
 			
-		
-		SNPalignment.add_sequence(record.id, SNPseq)
+		seqlist.append(SeqRecord(Seq(SNPseq, generic_dna), id=str(record.id)))
+	
+	SNPalignment = MultipleSeqAlignment(seqlist, alphabet=generic_dna)
 		
 	
 	return SNPalignment
@@ -936,18 +939,18 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 			
 		if window>float(lennogaps)/10:
 			window=int(float(lennogaps)/10)
-		downstreamnamelist=[]
-		for taxon in downstreamtaxa:
-			downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
-		print node, downstreamnamelist, lennogaps, totalsnps, window
-		
-		print float(lennogaps)/(totalsnps), (totalsnps/float(lennogaps))
+#		downstreamnamelist=[]
+#		for taxon in downstreamtaxa:
+#			downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
+#		print node, downstreamnamelist, lennogaps, totalsnps, window
+#		
+#		print float(lennogaps)/(totalsnps), (totalsnps/float(lennogaps))
 		
 		threshold=1-(0.05/(float(lennogaps)/(window/10)))
 		cutoff=0
 		pvalue=0.0
 		while pvalue<=threshold:
-			print window, cutoff, pvalue, threshold, totalsnps, reduce_factorial(float(window),cutoff), reduce_factorial(window,cutoff), reduce_factorial(cutoff,cutoff)
+#			print window, cutoff, pvalue, threshold, totalsnps, reduce_factorial(float(window),cutoff), reduce_factorial(window,cutoff), reduce_factorial(cutoff,cutoff)
 			part1=reduce_factorial(window,cutoff)-reduce_factorial(cutoff,cutoff)
 			part2=math.log((float(totalsnps)/lennogaps),10)*cutoff
 			part3=math.log((1.0-(float(totalsnps)/lennogaps)),10)*(window-cutoff)
@@ -975,28 +978,30 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 		
 		
 		added=False
-		if len(newblocks)>0:
-			newblocks.sort()			
-			
+		newblocks.sort()
+		testblock=0
+		while len(newblocks)>testblock and added==False:
+#			if node==1:		
+#				print newblocks
 			snpcount=0
 			oldtotalsnps=totalsnps
 			oldlennogaps=lennogaps
 			
-			for x, snp in enumerate(binsnps[newblocks[0][1]:newblocks[0][2]+1]):
+			for x, snp in enumerate(binsnps[newblocks[testblock][1]:newblocks[testblock][2]+1]):
 				if snp==1:
 					snpcount+=1
-					binsnps[newblocks[0][1]+x]=0
+					binsnps[newblocks[testblock][1]+x]=0
 					totalsnps-=1
 				lennogaps-=1
 			
 			
 			if snpcount>=options.minsnps:
 				numgaps=0
-				for x in binsnps[newblocks[0][1]:newblocks[0][2]+1]:
+				for x in binsnps[newblocks[testblock][1]:newblocks[testblock][2]+1]:
 					if x==2:
 						numgaps+=1
 				
-				blocklen=(((newblocks[0][2]+1)-newblocks[0][1])-numgaps)
+				blocklen=(((newblocks[testblock][2]+1)-newblocks[testblock][1])-numgaps)
 				x=0
 				pvalue=0.0
 				while x<snpcount:
@@ -1012,14 +1017,15 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 				pvalue=1.0-round(pvalue,10)
 				pvaluethreshold=(0.05/float(lennogaps))
 				
-				downstreamnamelist=[]
-				for taxon in downstreamtaxa:
-					downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
-				
-				print node, downstreamnamelist, blocklen, pvaluethreshold, snpcount, pvalue, oldtotalsnps, 1-threshold
+#				downstreamnamelist=[]
+#				for taxon in downstreamtaxa:
+#					downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
+#				
+#				print node, downstreamnamelist, blocklen, pvaluethreshold, snpcount, pvalue, oldtotalsnps, 1-threshold
 				if pvalue<pvaluethreshold:
-					blocks.append([newblocks[0][1], newblocks[0][2], newblocks[0][0], snpcount, pvalue])
+					blocks.append([newblocks[testblock][1], newblocks[testblock][2], newblocks[testblock][0], snpcount, pvalue])
 					added=True
+			testblock+=1
 
 	
 	for block in blocks:
@@ -1080,7 +1086,9 @@ def tree_recurse(node,treeobject):
 	if node==treeobject.root:
 		isroot=True
 		daughters=treeobject.node(node).get_succ()
+		rootnode=node
 		node=daughters[0]
+		
 		if treeobject.is_internal(node):
 			nodenames=(str(int(treeobject.node(node).get_data().support)),str(int(treeobject.node(node).get_data().support)))
 		else:
@@ -1107,8 +1115,31 @@ def tree_recurse(node,treeobject):
 	
 
 	if isroot:
+#		downstreamtaxa=treeobject.get_taxa(node)
+#		downstreamnames1=[]
+#		for downtax in downstreamtaxa:
+#			downstreamnames1.append(sequencenames[downtax.split("_")[1]])
+#		print nodenames, node, daughters, downstreamnames1,
+#		for daughter in daughters:
+#			downstreamtaxa=treeobject.get_taxa(daughter)
+#			downstreamnames2=[]
+#			for downtax in downstreamtaxa:
+#				downstreamnames2.append(sequencenames[downtax.split("_")[1]])
+#		 	print downstreamnames2,
+#		print
 		tree_recurse(node,treeobject)
 	for daughter in daughters:
+#		downstreamtaxa=treeobject.get_taxa(node)
+#		downstreamnames1=[]
+#		for downtax in downstreamtaxa:
+#			downstreamnames1.append(sequencenames[downtax.split("_")[1]])
+#		print nodenames, node, daughters, downstreamnames1,
+#		downstreamtaxa=treeobject.get_taxa(daughter)
+#		downstreamnames2=[]
+#		for downtax in downstreamtaxa:
+#			downstreamnames2.append(sequencenames[downtax.split("_")[1]])
+#		print downstreamnames2
+
 		if not gaplocations.has_key(daughternames[daughter][0]):
 			tree_recurse(daughter,treeobject)
 	
@@ -1199,8 +1230,8 @@ def tree_recurse(node,treeobject):
 				nongapposns[y]=x
 				y=y+1
 				
-		if isroot:
-			print snpposns
+#		if isroot:
+#			print snpposns
 
 		if numsnps>options.minsnps:
 			#print
@@ -1385,11 +1416,16 @@ if __name__ == "__main__":
 #	sys.exit()
 	
 	sys.stdout.flush()
+	
+	if not os.path.isfile(options.alignment):
+		DoError('Cannot find file '+options.alignment)
+	
 	try:
 		alignment=read_alignment(options.alignment)
 		#alignment = AlignIO.read(open(options.alignment), "fasta")
-	except ValueError:
+	except StandardError:
 		DoError("Cannot open alignment file "+options.alignment+". Is it in the correct format?")
+
 		
 	#Create a copy of the alignment that can be changed
 	
@@ -1417,10 +1453,12 @@ if __name__ == "__main__":
 		
 		#create newalignment from edited alignment for making the tree
 		
-		newalignment=Alignment(Gapped(IUPAC.unambiguous_dna))
+		
+		newalnlist=[]
 		for record in alignment:
-			newalignment.add_sequence(str(record.id),  str(editablealignment[record.id]))
+			newalnlist.append(SeqRecord(editablealignment[record.id], id=str(record.id)))
 			editablealignment[record.id]=record.seq
+		newalignment=MultipleSeqAlignment(newalnlist, alphabet=generic_dna)
 	
 		#locate sites with a SNP
 		
