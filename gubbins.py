@@ -14,6 +14,7 @@ from Bio.Alphabet import IUPAC, Gapped
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from optparse import OptionParser
 import math
+from numpy import mean, median, max, min, std, bincount, argmax
 #sys.path.extend(map(os.path.abspath, ['/usr/lib/python2.4/site-packages/']))
 #sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.5/site-packages/']))
 #from scipy.stats import chi2
@@ -926,7 +927,7 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 	blocks=[]
 	
 	lastcutoff=-1
-	
+	startingdensity=float(totalsnps)/lennogaps
 	while added and totalsnps>=options.minsnps:
 	
 	
@@ -986,7 +987,7 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 			snpcount=0
 			oldtotalsnps=totalsnps
 			oldlennogaps=lennogaps
-			
+			oldbinsnps=binsnps[:]
 			for x, snp in enumerate(binsnps[newblocks[testblock][1]:newblocks[testblock][2]+1]):
 				if snp==1:
 					snpcount+=1
@@ -1025,12 +1026,21 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 				if pvalue<pvaluethreshold:
 					blocks.append([newblocks[testblock][1], newblocks[testblock][2], newblocks[testblock][0], snpcount, pvalue])
 					added=True
+				else:
+					lennogaps=oldlennogaps
+					totalsnps=oldtotalsnps
+					binsnps=oldbinsnps[:]
+			else:
+				lennogaps=oldlennogaps
+				totalsnps=oldtotalsnps
+				binsnps=oldbinsnps[:]
 			testblock+=1
-
 	
+	
+	blsnpdensity=[]
 	for block in blocks:
 		downstreamnamelist=[]
-
+		blsnpdensity.append(float(block[3])/((block[1]+1)-block[0]))
 		print >> tabout, "FT   misc_feature    "+str(block[0]+1)+".."+str(block[1]+1)
 		if node==0 and options.outgroup!="" and options.outgroup!="None":
 			
@@ -1060,7 +1070,18 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 			
 		print >> tabout, 'FT                   /neg_log_likelihood='+str(block[2])
 		print >> tabout, 'FT                   /SNP_count='+str(block[3])
+		print >> tabout, 'FT                   /Recombination_to_background_SNP_ratio='+str((float(block[3])/((block[1]+1)-block[0]))/(totalsnps/lennogaps))
 		print >> tabout, 'FT                   /pvalue='+str(block[4])
+	
+	if len(blocks)==0:
+		blsnpdensity=[0.0]
+	
+	if node==0 and options.outgroup!="" and options.outgroup!="None":
+		print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+options.outgroup, startingdensity, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity)]))
+	elif treeobject.is_internal(daughter):
+		print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], startingdensity, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity)]))
+	else:
+		print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], startingdensity, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity)]))
 		
 	
 	return blocks
@@ -1775,7 +1796,9 @@ if __name__ == "__main__":
 		
 		snplocout=open(prefix+"_SNPS_per_branch.csv","w")
 		snptabout=open(prefix+"_SNPS_per_branch.tab","w")
+		branch_stats=open(prefix+"_branch_SNP_density_stats.csv","w")
 		print >> snplocout, "SNP_location,Branch,ancestral_base,Daughter_base"
+		print >> branch_stats, "Branch,Starting branch SNP density,Final branch SNP density,Mean recombination block SNP density,Maximum recombination block SNP density,Minimum recombination block SNP density"
 		tree_recurse(rootnode,pamltree)
 		
 		if options.show_gaps:
@@ -1816,6 +1839,7 @@ if __name__ == "__main__":
 		snplocout.close()
 		snptabout.close()
 		tabout.close()
+		branch_stats.close()
 		
 			
 		all_in1butnot2=0
