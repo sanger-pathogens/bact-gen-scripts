@@ -925,7 +925,7 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 	added=True
 	
 	blocks=[]
-	
+	testblock=0
 	lastcutoff=-1
 	startingdensity=float(totalsnps)/lennogaps
 	while added and totalsnps>=options.minsnps:
@@ -970,10 +970,8 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 		
 			newblocks=get_blocks_from_windowcounts(binsnps, windowcounts, cutoff, nongapposns)
 				
-				
-			
 		else:
-			newblocks=newblocks[1:]
+			newblocks=newblocks[testblock:]
 		
 		lastcutoff=cutoff
 		
@@ -1070,18 +1068,21 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 			
 		print >> tabout, 'FT                   /neg_log_likelihood='+str(block[2])
 		print >> tabout, 'FT                   /SNP_count='+str(block[3])
-		print >> tabout, 'FT                   /Recombination_to_background_SNP_ratio='+str((float(block[3])/((block[1]+1)-block[0]))/(totalsnps/lennogaps))
+		if totalsnps>0:
+			print >> tabout, 'FT                   /Recombination_to_background_SNP_ratio='+str((float(block[3])/((block[1]+1)-block[0]))/(totalsnps/lennogaps))
+		else:
+			print >> tabout, 'FT                   /Recombination_to_background_SNP_ratio=Inf'
 		print >> tabout, 'FT                   /pvalue='+str(block[4])
 	
 	if len(blocks)==0:
 		blsnpdensity=[0.0]
-	
-	if node==0 and options.outgroup!="" and options.outgroup!="None":
-		print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+options.outgroup, startingdensity, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity)]))
-	elif treeobject.is_internal(daughter):
-		print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], startingdensity, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity)]))
 	else:
-		print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], startingdensity, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity)]))
+		if node==0 and options.outgroup!="" and options.outgroup!="None":
+			print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+options.outgroup, startingdensity, totalsnps, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity), cutoff, window, len(blocks)]))
+		elif treeobject.is_internal(daughter):
+			print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], startingdensity, totalsnps, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity), cutoff, window, len(blocks)]))
+		else:
+			print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], startingdensity, totalsnps, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity), cutoff, window, len(blocks)]))
 		
 	
 	return blocks
@@ -1798,7 +1799,7 @@ if __name__ == "__main__":
 		snptabout=open(prefix+"_SNPS_per_branch.tab","w")
 		branch_stats=open(prefix+"_branch_SNP_density_stats.csv","w")
 		print >> snplocout, "SNP_location,Branch,ancestral_base,Daughter_base"
-		print >> branch_stats, "Branch,Starting branch SNP density,Final branch SNP density,Mean recombination block SNP density,Maximum recombination block SNP density,Minimum recombination block SNP density"
+		print >> branch_stats, "Branch,Starting branch SNP density,Number of SNPs post recombination removal,Final branch SNP density,Mean recombination block SNP density,Maximum recombination block SNP density,Minimum recombination block SNP density,Cutoff,Window,Number of Recombinations"
 		tree_recurse(rootnode,pamltree)
 		
 		if options.show_gaps:
