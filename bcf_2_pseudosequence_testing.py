@@ -276,27 +276,29 @@ if __name__ == "__main__":
 				
 					
 			else:
-				try: BASEINFO[heading]=float(words[x])
-				except StandardError:
+				if heading=="CHROM":
 					BASEINFO[heading]=words[x]
+				else:
+					try: BASEINFO[heading]=float(words[x])
+					except StandardError:
+						BASEINFO[heading]=words[x]
 		
 
-#		count+=1
-#		if count>=hundredth:
-#			total=float(BASEINFO["POS"])
-#			count=0
-#			print "%.0f%% complete\r" % (100*(total/totallength)),
-#			sys.stdout.flush()
+		count+=1
+		if count>=hundredth:
+			total=float(BASEINFO["POS"])
+			count=0
+			print "%.0f%% complete\r" % (100*(total/totallength)),
+			sys.stdout.flush()
 
 		
 		#for homopolymeric tracts with indels, fill in same as reference (see indels below)
-		if skip>0:
-			if not ((len(BASEINFO["ALT"].split(",")[0])>1 or len(BASEINFO["REF"].split(",")[0])>1) and BASEINFO['INFO']['INDEL']):
-				skip-=1
-				contigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["REF"][0]
-				mapped+=1
-			continue
-		
+#		if skip>0:
+#			if not ((len(BASEINFO["ALT"].split(",")[0])>1 or len(BASEINFO["REF"].split(",")[0])>1) and BASEINFO['INFO']['INDEL']):
+#				skip-=1
+#				contigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["REF"][0]
+#				mapped+=1
+#			continue
 		
 		
 		
@@ -341,6 +343,7 @@ if __name__ == "__main__":
 		
 		if BASEINFO["ALT"]=="." or BASEINFO["INFO"]["DP4rratio"]>=0.5:
 			SNP=False
+		
 		
 		if BASEINFO["QUAL"]<options.QUAL:
 			keep=False
@@ -436,11 +439,16 @@ if __name__ == "__main__":
 			#keep=False
 		elif ((len(BASEINFO["ALT"].split(",")[0])>1 or len(BASEINFO["REF"].split(",")[0])>1)) and "INDEL" in BASEINFO['INFO']:
 			INDEL=True
+			if BASEINFO['INFO']["IS"][0]<options.depth:
+				keep=False
+#				depthfail+=1
+			if BASEINFO['INFO']["IS"][1]<options.ratio:
+				keep=False
+#			print BASEINFO["POS"], BASEINFO['INFO']["IS"], keep
+			
 		elif "INDEL" in BASEINFO['INFO']:
 			keep=False
-	
-		if not keep:
-			print BASEINFO["POS"], ', '.join(failedfilters), BASEINFO["INFO"]["DP4"], BASEINFO["INFO"]["DP4ratios"]
+
 		
 #		vcfline=[]
 #		for x, heading in enumerate(headings):
@@ -501,7 +509,15 @@ if __name__ == "__main__":
 				contigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["REF"][0]
 				mapped+=1
 				snpline=0
+				
 			print >> mapplot, int(BASEINFO["POS"]), int(BASEINFO["INFO"]["DP"]), snpline
+		
+#		else:
+#			if int(BASEINFO["POS"])>1000 and not SNP:
+#				print failedfilters
+#				print int(BASEINFO["POS"]), SNP
+#				print BASEINFO
+#				sys.exit()
 			
 #			if int(BASEINFO["POS"])>4500:
 #				out=open(options.output+".mfa","w")
