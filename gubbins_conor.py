@@ -880,10 +880,10 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 	
 	window=int(float(lennogaps)/(totalsnps/10))
 	
-	if window<100:
+	if window<10:
+		window=10
+	elif window>100:
 		window=100
-	elif window>10000:
-		window=10000
 	
 	if window>float(lennogaps)/10:
 		window=int(float(lennogaps)/10)

@@ -289,7 +289,7 @@ if __name__ == "__main__":
 			try: BASEINFO["INFO"]["DP4ratios"]["ralt"]=float(BASEINFO["INFO"]["DP4"][3])/(BASEINFO["INFO"]["DP4"][1]+BASEINFO["INFO"]["DP4"][3])
 			except ZeroDivisionError:
 				BASEINFO["INFO"]["DP4ratios"]["ralt"]=0.0
-			try: BASEINFO["INFO"]["DP4rratio"]=(float(BASEINFO["INFO"]["DP4"][0])+float(BASEINFO["INFO"]["DP4"][1]))/(BASEINFO["INFO"]["DP4"][1]+BASEINFO["INFO"]["DP4"][2]+BASEINFO["INFO"]["DP4"][1]+BASEINFO["INFO"]["DP4"][3])
+			try: BASEINFO["INFO"]["DP4rratio"]=(float(BASEINFO["INFO"]["DP4"][0])+float(BASEINFO["INFO"]["DP4"][1]))/(BASEINFO["INFO"]["DP4"][0]+BASEINFO["INFO"]["DP4"][1]+BASEINFO["INFO"]["DP4"][2]+BASEINFO["INFO"]["DP4"][3])
 			except ZeroDivisionError:
 				BASEINFO["INFO"]["DP4rratio"]=1.0
 		
