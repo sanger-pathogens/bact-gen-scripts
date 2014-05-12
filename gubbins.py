@@ -1251,7 +1251,8 @@ def tree_recurse(node,treeobject):
 			elif binsnp==0:
 				nongapposns[y]=x
 				y=y+1
-				
+		
+		lennogaps=len(nongapposns)	
 #		if isroot:
 #			print snpposns
 
@@ -1264,14 +1265,21 @@ def tree_recurse(node,treeobject):
 			if options.detectiontype=="movingwindow":
 				
 				blocks=detect_recombination_using_moving_windows(binsnps, treeobject, node, daughter, nodenames, daughternames, downstreamtaxa)
-					
+				if len(blocks)==0:
+					if treeobject.is_internal(daughter):
+						print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
+					else:
+						print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
 
 			else:
 				binsnplist[str(node)+"_"+str(daughter)]=binsnps
 				binsnppositions[str(node)+"_"+str(daughter)]=nongapposns
 		
 		else:
-			print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], startingdensity, totalsnps, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity), cutoff, window, len(blocks)]))			
+			if treeobject.is_internal(daughter):
+				print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
+			else:
+				print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
 
 
 
