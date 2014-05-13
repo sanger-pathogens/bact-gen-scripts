@@ -439,11 +439,12 @@ if __name__ == "__main__":
 			#keep=False
 		elif ((len(BASEINFO["ALT"].split(",")[0])>1 or len(BASEINFO["REF"].split(",")[0])>1)) and "INDEL" in BASEINFO['INFO']:
 			INDEL=True
-			if BASEINFO['INFO']["IS"][0]<options.depth:
-				keep=False
-#				depthfail+=1
-			if BASEINFO['INFO']["IS"][1]<options.ratio:
-				keep=False
+			if "IS" in BASEINFO['INFO']:
+				if BASEINFO['INFO']["IS"][0]<options.depth:
+					keep=False
+	#				depthfail+=1
+				if BASEINFO['INFO']["IS"][1]<options.ratio:
+					keep=False
 #			print BASEINFO["POS"], BASEINFO['INFO']["IS"], keep
 			
 		elif "INDEL" in BASEINFO['INFO']:
