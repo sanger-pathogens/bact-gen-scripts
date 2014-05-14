@@ -6,12 +6,13 @@ from optparse import OptionParser
 
 
 def main():
-        usage = "usage: %prog [options] args"
+        usage = "usage: %prog [options]"
         parser = OptionParser(usage=usage)
         
         
-        parser.add_option("-o", "--output", action="store", dest="outputfile", help="output xml file name [default is to overwrite input xml]", type="string", metavar="FILE", default="")
-        parser.add_option("-p", "--patterns", action="store", dest="patternsfile", help="File containing constant site patterns (can be created with ~sh16/scripts/create_beast_alignment.py", type="string", metavar="FILE", default="")
+        parser.add_option("-o", "--output", action="store", dest="outputfile", help="output xml file name [default is to overwrite input xml, but I take no responsibility if it destroys your lovely xml.]", type="string", metavar="FILE", default="")
+        parser.add_option("-p", "--patterns", action="store", dest="patternsfile", help="File containing constant site patterns (can be created with ~sh16/scripts/create_beast_alignment.py). Whitespace separated file containing on line with four columns for the number of A, C, G and T constant sites", type="string", metavar="FILE", default="")
+        parser.add_option("-P", "--precision", action="store", dest="precisionfile", help="File containing precisions. File must be whitespace delimited with two columns: 1) Name of taxon, 2) precision (in days or years after the date specified in the xml file). e.g. If your samples are dated in days since 1900, but for one sample, Bob, you only know the year of isolation is 1989, you would need to define the date for Bob to be 32509 (days since 1900 for 1/1/1989) in beauti and include the line 'Bob 365' (i.e. Bob may have been isolated any day up to 365 days after 32509) in your input precision file for this script.", type="string", metavar="FILE", default="")
         parser.add_option("-x", "--xml", action="store", dest="xmlfile", help="xml file to edit", default="", type="string", metavar="FILE")
 	parser.add_option("-m", "--noMLE", action="store_false", dest="mle", help="Do not add marginal likelihood estimation for model comparison to the end of the beast block [default is to add mle block]", default=True)
 
@@ -41,6 +42,7 @@ if __name__=="__main__":
 	
 	xmlfile=options.xmlfile
 	patternsfile=options.patternsfile
+	precisionfile=options.precisionfile
 	outputfile=options.outputfile
 	add_model_comparison_block=options.mle
 	
@@ -53,8 +55,8 @@ if __name__=="__main__":
 		outputfile=xmlfile
 	
 	
-	if patternsfile=="" and not add_model_comparison_block:
-		print "No patterns file provided, and no model comparison block to be added. Nothing to do... exiting"
+	if patternsfile=="" and precisionfile=="" and not add_model_comparison_block:
+		print "No patterns or precision files provided, and no model comparison block to be added. Nothing to do... exiting"
 		sys.exit()
 	
 	if not os.path.isfile(xmlfile):
@@ -156,13 +158,15 @@ if __name__=="__main__":
 			ET.SubElement(countnode, "parameter")
 			paramnode=countnode[-1]
 			paramnode.attrib["value"]=patternstext
-		
+	
+
+	
 	mle =doc.find("marginalLikelihoodEstimator")
 	if mle!=None:
 		print "This xml already includes a marginal likelihood estimator block, so will not add another one"
 		add_model_comparison_block=False
-		if patternsfile=="":
-			print "No patterns to edit, so nothing to do... exiting"
+		if patternsfile=="" and precisionfile=="":
+			print "No patterns or precisions to edit, so nothing to do... exiting"
 			sys.exit()
 	
 	if add_model_comparison_block:
@@ -207,7 +211,131 @@ if __name__=="__main__":
 		ET.SubElement(lognode, "pathLikelihood")
 		plnode=lognode[-1]
 		plnode.attrib["idref"]="pathLikelihood"
+	
+	
+	
+	if precisionfile!="":
+	
+		try:
+			precisionf=open(precisionfile, "rU")
+		except:
+			print "Failed to open precision file", precisionfile
+			sys.exit()
 		
+		try:
+			precisiontext=precisionf.readlines()
+		except StandardError:
+			print "Is your precision file empty?"
+			sys.exit()
+	
+		#Check the patterns text
+		precisiondict={}
+		for line in precisiontext:
+			line=line.strip()
+			try:
+				if line.split()[0] in precisiondict:
+					print "WARNING:",line.split()[0],"appears more than once in precision fileI"
+				precisiondict[line.split()[0]]=float(line.split()[1])
+			except StandardError:
+				print "Expecting precision file to contain an isolate name followed by a precision value. Instead found:"
+				print line
+				sys.exit()
+		
+		added_precision_to=[]
+		if len(precisiondict)!=0:
+			
+			taxanode=doc.find('taxa')
+			
+			if taxanode==None:
+				print "No taxa block found. xml file misformed."
+				sys.exit()
+			else:
+				for taxonblock in taxanode.findall('taxon'):
+					taxon_name=""
+					for attrib in taxonblock.attrib:
+						if attrib=="id":
+							taxon_name=taxonblock.attrib["id"]
+					if taxon_name=="":
+						print "WARNING: Found no ID for taxon."
+						continue
+					dateblock=taxonblock.find("date")
+					if dateblock==None:
+						print "WARNING: Missing date block!"
+						continue
+					if taxon_name in precisiondict:
+						if not "units" in dateblock.attrib:
+							print "WARNING: Date block is missing units attribute!"
+						else:
+							print "Adding precision of", precisiondict[taxon_name], dateblock.attrib["units"], "to", taxon_name
+							dateblock.attrib["precision"]=str(precisiondict[taxon_name])
+							added_precision_to.append(taxon_name)
+
+#			You then need to add:
+#
+#        <leafHeight taxon="D4Brazi82">
+#                <parameter id="D4Brazi82.height"/>
+#        </leafHeight>
+#
+#to the tree model,
+				
+			treeModelnode=doc.find('treeModel')
+			
+			if treeModelnode==None:
+				print "No treeModel block found. xml file misformed."
+				sys.exit()
+			
+			for taxon in added_precision_to:
+				#create new subfeatures for taxa with precision
+				ET.SubElement(treeModelnode, "leafHeight")
+				leafHeightnode=treeModelnode[-1]
+				leafHeightnode.attrib["taxon"]=taxon
+				ET.SubElement(leafHeightnode, "parameter")
+				parameternode=leafHeightnode[-1]
+				parameternode.attrib["id"]=taxon+".height"
+				
+#        <randomWalkOperator windowSize="0.1" weight="1">
+#                <parameter idref="D4Brazi82.height"/>
+#        </randomWalkOperator>
+#
+#to the operators, and if you want:
+			
+			operatorsnode=doc.find('operators')
+			
+			if operatorsnode==None:
+				print "No operators block found. xml file misformed."
+				sys.exit()
+			
+			for taxon in added_precision_to:
+				#create new subfeatures for taxa with precision
+				ET.SubElement(operatorsnode, "randomWalkOperator")
+				randomWalkOperator=operatorsnode[-1]
+				randomWalkOperator.attrib["windowSize"]="0.1"
+				randomWalkOperator.attrib["weight"]="1"
+				ET.SubElement(randomWalkOperator, "parameter")
+				parameternode=randomWalkOperator[-1]
+				parameternode.attrib["idref"]=taxon+".height"
+			
+
+#        <parameter idref="D4Brazi82.height"/>
+#
+#to the log file. 
+			
+			mcmcnode=doc.find('mcmc')
+			for lognode in mcmcnode.findall('log'):
+				if lognode==None:
+					print "No mcmc log block found. xml file misformed."
+					sys.exit()
+				
+				if "id" in lognode.attrib and lognode.attrib['id']=='fileLog':
+					for taxon in added_precision_to:
+						#create new subfeatures for taxa with precision
+						ET.SubElement(lognode, "parameter")
+						parameternode=lognode[-1]
+						parameternode.attrib["idref"]=taxon+".height"
+					
+				
+	
+	
 	
 	indent(doc)
 	
