@@ -57,7 +57,7 @@ def get_user_options():
 	group = OptionGroup(parser, "Required")
 	group.add_option("-i", "--input", action="store", dest="inputfile", help="Input file name", default="")
 	group.add_option("-o", "--output", action="store", dest="outfile", help="Output file name", default="")
-	group.add_option("-d", "--dates", action="store", dest="dates", help="Dates csv file name (Nmae,date)", default="")
+	group.add_option("-d", "--dates", action="store", dest="dates", help="Dates csv file name (Name,date)", default="")
 	group.add_option("-n", "--nons", action="store_true", dest="nons", help="Exclude sites which are constant other than Ns", default=False)
 	group.add_option("-g", "--gaps", action="store_true", dest="gaps", help="Gaps (-) are real", default=False)
 	parser.add_option_group(group)
