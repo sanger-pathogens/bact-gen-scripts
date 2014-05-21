@@ -221,6 +221,11 @@ def check_input_validity(options, args):
 		DoError('Cannot find file '+options.ref)
 	options.mapped=options.mapped.rstrip('/')
 	
+	if os.path.isdir(options.mapped):
+		options.mapped=os.path.abspath(options.mapped)
+	else:
+		DoError("Cannot find directory "+options.mapped)
+	
 	
 	return
 	
@@ -279,7 +284,7 @@ if __name__ == "__main__":
 	
 	
 	#Create a bsub job to index the reference file ready for mapping
-	
+	print "Running job to index reference file"
 	smalt_index_command=SMALT_LOC+" index -k 13 -s 1 "+tmpname+"/"+tmpname+".index "+options.ref
 	
 	job1 = farm.Bsub(tmpname+"/SMALT_index_bsub.out", tmpname+"/SMALT_index_bsub.err", tmpname+"_smalt_index", "normal", 1, smalt_index_command)
@@ -287,7 +292,7 @@ if __name__ == "__main__":
 	
 	
 	#for each fastq file (pair), create a bash script to run SMALT, extract unmapping reads and assemble them
-	
+	print "Making scripts to create or copy bam files"
 	assembly_list=[]
 	
 	for i, fastq in enumerate(fastqs):
@@ -321,9 +326,8 @@ if __name__ == "__main__":
 				print >> smalt_run_file, "rm -f "+tmpname+"/"+tmpname+"_"+str(i+1)+'.bam || error_exit "rm command failed! Aborting"'
 			else:
 				if options.mapped+"/"+name+".bam" != tmpname+"/"+name+".bam":
-					os.system("cd "+tmpname)
-					os.system("cp -s "+options.mapped+"/"+name+".bam .")
-					os.system("cd ..")
+					os.system("ln -s "+options.mapped+"/"+name+".bam "+tmpname)
+					print >> smalt_run_file, SAMTOOLS_LOC+" index "+tmpname+"/"+name+".bam"+' || error_exit "samtools index command failed! Aborting"'
 		else:
 			print >> smalt_run_file, smalt_map_bit
 			print >> smalt_run_file, SAMTOOLS_LOC+" sort "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam "+tmpname+"/"+name+' || error_exit "samtools sort command failed! Aborting"'
@@ -364,7 +368,7 @@ if __name__ == "__main__":
 	#create a bsub array to run the smalt scripts
 	
 	smalt_run_file_command="bash "+tmpname+"/"+tmpname+"_smalt_INDEX.sh"
-	
+	print "Running jobs to create or copy bam files"
 	job2 = farm.Bsub(tmpname+"/SMALT_bsub.out", tmpname+"/SMALT_bsub.err", tmpname+"_smalt", "normal", 2, smalt_run_file_command, start=1, end=i+1)
 	#add a dependency so the mappings only run once the indexing is complete
 	job2.add_dependency(job1_id) 
@@ -382,6 +386,7 @@ if __name__ == "__main__":
 	
 	
 	if options.tab!="":
+		print "Extracting core and accessory regions fo reference"
 		try:
 			tablines=open(options.tab,"rU").readlines()
 		except StandardError:
@@ -449,7 +454,7 @@ if __name__ == "__main__":
 	
 	
 	#Create a bsub job to join all of the assemblies and prepare everything for blasting against the reference core regions
-	
+	print "Running job to join assemblies and prepare for blasting"
 	prepare_core_blast_file=open(tmpname+"/"+tmpname+"_prepare_core_blast.sh", "w")
 	
 	add_bash_error_function(prepare_core_blast_file)
@@ -460,7 +465,7 @@ if __name__ == "__main__":
 
 	prepare_core_blast_file.close()
 	
-	#Run the bsub command once the SMALT mappingsa re all complete
+	#Run the bsub command once the SMALT mappings are all complete
 	
 	prepare_core_blast_run_command="bash "+tmpname+"/"+tmpname+"_prepare_core_blast.sh"
 	
@@ -484,14 +489,14 @@ if __name__ == "__main__":
 		core_blast_file.close()
 	
 	core_blast_run_command="bash "+tmpname+"/"+tmpname+"_core_blast_INDEX.sh"
-	
+	print "Running job to blast assemblies against reference core"
 	job4 = farm.Bsub(tmpname+"/core_blast_bsub.out", tmpname+"/core_blast_bsub.err", tmpname+"_core_blast", "normal", 1, core_blast_run_command, start=1, end=i+1)
 	job4.add_dependency(job3_id) 
 	job4_id = job4.run()
 	
 	
 	#Create a bsub job to join all of the noncore contigs and prepare everything for blasting against themselves
-	
+	print "Running job to combine noncore assemblies"
 	prepare_noncore_blast_file=open(tmpname+"/"+tmpname+"_prepare_noncore_blast.sh", "w")
 	
 	add_bash_error_function(prepare_noncore_blast_file)
@@ -502,7 +507,7 @@ if __name__ == "__main__":
 
 	prepare_noncore_blast_file.close()
 	
-	#Run the bsub command once the SMALT mappingsa re all complete
+	#Run the bsub command once the SMALT mappings are all complete
 	
 	prepare_noncore_blast_run_command="bash "+tmpname+"/"+tmpname+"_prepare_noncore_blast.sh"
 	
@@ -529,7 +534,7 @@ if __name__ == "__main__":
 		noncore_blast_file.close()
 	
 	noncore_blast_run_command="bash "+tmpname+"/"+tmpname+"_noncore_blast_INDEX.sh"
-	
+	print "Running jobs to blast assemblies against each other"
 	job6 = farm.Bsub(tmpname+"/noncore_blast_bsub.out", tmpname+"/noncore_blast_bsub.err", tmpname+"_noncore_blast", "normal", 1, noncore_blast_run_command, start=1, end=i+1)
 	job6.add_dependency(job5_id) 
 	job6_id = job6.run()
@@ -550,7 +555,7 @@ if __name__ == "__main__":
 	#Run the bsub command once the SMALT mappings are all complete
 	
 	create_accessory_and_pan_genomes_command="bash "+tmpname+"/"+tmpname+"_create_accessory_and_pan_genomes.sh"
-	
+	print "Running jobs to create accessory and pan genomes"
 	job7 = farm.Bsub(tmpname+"/create_accessory_and_pan_genomes_bsub.out", tmpname+"/create_accessory_and_pan_genomes_bsub.err", tmpname+"_create_accessory_and_pan_genomes", "normal", 1, create_accessory_and_pan_genomes_command)
 	job7.add_dependency(job6_id)
 	job7_id = job7.run()
