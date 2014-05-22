@@ -171,8 +171,10 @@ def check_input_validity(options, args):
 		if userinput=='y':
 			for f in filelist:
 				os.remove(f)
-	elif options.mem>30 or options.mem<0:
-		DoError('Memory requirement (-M) must be between 0 and 30Gb')
+	elif options.mem>1000 or options.mem<0:
+		DoError('Memory requirement (-M) must be between 0 and 1Tb')
+	elif options.mem>30:
+		print "Warning: You have requested", options.mem+"Mb of memory. Some queues may not have sufficient memory to run this job"
 	if options.proportion<=0 or options.proportion>1:
 		DoError('Proportions of Ns (-p) must be greater than 0 and less than or equal to 1')
 		
