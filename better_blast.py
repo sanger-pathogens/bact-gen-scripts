@@ -40,6 +40,7 @@ def main():
 	group.add_option("-p", "--program", action="store", dest="blastprog", help="BLAST program to use (choose from blastn or tblastx) This script doesn't support protein BLASTs, and won't unless people ask very nicely. [Default= %default]", default="blastn", type="choice", choices=['blastn', 'tblastx'])
 	group.add_option("-e", "--evalue", action="store", dest="e", help="evalue cutoff for BLAST. [Default= %default]", default=0.00001, type="float")
 	group.add_option("-f", "--filter", action="store_true", dest="filter", help="Turn off BLAST low complexity filter", default=False)
+	group.add_option("-S", "--self", action="store_true", dest="filter_self", help="Filter self BLAST matches (i.e. to the same contig name)", default=False)
 	group.add_option("-E", "--extras", action="store", dest="extras", help="Extra BLAST options to use. Note: These will not be sanity checked.", default="")
 	group.add_option("-d", "--tmpdir", action="store", dest="tmpdir", help="Temporary directory prefix. [Default= %default]", default="better_blast_tmp_dir")
 	
@@ -276,9 +277,12 @@ if __name__ == "__main__":
 	print "Job ID =", job1_id
 	sys.stdout.flush()
 	
+	if options.filter_self:
+		fs="True"
+	else:
+		fs="False"
 	
-	
-	job2 = farm.Bsub(options.prefix+"_bb_bsub.out", options.prefix+"_bb_bsub.err", tmpname+"_postprocess", "normal", 0.5, "/nfs/users/nfs_s/sh16/scripts/post_process_better_blast.py "+options.tmpdir+" "+tmpname+" "+options.prefix+" "+str(query_file_count))
+	job2 = farm.Bsub(options.prefix+"_bb_bsub.out", options.prefix+"_bb_bsub.err", tmpname+"_postprocess", "normal", 0.5, "/nfs/users/nfs_s/sh16/scripts/post_process_better_blast.py "+options.tmpdir+" "+tmpname+" "+options.prefix+" "+str(query_file_count)+" "+fs)
 	job2.add_dependency(job1_id) 
 	job2_id = job2.run()
 	print "Job ID =", job2_id

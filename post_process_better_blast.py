@@ -25,6 +25,7 @@ dirname=sys.argv[1]
 tmpname=sys.argv[2]
 output_file_name=sys.argv[3]
 number_of_blast_files=int(sys.argv[4])
+remove_self_matches=sys.argv[5]
 
 output=gzip.open(output_file_name+".crunch.gz", "w")
 
@@ -38,14 +39,14 @@ for line in open(dirname+"/"+tmpname+".queryinfo", "rU"):
 	words=line.strip().split("\t")
 	query_db[words[0]]=[words[1], int(words[2])]
 
-print query_db
-print subject_db
 
 for blast_number in xrange(1,number_of_blast_files+1):
 	blast_filename=dirname+"/"+tmpname+".blast"+str(blast_number)
 	for line in open(blast_filename, "rU"):
 		words=line.strip().split()
-		print >> output, words[11], words[2], query_db[words[0]][1]+int(words[6]), query_db[words[0]][1]+int(words[7]), query_db[words[0]][0].split()[0], subject_db[words[1]][1]+int(words[8]), subject_db[words[1]][1]+int(words[9]), subject_db[words[1]][0].split()[0]
+		
+		if remove_self_matches!="True" or query_db[words[0]][0].split()[0]!=subject_db[words[1]][0].split()[0]:
+			print >> output, words[11], words[2], query_db[words[0]][1]+int(words[6]), query_db[words[0]][1]+int(words[7]), query_db[words[0]][0].split()[0], subject_db[words[1]][1]+int(words[8]), subject_db[words[1]][1]+int(words[9]), subject_db[words[1]][0].split()[0]
 
 
 #if os.path.isdir(options.tmpdir):
