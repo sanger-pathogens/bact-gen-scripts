@@ -45,7 +45,8 @@ import pysam
 #BCFTOOLS_DIR="/Users/sh16/Applications/samtools-0.1.18/bcftools/"
 #on pcs4
 SAMTOOLS_DIR="/nfs/users/nfs_s/sh16/samtools-0.1.17/"
-BCFTOOLS_DIR="/nfs/users/nfs_s/sh16/samtools-0.1.17/bcftools/"
+BCFTOOLS_DIR=""
+OLD_BCFTOOLS_DIR="/nfs/users/nfs_s/sh16/samtools-0.1.17/bcftools/"
 
 #################################
 # Set up some global converters #

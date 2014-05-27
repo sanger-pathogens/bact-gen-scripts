@@ -41,6 +41,8 @@ for filename in args:
 		print "Could not open file", filename
 		continue
 	
+	
+	
 #	print filename
 	
 	lengths=[]
@@ -66,7 +68,9 @@ for filename in args:
 		
 		GCs.append(GC)
 		
-		
+	if len(lengths)==0:
+		print '\t'.join([filename, '0', '0', '0', '0', '0', '0', '0', '0', "-", "-", "-", "-", "-"])
+		continue	
 #	print "Total length =", numpy.sum(lengths)
 #	print "Number of contigs =", len(lengths)
 #	print "Mean length =", numpy.mean(lengths)
