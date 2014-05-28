@@ -188,6 +188,8 @@ if __name__ == "__main__":
 	
 	if options.restart:
 		bsubstring="brestart"
+		if options.checkpoint_directory[-1]=="/":
+			options.checkpoint_directory=options.checkpoint_directory[:-1]
 		arguments='/'.join(options.checkpoint_directory.split("/")[:-1])+" "+options.checkpoint_directory.split("/")[-1]
 	else:
 		bsubstring="bsub"
