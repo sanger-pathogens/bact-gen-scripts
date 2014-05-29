@@ -1,12 +1,16 @@
-#!/usr/bin/env python
+#!/software/python-2.7.6/bin/python
+##!/usr/bin/env python
 
 #################################
 # Import some necessary modules #
 #################################
 
+import os, sys
+sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/site-packages/reportlab-3.1.8-py2.7-linux-x86_64.egg')
+sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/site-packages/')
+sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/')
 import dendropy
 import string, re
-import os, sys
 import random
 from math import sqrt, pow, log, floor, sin, log10, ceil
 from numpy import repeat, convolve, mean, median
@@ -20,12 +24,13 @@ from colorsys import hsv_to_rgb
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 from Si_general import *
 from Si_SeqIO import *
-from Si_nexus import midpoint_root, tree_to_string
+#from Si_nexus import midpoint_root, tree_to_string
 from Bio import SeqIO
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio import GenBank
 from Bio.Graphics.GenomeDiagram._Colors import ColorTranslator
 from math import floor
+import imp
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.lib import pagesizes
@@ -3964,7 +3969,7 @@ class Plot:
 					
 					colour=colors.PCMYKColor(lastbluevalue*100, lastredvalue*100,0,0)
 					
-					print lastredvalue, green, lastbluevalue, data[0][i], data[1][i], colour, (1.0-lastbluevalue),((1.0-lastredvalue)+(1.0-lastbluevalue))/2,(1.0-lastredvalue)
+					#print lastredvalue, green, lastbluevalue, data[0][i], data[1][i], colour, (1.0-lastbluevalue),((1.0-lastredvalue)+(1.0-lastbluevalue))/2,(1.0-lastredvalue)
 					if colour!=colors.Color(1,1,1):
 						d.add(Rect(x+(draw_start*feature_width), y, draw_width, height, fillColor=colour, strokeColor=None, stroke=False, strokeWidth=0))
 
