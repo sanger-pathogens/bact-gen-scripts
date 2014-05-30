@@ -182,7 +182,7 @@ def minimize_this(trees):
     values to adjust the importance of alphabetizing vs. tangling
     or you can add your own measure to be minimized. """
     #return tangle_count_all() + (alpha_count_all()*0.5)
-    #print flatness_count_all(trees), tangle_count_all(trees), (alpha_count_all(trees)*0.5)
+    #print flatness_count_all(trees), tangle_count_all(trees), (alpha_count_all(trees)*0.5), flatness_count_all(trees) + tangle_count_all(trees)  + (alpha_count_all(trees)*0.5)
     return flatness_count_all(trees) + tangle_count_all(trees)  + (alpha_count_all(trees)*0.5)
 
 
@@ -342,6 +342,50 @@ def add_twist_functions(tree):
 
 
 
+def find_best_root(fixed_tree, query_tree):
+	
+	def get_downstream_taxa(node):#Updated for dendropy
+		leaves=[]
+		
+		for x in node.leaf_nodes():
+			leaves.append(x.taxon.label)
+
+		return leaves
+	
+	
+	def find_best_root_node(tree, down, up):
+		max_node=None
+		max_diff=0
+		for node in tree.postorder_node_iter():
+			up_score=0
+			down_score=0
+			node_down=get_downstream_taxa(node)
+			for taxon in node_down:
+				if taxon in down:
+					down_score+=1
+				elif taxon in up:
+					up_score+=1
+			if down_score>up_score and (down_score-up_score)>max_diff:
+				max_diff=down_score-up_score
+				max_node=node
+				print max_node, max_diff
+			elif (up_score-down_score)>max_diff:
+				max_diff=up_score-down_score
+				max_node=node
+				print max_node, max_diff
+		return max_node, max_diff
+	
+	print query_tree.seed_node
+	
+	downstream=get_downstream_taxa(fixed_tree.seed_node.child_nodes()[0])
+	upstream=get_downstream_taxa(fixed_tree.seed_node.child_nodes()[1])
+	new_root_node, diff_score=find_best_root_node(query_tree, downstream, upstream)
+	
+	query_tree.reroot_at_node(new_root_node, update_splits=True)
+	print query_tree.seed_node, new_root_node, get_downstream_taxa(new_root_node), upstream, diff_score
+	sys.exit()
+	return query_tree
+
 tree_list = []
 g_starting_intensity = 50
 g_number_of_iterations_before_reducing_intensity = 5
@@ -370,9 +414,14 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 	orders = {}
 	ordered_names = {}
 	
-	if len(tree_list)>2:
+	if len(tree_list)>2 or len(tree_list)<2:
 		print "Can only cope with 2 trees"
 		sys.exit()
+	
+	reroot_tree2=True
+	if reroot_tree2:
+		print "Rerooting second tree to find best match"
+		tree_list[1]=find_best_root(tree_list[0], tree_list[1])
 	
 	for x, tr in enumerate(tree_list):
 		if first_tree == None:
@@ -384,9 +433,16 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 		tr=add_twist_functions(tr)
 		tree_list[x]=tr
 		#twists[tr.label] = tr.get_twists()
+		#print dir(tr)
+#		tr.is_rooted = False
+#		tr.update_splits(delete_outdegree_one=False)
+		
 		orders[tr.label] = tr.get_orders()
 		ordered_names[tr.label] = tr.get_ordered_names()
+		#print ordered_names[tr.label]
+	#sys.exit()
 	
+		
 	
 	if verbose:
 		print "Starting tree =", tangle_count_all(trees)
@@ -404,6 +460,8 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 			if count>0:
 				print "Iteration " + str(count) + ", Optimize " + str(best) + ", Tangle Count " + str(tangle_count_all(trees, Final=False))
 				sys.stdout.flush()
+			if tangle_count_all(trees, Final=False)==0:
+				break
 		for i in range(0,len(trees)):
 			if not skip_first_tree or trees[trees.keys()[i]].label <> first_tree:
 		    
@@ -477,21 +535,27 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 					neworders[randnum[0]]=neworder
 					trees[trees.keys()[i]].apply_orders(neworders)
 					curbest = minimize_this(trees)
-					curbestpos=randnum[1]
-					#print j, value, neworders[randnum[0]], curbest, curbestpos
+					curbestpos=0
+					if len(neworders[randnum[0]])>500:
+						print " Start", i, value, randnum[0], neworders[randnum[0]], curbest, curbestpos, str(tangle_count_all(trees, Final=False))
 					bestorder=copy.deepcopy(neworders)
 					for x in range(0,len(neworders[randnum[0]])-1):
 						neworders[randnum[0]][x]=neworders[randnum[0]][x+1]
 						neworders[randnum[0]][x+1]=value
 						trees[trees.keys()[i]].apply_orders(neworders)
 						curval = minimize_this(trees)
-						#print j, value, neworders[randnum[0]], curbest, curbestpos
+						if len(neworders[randnum[0]])>500:
+							print i, value, neworders[randnum[0]], curbest, curbestpos, curval, x+1, str(tangle_count_all(trees, Final=False))
 						if curval<curbest:
 							curbest=curval
-							curbestpos=x
+							curbestpos=x+1
 							bestorder=copy.deepcopy(neworders)
-					
-					#print bestorder	
+					if len(neworders[randnum[0]])>500:
+						print " Final", i, value, neworders[randnum[0]], curbest, curbestpos
+						#sys.exit()
+					#print bestorder
+#					trees[trees.keys()[i]].apply_orders(bestorder)
+#					print str(tangle_count_all(trees, Final=False))
 					o=copy.deepcopy(bestorder)
 					totcount=r
 #					print posdict

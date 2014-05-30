@@ -1,12 +1,16 @@
-#!/usr/bin/env python
+#!/software/python-2.7.6/bin/python
+##!/usr/bin/env python
 
 #################################
 # Import some necessary modules #
 #################################
 
-import dendropy
 import string, re
 import os, sys
+sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/site-packages/reportlab-3.1.8-py2.7-linux-x86_64.egg')
+sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/site-packages/')
+sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/')
+import dendropy
 import random
 from math import sqrt, pow, log, floor, sin, log10, ceil
 from numpy import repeat, convolve, mean, median
@@ -23,7 +27,7 @@ from Si_SeqIO import *
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/Tangled-master']))
 import detangle_dendropyb
 import detangle_dendropy
-from Si_nexus import midpoint_root, tree_to_string
+#from Si_nexus import midpoint_root, tree_to_string
 from Bio import SeqIO
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio import GenBank
@@ -771,8 +775,28 @@ def read_dendropy_tree(treefile):
 		root_children = root.child_nodes()
 		
 		if len(root_children) != 2:
-			print "Tree rooted at node. Rerooting on first edge from that node."
-			t.reroot_at_edge(root_children[0].edge, update_splits=True)
+			print "Tree rooted at polytomy. Rerooting on first non polytomy edge from current root."
+			for node in t.preorder_internal_node_iter():
+				if len(node.child_nodes())==2:
+					t.reroot_at_edge(node.child_nodes()[0].edge, update_splits=True)
+					break
+#			
+#			rerooted=False
+#			
+#			for child in root_children:
+#				if not child.is_leaf():
+##					print child.edge.length
+##					print child.taxon
+#					t.reroot_at_edge(child.edge, update_splits=True)
+#					rerooted=True
+##				else:
+##					print child.taxon
+#				if rerooted:
+#					break
+#			if not rerooted:
+#				t.reroot_at_edge(root_children[0].edge, update_splits=True)
+			
+			
 		#print the tree in ascii as a cladogram
 		#print(t.as_ascii_plot())
 		#print the tree in ascii including branch lengths
@@ -5521,8 +5545,8 @@ if __name__ == "__main__":
 	
 	if options.tree!="" and options.tree2!="":
 		if not os.path.isfile(options.tree2):
-			print "Cannot find file:", options.tree
-			options.tree=""
+			print "Cannot find file:", options.tree2
+			sys.exit()
 		else:
 			
 			tree2_tangled=read_dendropy_tree(options.tree2)
@@ -5575,6 +5599,9 @@ if __name__ == "__main__":
 			tree1=tree
 			
 		tree=tree1
+		
+		
+		print tree2
 		
 		treenames=[]
 		for terminal_node in tree.leaf_iter():
