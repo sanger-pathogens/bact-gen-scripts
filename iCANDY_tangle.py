@@ -4762,12 +4762,12 @@ if __name__ == "__main__":
 	if options.page=="custom":
 		width, height = pagesize
 	elif options.orientation=="landscape":
-		if x>y:
+		if x<y:
 			height, width = pagesize
 		else:
 			width, height = pagesize
 	else:
-		if x<y:
+		if x>y:
 			height, width = pagesize
 		else:
 			width, height = pagesize
@@ -4779,6 +4779,7 @@ if __name__ == "__main__":
 		print "Found nothing to draw"
 		sys.exit()
 	
+	#print options.orientation, height, width, pagesize
 	
 	
 	
@@ -5601,7 +5602,6 @@ if __name__ == "__main__":
 		tree=tree1
 		
 		
-		print tree2
 		
 		treenames=[]
 		for terminal_node in tree.leaf_iter():
