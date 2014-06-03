@@ -312,7 +312,7 @@ if __name__ == "__main__":
 	
 	
 	if options.tab!="":
-		print "Extracting core and accessory regions fo reference"
+		print "Extracting core and accessory regions for reference"
 		try:
 			tablines=open(options.tab,"rU").readlines()
 		except StandardError:

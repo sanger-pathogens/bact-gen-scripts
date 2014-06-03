@@ -95,7 +95,7 @@ def main():
 	parser.add_option_group(group)
 	group = OptionGroup(parser, "LSF options")
 	group.add_option("-q", "--queue", action="store", dest="queue", help="LSF queue [Choices = normal, long, basement, hugemem (farm only)] [Default = %default]", default="normal", type="choice", choices=["normal","long", "basement", "hugemem"])
-	group.add_option("-M", "--memory", action="store", dest="mem", help="Amount of memory required for analysis (Gb). 0 means do not require a memory limit, 10 means ask for at least 10Gb. [Default= %default]", default=0, type="int")
+	group.add_option("-M", "--memory", action="store", dest="mem", help="Amount of memory required for analysis (Gb). e.g. 10 means ask for at least 10Gb. [Default= %default]", default=1, type="int")
 	group.add_option("-O", "--bsubout", action="store_true", dest="bsubout", help="Save bsub outputs", default=False)
 	group.add_option("-E", "--bsuberr", action="store_true", dest="bsuberr", help="Save bsub errors", default=False)
 	group.add_option("-n", "--threads", action="store", dest="threads", help="Number of threads to run - allows parallelisation of the analysis. Max=32. [Default= %default]", default=1, type="int")
@@ -155,6 +155,7 @@ def check_input_validity(options, args):
 	
 	if options.threads<1 or options.threads>32:
 		DoError('Number of threads to run must be between 1 and 32')
+	
 		
 	
 	userinput=""
@@ -171,8 +172,8 @@ def check_input_validity(options, args):
 		if userinput=='y':
 			for f in filelist:
 				os.remove(f)
-	elif options.mem>1000 or options.mem<0:
-		DoError('Memory requirement (-M) must be between 0 and 1Tb')
+	elif options.mem>1000 or options.mem<=0:
+		DoError('Memory requirement (-M) must be greater than 0 and less than 1Tb')
 	elif options.mem>30:
 		print "Warning: You have requested", options.mem+"Mb of memory. Some queues may not have sufficient memory to run this job"
 	if options.proportion<=0 or options.proportion>1:
@@ -426,6 +427,9 @@ if __name__ == "__main__":
 	
 	if options.mem>0:
 		bsubcommand.append("-M "+str(options.mem)+'000 -R \'select[mem>'+str(options.mem)+'000] rusage[mem='+str(options.mem)+'000]\'')
+	else:
+		bsubcommand.append("-M 1000 -R \'select[mem>1000] rusage[mem=1000]\'")
+		
 	
 	if options.threads>1:
 		bsubcommand.append('-n '+str(options.threads)+' -R "span[hosts=1]"')

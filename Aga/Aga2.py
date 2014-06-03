@@ -492,11 +492,11 @@ if __name__ == "__main__":
 		
 			print options.mapped, options.coverage
 			if options.mapped!="" and options.coverage>0:
-				print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped_tmp -f pairedfastq"+tabcommand+" -t bothunmapped"+' || error_exit "bam_filter command failed! Aborting"'
+				print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped_tmp -f pairedfastq"+tabcommand+" -t atleastoneunmapped"+' || error_exit "bam_filter command failed! Aborting"'
 				print >> smalt_run_file, AGA_DIR+"subsample_fastq.py -f "+tmpname+"/"+name+"_unmapped_tmp_1.fastq -r "+tmpname+"/"+name+"_unmapped_tmp_2.fastq -o "+tmpname+"/"+name+"_unmapped -p "+str(options.coverage/(fastqs[fastq]["read1"].coverage*2))+' || error_exit "subsample_fastq command failed! Aborting"'
 				print >> smalt_run_file, "rm -f "+tmpname+"/"+name+"_unmapped_tmp_1.fastq "+tmpname+"/"+name+"_unmapped_tmp_2.fastq"+' || error_exit "removing temporary bam filter files failed! Aborting"'
 			else:
-				print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f pairedfastq"+tabcommand+" -t bothunmapped"+' || error_exit "bam_filter command failed! Aborting"'
+				print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f pairedfastq"+tabcommand+" -t atleastoneunmapped"+' || error_exit "bam_filter command failed! Aborting"'
 			
 			if options.assembler=="velvet":
 				#print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f pairedfastq"+tabcommand+" -t aga"+' || error_exit "bam_filter command failed! Aborting"'

@@ -1139,10 +1139,10 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			date_chunks=floor(date_range)
 			if date_chunks>10:
 				while date_chunks>10:
-					date_chunks=date_chunks/10
+					date_chunks=round(date_chunks/10)
 			if date_chunks<1:
 				while date_chunks<1:
-					date_chunks=date_chunks*10
+					date_chunks=round(date_chunks*10)
 			
 			if options.time_type=="years":
 				datestring="Year"
@@ -1159,7 +1159,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			
 			if date_chunks<3:
 				date_chunks=date_chunks*2
-			for chunk in xrange(0,int(date_chunks)+1):
+			for chunk in xrange(0,int(date_chunks)):
 				chunklength=(chunk*(date_range/date_chunks))*horizontal_scaling_factor
 				d.add(Line(horizontalpos+branchlength-chunklength, vertposbottom, horizontalpos+branchlength-chunklength, vertpostop, strokeDashArray=[1, 2], strokeWidth=linewidth/2))
 				if max_date>min_date:
