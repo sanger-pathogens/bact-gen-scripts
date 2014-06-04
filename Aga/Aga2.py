@@ -502,7 +502,7 @@ if __name__ == "__main__":
 				#print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f pairedfastq"+tabcommand+" -t aga"+' || error_exit "bam_filter command failed! Aborting"'
 				print >> smalt_run_file, AGA_DIR+"velvet_assembly.sh -f "+tmpname+"/"+name+"_unmapped_1.fastq -r "+tmpname+"/"+name+"_unmapped_2.fastq -s "+tmpname+"/"+name+"_shuffled.fastq -n -p"+' || error_exit "velvet assembly command failed! Aborting"'
 			elif options.assembler=="spades":
-				print >> smalt_run_file, "spades.py -t 1 -1 "+tmpname+"/"+name+"_unmapped_1.fastq -2 "+tmpname+"/"+name+"_unmapped_2.fastq -o "+tmpname+"/"+name+"_spades"+' || error_exit "velvet assembly command failed! Aborting"'
+				print >> smalt_run_file, "spades.py -t 1 -1 "+tmpname+"/"+name+"_unmapped_1.fastq -2 "+tmpname+"/"+name+"_unmapped_2.fastq -o "+tmpname+"/"+name+"_spades"+' || error_exit "spades assembly command failed! Aborting"'
 		else:
 			print "unpaired fastq file found. SPAdes cannot handle this. Using velvet instead."
 #			print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f fastq"+tabcommand+" -t aga"+' || error_exit "bam_filter command failed! Aborting"'

@@ -145,6 +145,14 @@ if __name__ == "__main__":
 	if int(subsample)>=linecount/4:
 		cleanup()
 		print "Subsample is >= number of reads in the input files. No need to subsample. Exiting..."
+		if mimetypes.guess_type(forward)[1]=="gzip":
+			os.system("cp "+forward+" "+options.output+"_1.fastq.gz")
+		else:
+			os.system("cp "+forward+" "+options.output+"_1.fastq")
+		if mimetypes.guess_type(reverse)[1]=="gzip":
+			os.system("cp "+reverse+" "+options.output+"_2.fastq.gz")
+		else:
+			os.system("cp "+reverse+" "+options.output+"_2.fastq")
 		sys.exit()
 	
 	if options.zip:

@@ -96,10 +96,12 @@ if __name__ == "__main__":
 		strain_seqs[name]=seq
 	
 	lengths={}
+	trims={}
 	for line in open(options.lengths):
 		line=line.strip()
 		words=line.split()
 		lengths[words[0]]=int(words[1])
+		trims[words[0]]=[0,int(words[1])]
 		
 	
 	lastsubject=''
@@ -107,6 +109,7 @@ if __name__ == "__main__":
 	keep=False
 	first_query=True
 	first_subject=True
+	
 	trim_start=0
 	trim_end=0
 	for line in open(options.blast):
@@ -147,7 +150,10 @@ if __name__ == "__main__":
 #				print "Remove", lastquery, lastsubject, unmatched_run_score, longest_run, lengths[lastquery]#, failed_match
 			if lastquery!='':
 				
-				print lastquery, trim_start, lengths[lastquery]-trim_end
+				if (lengths[lastquery]-trim_end+trim_start)>lengths[lastquery]-options.minsize:
+					keep=False
+				
+				print lastquery, trim_start, lengths[lastquery]-trim_end, lengths[lastquery], keep
 					
 			if not first_query and (not keep or lengths[lastquery]<options.minsize):
 				del strain_seqs[lastquery]
@@ -246,13 +252,15 @@ if __name__ == "__main__":
 					#print "B", s, words[0], words[1], start, end, sstart, send, lengths[words[0]], lengths[words[1]]
 			elif (start-options.minlength)<=strim:
 				
-				if (lengths[words[1]]>lengths[words[0]] or (lengths[words[1]]==lengths[lastquery] and words[1]>words[0])) or s=="M":
+				if (lengths[words[1]]>lengths[words[0]] or (lengths[words[1]]==lengths[lastquery] and words[1]>words[0])):# or s=="M": #and s in ["S", "E", "B"]:
 					strim=end
+					trims[words[0]][0]=end
 					#print "S", s, words[0], words[1], start, end, sstart, send, lengths[words[0]], lengths[words[1]]
 			elif (end+options.minlength)>=etrim:
 				
-				if (lengths[words[1]]>lengths[words[0]] or (lengths[words[1]]==lengths[lastquery] and words[1]>words[0])) or s=="M":
+				if (lengths[words[1]]>lengths[words[0]] or (lengths[words[1]]==lengths[lastquery] and words[1]>words[0])):# or s=="M":# and s in ["S", "E", "B"]:
 					etrim=start
+					trims[words[0]][1]=start
 					#print "E", s, words[0], words[1], start, end, sstart, send, lengths[words[0]], lengths[words[1]]
 		
 		
@@ -293,9 +301,17 @@ if __name__ == "__main__":
 #		sys.exit()
 
 		del strain_seqs[lastquery]
-	output=open(options.output, "w")
+		
+	filtered_lengths=[]
 	for seq in strain_seqs:
+		filtered_lengths.append([trims[seq][1]-trims[seq][0], seq])
+	filtered_lengths.sort()
+	filtered_lengths.reverse()
+	output=open(options.output, "w")
+	for seqlist in filtered_lengths:
+		seq=seqlist[1]
 		if len(strain_seqs[seq])>options.minsize:
+			print seq, trims[seq], lengths[seq], seqlist[0]
 			print >> output, ">"+seq
-			print >> output, strain_seqs[seq]
+			print >> output, strain_seqs[seq][trims[seq][0]:trims[seq][1]]
 	output.close()
