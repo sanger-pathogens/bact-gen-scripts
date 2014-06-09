@@ -32,7 +32,7 @@ for filename in sys.argv[1:]:
 			for y in ["A","C","G","T"]:
 				dinucleotides[x][y]=0
 		
-		seq=str(contig.seq)
+		seq=str(contig.seq).upper()
 		length=len(seq)
 		
 		lengths.append(length)
