@@ -13,7 +13,6 @@ from random import randint, choice
 from optparse import OptionParser
 import pysam
 from numpy import min, max, median, mean, std
-from scipy.stats import mannwhitneyu, ttest_ind
 from math import sqrt, pow
 
 ##############################################

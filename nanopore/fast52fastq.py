@@ -32,13 +32,16 @@ if __name__ == "__main__":
 
 	(options, args) = main()
  	
+ 	
+ 	
 	if options.fastq=="":
 		print "Error: No name provided for output fastq file"
 		sys.exit()
 	
 	output=open(options.fastq, "w")
 	print "Reading", len(args), "fast5 files"
-	nods=0
+	nods2D=0
+	nods1D=0
 	fnf=0
 	utr=0
 	success=0
@@ -56,14 +59,24 @@ if __name__ == "__main__":
 		except StandardError:
 			#print "Error: Cannot find dataset:", options.dataset, "within fast5 file:", fast5
 			#print "Skipping"
-			nods+=1
-			continue
+			nods2D+=1
+		
+			try:
+				fq = hdf["/Analyses/Basecall_1D_000/BaseCalled_template/Fastq"][()]
+			except StandardError:
+				#print "Error: Cannot find dataset:", options.dataset, "within fast5 file:", fast5
+				#print "Skipping"
+				nods1D+=1
+				continue
+		
 		#print "Fast5 file", options.fast5, "successfully read"
+		
 		success+=1
 		print >> output, fq
 	print fnf, "files not found"
 	print utr, "files were unreadable"
-	print nods, "files did not contain 2D basecalling"
+	print nods2D, "files did not contain 2D basecalling"
+	print nods1D, "files did not contain 1D basecalling"
 	print success, "reads  written to", options.fastq
 	print "Done."
 	output.close()
