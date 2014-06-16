@@ -43,6 +43,8 @@ def get_user_options(args=[]):
 	parser.add_option("-r", "--restart", action="store_true", dest="restart", help="Restart a checkpointed job. To do this you will need to provide the path to the checkpoint file including the jobid (you will normally probably want to use the last one in the directory), e.g. /my/checkpoint/directory/<JOBID>. Important: Check that your job has really died; restarting a job from a checkpoint whilst the original is running will lead to unpredictable results! If your jobs needs special resources, you should add them to the command. (LSF does not remember them from the original bsub). ", default=False)
 	parser.add_option("-o", "--output", action="store", dest="output", help="Output file name. [Default= None]", default=False)
 	parser.add_option("-e", "--error", action="store", dest="error", help="Error file name. [Default= None]", default=False)
+	parser.add_option("-I", "--interactive", action="store_true", dest="interactive", help="Run job in interactive mode", default=False)
+	parser.add_option("-n", "--nohup", action="store_true", dest="nohup", help="Nohup the command. Can only be used if job is interactive", default=False)
 	parser.add_option("-E", "--exclude", action="store", dest="exclude", help="Comma separated list of nodes to exclude. [Default= None]", default="")
 	
 	if args==[]:
@@ -136,6 +138,8 @@ if __name__ == "__main__":
 	memstring=""
 	cpustring=""
 	excludestring=""
+	interactivestring=""
+	nohupstring=""
 	
 	if options.exclude!="":
 		toexclude=options.exclude.split(",")
@@ -153,6 +157,11 @@ if __name__ == "__main__":
 	if options.CPUs>1:
 		rlist.append('span[hosts=1]')
 		cpustring="-n "+str(options.CPUs)
+	
+	if options.interactive:
+		interactivestring="-I"
+		if options.nohup:
+			nohupstring="nohup"
 	
 	if options.mem>0:
 		if host=="farm3" or host=="pcs5":
@@ -205,7 +214,7 @@ if __name__ == "__main__":
 		print "Nothing to bsub"
 		sys.exit()		
 	
-	submitstring= ' '.join(' '.join([bsubstring, cstring, memstring, cpustring, rstring, qstring, ostring, estring, excludestring, arguments]).split())
+	submitstring= ' '.join(' '.join([nohupstring, bsubstring, interactivestring, cstring, memstring, cpustring, rstring, qstring, ostring, estring, excludestring, arguments]).split())
 	print submitstring
 	#sys.exit()
 	os.system(submitstring)
