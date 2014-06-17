@@ -156,6 +156,7 @@ if __name__ == "__main__":
 				print lastquery, trim_start, lengths[lastquery]-trim_end, lengths[lastquery], keep
 					
 			if not first_query and (not keep or lengths[lastquery]<options.minsize):
+				print "deleting", lastquery, lengths[lastquery], options.minsize, keep
 				del strain_seqs[lastquery]
 			lastsubject=''
 			first_subject=True
@@ -299,7 +300,7 @@ if __name__ == "__main__":
 #		elif not first_query:
 #			print "Remove", lastquery, lastsubject, unmatched_run_score, longest_run, lengths[lastquery]#, failed_match
 #		sys.exit()
-
+		print "deleting", lastquery
 		del strain_seqs[lastquery]
 		
 	filtered_lengths=[]
