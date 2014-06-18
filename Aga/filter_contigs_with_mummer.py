@@ -22,6 +22,7 @@ from Si_SeqIO import *
 
 
 MUMMER_DIR=""
+MIN_LENGTH=1000
 
 
 ##########################################
@@ -136,49 +137,87 @@ if __name__ == "__main__":
 			DoError("Nucmer failed with return value "+str(returnval))
 	
 	#Run delta-filter to filter repetitive regions
-	deltafilterargs=shlex.split(MUMMER_DIR+"delta-filter -l 1000 -i 98 "+options.output+".delta")
-	handle=open(options.output+".filter", "w")
-	returnval = subprocess.call(deltafilterargs, stdout=handle)
-	handle.close()
-	if returnval!=0:
-			DoError("delta-filter failed with return value "+str(returnval))
+#	deltafilterargs=shlex.split(MUMMER_DIR+"delta-filter -l 1000 -i 80 "+options.output+".delta")
+#	handle=open(options.output+".filter", "w")
+#	returnval = subprocess.call(deltafilterargs, stdout=handle)
+#	handle.close()
+#	if returnval!=0:
+#			DoError("delta-filter failed with return value "+str(returnval))
 	
 	blocks=[]
-	for x, refname in enumerate(reflist):
-		print "Aligning query sequences against", refname
-		for queryname in querylist:
-			if refname==queryname:
-				continue
-			showalignsarg = shlex.split(MUMMER_DIR+"show-aligns -r "+options.output+".filter "+refname+" "+queryname)
-			returnval = subprocess.Popen(showalignsarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-			align = returnval.stdout.readlines()
-			inblock=False
+#	for x, refname in enumerate(reflist):
+#		print "Aligning query sequences against", refname
+#		for queryname in querylist:
+#			if refname==queryname:
+#				continue
+#			showalignsarg = shlex.split(MUMMER_DIR+"show-aligns -r "+options.output+".delta "+refname+" "+queryname)
+#			returnval = subprocess.Popen(showalignsarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#			align = returnval.stdout.readlines()
+#			inblock=False
+#			
+#			for line in align:
+#				
+#				words=line.replace("^","").strip().split()
+#				
+#				
+#				if inblock and len(words)>1:
+#					if words[1]=="END":
+#						inblock=False
+#						continue
+#					blockline+=1
+#					if blockline%2==0:
+#						blocks[-1]["queryseq"]=blocks[-1]["queryseq"]+words[1].replace(".","-")
+#					else:
+#						blocks[-1]["refseq"]=blocks[-1]["refseq"]+words[1].replace(".","-")
+#						
+#				elif len(words)>1 and words[1]=="BEGIN":
+#					inblock=True
+#					blockline=0
+#					if int(words[9])>0:
+#						qstart=words[10]
+#						qend=words[12]
+#					else:
+#						qstart=words[12]
+#						qend=words[10]
+#					
+#					if int(words[4])>0:
+#						rstart=words[5]
+#						rend=words[7]
+#					else:
+#						rstart=words[7]
+#						rend=words[5]
+#						
+#						
+#					blocks.append({"start":int(words[5])+reflens[x], "ref_start": rstart, "ref_end": rend,"end":int(words[7])+reflens[x], "refseq":"", "queryseq":"", "query":queryname, "ref":refname, "query_start": qstart, "query_end": qend})
+	
+	for line in open(options.output+".delta"):
+		line=line.strip()
+		words=line.split()
+		if len(words)==4 and line[0]==">":
+			refname=words[0][1:]
+			queryname=words[1]
+		elif len(words)==7:
+			if int(words[0])<int(words[1]):
+				rstart=words[0]
+				rend=words[1]
+			else:
+				rstart=words[1]
+				rend=words[0]
 			
-			for line in align:
-				
-				words=line.replace("^","").strip().split()
-				
-				
-				if inblock and len(words)>1:
-					if words[1]=="END":
-						inblock=False
-						continue
-					blockline+=1
-					if blockline%2==0:
-						blocks[-1]["queryseq"]=blocks[-1]["queryseq"]+words[1].replace(".","-")
-					else:
-						blocks[-1]["refseq"]=blocks[-1]["refseq"]+words[1].replace(".","-")
-						
-				elif len(words)>1 and words[1]=="BEGIN":
-					inblock=True
-					blockline=0
-					blocks.append({"start":int(words[5])+reflens[x], "ref_start": words[5], "ref_end": words[7],"end":int(words[7])+reflens[x], "refseq":"", "queryseq":"", "query":queryname, "ref":refname})
+			if int(words[2])<int(words[3]):
+				qstart=words[2]
+				qend=words[3]
+			else:
+				qstart=words[3]
+				qend=words[2]
+			if refname!=queryname:
+				blocks.append({"ref_start": int(rstart), "ref_end": int(rend), "query":queryname, "ref":refname, "query_start": int(qstart), "query_end": int(qend)})
 			
 	
 	
 	blockorder=[]
 	for x, block in enumerate(blocks):
-		blockorder.append([block["start"],x])
+		blockorder.append([block["ref_start"],x])
 	
 	blockorder.sort()
 	blockorder.reverse
@@ -187,113 +226,157 @@ if __name__ == "__main__":
 		filtered[blocks[block[1]]["ref"]]={}
 	
 	
-	
-	if options.tab:
-	
-		tabhandle=open(options.output+".tab", "w")
-		print >> tabhandle, "ID   mummer_alignment"
 		
 		
 	for block in blockorder:
-		percent_ID=blocks[block[1]]["end"]-blocks[block[1]]["start"]
-	
-		currbase=blocks[block[1]]["start"]
-		in_insertion=False
-		insertion_start=-1
-		
-		for x, base in enumerate(blocks[block[1]]["refseq"]):
-			if base!="-":
-				currbase+=1
-				if in_insertion:
-					in_insertion=False
-					if options.tab:
-						print >> tabhandle, "FT   insertion       "+str(insertion_start-1)+".."+str(insertion_start)
-						print >> tabhandle, "FT                   /query="+blocks[block[1]]["query"]
-						print >> tabhandle, "FT                   /reference="+blocks[block[1]]["ref"]
-						print >> tabhandle, "FT                   /reference_start="+blocks[block[1]]["ref_start"]
-						print >> tabhandle, "FT                   /reference_end="+blocks[block[1]]["ref_end"]
-						#print >> tabhandle, "FT                   /refseq="+blocks[block[1]]["refseq"][start_x-5:x+5]
-						print >> tabhandle, "FT                   /insertion="+blocks[block[1]]["queryseq"][start_x:x]
-						print >> tabhandle, "FT                   /colour=2"
-			elif not in_insertion:
-				in_insertion=True
-				insertion_start=currbase
-				start_x=x
-		
-		currbase=blocks[block[1]]["start"]
-		in_deletion=False
-		deletion_start=-1
-		for x, base in enumerate(blocks[block[1]]["queryseq"]):
-			if blocks[block[1]]["refseq"][x]!="-":
-				currbase+=1
-			if base!="-":
-				if in_deletion:
-					in_deletion=False
-					if options.tab:
-						print >> tabhandle, "FT   deletion        "+str(deletion_start)+".."+str(currbase-1)
-						print >> tabhandle, "FT                   /query="+blocks[block[1]]["query"]
-						print >> tabhandle, "FT                   /reference="+blocks[block[1]]["ref"]
-						print >> tabhandle, "FT                   /deletion="+blocks[block[1]]["refseq"][start_x:x]
-						print >> tabhandle, "FT                   /reference_start="+blocks[block[1]]["ref_start"]
-						print >> tabhandle, "FT                   /reference_end="+blocks[block[1]]["ref_end"]
-						print >> tabhandle, "FT                   /queryseq="+blocks[block[1]]["queryseq"][start_x-5:x+5]
-						print >> tabhandle, "FT                   /colour=5"
-					percent_ID-=((currbase-1)-deletion_start)
-				if base!=blocks[block[1]]["refseq"][x] and blocks[block[1]]["refseq"][x]!="-":
-					if options.tab:
-						print >> tabhandle, "FT   SNP             "+str(currbase-1)
-						print >> tabhandle, "FT                   /query="+blocks[block[1]]["query"]
-						print >> tabhandle, "FT                   /reference="+blocks[block[1]]["ref"]
-						print >> tabhandle, "FT                   /reference_start="+blocks[block[1]]["ref_start"]
-						print >> tabhandle, "FT                   /reference_end="+blocks[block[1]]["ref_end"]
-						print >> tabhandle, "FT                   /querybase="+base
-						print >> tabhandle, "FT                   /refseq="+blocks[block[1]]["refseq"][x]
-						print >> tabhandle, "FT                   /colour=4"
-					percent_ID-=1
-			elif not in_deletion:
-				in_deletion=True
-				deletion_start=currbase
-				start_x=x
-		
-		final_ID=((float(percent_ID)/(blocks[block[1]]["end"]-blocks[block[1]]["start"]))*100)
-		if options.tab:
-			print >> tabhandle, "FT   misc_feature    "+str(blocks[block[1]]["start"])+".."+str(blocks[block[1]]["end"])
-			print >> tabhandle, "FT                   /query="+blocks[block[1]]["query"]
-			print >> tabhandle, "FT                   /reference="+blocks[block[1]]["ref"]
-			print >> tabhandle, "FT                   /reference_start="+blocks[block[1]]["ref_start"]
-			print >> tabhandle, "FT                   /reference_end="+blocks[block[1]]["ref_end"]
-			print >> tabhandle, "FT                   /ID="+str(final_ID)
-		if final_ID>98 and (blocks[block[1]]["end"]-blocks[block[1]]["start"])>1000:
-			if options.tab:
-				print >> tabhandle, "FT                   /colour=2"
-			if not blocks[block[1]]["query"] in filtered[blocks[block[1]]["ref"]]:
-				filtered[blocks[block[1]]["ref"]][blocks[block[1]]["query"]]=[]
-			filtered[blocks[block[1]]["ref"]][blocks[block[1]]["query"]].append([int(blocks[block[1]]["ref_start"]), int(blocks[block[1]]["ref_end"])])
+#		percent_ID=blocks[block[1]]["end"]-blocks[block[1]]["start"]
+#	
+#		currbase=blocks[block[1]]["start"]
+#		in_insertion=False
+#		insertion_start=-1
+#		
+#		
+#		currbase=blocks[block[1]]["start"]
+#		in_deletion=False
+#		deletion_start=-1
+#		for x, base in enumerate(blocks[block[1]]["queryseq"]):
+#			if blocks[block[1]]["refseq"][x]!="-":
+#				currbase+=1
+#			if base!="-":
+#				if in_deletion:
+#					in_deletion=False
+#					if options.tab:
+#						print >> tabhandle, "FT   deletion        "+str(deletion_start)+".."+str(currbase-1)
+#						print >> tabhandle, "FT                   /query="+blocks[block[1]]["query"]
+#						print >> tabhandle, "FT                   /reference="+blocks[block[1]]["ref"]
+#						print >> tabhandle, "FT                   /deletion="+blocks[block[1]]["refseq"][start_x:x]
+#						print >> tabhandle, "FT                   /reference_start="+blocks[block[1]]["ref_start"]
+#						print >> tabhandle, "FT                   /reference_end="+blocks[block[1]]["ref_end"]
+#						print >> tabhandle, "FT                   /queryseq="+blocks[block[1]]["queryseq"][start_x-5:x+5]
+#						print >> tabhandle, "FT                   /colour=5"
+#					percent_ID-=((currbase-1)-deletion_start)
+#				if base!=blocks[block[1]]["refseq"][x] and blocks[block[1]]["refseq"][x]!="-":
+#					if options.tab:
+#						print >> tabhandle, "FT   SNP             "+str(currbase-1)
+#						print >> tabhandle, "FT                   /query="+blocks[block[1]]["query"]
+#						print >> tabhandle, "FT                   /reference="+blocks[block[1]]["ref"]
+#						print >> tabhandle, "FT                   /reference_start="+blocks[block[1]]["ref_start"]
+#						print >> tabhandle, "FT                   /reference_end="+blocks[block[1]]["ref_end"]
+#						print >> tabhandle, "FT                   /querybase="+base
+#						print >> tabhandle, "FT                   /refseq="+blocks[block[1]]["refseq"][x]
+#						print >> tabhandle, "FT                   /colour=4"
+#					percent_ID-=1
+#			elif not in_deletion:
+#				in_deletion=True
+#				deletion_start=currbase
+#				start_x=x
+#		
+#		final_ID=((float(percent_ID)/(blocks[block[1]]["end"]-blocks[block[1]]["start"]))*100)
+#		if options.tab:
+#			print >> tabhandle, "FT   misc_feature    "+str(blocks[block[1]]["start"])+".."+str(blocks[block[1]]["end"])
+#			print >> tabhandle, "FT                   /query="+blocks[block[1]]["query"]
+#			print >> tabhandle, "FT                   /reference="+blocks[block[1]]["ref"]
+#			print >> tabhandle, "FT                   /reference_start="+blocks[block[1]]["ref_start"]
+#			print >> tabhandle, "FT                   /reference_end="+blocks[block[1]]["ref_end"]
+#			print >> tabhandle, "FT                   /ID="+str(final_ID)
+#		if final_ID>98 and (blocks[block[1]]["end"]-blocks[block[1]]["start"])>MIN_LENGTH:
+#			if options.tab:
+#				print >> tabhandle, "FT                   /colour=2"
+		if not blocks[block[1]]["query"] in filtered[blocks[block[1]]["ref"]]:
+			filtered[blocks[block[1]]["ref"]][blocks[block[1]]["query"]]=[]
+		filtered[blocks[block[1]]["ref"]][blocks[block[1]]["query"]].append([int(blocks[block[1]]["ref_start"]), int(blocks[block[1]]["ref_end"]), int(blocks[block[1]]["query_start"]), int(blocks[block[1]]["query_end"])])
 
-		
-		
-	fastahandle=open(options.output+"_unmatched.fasta", "w")
+	
+	fastahandle=open(options.output+"_filtered.fasta", "w")
 	for subject in filtered:
 		ssequence=seqs[subject]
-		slength_orig=len(ssequence)
-		if slength_orig<1000:
+		slength=len(ssequence)
+		if slength<MIN_LENGTH:
 			continue
-		matched_regions=[0]*slength_orig
+		matched_regions=[0]*slength
 		prev=0
 		count=1
-		for query in filtered[subject]:
-			qsequence=seqs[query]
-			qlength=len(qsequence)
-			if qlength<1000:
-				continue
-			for region in filtered[subject][query]:
-				slength=matched_regions.count(0)
-				print region, subject, slength, query, qlength
-				if (region[0]<200 or (slength-region[1])<200) and (qlength>slength or (qlength==slength and query>subject)):
-					for x in xrange(region[0],region[1]):
-						matched_regions[x]=1
+		s_isolate=subject.split("_50x")[0]
+		old_q=""
+		rtrim=slength
+		ltrim=0
+		keep=True
+		old_rtrim=ltrim
+		old_ltrim=rtrim	
+		while old_rtrim!=rtrim or old_rtrim!=ltrim:
+			old_rtrim=rtrim
+			old_ltrim=ltrim	
+			for query in filtered[subject]:
+				if keep==False:
+					break
+				qsequence=seqs[query]
+				qlength=len(qsequence)
+	#			if qlength<MIN_LENGTH:
+	#				continue
+				q_isolate=query.split("_50x")[0]
 				
-			print subject, query, matched_regions
+				if old_q!="" and old_q!=query:
+					
+						
+					max_run=0
+					run=0
+					if rtrim>ltrim:
+						for m in matched_regions[ltrim:rtrim]:
+							if m==0:
+								run+=1
+							else:
+								if run>max_run:
+									max_run=run
+								run=0
+						if run>max_run:
+							max_run=run
+	#				print subject, old_q, max_run,ltrim, rtrim
+					if max_run<MIN_LENGTH:
+						keep=False
+				
+					matched_regions=[0]*slength
+				
+				for region in filtered[subject][query]:
+	#				slength=matched_regions.count(0)
+					#print  subject, s_isolate, slength, region[0], region[1], query, q_isolate, qlength, region[2], region[3]
+					if (qlength>slength or (qlength==slength and query>subject)):
+						for x in xrange(region[0],region[1]):
+							matched_regions[x]=1
+						if region[0]<ltrim+MIN_LENGTH and region[1]>ltrim:
+							ltrim=region[1]
+						if region[1]>rtrim-MIN_LENGTH and region[0]<rtrim:
+							rtrim=region[0]
+				old_q=query
+		
+			#print subject, query, matched_regions
+			if old_q!="":
+				max_run=0
+				run=0
+				if rtrim>ltrim:
+					for m in matched_regions[ltrim:rtrim]:
+						if m==0:
+							run+=1
+						else:
+							if run>max_run:
+								max_run=run
+							run=0
+					if run>max_run:
+						max_run=run
+	#			print subject, old_q, max_run,ltrim, rtrim
+				if max_run<MIN_LENGTH:
+					keep=False
+				
+		if keep==False:
+			print "Removing sequence", subject
+		elif ltrim!=0 or rtrim!=slength:
+			print "Trimming", ltrim, "bases from 5' and", slength-rtrim, "bases from 3' of", subject
+			print >> fastahandle, ">"+subject
+			print >> fastahandle, ssequence[ltrim:rtrim]
+		else:
+			print "keeping", subject
+			print >> fastahandle, ">"+subject
+			print >> fastahandle, ssequence
+			
 				
 		
 		
@@ -317,8 +400,8 @@ if __name__ == "__main__":
 #			print >> fastahandle, sequence
 	
 	
-	if options.tab:
-		tabhandle.close()
+#	if options.tab:
+#		tabhandle.close()
 	fastahandle.close()
 			
 				

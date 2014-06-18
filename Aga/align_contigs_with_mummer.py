@@ -169,9 +169,22 @@ if __name__ == "__main__":
 				elif len(words)>1 and words[1]=="BEGIN":
 					inblock=True
 					blockline=0
-					blocks.append({"start":int(words[5])+reflens[x], "ref_start": words[5], "ref_end": words[7],"end":int(words[7])+reflens[x], "refseq":"", "queryseq":"", "query":queryname, "ref":refname})
+					if int(words[9])>0:
+						qstart=words[10]
+						qend=words[12]
+					else:
+						qstart=words[12]
+						qend=words[10]
 					
-			
+					if int(words[4])>0:
+						rstart=words[5]
+						rend=words[7]
+					else:
+						rstart=words[7]
+						rend=words[5]
+						
+						
+					blocks.append({"start":int(words[5])+reflens[x], "ref_start": rstart, "ref_end": rend,"end":int(words[7])+reflens[x], "refseq":"", "queryseq":"", "query":queryname, "ref":refname, "query_start": qstart, "query_end": qend})
 	
 	
 	
