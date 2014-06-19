@@ -144,7 +144,7 @@ if __name__ == "__main__":
 #	if returnval!=0:
 #			DoError("delta-filter failed with return value "+str(returnval))
 	
-	blocks=[]
+	blocks={}
 #	for x, refname in enumerate(reflist):
 #		print "Aligning query sequences against", refname
 #		for queryname in querylist:
@@ -211,24 +211,26 @@ if __name__ == "__main__":
 				qstart=words[3]
 				qend=words[2]
 			if refname!=queryname:
-				blocks.append({"ref_start": int(rstart), "ref_end": int(rend), "query":queryname, "ref":refname, "query_start": int(qstart), "query_end": int(qend)})
+				if not refname in blocks:
+					blocks[refname]={}
+				if not queryname in blocks[refname]:
+					blocks[refname][queryname]=[]
+				blocks[refname][queryname].append([int(rstart), int(rend), int(qstart), int(qend)])
 			
 	
 	
 	blockorder=[]
 	for x, block in enumerate(blocks):
-		blockorder.append([block["ref_start"],x])
+		blockorder.append([block[0],x])
 	
 	blockorder.sort()
 	blockorder.reverse
-	filtered={}
-	for block in blockorder:
-		filtered[blocks[block[1]]["ref"]]={}
+#	filtered={}
 	
 	
 		
 		
-	for block in blockorder:
+#	for block in blockorder:
 #		percent_ID=blocks[block[1]]["end"]-blocks[block[1]]["start"]
 #	
 #		currbase=blocks[block[1]]["start"]
@@ -282,13 +284,14 @@ if __name__ == "__main__":
 #		if final_ID>98 and (blocks[block[1]]["end"]-blocks[block[1]]["start"])>MIN_LENGTH:
 #			if options.tab:
 #				print >> tabhandle, "FT                   /colour=2"
-		if not blocks[block[1]]["query"] in filtered[blocks[block[1]]["ref"]]:
-			filtered[blocks[block[1]]["ref"]][blocks[block[1]]["query"]]=[]
-		filtered[blocks[block[1]]["ref"]][blocks[block[1]]["query"]].append([int(blocks[block[1]]["ref_start"]), int(blocks[block[1]]["ref_end"]), int(blocks[block[1]]["query_start"]), int(blocks[block[1]]["query_end"])])
+#		if not blocks[block[1]]["query"] in filtered[blocks[block[1]]["ref"]]:
+#			filtered[blocks[block[1]]["ref"]][blocks[block[1]]["query"]]=[]
+#		filtered[blocks[block[1]]["ref"]][blocks[block[1]]["query"]].append([int(blocks[block[1]]["ref_start"]), int(blocks[block[1]]["ref_end"]), int(blocks[block[1]]["query_start"]), int(blocks[block[1]]["query_end"])])
 
 	
 	fastahandle=open(options.output+"_filtered.fasta", "w")
-	for subject in filtered:
+	for subject in blocks:
+		
 		ssequence=seqs[subject]
 		slength=len(ssequence)
 		if slength<MIN_LENGTH:
@@ -303,10 +306,11 @@ if __name__ == "__main__":
 		keep=True
 		old_rtrim=ltrim
 		old_ltrim=rtrim	
-		while old_rtrim!=rtrim or old_rtrim!=ltrim:
+		while old_rtrim!=rtrim or old_ltrim!=ltrim:
 			old_rtrim=rtrim
 			old_ltrim=ltrim	
-			for query in filtered[subject]:
+			for query in blocks[subject]:
+				
 				if keep==False:
 					break
 				qsequence=seqs[query]
@@ -336,7 +340,7 @@ if __name__ == "__main__":
 				
 					matched_regions=[0]*slength
 				
-				for region in filtered[subject][query]:
+				for region in blocks[subject][query]:
 	#				slength=matched_regions.count(0)
 					#print  subject, s_isolate, slength, region[0], region[1], query, q_isolate, qlength, region[2], region[3]
 					if (qlength>slength or (qlength==slength and query>subject)):

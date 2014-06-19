@@ -15,13 +15,14 @@ from optparse import OptionParser, OptionGroup
 
 
 def main():
-        usage = "usage: %prog [options] args"
-        parser = OptionParser(usage=usage)
+		usage = "usage: %prog [options] args"
+		parser = OptionParser(usage=usage)
         
-        parser.add_option("-o", "--output", action="store", dest="fastq", help="output fastq file name", type="string", metavar="fastq file", default="")
-	parser.add_option("-d", "--dataset", action="store", dest="dataset", help="dataset path within fast5 file [default = %default]", metavar="path", default="/Analyses/Basecall_2D_000/BaseCalled_2D/Fastq")
+		parser.add_option("-o", "--output", action="store", dest="fastq", help="output fastq file name", type="string", metavar="fastq file", default="")
+		parser.add_option("-d", "--2Ddataset", action="store", dest="2Ddataset", help="2D dataset path within fast5 file [default = %default]", metavar="path", default="/Analyses/Basecall_2D_000/BaseCalled_2D/Fastq")
+		parser.add_option("-D", "--1Ddataset", action="store", dest="1Ddataset", help="1D dataset path within fast5 file [default = %default]", metavar="path", default="/Analyses/Basecall_1D_000/BaseCalled_template/Fastq")
         
-        return parser.parse_args()
+		return parser.parse_args()
 
 
 ################
@@ -32,7 +33,9 @@ if __name__ == "__main__":
 
 	(options, args) = main()
  	
- 	
+ 	if len(args)==0:
+ 		print "Error: No input fastq files specified"
+		sys.exit()
  	
 	if options.fastq=="":
 		print "Error: No name provided for output fastq file"
@@ -55,14 +58,14 @@ if __name__ == "__main__":
 			utr+=1
 			continue
 		try:
-			fq = hdf[options.dataset][()]
+			fq = hdf[options.2Ddataset][()]
 		except StandardError:
 			#print "Error: Cannot find dataset:", options.dataset, "within fast5 file:", fast5
 			#print "Skipping"
 			nods2D+=1
 		
 			try:
-				fq = hdf["/Analyses/Basecall_1D_000/BaseCalled_template/Fastq"][()]
+				fq = hdf[options.1Ddataset][()]
 			except StandardError:
 				#print "Error: Cannot find dataset:", options.dataset, "within fast5 file:", fast5
 				#print "Skipping"

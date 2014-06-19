@@ -35,6 +35,9 @@ def get_user_options():
 	parser.add_option("-r", "--reference", action="store", dest="ref", help="Reference fasta file", default="", metavar="FILE")
 	parser.add_option("-m", "--min", action="store", dest="min", help="minimum length of homopolymer to analyse", default=6, type="int")
 	parser.add_option("-o", "--output", action="store", dest="output", help="output file name prefix", default="", metavar="FILE")
+	parser.add_option("-s", "--skip", action="store_true", dest="skip", help="Skip homopolymers for which no sample mean varies from reference number", default=False)
+	parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Print verbose output", default=False)
+
 #	parser.add_option("-f", "--features", action="store", dest="features", help="feature keys to use as homopolymer regions [default=%default]", default="misc_feature", metavar="FILE")
 
 
@@ -50,10 +53,10 @@ def check_input_validity(options, args):
 	if options.output=='':
 		DoError("No output file selected")
 
-#	elif options.ref=='':
-#		DoError("No reference file selected")
-#	elif not os.path.isfile(options.ref):	
-#		DoError(options.ref+" is not a file")
+	elif options.ref=='':
+		DoError("No reference file selected")
+	elif not os.path.isfile(options.ref):	
+		DoError(options.ref+" is not a file")
 	
 	elif options.min<2:
 		DoError("Minimum Homopolymer length must be greater than 1")
@@ -90,22 +93,23 @@ if __name__ == "__main__":
 	homopolymers={}
 	regions={}
 	region_lengths={}
-	if sys.argv[1]=="-r":
-		doerrors=True
-		reflines=open(sys.argv[2]).read().split(">")[1:]
-		for ref in reflines:
-			seqlines=ref.split("\n")
-			refname=seqlines[0].split()[0]
-			refseqs[refname]=''.join(seqlines[1:]).upper()
-			homopolymers[refname]=[]
-			regions[refname]={}
-			region_lengths[refname]={}
 	
+	doerrors=True
+	reflines=open(options.ref).read().split(">")[1:]
+	for ref in reflines:
+		seqlines=ref.split("\n")
+		refname=seqlines[0].split()[0]
+		refseqs[refname]=''.join(seqlines[1:]).upper()
+		homopolymers[refname]=[]
+		regions[refname]={}
+		region_lengths[refname]={}
+	
+	count=0
 	for ref in refseqs:
 		seq=refseqs[ref]
 		runbase='N'
 		start=0
-		count=0
+		
 		for x in xrange(len(seq)):
 			if seq[x]=='N' or seq[x]!=runbase:
 				if x-start>=options.min and runbase!='N':
@@ -387,8 +391,9 @@ if __name__ == "__main__":
 						variable=True
 						
 #			print basecounts	
-			if not variable:
-				print "Skipping", region, "as the most common length does not vary from the reference"
+			if not variable and options.skip:
+				if options.verbose:
+					print "Skipping", region, "as the most common length does not vary from the reference"
 				continue
 			
 			
@@ -400,7 +405,7 @@ if __name__ == "__main__":
 #					output=open(options.output+"_"+region+"_"+base+".csv", "w")
 				output=open(options.output+"_"+str(region)+"_"+base+".csv", "w")
 				headings.append(options.output+"_"+str(region)+"_"+base)
-				print >> output, ",".join([str(region)]+map(str,basecounts[base])+["Max_length"])
+				print >> output, ",".join([str(region)]+map(str,basecounts[base])+["Most common length"])
 				
 				for filename in args:
 				
