@@ -19,8 +19,8 @@ def main():
 		parser = OptionParser(usage=usage)
         
 		parser.add_option("-o", "--output", action="store", dest="fastq", help="output fastq file name", type="string", metavar="fastq file", default="")
-		parser.add_option("-d", "--2Ddataset", action="store", dest="2Ddataset", help="2D dataset path within fast5 file [default = %default]", metavar="path", default="/Analyses/Basecall_2D_000/BaseCalled_2D/Fastq")
-		parser.add_option("-D", "--1Ddataset", action="store", dest="1Ddataset", help="1D dataset path within fast5 file [default = %default]", metavar="path", default="/Analyses/Basecall_1D_000/BaseCalled_template/Fastq")
+		parser.add_option("-d", "--2Ddataset", action="store", dest="twoDdataset", help="2D dataset path within fast5 file [default = %default]", metavar="path", default="/Analyses/Basecall_2D_000/BaseCalled_2D/Fastq")
+		parser.add_option("-D", "--1Ddataset", action="store", dest="oneDdataset", help="1D dataset path within fast5 file [default = %default]", metavar="path", default="/Analyses/Basecall_1D_000/BaseCalled_template/Fastq")
         
 		return parser.parse_args()
 
@@ -58,14 +58,14 @@ if __name__ == "__main__":
 			utr+=1
 			continue
 		try:
-			fq = hdf[options.2Ddataset][()]
+			fq = hdf[options.twoDdataset][()]
 		except StandardError:
 			#print "Error: Cannot find dataset:", options.dataset, "within fast5 file:", fast5
 			#print "Skipping"
 			nods2D+=1
 		
 			try:
-				fq = hdf[options.1Ddataset][()]
+				fq = hdf[options.oneDdataset][()]
 			except StandardError:
 				#print "Error: Cannot find dataset:", options.dataset, "within fast5 file:", fast5
 				#print "Skipping"
