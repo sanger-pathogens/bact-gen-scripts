@@ -123,7 +123,7 @@ if __name__ == "__main__":
 			regions[ref][start]=[start,x]
 			count+=1
 				
-	print "Found", count, "homopolymers greater than or equal to ", options.min, "bases long"
+	print "Found", count, "homopolymers greater than or equal to", options.min, "bases long"
 #	sys.exit()
 	
 	
