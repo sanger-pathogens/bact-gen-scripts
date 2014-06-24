@@ -114,13 +114,13 @@ if __name__ == "__main__":
 			if seq[x]=='N' or seq[x]!=runbase:
 				if x-start>=options.min and runbase!='N':
 #					print start+1, x+1, x-start, seq[start:x]
-					regions[ref][start]=[start,x]
+					regions[ref][start]=[start,x,runbase]
 					count+=1
 				start=x
 				runbase=seq[x]
 		if x-start>=options.min and runbase!='N':
 #			print start+1, x+1, x-start, seq[start:x]
-			regions[ref][start]=[start,x]
+			regions[ref][start]=[start,x,runbase]
 			count+=1
 				
 	print "Found", count, "homopolymers greater than or equal to", options.min, "bases long"
@@ -301,6 +301,9 @@ if __name__ == "__main__":
 						if len(foundbases)>1:
 							break
 					
+					
+					if repbase!=regions[ref][region][2]:
+						continue
 					
 					if repbase not in ["A", "T", "C", "G"]:
 						continue

@@ -24,6 +24,23 @@ from Si_SeqIO import *
 MUMMER_DIR=""
 
 
+#############################################
+# Function to reverse complement a sequence #
+#############################################
+
+def revcomp(sequence):
+        rev=sequence[::-1]
+        revcomp=''
+        d={'A':'T', 'T':'A', 'C':'G', 'G':'C', 'a':'t', 't':'a', 'g':'c', 'c':'g'}
+        for i in rev:
+                if d.has_key(i):
+                        revcomp=revcomp+d[i]
+                else:
+                        revcomp=revcomp+i
+        
+        return revcomp
+
+
 ##########################################
 # Function to Get command line arguments #
 ##########################################
@@ -112,7 +129,7 @@ if __name__ == "__main__":
 		lens[seq.id]=len(seq.seq)
 
 		try:
-			refstarts[seq.id]=int(seq.description.split()[1].split("..")[0].strip())+1
+			refstarts[seq.id]=int(seq.description.split("#")[1].split("..")[0].strip())+1
 		except ValueError:
 			refstarts[seq.id]=float("Inf")
 
@@ -147,8 +164,8 @@ if __name__ == "__main__":
 		nucmerargs=shlex.split(MUMMER_DIR+"nucmer -p "+options.output+" "+options.ref+" "+options.query)
 		returnval = subprocess.call(nucmerargs)
 		if returnval!=0:
-			fastahandle=open(options.output+"_unmatched.fasta", "w")
-			fastahandle.close()
+#			fastahandle=open(options.output+"_unmatched.fasta", "w")
+#			fastahandle.close()
 			DoError("Nucmer failed with return value "+str(returnval))
 	
 	#Run delta-filter to filter repetitive regions
@@ -163,7 +180,7 @@ if __name__ == "__main__":
 	blocks={}
 	for qname in querylist:
 		if not qname in blocks:
-			blocks[qname]={}
+			blocks[qname]=[]
 
 	
 	for line in open(options.output+".delta"):
@@ -181,7 +198,6 @@ if __name__ == "__main__":
 				rstart=words[1]
 				rend=words[0]
 				rstrand="r"
-				print "HERE"
 			
 			if int(words[2])<int(words[3]):
 				qstart=words[2]
@@ -196,28 +212,10 @@ if __name__ == "__main__":
 					
 			if refname!=queryname:
 				
-				if not refname in blocks[queryname]:
-					blocks[queryname][refname]=[]
-				
-				blocks[queryname][refname].append([int(rstart), int(rend), int(qstart), int(qend), 100*((float(int(rend)-int(rstart)))-int(words[4]))/(float(int(rend)-int(rstart))), rstrand])
-			
-#	sys.exit()
-#	
-#	blockorder=[]
-#	for ref in blocks:
-#		for query in blocks[ref]:
-#			for x, block in enumerate(blocks[query][ref]):
-#				blockorder.append([block[0],ref, query])
-#	
-#	blockorder.sort()
-#	blockorder.reverse
+				blocks[queryname].append([int(rstart), int(rend), int(qstart), int(qend), 100*((float(int(rend)-int(rstart)))-int(words[4]))/(float(int(rend)-int(rstart))), rstrand, refname])
 	
-#	reforder=[]
-#	for block in blockorder:
-#		print block
-#		reforder.append[block[1]]
-#	
-#	
+	
+	
 	if options.tab:
 	
 		tabhandle=open(options.output+".tab", "w")
@@ -225,29 +223,38 @@ if __name__ == "__main__":
 		
 		
 	for query in blocks:
-		for ref in blocks[query]:
-			for block in blocks[query][ref]:
-				rstart=block[0]
-				rend=block[1]
-				qstart=block[2]+qstarts[query]
-				qend=block[3]+qstarts[query]
-				percent_ID=block[4]
-				
-				if options.tab:
-					print >> tabhandle, "FT   misc_feature    "+str(qstart)+".."+str(qend)
-					print >> tabhandle, "FT                   /query="+query
-					print >> tabhandle, "FT                   /reference="+ref
-					print >> tabhandle, "FT                   /reference_start="+str(rstart)
-					print >> tabhandle, "FT                   /reference_end="+str(rend)
-					if block[5]=="f":
-						print >> tabhandle, "FT                   /reference_strand=+"
-						print >> tabhandle, "FT                   /colour=2"
-					else:
-						print >> tabhandle, "FT                   /reference_strand=-"
-						print >> tabhandle, "FT                   /colour=3"
-					print >> tabhandle, "FT                   /ID="+str(percent_ID)
+		blockorder=[]
+		for x, block in enumerate(blocks[query]):
+			blockorder.append([block[2],x])
+		blockorder.sort()
+		blockorder.reverse()
+	
+		for x in blockorder:
+			block=blocks[query][x[1]]
+			#print query, block
+			rstart=block[0]
+			rend=block[1]
+			qstart=block[2]+qstarts[query]
+			qend=block[3]+qstarts[query]
+			percent_ID=block[4]
+			strand=block[5]
+			ref=block[6]
+			
+			if options.tab:
+				print >> tabhandle, "FT   misc_feature    "+str(qstart)+".."+str(qend)
+				print >> tabhandle, "FT                   /query="+query
+				print >> tabhandle, "FT                   /reference="+ref
+				print >> tabhandle, "FT                   /reference_start="+str(rstart)
+				print >> tabhandle, "FT                   /reference_end="+str(rend)
+				if block[5]=="f":
+					print >> tabhandle, "FT                   /reference_strand=+"
+					print >> tabhandle, "FT                   /colour=2"
+				else:
+					print >> tabhandle, "FT                   /reference_strand=-"
+					print >> tabhandle, "FT                   /colour=3"
+				print >> tabhandle, "FT                   /ID="+str(percent_ID)
 					
-
+	
 	if options.tab:
 		tabhandle.close()
 		
@@ -259,66 +266,84 @@ if __name__ == "__main__":
 			continue
 		#unmatched_regions=[]
 		
+		ordered_blocks={}
 		
 		count=1
 		if query in blocks:
+			prevrefblockend=float("Inf")
+			blockorder=[]
+			for x, block in enumerate(blocks[query]):
+				blockorder.append([block[2],x])
+			blockorder.sort()
+#			blockorder.reverse()
 			prev=0
-			for ref in blocks[query]:
-				prevrefblockend="Inf"
-				qsort=[]
-				for x, block in enumerate(blocks[query][ref]):
-					qsort.append([block[2],x])
-				qsort.sort()
-				#qsort.reverse()
-				for x in xrange(len(qsort)):
+			ordered_blocks[query]=[]
+			for y in blockorder:
+				ordered_blocks[query].append(blocks[query][y[1]])
+			for x in xrange(len(ordered_blocks[query])):
+				block=ordered_blocks[query][x]
+				ref=block[6]
+#				print query, ref,block
+#				print query, ref, block[2],block[3], prev
+				if block[3]<prev:
+					continue
+				if block[2]-prev>1000:
 					
-					block=blocks[query][ref][qsort[x][1]]
-					print query, ref, block[2],block[3], prev
-					if block[3]<prev:
-						continue
-					if block[2]-prev>1000:
-						
-						#unmatched_regions.append([prev,block[0], sequence[prev:block[0]]])
-						loc_string=""
-						if prevrefblockend!="Inf":
-							loc_string=loc_string+str(prevrefblockend)
+					#unmatched_regions.append([prev,block[0], sequence[prev:block[0]]])
+					loc_start=""
+					if prevrefblockend!=float("Inf"):
+						loc_start=str(prevrefblockend)
 #						else:
 #							loc_string=loc_string+str(refstarts[ref])
-						loc_string=loc_string+".."
-						if len(blocks[query][ref])>x+1:
-							if blocks[query][ref][qsort[x+1][1]][5]=="f":
-								loc_string=loc_string+str(blocks[query][ref][qsort[x+1][1]][0])
-							else:
-								loc_string=loc_string+str(blocks[query][ref][qsort[x+1][1]][1])
-						print >> fastahandle, ">"+query+"#"+ref+":"+loc_string
-						print >> fastahandle, sequence[prev:]
-						count+=1
-					prev=block[3]
-					if blocks[query][ref][x][5]=="f":
-						prevrefblockend=blocks[query][ref][qsort[x][1]][1]
+					loc_end=""
+#					if len(ordered_blocks[query])>x+1:
+					if block[5]=="f":
+						loc_end=str(refstarts[ref]+block[0])
 					else:
-						prevrefblockend=blocks[query][ref][qsort[x][1]][0]
-					print ref, query, prevrefblockend, blocks[query][ref][qsort[x][1]]
-				print length, prev
-				if length-prev>1000:
-					#unmatched_regions.append([prev,length, sequence[prev:]])
-					loc_string=""
-					if prevrefblockend!="Inf":
-						loc_string=loc_string+str(prevrefblockend)
-#					else:
-#						loc_string=loc_string+str(refstarts[ref])
-					loc_string=loc_string+".."
-					if len(blocks[query][ref])>x+1:
-						if blocks[query][ref][qsort[x+1][1]][5]=="f":
-							loc_string=loc_string+str(blocks[query][ref][qsort[x+1][1]][0])
+						loc_end=str(refstarts[ref]+block[1])
+					if block[5]=="f":
+						print >> fastahandle, ">"+query.replace("#","_")+"#"+loc_start+".."+loc_end
+						print >> fastahandle, sequence[prev:block[2]]
+#						print sequence[prev:block[2]]
+#						print len(sequence), prev, block[2]
+					else:
+						if x>0 and ordered_blocks[query][x-1][5]=="f":
+							print >> fastahandle, ">"+query.replace("#","_")+"#"+loc_start+".."+loc_end
+							print >> fastahandle, sequence[prev:block[2]]
+#							print sequence[prev:block[2]]
+#							print len(sequence), prev, block[2]
 						else:
-							loc_string=loc_string+str(blocks[query][ref][qsort[x+1][1]][1])
-#					else:
-#						loc_string=loc_string+str(refends[ref])
-					print >> fastahandle, ">"+query+"#"+ref+":"+loc_string
+							print >> fastahandle, ">"+query.replace("#","_")+"#"+loc_end+".."+loc_start
+							print >> fastahandle, revcomp(sequence[prev:block[2]])
+#							print sequence[prev:block[2]]
+#							print len(sequence), prev, block[2]
+						
+					count+=1
+				prev=block[3]
+				if block[5]=="f":
+					prevrefblockend=refstarts[ref]+block[1]
+				else:
+					prevrefblockend=refstarts[ref]+block[0]
+				#print ref, query, prevrefblockend, blocks[query][x]
+			#print length, prev
+			if length-prev>1000:
+				#unmatched_regions.append([prev,length, sequence[prev:]])
+				loc_start=""
+				if prevrefblockend!=float("Inf"):
+					loc_start=str(prevrefblockend)
+#						else:
+#							loc_string=loc_string+str(refstarts[ref])
+				loc_end=""
+#					if len(ordered_blocks[query])>x+1:
+				
+				if len(ordered_blocks[query])==0 or block[5]=="f":
+					print >> fastahandle, ">"+query.replace("#","_")+"#"+loc_start+".."+loc_end
 					print >> fastahandle, sequence[prev:]
+				else:
+					print >> fastahandle, ">"+query.replace("#","_")+"#"+loc_end+".."+loc_start
+					print >> fastahandle, revcomp(sequence[prev:])
 		else:
-			print >> fastahandle, ">"+query+"#"+ref+":.."
+			print >> fastahandle, ">"+query.replace("#","_")+"#.."
 			print >> fastahandle, sequence
 	
 	

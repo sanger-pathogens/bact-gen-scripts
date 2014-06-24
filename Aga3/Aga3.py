@@ -19,7 +19,7 @@ import gzip
 
 SMALT_LOC="/software/pathogen/external/apps/usr/bin/smalt"
 SAMTOOLS_LOC="/software/pathogen/external/apps/usr/bin/samtools"
-AGA_DIR="/nfs/users/nfs_s/sh16/scripts/Aga/"
+AGA_DIR="/nfs/users/nfs_s/sh16/scripts/Aga3/"
 
 
 ##########################
@@ -398,20 +398,20 @@ if __name__ == "__main__":
 		for region in regions:
 			if region[0]-cur>1:
 				print "ref", cur, "..",region[0]-1
-				print >> core_out, ">Ref_"+str(count), cur, "..",region[0]-1
+				print >> core_out, ">Ref_"+str(count)+"#"+str(cur)+".."+str(region[0]-1)
 				print >> core_out, refseq[cur+1:region[0]]
 				core_count+=1
 				count+=1
 				
 			print "acc", region[0], "..", region[1], region[2]
-			print >> acc_out, ">Ref_"+str(count), region[0], "..",region[1]-1, region[2]
+			print >> acc_out, ">Ref_"+str(count)+"#"+str(region[0])+".."+str(region[1]-1), region[2]
 			print >> acc_out, refseq[region[0]:region[1]]
 			cur=region[1]
 			acc_count+=1
 			count+=1
 		if cur<len(refseq):
 			print "ref", cur, "..",len(refseq)
-			print >> core_out, ">Ref_"+str(count), cur, "..",len(refseq)
+			print >> core_out, ">Ref_"+str(count)+"#"+str(cur)+".."+str(len(refseq))
 			print >> core_out, refseq[cur:]
 		core_out.close()
 		acc_out.close()
@@ -421,133 +421,14 @@ if __name__ == "__main__":
 		open(acc_file, 'w').close()
 	
 	
-	#Calculate predicted coverage of each fastq file. Requires line count files to be present in the same path as each fastq file.
-#	ref_length=len(refseq)
-#	for fastq in fastqs:
-#	
-#		if not os.path.isfile('/'.join(fastqs[fastq]["read1"].absolute_path.split("/")[:-1])+"/"+fastq+"_line_count.txt"):
-#			fastqs[fastq]["read1"].coverage=0
-#			fastqs[fastq]["read2"].coverage=0
-#			print "No fastq length file found for", fastq, '/'.join(fastqs[fastq]["read1"].absolute_path.split("/")[:-1])+"/"+fastq+"_line_count.txt"
-#			continue
-#		else:
-#			num_lines=int(open('/'.join(fastqs[fastq]["read1"].absolute_path.split("/")[:-1])+"/"+fastq+"_line_count.txt").readlines()[0].strip().split()[0])
-#		
-#		fastqs[fastq]["read1"].num_reads=num_lines/4
-#		fastqs[fastq]["read2"].num_reads=num_lines/4
-#		
-#		f_cov=(float(fastqs[fastq]["read1"].num_reads)*fastqs[fastq]["read1"].read_length)/ref_length
-#		fastqs[fastq]["read1"].coverage=f_cov
-#		fastqs[fastq]["read2"].coverage=f_cov
-	
-	
-	#for each fastq file (pair), create a bash script to run SMALT, extract unmapping reads and assemble them
-#	print "Making scripts to create or copy bam files"
-#	assembly_list=[]
-#	
-#	for i, fastq in enumerate(fastqs):
-#		if options.nomapid:
-#			smalt_map_command=' '.join(map(str,[SMALT_LOC+" map -y "+str(options.nomapid)+" -x -r -1 -i", options.maxinsertsize, " -j", options.mininsertsize, " -f bam -o "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam", tmpname+"/"+tmpname+".index"]))
-#		else:
-#			smalt_map_command=' '.join(map(str,[SMALT_LOC+" map -x -r -1 -i", options.maxinsertsize, " -j", options.mininsertsize, " -f bam -o "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam", tmpname+"/"+tmpname+".index"]))
-#		
-#		smalt_run_file=open(tmpname+"/"+tmpname+"_smalt_"+str(i+1)+".sh", "w")
-#		add_bash_error_function(smalt_run_file)
-#		
-#		name=""
-#		
-#		if fastqs[fastq]["read1"] and fastqs[fastq]["read2"]:
-#			smalt_map_bit= smalt_map_command+" "+fastqs[fastq]["read1"].absolute_path+" "+fastqs[fastq]["read2"].absolute_path+" "+'|| error_exit "SMALT command failed! Aborting"'
-#			name=fastqs[fastq]["read1"].base_name
-#		elif fastqs[fastq]["read1"]:
-#			smalt_map_bit= smalt_map_command+" "+astqs[fastq]["read1"].absolute_path+" "+'|| error_exit "SMALT command failed! Aborting"'
-#			name=fastqs[fastq]["read1"].base_name
-#		elif fastqs[fastq]["read2"]:
-#			smalt_map_bit= smalt_map_command+" "+fastqs[fastq]["read2"].absolute_path+" "+'|| error_exit "SMALT command failed! Aborting"'
-#			name=fastqs[fastq]["read2"].base_name
-#		
-#		
-#		if options.mapped!="":
-#			if not os.path.isfile(options.mapped+"/"+name+".bam"):
-#				"Cannot find mapped file "+options.mapped+"/"+name+".bam. Will map this one."
-#				print >> smalt_run_file, smalt_map_bit
-#				print >> smalt_run_file, SAMTOOLS_LOC+" sort "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam "+tmpname+"/"+name+' || error_exit "samtools sort command failed! Aborting"'
-#				print >> smalt_run_file, SAMTOOLS_LOC+" index "+tmpname+"/"+name+".bam"+' || error_exit "samtools index command failed! Aborting"'
-#				print >> smalt_run_file, "rm -f "+tmpname+"/"+tmpname+"_"+str(i+1)+'.bam || error_exit "rm command failed! Aborting"'
-#			else:
-#				if options.mapped+"/"+name+".bam" != tmpname+"/"+name+".bam":
-#					os.system("ln -s "+options.mapped+"/"+name+".bam "+tmpname)
-#					print >> smalt_run_file, SAMTOOLS_LOC+" index "+tmpname+"/"+name+".bam"+' || error_exit "samtools index command failed! Aborting"'
-#		else:
-#			print >> smalt_run_file, smalt_map_bit
-#			print >> smalt_run_file, SAMTOOLS_LOC+" sort "+tmpname+"/"+tmpname+"_"+str(i+1)+".bam "+tmpname+"/"+name+' || error_exit "samtools sort command failed! Aborting"'
-#			print >> smalt_run_file, SAMTOOLS_LOC+" index "+tmpname+"/"+name+".bam"+' || error_exit "samtools index command failed! Aborting"'
-#			print >> smalt_run_file, "rm -f "+tmpname+"/"+tmpname+"_"+str(i+1)+'.bam || error_exit "rm command failed! Aborting"'
-#		
-#		if options.tab!="":
-#			tabcommand=" -T "+options.tab
-#		else:
-#			tabcommand=""
-#			
-#		if fastqs[fastq]["read1"] and fastqs[fastq]["read2"]:
-#		
-#			print options.mapped, options.coverage
-#			if options.mapped!="" and options.coverage>0:
-#				print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped_tmp -f pairedfastq"+tabcommand+" -t atleastoneunmapped"+' || error_exit "bam_filter command failed! Aborting"'
-#				print >> smalt_run_file, AGA_DIR+"subsample_fastq.py -f "+tmpname+"/"+name+"_unmapped_tmp_1.fastq -r "+tmpname+"/"+name+"_unmapped_tmp_2.fastq -o "+tmpname+"/"+name+"_unmapped -p "+str(options.coverage/(fastqs[fastq]["read1"].coverage*2))+' || error_exit "subsample_fastq command failed! Aborting"'
-#				print >> smalt_run_file, "rm -f "+tmpname+"/"+name+"_unmapped_tmp_1.fastq "+tmpname+"/"+name+"_unmapped_tmp_2.fastq"+' || error_exit "removing temporary bam filter files failed! Aborting"'
-#			else:
-#				print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f pairedfastq"+tabcommand+" -t atleastoneunmapped"+' || error_exit "bam_filter command failed! Aborting"'
-#			
-#			if options.assembler=="velvet":
-#				#print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f pairedfastq"+tabcommand+" -t aga"+' || error_exit "bam_filter command failed! Aborting"'
-#				print >> smalt_run_file, AGA_DIR+"velvet_assembly.sh -f "+tmpname+"/"+name+"_unmapped_1.fastq -r "+tmpname+"/"+name+"_unmapped_2.fastq -s "+tmpname+"/"+name+"_shuffled.fastq -n -p"+' || error_exit "velvet assembly command failed! Aborting"'
-#			elif options.assembler=="spades":
-#				print >> smalt_run_file, "spades.py -t 1 -1 "+tmpname+"/"+name+"_unmapped_1.fastq -2 "+tmpname+"/"+name+"_unmapped_2.fastq -o "+tmpname+"/"+name+"_spades"+' || error_exit "spades assembly command failed! Aborting"'
-#		else:
-#			print "unpaired fastq file found. SPAdes cannot handle this. Using velvet instead."
-##			print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f fastq"+tabcommand+" -t aga"+' || error_exit "bam_filter command failed! Aborting"'
-##			print >> smalt_run_file, AGA_DIR+"velvet_assembly.sh -f "+tmpname+"/"+name+"_unmapped.fastq -s "+tmpname+"/"+name+"_shuffled.fastq -n"+' || error_exit "velvet assembly command failed! Aborting"'
-#			print options.mapped, options.coverage
-#			if options.mapped!="" and options.coverage>0:
-#				print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped_tmp -f fastq"+tabcommand+" -t unmapped"+' || error_exit "bam_filter command failed! Aborting"'
-#				print >> smalt_run_file, AGA_DIR+"subsample_fastq.py -f "+tmpname+"/"+name+"_unmapped_tmp_1.fastq -o "+tmpname+"/"+name+"_unmapped -p "+str(options.coverage/fastqs[fastq]["read1"].coverage)+' || error_exit "subsample_fastq command failed! Aborting"'
-#				print >> smalt_run_file, "rm -f "+tmpname+"/"+name+"_unmapped_tmp_1.fastq "+tmpname+"/"+name+"_unmapped_tmp_2.fastq"+' || error_exit "removing temporary bam filter files failed! Aborting"'
-#			else:
-#				print >> smalt_run_file, AGA_DIR+"Aga_bam_filter.py -b "+tmpname+"/"+name+".bam -o "+tmpname+"/"+name+"_unmapped -f fastq"+tabcommand+" -t unmapped"+' || error_exit "bam_filter command failed! Aborting"'
-#			print >> smalt_run_file, AGA_DIR+"velvet_assembly.sh -f "+tmpname+"/"+name+"_unmapped.fastq -s "+tmpname+"/"+name+"_shuffled.fastq -n"+' || error_exit "velvet assembly command failed! Aborting"'
-#		
-##		print >> smalt_run_file, "mv "+tmpname+"/"+name+"_shuffled_velvet/contigs.fa "+tmpname+"/"+name+"_assembled.fasta"+' || error_exit "mv command failed! Aborting"'
-##		print >> smalt_run_file, "rm -rf "+tmpname+"/"+name+"_shuffled_velvet "+tmpname+"/"+name+"_shuffled.fastq "+tmpname+"/"+name+'_shuffled_velvet.log || error_exit "rm command failed! Aborting"'
-#		if options.assembler=="velvet":
-#			print >> smalt_run_file, "mv "+tmpname+"/"+name+"_shuffled_velvet/contigs.fa "+tmpname+"/"+name+"_assembled.fasta"+' || error_exit "mv command failed! Aborting"'
-#		elif options.assembler=="spades":
-#			print >> smalt_run_file, "mv "+tmpname+"/"+name+"_spades/contigs.fasta "+tmpname+"/"+name+"_assembled.fasta"+' || error_exit "mv command failed! Aborting"'
-#		print >> smalt_run_file, "rm -rf "+tmpname+"/"+name+'_spades || error_exit "rm command failed! Aborting"'
-#		assembly_list.append(tmpname+"/"+name+"_assembled.fasta")
-#		
-#		
-#		smalt_run_file.close()
-#	
-#	#create a bsub array to run the smalt scripts
-#	
-#	smalt_run_file_command="bash "+tmpname+"/"+tmpname+"_smalt_INDEX.sh"
-#	print "Running jobs to create or copy bam files"
-#	job2 = farm.Bsub(tmpname+"/SMALT_bsub.out", tmpname+"/SMALT_bsub.err", tmpname+"_smalt", "normal", 2, smalt_run_file_command, start=1, end=i+1)
-#	#add a dependency so the mappings only run once the indexing is complete
-#	job2.add_dependency(job1_id) 
-#	job2_id = job2.run()
-	
-	
-	
 	assembly_list=[]
 	#Create a bsub job to map all of the assemblies against the reference core and pull out unmatched regions
 	print "Running job to map assemblies to the reference core using mummer"
 	for i, assembly in enumerate(args):
 		name=assembly.split("/")[-1].split(".")[0]
 		mummer_file=open(tmpname+"/"+tmpname+"_mummer_"+str(i+1)+".sh", "w")
-		print >> mummer_file, "/nfs/users/nfs_s/sh16/scripts/Aga/align_contigs_with_mummer.py -q "+core_file+" -r "+assembly+" -o "+tmpname+"/"+name+' || error_exit "mummer script failed! Aborting"'
-		assembly_list.append(tmpname+"/"+name+"_unmatched.fasta")
+		print >> mummer_file, AGA_DIR+"align_contigs_with_mummer.py -r "+core_file+" -q "+assembly+" -o "+tmpname+"/"+name+' || error_exit "mummer script failed! Aborting"'
+		assembly_list.append(tmpname+"/"+name+"_novel.fasta")
 
 		mummer_file.close()
 	
@@ -555,34 +436,35 @@ if __name__ == "__main__":
 	
 	mummer_run_file_command="bash "+tmpname+"/"+tmpname+"_mummer_INDEX.sh"
 	
-	job2 = farm.Bsub(tmpname+"/mummer_bsub.out", tmpname+"/mummer_bsub.err", tmpname+"_mummer", "normal", 1, mummer_run_file_command, start=1, end=i+1)
-	job2_id = job2.run()
+	job1 = farm.Bsub(tmpname+"/mummer_bsub.out", tmpname+"/mummer_bsub.err", tmpname+"_mummer", "normal", 1, mummer_run_file_command, start=1, end=i+1)
+	job1_id = job1.run()
 	
 	
 	#Create a bsub job to join all of the noncore contigs and prepare everything for blasting against themselves
 	print "Running job to combine unmatched regions"
-	prepare_noncore_blast_file=open(tmpname+"/"+tmpname+"_prepare_noncore_blast.sh", "w")
+	cluster_noncore=open(tmpname+"/"+tmpname+"_cluster_noncore.sh", "w")
 	
-	add_bash_error_function(prepare_noncore_blast_file)
+	add_bash_error_function(cluster_noncore)
 	assembly_list.append(acc_file)
 	
-	print >> prepare_noncore_blast_file, "cat "+' '.join(assembly_list)+' > '+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta || error_exit "cat command failed! Aborting"'
-	print >> prepare_noncore_blast_file, AGA_DIR+"extract_contig_lengths.py "+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta > '+tmpname+'/'+tmpname+'_noncore_seq_lengths.txt || error_exit "extracting of contig lengths failed! Aborting"'
-	print >> prepare_noncore_blast_file, "formatdb -p F -i "+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta || error_exit "formatdb failed! Aborting"'
+	print >> cluster_noncore, "cat "+' '.join(assembly_list)+' > '+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta || error_exit "cat command failed! Aborting"'
+	print >> cluster_noncore, "cd-hit-est -i "+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta -o '+tmpname+'/'+tmpname+'_cd-hit.fasta || error_exit "cd-hit failed! Aborting"'
+	print >> cluster_noncore, AGA_DIR+"filter_contigs_with_mummer.py -o "+tmpname+'/'+tmpname+" -r "+tmpname+'/'+tmpname+'_cd-hit.fasta -q '+tmpname+'/'+tmpname+'_cd-hit.fasta || error_exit "Filtering noncore with mummer failed! Aborting"'
+	print >> cluster_noncore, AGA_DIR+"reorder_contigs.py -o "+options.prefix+"_accessory.fasta -c "+tmpname+'/'+tmpname+'_filtered.fasta || error_exit "Sorting filtered noncore failed! Aborting"'
 
-	prepare_noncore_blast_file.close()
+	cluster_noncore.close()
 	
 	#Run the bsub command once the SMALT mappings are all complete
 	
-	prepare_noncore_blast_run_command="bash "+tmpname+"/"+tmpname+"_prepare_noncore_blast.sh"
+	cluster_noncore_run_command="bash "+tmpname+"/"+tmpname+"_cluster_noncore.sh"
 	
-	job5 = farm.Bsub(tmpname+"/prepare_noncore_blast_bsub.out", tmpname+"/prepare_noncore_blast_bsub.err", tmpname+"_prepare_noncore_blast", "normal", 1, prepare_noncore_blast_run_command)
-	job5.add_dependency(job2_id)
-	job5_id = job5.run()
+	job2 = farm.Bsub(tmpname+"/cluster_noncore_bsub.out", tmpname+"/cluster_noncore_bsub.err", tmpname+"_cluster_noncore", "normal", 1, cluster_noncore_run_command)
+	job2.add_dependency(job1_id)
+	job2_id = job2.run()
 	
 	#For each noncore fasta file, create a bash script to blast the assembly against the noncore database and remove contigs that match (should this script also remove any overlapping contig ends that match the core?)
 	
-	
+	sys.exit()
 	
 	finallist=[]
 	for i, noncorefile in enumerate(assembly_list):
