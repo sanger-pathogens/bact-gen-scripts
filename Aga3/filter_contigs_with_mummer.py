@@ -100,9 +100,15 @@ if __name__ == "__main__":
 	seqs={}
 	totlen=0
 	for seq in refseqs:
-		if seq.id in reflist:
-			DoError("You have two identically named sequences in your reference fasta file")
-		reflist.append(seq.id)
+		newname=seq.id
+#		if seq.id in querylist:
+			#DoError("You have two identically named sequences in your query fasta file")
+		count=1
+		while newname in reflist:
+			newname=str(count)+seq.id
+			count+=1
+
+		reflist.append(newname)
 		reflens.append(totlen)
 		
 	
@@ -114,12 +120,18 @@ if __name__ == "__main__":
 	
 	querylist=[]
 	for seq in queryseqs:
-		if seq.id in querylist:
-			DoError("You have two identically named sequences in your query fasta file")
-		querylist.append(seq.id)
-		seqs[seq.id]=str(seq.seq).upper()
+		newname=seq.id
+#		if seq.id in querylist:
+			#DoError("You have two identically named sequences in your query fasta file")
+		count=1
+		while newname in querylist:
+			newname=str(count)+seq.id
+			print newname
+			count+=1
+		querylist.append(newname)
+		seqs[newname]=str(seq.seq).upper()
 		totlen+=len(seq.seq)
-		lens[seq.id]=len(seq.seq)
+		lens[newname]=len(seq.seq)
 	
 	
 	if options.promer:

@@ -145,14 +145,22 @@ if __name__ == "__main__":
 	qlengths={}
 	qseqs={}
 	totlen=0
+	name_conversion={}
+	qname_prefix=options.query.split("/")[-1].split(".")[0]+"_"
 	for seq in queryseqs:
 		if seq.id in querylist:
 			DoError("You have two identically named sequences in your query fasta file")
-		querylist.append(seq.id)
-		qseqs[seq.id]=str(seq.seq).upper()
-		qstarts[seq.id]=totlen
+		qname=qname_prefix+seq.id
+		count=1
+		while qname in querylist:
+			qname=qname_prefix+seq.id+"_"+str(count)
+			count+=1
+		name_conversion[seq.id]=qname
+		querylist.append(qname)
+		qseqs[qname]=str(seq.seq).upper()
+		qstarts[qname]=totlen
 		totlen+=len(seq.seq)
-		qlengths[seq.id]=len(seq.seq)
+		qlengths[qname]=len(seq.seq)
 	
 	if options.promer:
 		promerargs=shlex.split(MUMMER_DIR+"promer -p "+options.output+" "+options.ref+" "+options.query)
@@ -188,7 +196,7 @@ if __name__ == "__main__":
 		words=line.split()
 		if len(words)==4 and line[0]==">":
 			refname=words[0][1:]
-			queryname=words[1]
+			queryname=name_conversion[words[1]]
 		elif len(words)==7:
 			rstrand="f"
 			if int(words[0])<int(words[1]):

@@ -448,7 +448,7 @@ if __name__ == "__main__":
 	assembly_list.append(acc_file)
 	
 	print >> cluster_noncore, "cat "+' '.join(assembly_list)+' > '+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta || error_exit "cat command failed! Aborting"'
-	print >> cluster_noncore, "cd-hit-est -i "+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta -o '+tmpname+'/'+tmpname+'_cd-hit.fasta || error_exit "cd-hit failed! Aborting"'
+	print >> cluster_noncore, "cd-hit-est -M 0 -i "+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta -o '+tmpname+'/'+tmpname+'_cd-hit.fasta || error_exit "cd-hit failed! Aborting"'
 	print >> cluster_noncore, AGA_DIR+"filter_contigs_with_mummer.py -o "+tmpname+'/'+tmpname+" -r "+tmpname+'/'+tmpname+'_cd-hit.fasta -q '+tmpname+'/'+tmpname+'_cd-hit.fasta || error_exit "Filtering noncore with mummer failed! Aborting"'
 	print >> cluster_noncore, AGA_DIR+"reorder_contigs.py -o "+options.prefix+"_accessory.fasta -c "+tmpname+'/'+tmpname+'_filtered.fasta || error_exit "Sorting filtered noncore failed! Aborting"'
 
@@ -458,7 +458,7 @@ if __name__ == "__main__":
 	
 	cluster_noncore_run_command="bash "+tmpname+"/"+tmpname+"_cluster_noncore.sh"
 	
-	job2 = farm.Bsub(tmpname+"/cluster_noncore_bsub.out", tmpname+"/cluster_noncore_bsub.err", tmpname+"_cluster_noncore", "normal", 1, cluster_noncore_run_command)
+	job2 = farm.Bsub(tmpname+"/cluster_noncore_bsub.out", tmpname+"/cluster_noncore_bsub.err", tmpname+"_cluster_noncore", "normal", 10, cluster_noncore_run_command)
 	job2.add_dependency(job1_id)
 	job2_id = job2.run()
 	
