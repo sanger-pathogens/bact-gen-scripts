@@ -31,10 +31,12 @@ def main():
 	usage = "usage: %prog [options]"
 	parser = OptionParser(usage=usage)
 	
-	parser.add_option("-t", "--tree", action="store", dest="tree", help="Input tree file", default="", metavar="FILE")
+	parser.add_option("-t", "--tree", action="store", dest="tree", help="Input tree file (NOTE: tree must be fully bifurcating)", default="", metavar="FILE")
 	parser.add_option("-o", "--output_prefix", action="store", dest="output", help="Output prefix", default="")
 	parser.add_option("-s", "--significance", action="store", dest="significance", help="Significance butoff level [default= %default]", default=0.05, type="float", metavar="FLOAT")
 	parser.add_option("-p", "--permutations", action="store", dest="permutations", help="Number of permutations to run to test significance [default= %default]", default=100, type="int", metavar="INT")
+	parser.add_option("-m", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root output tree pdf [default= %default]", default=False, metavar="INT")
+	parser.add_option("-l", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="ladderise tree (choose from right or left) [default= %default]", type="choice", default=None)
 	
 
 
@@ -87,7 +89,8 @@ def read_tree(treefile):
 		print "Failed to open tree file"
 		sys.exit()
 	
-	t.deroot()
+	#t.deroot()
+	
 	
 	return t
 
@@ -95,17 +98,34 @@ def read_tree(treefile):
 def get_clade_lengths(t, treelength, node_count):
 	for node in t.postorder_node_iter():
 		
-		node.downstream_length=0
-		node.downstream_count=0
+		node.downstream_length=0.0
+		node.downstream_count=0.0
 		node.downstream_set=set([])
 		
 		if node.is_internal():
-			for child in node.child_nodes():
-				node.downstream_length+=child.downstream_length
-				node.downstream_length+=child.edge_length
-				node.downstream_count+=child.downstream_count
-				node.downstream_count+=1
-				node.downstream_set.update(child.downstream_set)
+			
+			if len(node.child_nodes())>2:
+				max_child_node_value=0
+				max_child=0
+				for x, child in enumerate(node.child_nodes()):
+					if child.downstream_length+child.edge_length>max_child_node_value:
+						max_child_node_value=child.downstream_length+child.edge_length
+						max_child=x
+				for x, child in enumerate(node.child_nodes()):
+					if x==max_child:
+						continue
+					node.downstream_length+=child.downstream_length
+					node.downstream_length+=child.edge_length
+					node.downstream_count+=child.downstream_count
+					node.downstream_count+=1
+					node.downstream_set.update(child.downstream_set)
+			else:
+				for child in node.child_nodes():
+					node.downstream_length+=child.downstream_length
+					node.downstream_length+=child.edge_length
+					node.downstream_count+=child.downstream_count
+					node.downstream_count+=1
+					node.downstream_set.update(child.downstream_set)
 		else:
 			node.downstream_set.add(node.taxon.label)
 			
@@ -115,51 +135,53 @@ def get_clade_lengths(t, treelength, node_count):
 
 def getlikelihood(N, C, n, c):
 	#Where N = treelength, C = node_count, n=clade_length, c= clade size
+	
+	
+#	print c, n, c/n, C, N, C/N, C-c, N-n
+	
 
-#	print c, n, C, N
-#	
-#	print C-c, N-n,
-	
-	part1=math.log((c/n),10)*c
-	if n-c==0:
-		part2=0
-	else:
-		part2=math.log((((n-c)/n)),10)*(n-c)
-	if C-c==0:
-		part3=0
-	else:
-		part3=math.log((((C-c)/(N-n))),10)*(C-c)
-	if ((N-n)-(C-c))==0:
-		part4=0
-	else:
-		part4=math.log(((((N-n)-(C-c))/(N-n))),10)*((N-n)-(C-c))
-	
-	likelihood=(part1+part2+part3+part4)*-1
+	try:
+		part1=math.log((c/n),10)*c
+		if n-c==0:
+			part2=0
+		else:
+			part2=math.log((((n-c)/n)),10)*(n-c)
+		if C-c==0:
+			part3=0
+		else:
+			part3=math.log((((C-c)/(N-n))),10)*(C-c)
+		if ((N-n)-(C-c))==0:
+			part4=0
+		else:
+			part4=math.log(((((N-n)-(C-c))/(N-n))),10)*((N-n)-(C-c))
+		
+		likelihood=(part1+part2+part3+part4)*-1
+	except ValueError:
+		print "Failed to calculate likelihoods"
+		print c, n, C, N
+		sys.exit()
 	
 #	print c, n, C, N, likelihood
 	
 	return likelihood
 
 
-def get_tree_node_likelihoods(t, treelength, node_count, min_length):
+def get_tree_node_likelihoods(t, treelength, node_count, multiplier):
 	likelihoods=[]
 	for node in t.postorder_internal_node_iter():
 		if node.edge_length!=None:
 			node.upstream_length=treelength-(node.downstream_length+node.edge_length)
 		else:
 			continue
-		node.upstream_count=(node_count-node.downstream_count)-1
-#		print node_count, node.downstream_count, node.upstream_count, min_length
-		if node.downstream_count>=(node_count-2) or node.upstream_count>=(node_count-2) or node.downstream_count<2 or node.upstream_count<2:
-			continue
-		node.downstream_mean=node.downstream_length/node.downstream_count
-		node.upstream_mean=node.upstream_length/node.upstream_count
+		node.upstream_count=float(node_count-node.downstream_count)-1
 		
-		if((1/min_length)*treelength/node_count)>((1/min_length)*node.downstream_length/node.downstream_count):
-			node.downstream_likelihood=getlikelihood((1/min_length)*treelength, node_count, (1/min_length)*node.downstream_length, node.downstream_count)
+		
+		if (node.downstream_count)>1 and (node.upstream_count+1)>0 and (multiplier*treelength)/node_count>((multiplier)*node.downstream_length)/node.downstream_count:
+			node.downstream_likelihood=getlikelihood(multiplier*treelength, node_count, (multiplier)*node.downstream_length, node.downstream_count)
 			likelihoods.append([node.downstream_likelihood, node, "d"])
-		if ((1/min_length)*treelength/node_count)>((1/min_length)*node.upstream_length/node.upstream_count):
-			node.upstream_likelihood=getlikelihood((1/min_length)*treelength, node_count, (1/min_length)*node.upstream_length, node.upstream_count)
+			
+		if (node.upstream_count)>1 and (node.downstream_count+1)>0 and (multiplier*treelength)/node_count>((multiplier)*node.upstream_length)/node.upstream_count:
+			node.upstream_likelihood=getlikelihood(multiplier*treelength, node_count, (multiplier)*node.upstream_length, node.upstream_count)
 			likelihoods.append([node.upstream_likelihood, node, "u"])
 	
 	return likelihoods
@@ -189,21 +211,23 @@ if __name__ == "__main__":
 	
 	tree=copy.deepcopy(original_tree)
 	
-	
 	significant=True
 	i=1
 	while significant:
-		
+		significant=False
 		print "Iteration", i
 		
-		node_count=0
+		node_count=0.0
 		
 		taxa=set([])
+		
+		tree.deroot()
 		
 		for node in tree.leaf_iter():
 			taxa.add(node.taxon.label)
 		
-		if len(taxa)<4:
+		if len(taxa)<3:
+			print "Too few taxa to cluster"
 			break
 		
 		blengths=[]
@@ -216,24 +240,36 @@ if __name__ == "__main__":
 					node.edge_length=0.00000000001
 				if node.edge_length<min_length:
 					min_length=node.edge_length
-		min_length=min_length/10
-		treelength=tree.length()
+		multiplier=node_count/min_length
+		treelength=float(tree.length())
 		
 		get_clade_lengths(tree, treelength, node_count)
 		
 		
-		likelihoods=get_tree_node_likelihoods(tree, treelength, node_count, min_length)
+		likelihoods=get_tree_node_likelihoods(tree, treelength, node_count, multiplier)
 		
 		likelihoods.sort()
 		
 		
+		if len(likelihoods)==0:
+			print "\tNo significant clusters found"
+			break
+				
+		
+#		for likelihood in likelihoods:
+#			if likelihood[2]=="d":	
+#				cluster=list(likelihood[1].downstream_set)
+#			else:
+#				cluster=list(taxa.difference(likelihood[1].downstream_set))
+#			print likelihood[0], cluster
+#		sys.exit()
 		test_values=[]
 		for x in xrange(0,options.permutations-1):
 			new_tree=copy.deepcopy(tree)
 			rand_blengths=blengths[:]
 			random.shuffle(rand_blengths)
 			x=xrange(int((1/min_length)*treelength))
-			bits=random.sample(x, node_count-1)
+			bits=random.sample(x, int(node_count)-1)
 			
 			
 			bits.sort()
@@ -254,56 +290,84 @@ if __name__ == "__main__":
 					y+=1
 				
 			get_clade_lengths(new_tree, treelength, node_count)
-			tlikelihoods=get_tree_node_likelihoods(new_tree, treelength, node_count, min_length)
+			tlikelihoods=get_tree_node_likelihoods(new_tree, treelength, node_count, multiplier)
 			tlikelihoods.sort()
 			try:
 				test_values.append(tlikelihoods[0][0])
 			except StandardError:
-				print tlikelihoods
+				test_values.append(float("Inf"))
 		
+		test_values.sort()
+		test_values.reverse()
 		
-		node=likelihoods[0][1]
-		
-		bettercount=0.0
-		for t in test_values:
-			if likelihoods[0][0]<t:
+		removedset=set([])
+		for likelihood in likelihoods[:1]:
+			node=likelihood[1]
+			
+			bettercount=0.0
+			t=0
+			while t<len(test_values) and likelihood[0]<test_values[t]:
 				bettercount+=1
+				t+=1
+			
+			pvalue=(float(options.permutations)-bettercount)/options.permutations
+			
+			if likelihood[2]=="d":	
+				cluster=likelihood[1].downstream_set
+			else:
+				cluster=taxa.difference(likelihood[1].downstream_set)
+			
+			
+			if len(cluster.intersection(removedset))>0:
+				continue
+			
+			if pvalue<=options.significance:
+				clusters.append([i, cluster, pvalue, likelihood[0]])
+				significant=True
+				
+				taxa_to_prune=[]
+				try:
+					tree.prune_taxa_with_labels(list(cluster))
+				except StandardError:
+					print "Could not prune taxa"
+				print "\tFound significant cluster at", pvalue, "level"
+				print "\t\tCluster contains", len(list(cluster)), "taxa:"
+				print "\t\t"+", ".join(list(cluster))
+				removedset.update(cluster)
+				
+				
+				
+		if not significant:
+			print "\tNo significant clusters found"
+			if len(likelihoods)>0:
+				print "\tTop cluster has p-value of", pvalue
+		i+=1
 		
-		pvalue=(options.permutations-bettercount)/options.permutations
-		
-		if likelihoods[0][2]=="d":	
-			cluster=likelihoods[0][1].downstream_set
-		else:
-			cluster=taxa.difference(likelihoods[0][1].downstream_set)
 		
 		
-		if pvalue<=options.significance:
-			clusters.append([i, cluster, pvalue])
-			significant=True
-			i+=1
-			taxa_to_prune=[]
-			tree.prune_taxa_with_labels(list(cluster))
-			print "Found significant cluster at", pvalue, "level"
-			print "Cluster contains", len(list(cluster)), "taxa:"
-			print ", ".join(list(cluster))
-		else:
-			significant=False
-			print "No significant clusters found"
-		
-		
-		
-	print "found a total of", len(clusters), "significant clusters"
+	print "Found a total of", len(clusters), "significant clusters"
 	if len(clusters)>0:
 		print "Printing output csv"
 		output=open(options.output+".csv", "w")
-		print >> output, ",".join(["Taxon", "Cluster", "p-value:c:0:"+str(options.significance)])
-		for cluster in clusters:
+		print >> output, ",".join(["Taxon", "Iteration", "p-value:c:"+str(1.0/options.permutations)+":"+str(options.significance), "Likelihood"])
+		for x, cluster in enumerate(clusters):
 			for taxon in list(cluster[1]):
-				print >> output, ",".join(map(str,[taxon, cluster[0], cluster[2]]))
+				print >> output, ",".join(map(str,[taxon, cluster[0], cluster[2], cluster[3]]))
 		output.close()
 			
 		print "Drawing tree"
-		os.system("~/scripts/iCANDY.py -t "+options.tree+" -M -L right -m "+options.output+".csv -a 2 -C 2,2,3 -r deltran -O portrait -o "+options.output+".pdf")
+		
+		if options.midpoint:
+			mid="-M"
+		else:
+			mid=""
+		
+		if options.ladderise==None:
+			lad=""
+		else:
+			lad="-L "+options.ladderise
+		os.system("~/scripts/iCANDY.py -t "+options.tree+" "+mid+" "+lad+" -m "+options.output+".csv -a 2 -C 2,2,3 -r deltran -O portrait -o "+options.output+".pdf")
+		
 	else:
 		print "No clusters found, so no output to print"
 	

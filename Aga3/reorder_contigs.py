@@ -8,6 +8,7 @@ from Bio.Align import Generic
 from Bio.Alphabet import IUPAC, Gapped
 from optparse import OptionParser, OptionGroup
 import glob
+import dendropy
 import shlex, subprocess
 
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
@@ -53,7 +54,7 @@ def main():
 	
 	parser.add_option("-c", "--contigs", action="store", dest="contigs", help="Contig fasta file name", default="", metavar="FILE")
 	parser.add_option("-o", "--output", action="store", dest="output", help="Output file name", default="", metavar="STRING")
-	parser.add_option("-t", "--tree", action="store_true", dest="tree", help="Tree file to allow ordering by clade", default=False)
+	parser.add_option("-t", "--tree", action="store", dest="tree", help="Tree file to allow ordering by clade", default="")
 	
 	
 	
@@ -81,6 +82,37 @@ def check_input_validity(options, args):
 
 
 
+def read_tree(treefile):
+	#Try opening the tree using various schemas
+	opened=False
+	for treeschema in ["nexus", "newick"]:#["beast-summary-tree",  "nexus", "newick"]:
+		try: 
+			t = dendropy.Tree.get_from_path(treefile, schema=treeschema, as_rooted=True, preserve_underscores=True, case_insensitive_taxon_labels=False, set_node_attributes=True, extract_comment_metadata=True)
+			opened=True
+			t.schema=treeschema
+			break
+		except dendropy.utility.error.DataParseError:
+			continue
+		except ValueError as e:
+			print "Encountered ValueError while trying to read tree file as", treeschema+":", e
+			continue
+			
+	if not opened:
+		print "Failed to open tree file"
+		sys.exit()
+	
+	#t.deroot()
+	for n in t.leaf_iter():
+		print n.taxon.label
+	
+	print t.as_ascii_plot()
+	
+	
+	return t
+
+
+
+
 ################
 # Main program #
 ################		
@@ -94,6 +126,10 @@ if __name__ == "__main__":
 	#Do some checking of the input files
 	
 	check_input_validity(options, args)
+	
+	read_tree(options.tree)
+	
+	sys.exit()
 	
 	
 	try:

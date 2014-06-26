@@ -5093,7 +5093,7 @@ if __name__ == "__main__":
 #							print redbit, greenbit, bluebit
 							
 							for i in xrange(0,numbits):
-								print colors.Color(minred+((i+1)*redbit),mingreen+((i+1)*greenbit),minblue+((i+1)*bluebit))
+								#print colors.Color(minred+((i+1)*redbit),mingreen+((i+1)*greenbit),minblue+((i+1)*bluebit))
 								value=newtrack.datamin+((i+1)*bit)
 								proportion=((float(value)-newtrack.datamin)/((newtrack.datamax-newtrack.datamin)))
 								
