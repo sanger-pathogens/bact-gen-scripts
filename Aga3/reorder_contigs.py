@@ -127,9 +127,9 @@ if __name__ == "__main__":
 	
 	check_input_validity(options, args)
 	
-	read_tree(options.tree)
-	
-	sys.exit()
+#	read_tree(options.tree)
+#	
+#	sys.exit()
 	
 	
 	try:

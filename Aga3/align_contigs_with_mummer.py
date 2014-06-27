@@ -310,23 +310,26 @@ if __name__ == "__main__":
 					else:
 						loc_end=str(refstarts[ref]+block[1])
 					if block[5]=="f":
-						print >> fastahandle, ">"+query.replace("#","_")+"#"+loc_start+".."+loc_end
+						print >> fastahandle, ">"+query.replace("#","_")+"_"+str(count)+"#"+loc_start+".."+loc_end
 						print >> fastahandle, sequence[prev:block[2]]
+						count+=1
 #						print sequence[prev:block[2]]
 #						print len(sequence), prev, block[2]
 					else:
 						if x>0 and ordered_blocks[query][x-1][5]=="f":
-							print >> fastahandle, ">"+query.replace("#","_")+"#"+loc_start+".."+loc_end
+							print >> fastahandle, ">"+query.replace("#","_")+"_"+str(count)+"#"+loc_start+".."+loc_end
 							print >> fastahandle, sequence[prev:block[2]]
+							count+=1
 #							print sequence[prev:block[2]]
 #							print len(sequence), prev, block[2]
 						else:
-							print >> fastahandle, ">"+query.replace("#","_")+"#"+loc_end+".."+loc_start
+							print >> fastahandle, ">"+query.replace("#","_")+"_"+str(count)+"#"+loc_end+".."+loc_start
 							print >> fastahandle, revcomp(sequence[prev:block[2]])
+							count+=1
 #							print sequence[prev:block[2]]
 #							print len(sequence), prev, block[2]
 						
-					count+=1
+					
 				prev=block[3]
 				if block[5]=="f":
 					prevrefblockend=refstarts[ref]+block[1]
@@ -345,14 +348,17 @@ if __name__ == "__main__":
 #					if len(ordered_blocks[query])>x+1:
 				
 				if len(ordered_blocks[query])==0 or block[5]=="f":
-					print >> fastahandle, ">"+query.replace("#","_")+"#"+loc_start+".."+loc_end
+					print >> fastahandle, ">"+query.replace("#","_")+"_"+str(count)+"#"+loc_start+".."+loc_end
 					print >> fastahandle, sequence[prev:]
+					count+=1
 				else:
-					print >> fastahandle, ">"+query.replace("#","_")+"#"+loc_end+".."+loc_start
+					print >> fastahandle, ">"+query.replace("#","_")+"_"+str(count)+"#"+loc_end+".."+loc_start
 					print >> fastahandle, revcomp(sequence[prev:])
+					count+=1
 		else:
-			print >> fastahandle, ">"+query.replace("#","_")+"#.."
+			print >> fastahandle, ">"+query.replace("#","_")+"_"+str(count)+"#.."
 			print >> fastahandle, sequence
+			count+=1
 	
 	
 	
