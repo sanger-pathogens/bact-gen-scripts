@@ -238,6 +238,9 @@ def main():
 	group.add_option("-a", "--assembler", action="store", dest="assembler", help="Assembler to use. [choose from velvet or spades]", default="velvet")
 	group.add_option("-c", "--coverage", action="store", dest="coverage", help="Target coverage for mapping/assembly. 0 equals use all reads. [default= %default]", default=0, type="float", metavar="float")
 	group.add_option("-m", "--mapped", action="store", dest="mapped", help="Directory containing bam files so mapping does not need to be redone.", default="")
+	parser.add_option("-T", "--tree", action="store", dest="tree", help="Tree file to allow ordering by clade", default="")
+	parser.add_option("-M", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root tree[default= %default]", default=False, metavar="INT")
+	parser.add_option("-L", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="ladderise tree (choose from right or left) [default= %default]", type="choice", default=None)
 	
 	parser.add_option_group(group)
 #	group.add_option("-d", "--contaminant_database", action="store", dest="contaminants", help="Name file containing contaminant accession numbers", default=False, metavar="FILE")
@@ -272,7 +275,9 @@ def check_input_validity(options, args):
 			options.mapped=os.path.abspath(options.mapped)
 		else:
 			DoError("Cannot find directory "+options.mapped)
-		
+	
+	if len(args)==0:
+		DoError("No assemblies specified")
 	
 	return
 	
@@ -447,10 +452,18 @@ if __name__ == "__main__":
 	add_bash_error_function(cluster_noncore)
 	assembly_list.append(acc_file)
 	
-	print >> cluster_noncore, "cat "+' '.join(assembly_list)+' > '+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta || error_exit "cat command failed! Aborting"'
-	print >> cluster_noncore, "cd-hit-est -M 0 -i "+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta -o '+tmpname+'/'+tmpname+'_cd-hit.fasta || error_exit "cd-hit failed! Aborting"'
-	print >> cluster_noncore, AGA_DIR+"filter_contigs_with_mummer.py -o "+tmpname+'/'+tmpname+" -r "+tmpname+'/'+tmpname+'_cd-hit.fasta -q '+tmpname+'/'+tmpname+'_cd-hit.fasta || error_exit "Filtering noncore with mummer failed! Aborting"'
-	print >> cluster_noncore, AGA_DIR+"reorder_contigs.py -o "+options.prefix+"_accessory.fasta -c "+tmpname+'/'+tmpname+'_filtered.fasta || error_exit "Sorting filtered noncore failed! Aborting"'
+	treebit=""
+	if options.tree!="":
+		treebit=treebit+"-t "+options.tree
+	if options.midpoint:
+		treebit=treebit+" -m"
+	if options.ladderise!=None:
+		treebit=treebit+" -l "+options.ladderise
+	
+#	print >> cluster_noncore, "cat "+' '.join(assembly_list)+' > '+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta || error_exit "cat command failed! Aborting"'
+#	print >> cluster_noncore, "cd-hit-est -M 0 -i "+tmpname+'/'+tmpname+'_all_noncore_seqs.fasta -o '+tmpname+'/'+tmpname+'_cd-hit.fasta || error_exit "cd-hit failed! Aborting"'
+	print >> cluster_noncore, AGA_DIR+"filter_contigs_with_mummer_sequential.py -o "+tmpname+'/'+tmpname+" "+acc_file+" "+tmpname+' || error_exit "Filtering noncore with mummer failed! Aborting"'
+	print >> cluster_noncore, AGA_DIR+"reorder_contigs.py "+treebit+" -o "+options.prefix+"_accessory.fasta -c "+tmpname+'/'+tmpname+'_filtered.fasta || error_exit "Sorting filtered noncore failed! Aborting"'
 
 	cluster_noncore.close()
 	
@@ -462,7 +475,25 @@ if __name__ == "__main__":
 	job2.add_dependency(job1_id)
 	job2_id = job2.run()
 	
-	#For each noncore fasta file, create a bash script to blast the assembly against the noncore database and remove contigs that match (should this script also remove any overlapping contig ends that match the core?)
+	
+	#Create a bsub job to join all of the noncore contigs and prepare everything for blasting against themselves
+	
+	create_pan_genome=open(tmpname+"/"+tmpname+"_create_pan_genome.sh", "w")
+	
+	add_bash_error_function(create_pan_genome)
+	
+	print >> create_pan_genome, "cat "+core_file+' '+options.prefix+"_accessory.fasta > "+options.prefix+'_pan.fasta || error_exit "cat command failed! Aborting"'
+	print >> create_pan_genome, AGA_DIR+"better_blast.py -q "+options.prefix+'_pan.fasta -s '+options.prefix+'_pan.fasta -o '+options.prefix+"_self_blast"
+
+	create_pan_genome.close()
+	
+	#Run the bsub command once the SMALT mappings are all complete
+	
+	create_pan_genome_command="bash "+tmpname+"/"+tmpname+"_create_pan_genome.sh"
+	print "Running jobs to create accessory and pan genomes"
+	job3 = farm.Bsub(tmpname+"/create_pan_genome_bsub.out", tmpname+"/create_pan_genome_bsub.err", tmpname+"_create_pan_genome", "normal", 1, create_pan_genome_command)
+	job3.add_dependency(job2_id)
+	job3_id = job3.run()
 	
 	sys.exit()
 	

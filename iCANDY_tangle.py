@@ -5453,7 +5453,7 @@ if __name__ == "__main__":
 			options.tree=""
 		else:
 #			d = Drawing(width, height)
-			
+			options.midpoint=False
 			tree=read_dendropy_tree(options.tree)
 			
 #			renderPDF.drawToFile(d, options.outputfile)

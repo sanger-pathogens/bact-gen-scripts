@@ -15,7 +15,7 @@ from optparse import OptionParser, OptionGroup
 
 
 def main():
-		usage = "usage: %prog [options] args"
+		usage = "usage: %prog [options] <list of fast5 files or directories containing fast5 files>"
 		parser = OptionParser(usage=usage)
         
 		parser.add_option("-o", "--output", action="store", dest="fastq", help="output fastq file name", type="string", metavar="fastq file", default="")
@@ -48,7 +48,20 @@ if __name__ == "__main__":
 	fnf=0
 	utr=0
 	success=0
-	for fast5 in args:
+	
+	fast5s=[]
+	
+	for arg in args:
+		if os.path.isfile(arg):
+			fast5s.append(arg)
+		elif os.path.isdir(arg):
+			for file in os.listdir(arg):
+			    if file.endswith(".fast5"):
+			        fast5s.append(arg+"/"+file)
+		else:
+			fnf+=1
+	
+	for fast5 in fast5s:
 		if not os.path.isfile(fast5):
 			fnf+=1
 			continue

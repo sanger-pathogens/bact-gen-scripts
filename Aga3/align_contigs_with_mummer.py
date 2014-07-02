@@ -146,7 +146,7 @@ if __name__ == "__main__":
 	qseqs={}
 	totlen=0
 	name_conversion={}
-	qname_prefix=options.query.split("/")[-1].split(".")[0]+"_"
+	qname_prefix=options.query.split("/")[-1].split(".")[0]+"$"
 	for seq in queryseqs:
 		if seq.id in querylist:
 			DoError("You have two identically named sequences in your query fasta file")
