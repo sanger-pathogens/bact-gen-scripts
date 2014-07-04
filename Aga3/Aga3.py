@@ -225,31 +225,16 @@ class fastq:
 
 def main():
 
-	usage = "usage: %prog [options]"
+	usage = "usage: %prog [options] <list of fasta assemblies>"
 	parser = OptionParser(usage=usage)
 	
-	group = OptionGroup(parser, "General options")
-	group.add_option("-r", "--reference", action="store", dest="ref", help="Reference fasta", default="", metavar="FILE")
-	group.add_option("-t", "--tab", action="store", dest="tab", help="Reference tab file of MGEs", default="", metavar="FILE")
-	group.add_option("-o", "--output_prefix", action="store", dest="prefix", help="Output prefix", default="")
-	group.add_option("-i", "--maxinsert", action="store", dest="maxinsertsize", help="maximum insert size [default= %default]", default=1000, type="int", metavar="INT")
-	group.add_option("-j", "--mininsert", action="store", dest="mininsertsize", help="minimum insert size [default= %default]", default=50, type="int", metavar="INT")
-	group.add_option("-z", "--nomapid", action="store", dest="nomapid", help="Minimum identity threshold to report a mapping Specified as a positive integer or proportion of read length [default= %default]", default=0, type="float", metavar="float")
-	group.add_option("-a", "--assembler", action="store", dest="assembler", help="Assembler to use. [choose from velvet or spades]", default="velvet")
-	group.add_option("-c", "--coverage", action="store", dest="coverage", help="Target coverage for mapping/assembly. 0 equals use all reads. [default= %default]", default=0, type="float", metavar="float")
-	group.add_option("-m", "--mapped", action="store", dest="mapped", help="Directory containing bam files so mapping does not need to be redone.", default="")
-	parser.add_option("-T", "--tree", action="store", dest="tree", help="Tree file to allow ordering by clade", default="")
+	parser.add_option("-r", "--reference", action="store", dest="ref", help="Reference sequence file. NOTE: Currently this must be a single DNA sequence, not a multifasta.", default="", metavar="FILE")
+	parser.add_option("-t", "--tab", action="store", dest="tab", help="Reference tab file of MGEs", default="", metavar="FILE")
+	parser.add_option("-o", "--output_prefix", action="store", dest="prefix", help="Output prefix", default="")
+	parser.add_option("-T", "--tree", action="store", dest="tree", help="Tree file to allow ordering by clade (only works if taxon names are the same in the assemblies and tree)", default="")
 	parser.add_option("-M", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root tree[default= %default]", default=False, metavar="INT")
 	parser.add_option("-L", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="ladderise tree (choose from right or left) [default= %default]", type="choice", default=None)
 	
-	parser.add_option_group(group)
-#	group.add_option("-d", "--contaminant_database", action="store", dest="contaminants", help="Name file containing contaminant accession numbers", default=False, metavar="FILE")
-#	group.add_option("-H", "--human", action="store_true", dest="human", help="Blast primers against human genome", default=False)
-#	parser.add_option_group(group)
-#if len(sys.argv)!=3:
-#	print "Usage: create_pan_genome.py <ssaha_folders>"
-#	sys.exit()
-
 
 	return parser.parse_args()
 
@@ -268,14 +253,7 @@ def check_input_validity(options, args):
 		DoError('No reference file selected')
 	elif not os.path.isfile(options.ref):
 		DoError('Cannot find file '+options.ref)
-	options.mapped=options.mapped.rstrip('/')
-	
-	if options.mapped!="":
-		if os.path.isdir(options.mapped):
-			options.mapped=os.path.abspath(options.mapped)
-		else:
-			DoError("Cannot find directory "+options.mapped)
-	
+		
 	if len(args)==0:
 		DoError("No assemblies specified")
 	

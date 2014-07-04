@@ -60,6 +60,7 @@ def get_user_options():
 	group.add_option("-d", "--dates", action="store", dest="dates", help="Dates csv file name (Name,date)", default="")
 	group.add_option("-n", "--nons", action="store_true", dest="nons", help="Exclude sites which are constant other than Ns", default=False)
 	group.add_option("-g", "--gaps", action="store_true", dest="gaps", help="Gaps (-) are real", default=False)
+	group.add_option("-x", "--exclude", action="store_true", dest="exclude", help="Exclude isolates without dates from output", default=False)
 	parser.add_option_group(group)
 	
 	return parser.parse_args()
@@ -147,7 +148,23 @@ if __name__ == "__main__":
 	check_input_validity(options, args)
 	
 	
-	print '\nReading input alignment...',
+	dates={}
+	
+	if options.dates!="":
+		
+		for line in open(options.dates):
+			words=line.strip().split(',')
+			if len(words)<2:
+				continue
+				
+				
+			try:
+				dates[words[0]]=float(words[1])
+			except ValueError:
+				continue
+	
+	
+	print '\nReading input alignment...'
 	sys.stdout.flush()
 	
 	sequences={}
@@ -177,11 +194,20 @@ if __name__ == "__main__":
 		linesa=[]
 		sequences={}
 	
-	
+	exccount=0
 	for line in lines:
 		words=line.strip().split('\n')
-		sequences[words[0].split()[0]]=''.join(words[1:])
-
+		if options.exclude and not words[0].split()[0] in dates:
+			exccount+=1
+		else:
+			sequences[words[0].split()[0]]=''.join(words[1:])
+	
+	if exccount>0:
+		print "Removed", exccount, "sequences with no dates"
+	if len(sequences)==0:
+		print "\nNo sequences found"
+		sys.exit()
+	
 
 	alnlen=len(sequences[sequences.keys()[0]])
 
@@ -207,20 +233,7 @@ if __name__ == "__main__":
 	print "Found", len(sequences.keys()), "sequences of length", alnlen
 	sys.stdout.flush()
 	
-	dates={}
-	
-	if options.dates!="":
-		
-		for line in open(options.dates):
-			words=line.strip().split(',')
-			if len(words)<2:
-				continue
-			if words[0] in sequences.keys():
-				
-				try:
-					dates[words[0]]=float(words[1])
-				except ValueError:
-					continue
+
 	
 	
 	snplocations=[]
