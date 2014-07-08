@@ -793,7 +793,7 @@ def read_dendropy_tree(treefile):
 						node.annotations[x].value=float(a.value)
 					except:
 						node.annotations[x].value=a.value
-					print node.annotations[x]
+#					print node.annotations[x]
 				elif isinstance(a.value, list):
 					for y in xrange(len(a.value)):
 						if isinstance(a.value[y], str):
@@ -876,7 +876,7 @@ def read_dendropy_tree(treefile):
 					"Found name that failed to split on", options.date_separator+":", leaf.taxon
 				
 				try:
-					leaf.sampling_date=int(last_part_of_name)
+					leaf.sampling_date=int(float(last_part_of_name))
 					if leaf.sampling_date>max_leaf_sampling_date:
 						max_leaf_sampling_date=leaf.sampling_date
 					if leaf.sampling_date<min_leaf_sampling_date:

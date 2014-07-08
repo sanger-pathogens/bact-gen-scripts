@@ -242,7 +242,7 @@ if __name__ == "__main__":
 	
 	
 	mfile=open(options.m)
-	metadata=read_metadata(mfile, [4,8], header=True, split_value=",")
+	metadata=read_metadata(mfile, [4,14], header=True, split_value=",")
 	
 	
 	if options.tree!="":
@@ -296,6 +296,9 @@ if __name__ == "__main__":
 				medianrate=a.value
 			if a.name=="length":
 				length=a.value
+		
+		
+		
 		length=node.edge_length
 		
 		if node.is_leaf():
