@@ -68,19 +68,19 @@ if __name__ == "__main__":
 	outfile, mauve, infile=getOptions(argv)
 	
 	print "Reading file: "+infile
-	data=open(infile, "rU").read().split('#')
-	
+	data=open(infile, "rU").read().split('\n#')
 	names=[]
 	
 	consevents={}
 	
-	poly=data[7].split('\n')[1:-1]
+	poly=data[6].split('\n')[1:-1]
 	
-	conseventsbloc=data[3].split('\n')[1:-1]
+	conseventsbloc=data[2].split('\n')[1:-1]
+	
 	
 	for x, name in enumerate(conseventsbloc):
 		names.append(str(x+1))
-		consevents[str(x+1)]=conseventsbloc[x].replace('0.000000e+00','0').split()
+		consevents[str(x+1)]=conseventsbloc[x].replace('0.00e+00','0').split()
 	
 	recombination={}
 	substitution={}

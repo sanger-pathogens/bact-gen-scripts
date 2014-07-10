@@ -785,6 +785,12 @@ def read_dendropy_tree(treefile):
 		#print the tree in ascii including branch lengths
 		#print(t.as_ascii_plot(plot_metric='length'))
 		
+		
+		for node in t.postorder_node_iter():
+			if node.edge_length==None:
+				node.edge_length=0
+		
+		
 		for node in t.postorder_node_iter():
 			for x, a in enumerate(node.annotations):
 				if isinstance(a.value, str):
@@ -827,34 +833,36 @@ def read_dendropy_tree(treefile):
 		#parse leaf annotation information
 		for leaf in t.leaf_iter():
 			#print leaf.taxon
-			for x, a in enumerate(leaf.taxon.annotations):
-				if isinstance(a.value, str):
-					a.value=a.value.replace('"','')
-					try:
-						leaf.taxon.annotations[x].value=float(a.value)
-					except:
-						leaf.taxon.annotations[x].value=a.value
-				elif isinstance(a.value, list):
-					for y in xrange(len(a.value)):
-						if isinstance(a.value[y], str):
-							a.value[y]=a.value[y].replace('"','')
-							leaf.taxon.annotations[x].value[y]=a.value[y]
-					
-					try:
-						leaf.taxon.annotations[x].value=map(float,node.annotations[x].value)
-					except:
-						continue
-				
-				
-				if isinstance(a.value, str) and a.name=="!color" and len (a.value)>1 and a.value[0]=="#":
-					try:
-						rgbint=int(a.value[1:])
-					except:
-						break
-					r,g,b=rgbint2rgbtuple(rgbint)
-					leaf.taxon.annotations[x].name="Figtree_colour"
-					leaf.taxon.annotations[x].value=colors.Color(float(r)/255,float(g)/255,float(b)/255)
-		
+			if hasattr(leaf, "taxon"):
+				if hasattr(leaf.taxon, "annotations"):
+					for x, a in enumerate(leaf.taxon.annotations):
+						if isinstance(a.value, str):
+							a.value=a.value.replace('"','')
+							try:
+								leaf.taxon.annotations[x].value=float(a.value)
+							except:
+								leaf.taxon.annotations[x].value=a.value
+						elif isinstance(a.value, list):
+							for y in xrange(len(a.value)):
+								if isinstance(a.value[y], str):
+									a.value[y]=a.value[y].replace('"','')
+									leaf.taxon.annotations[x].value[y]=a.value[y]
+							
+							try:
+								leaf.taxon.annotations[x].value=map(float,node.annotations[x].value)
+							except:
+								continue
+						
+						
+						if isinstance(a.value, str) and a.name=="!color" and len (a.value)>1 and a.value[0]=="#":
+							try:
+								rgbint=int(a.value[1:])
+							except:
+								break
+							r,g,b=rgbint2rgbtuple(rgbint)
+							leaf.taxon.annotations[x].name="Figtree_colour"
+							leaf.taxon.annotations[x].value=colors.Color(float(r)/255,float(g)/255,float(b)/255)
+			
 		
 		#Check if tree is from BEAST (not sure best way to check this, but will check from height on root node)
 		root=t.seed_node

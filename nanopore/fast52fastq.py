@@ -34,7 +34,7 @@ if __name__ == "__main__":
 	(options, args) = main()
  	
  	if len(args)==0:
- 		print "Error: No input fastq files specified"
+ 		print "Error: No input fast5 files specified"
 		sys.exit()
  	
 	if options.fastq=="":
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 		sys.exit()
 	
 	output=open(options.fastq, "w")
-	print "Reading", len(args), "fast5 files"
+	print "Reading fast5 files"
 	nods2D=0
 	nods1D=0
 	fnf=0
@@ -50,14 +50,14 @@ if __name__ == "__main__":
 	success=0
 	
 	fast5s=[]
-	
+	hopen=False
 	for arg in args:
 		if os.path.isfile(arg):
 			fast5s.append(arg)
 		elif os.path.isdir(arg):
 			for file in os.listdir(arg):
 			    if file.endswith(".fast5"):
-			        fast5s.append(arg+"/"+file)
+			        fast5s.append(os.path.join(arg, file))
 		else:
 			fnf+=1
 	
@@ -67,8 +67,12 @@ if __name__ == "__main__":
 			continue
 		try:
 			hdf = h5py.File(fast5, 'r')
+			hopen=True
 		except StandardError:
 			utr+=1
+			if hopen:
+				hdf.close()
+				hopen=False
 			continue
 		try:
 			fq = hdf[options.twoDdataset][()]
@@ -83,8 +87,13 @@ if __name__ == "__main__":
 				#print "Error: Cannot find dataset:", options.dataset, "within fast5 file:", fast5
 				#print "Skipping"
 				nods1D+=1
+				if hopen:
+					hdf.close()
+					hopen=False
 				continue
-		
+		if hopen:
+			hdf.close()
+			hopen=False
 		#print "Fast5 file", options.fast5, "successfully read"
 		
 		success+=1
@@ -96,5 +105,5 @@ if __name__ == "__main__":
 	print success, "reads  written to", options.fastq
 	print "Done."
 	output.close()
-	hdf.close()
+	
 
