@@ -1126,6 +1126,7 @@ if __name__ == "__main__":
 			tabstring=tabstring+'FT                   /note="refAllele: '+sequences[ref][j]
 			#tabstring=tabstring+'FT				   /SNPAllele="'+snpbase+'"\n'
 			tabstring=tabstring+' SNPstrains: '
+			
 
 		
 
