@@ -651,15 +651,22 @@ def read_dendropy_tree(treefile):
 			mrca_node = pdm.mrca(n1.taxon, n2.taxon)
 	        #assert mrca_node is self.mrca(taxa=[n1.taxon, n2.taxon])
 	        #mrca_node = self.mrca(taxa=[n1.taxon, n2.taxon])
+			
 			cur_node = n1
-	
+			
+			
 			break_on_node = None # populated *iff* midpoint is exactly at an existing node
 			target_edge = None
 			head_node_edge_len = None
 	
 	        # going up ...
 			while cur_node is not mrca_node:
-				if cur_node.edge.length > plen:
+			
+				if str(cur_node.edge.length)==str(plen):
+					break_on_node = cur_node
+					#FIX
+					break         #when find the  midpoint, it should break the loop
+				elif cur_node.edge.length > plen:
 					target_edge = cur_node.edge
 					head_node_edge_len = plen #cur_node.edge.length - plen
 					plen = 0
@@ -668,10 +675,9 @@ def read_dendropy_tree(treefile):
 					plen -= cur_node.edge.length
 					cur_node = cur_node.parent_node
 				else:
-					break_on_node = cur_node
-					#FIX
-					break         #when find the  midpoint, it should break the loop
-	
+					print "Error midpoint rooting tree"
+					sys.exit()
+			
 			assert break_on_node is not None or target_edge is not None
 	
 			if break_on_node:
@@ -732,6 +738,10 @@ def read_dendropy_tree(treefile):
 			print "Failed to open tree file"
 			sys.exit()
 		
+		
+		
+#		for node in t.postorder_node_iter():
+#			print node.label, node.edge.length
 		
 		
 		#log the branch lengths if the option has been chosen
