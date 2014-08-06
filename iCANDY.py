@@ -130,7 +130,7 @@ def main():
 	
 	group = OptionGroup(parser, "Names Options")
 	
-	group.add_option("-a", "--aligntaxa", action="store", dest="aligntaxa", help="Align taxon names (0=no, 1=align left, 2=align right) [default= %default]", default=0, type="int")
+	group.add_option("-a", "--aligntaxa", action="store", dest="aligntaxa", help="Align taxon names (0=no, 1=align left, 2=align right, 3=name on tree but metadata aligned to right) [default= %default]", default=0, type="int")
 	group.add_option("-N", "--taxanames", action="store_false", dest="taxon_names", help="Do not show taxa names on tree. [default=show names]", default=True)
 	group.add_option("-m", "--metadata", action="store", dest="metadata", help="metadata file in csv format. Note that this file must have a header row ontaining titles for each column", default="")
 	group.add_option("-c", "--columns", action="store", dest="columns", help="column(s) from metadata file to use for track name (comma separated list) [default=%default]", default="1")
@@ -612,6 +612,13 @@ def rgbint2rgbtuple(RGBint):
 	return (red, green, blue)
 
 
+
+def hex_to_rgb(value):
+	value = value.lstrip('#')
+	lv = len(value)
+	return tuple(int(value[i:i+lv/3], 16) for i in range(0, lv, lv/3))
+
+
 ##############################################
 # Function toread a tree file using dendropy #
 ##############################################
@@ -822,9 +829,13 @@ def read_dendropy_tree(treefile):
 						if a.name=="!hilight" and len(a.value)==3 and len(a.value[2])>1 and a.value[2][0]=="#":
 							try:
 								rgbint=int(a.value[2][1:])
+								r,g,b=rgbint2rgbtuple(rgbint)
 							except:
-								break
-							r,g,b=rgbint2rgbtuple(rgbint)
+								try:
+									r,g,b=hex_to_rgb(a.value[2])
+								except:
+									print a.value[1:]
+									break
 							node.annotations[x].name="Figtree_hilight"
 							node.annotations[x].value=colors.Color(float(r)/255,float(g)/255,float(b)/255)
 				
@@ -833,9 +844,13 @@ def read_dendropy_tree(treefile):
 					if a.name=="!color" and len (a.value)>1 and a.value[0]=="#":
 						try:
 							rgbint=int(a.value[1:])
+							r,g,b=rgbint2rgbtuple(rgbint)
 						except:
-							break
-						r,g,b=rgbint2rgbtuple(rgbint)
+							try:
+								r,g,b=hex_to_rgb(a.value)
+							except:
+								print a.value[1:]
+								break
 						node.annotations[x].name="Figtree_colour"
 						node.annotations[x].value=colors.Color(float(r)/255,float(g)/255,float(b)/255)
 					
@@ -859,17 +874,21 @@ def read_dendropy_tree(treefile):
 									leaf.taxon.annotations[x].value[y]=a.value[y]
 							
 							try:
-								leaf.taxon.annotations[x].value=map(float,node.annotations[x].value)
+								leaf.taxon.annotations[x].value=map(float,leaf.taxon.annotations[x].value)
 							except:
 								continue
 						
-						
+						print leaf.taxon.label, a.name, a.value
 						if isinstance(a.value, str) and a.name=="!color" and len (a.value)>1 and a.value[0]=="#":
 							try:
 								rgbint=int(a.value[1:])
+								r,g,b=rgbint2rgbtuple(rgbint)
 							except:
-								break
-							r,g,b=rgbint2rgbtuple(rgbint)
+								try:
+									r,g,b=hex_to_rgb(a.value)
+								except:
+									print a.value[1:]
+									break
 							leaf.taxon.annotations[x].name="Figtree_colour"
 							leaf.taxon.annotations[x].value=colors.Color(float(r)/255,float(g)/255,float(b)/255)
 			
@@ -1406,7 +1425,10 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			
 			#Add the taxon names if present
 			if options.taxon_names:
-				if options.aligntaxa==2:
+				if options.aligntaxa==3:
+					d.add(String(horizontalpos+branchlength+(fontsize/2), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
+					block_xpos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)+namewidth
+				elif options.aligntaxa==2:
 					d.add(String(treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
 					block_xpos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)+namewidth
 				elif options.aligntaxa==1:
@@ -1416,7 +1438,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 					d.add(String(horizontalpos+branchlength+(fontsize/2), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
 					block_xpos=horizontalpos+branchlength+(fontsize/2)+namewidth
 			else:
-				if options.aligntaxa==2:
+				if options.aligntaxa==2 or options.aligntaxa==3:
 					block_xpos=treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2)
 				elif options.aligntaxa==1:
 					block_xpos=treewidth+(fontsize/2)+xoffset+(fontsize/2)
@@ -1430,6 +1452,11 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 			elif options.aligntaxa==2:
 				d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-gubbins_length), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+			elif options.aligntaxa==3:
+				if options.taxon_names:
+					d.add(Line(horizontalpos+branchlength+(fontsize/2)+namewidth, vertpos, block_xpos, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+				else:
+					d.add(Line(horizontalpos+branchlength, vertpos, block_xpos, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
 			
 			
 			if vertical_scaling_factor>2:
@@ -2794,7 +2821,7 @@ class Figure:
 
 
 class Track:
-	def __init__(self, track_position=[-1,-1], track_height=0, track_length=0, track_draw_proportion=0.75, scale=False, tick_marks=True, tick_mark_number=5, tick_mark_labels=True, minor_tick_marks=True, minor_tick_mark_number=3, features=[], beginning=0, end=-1, minimum_feature_length=0.5):
+	def __init__(self, track_position=[-1,-1], track_height=1, track_length=0, track_draw_proportion=0.75, scale=False, tick_marks=True, tick_mark_number=5, tick_mark_labels=True, minor_tick_marks=True, minor_tick_mark_number=3, features=[], beginning=0, end=-1, minimum_feature_length=0.5):
 	
 		self.track_position=track_position#horizontal and vertical position of centre of track
 		self.track_height=track_height#height of space allocated for track
