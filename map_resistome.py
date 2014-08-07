@@ -40,7 +40,7 @@ def get_user_options():
 	parser.add_option("-r", "--reverse", action="store", dest="reverse", help="reverse fastq file (may be zipped, but must end .gz)", default="", metavar="FILE")
 	parser.add_option("-g", "--genes", action="store", dest="genes", help="multifasta containing genes to search for", default="", metavar="FILE")
 	parser.add_option("-o", "--output", action="store", dest="output", help="output prefix", default="", metavar="FILE")
-	parser.add_option("-i", "--id", action="store", dest="id", help="minimum id to report match (excluding clipping due to contig breaks) [default = %default]", default=0.9, type="float", metavar="float")
+	parser.add_option("-i", "--id", action="store", dest="id", help="minimum id to report match (excluding clipping due to contig breaks). Must be between 0 and 1. [default = %default]", default=0.9, type="float", metavar="float")
 
 
 	return parser.parse_args()
@@ -60,7 +60,7 @@ def check_input_validity(options, args):
 	elif options.genes=='':
 		DoError("No genes file selected")
 	if options.id<0 or options.id>1:
-		print "percent id (-i) must be between 0 and 1"
+		print "minimum id (-i) must be between 0 and 1"
 		sys.exit()
 
 	
