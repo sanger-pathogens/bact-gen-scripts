@@ -55,6 +55,7 @@ def main():
 	parser.add_option("-d", "--dNdS", action="store_true", dest="dnds", help="Calculate dN/dS for each branch (requires embl file) [default=%default]", default=False)
 	parser.add_option("-g", "--gaps", action="store_true", dest="gaps", help="Gaps (-) are real", default=False)
 	parser.add_option("-P", "--pdf", action="store_true", dest="pdf", help="Print pdfs (can be slow)", default=False)
+	parser.add_option("-G", "--genetic_code_number", action="store", dest="genetic_code", help="Genetic code to use. Chose from 1 = Standard, 4 = Mycoplasma. [Default= %default]", default="1", type="choice", choices=["1","4"])
 	
 	return parser.parse_args()
 
@@ -83,6 +84,7 @@ def check_input_validity(options, args):
 		options.runtree=False	
 	if options.prefix=='':
 		options.prefix=options.alignment.split("/")[-1].split(".")[0]
+	options.genetic_code=int(options.genetic_code)
 
 
 
@@ -425,7 +427,7 @@ if __name__ == "__main__":
 	
 	print "Reconstructing sequences on tree"
 	sys.stdout.flush()
-	tree=parsimonious_sequence_reconstruction(tree, alignment, transformation=options.transformation, locations =SNPlocations)#,locations=range(0,50000))# locations=range(89868,89870))#, sequence_Objecttype="annotation")
+	tree=parsimonious_sequence_reconstruction(tree, alignment, transformation=options.transformation, locations =SNPlocations, genetic_code_number=options.genetic_code)#,locations=range(0,50000))# locations=range(89868,89870))#, sequence_Objecttype="annotation")
 
 #	tree=branchlengths_to_SNP_count(tree)#, lengthtype="insertion_locations")
 #	tree=support_to_node_names(tree)
@@ -447,7 +449,7 @@ if __name__ == "__main__":
 		sys.stdout.flush()
 		
 		
-		tree=apply_annotation_to_branches(tree, emblCDSrecord)
+		tree=apply_annotation_to_branches(tree, emblCDSrecord, genetic_code_number=options.genetic_code)
 		
 		
 		print "Annotating SNPS"
@@ -470,12 +472,12 @@ if __name__ == "__main__":
 			print "Calculating dNdS for each CDS on each branch"
 			sys.stdout.flush()
 			
-			tree=dNdS_per_branch(tree)
+			tree=dNdS_per_branch(tree, genetic_code_number=options.genetic_code)
 		
 			print "Calculating branch dNdS"
 			sys.stdout.flush()
 			handle=open(prefix+"_dNdS.txt","w")
-			calculate_branch_dNdS(tree, handle)
+			calculate_branch_dNdS(tree, handle, genetic_code_number=options.genetic_code)
 			handle.close()
 			
 		Stree=branchlengths_to_SNP_count(tree, SNP_type="S")#, lengthtype="insertion_locations")

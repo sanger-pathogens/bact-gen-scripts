@@ -1179,8 +1179,10 @@ def Create_SNP_alignment(alignment, SNPlocations):
 ##############################################################
 	
 	
-def parsimonious_sequence_reconstruction(treeObject, alignmentObject, transformation="acctran", sequence_Objecttype="sequence", locations=[]):
+def parsimonious_sequence_reconstruction(treeObject, alignmentObject, transformation="acctran", sequence_Objecttype="sequence", locations=[], genetic_code_number=1):
 
+	print "Reconstructing SNPs using parsimony"
+	print "Using genetic code number", genetic_code_number
 
 	def fitch(treeObject, sitenumber, node=-1, sequence_Objecttype="sequence"):
 		
@@ -1641,6 +1643,7 @@ def parsimonious_sequence_reconstruction(treeObject, alignmentObject, transforma
 					SNP.parent_base=ambiguity_to_bases[node_data.comment[sequence_Objecttype][sitenumber]][:]
 					SNP.daughter_base=ambiguity_to_bases[daughter_data.comment[sequence_Objecttype][sitenumber]][:]
 					SNP.originalSNP=True
+					SNP.genetic_code_number=genetic_code_number
 					
 					
 					daughter_data.comment["SNP_locations"][sitenumber]=SNP
@@ -2278,7 +2281,7 @@ def annotate_SNPs(treeObject, node=-1):
 
 
 
-def dNdS_per_branch(treeObject, node=-1):
+def dNdS_per_branch(treeObject, node=-1, genetic_code_number=1):
 
 	if node==-1:
 		node=treeObject.root
@@ -2290,7 +2293,7 @@ def dNdS_per_branch(treeObject, node=-1):
 	#node_revcompseq=Si_SNPs_temp.revcomp(str(node_data.comment["sequence"][:]))
 	for daughter in daughters:
 		
-		treeObject=dNdS_per_branch(treeObject, node=daughter)
+		treeObject=dNdS_per_branch(treeObject, node=daughter, genetic_code_number=genetic_code_number)
 		
 		daughter_data=treeObject.node(daughter).get_data()
 
@@ -2315,7 +2318,7 @@ def dNdS_per_branch(treeObject, node=-1):
 					#continue
 				
 				try:
-					dndsout=Si_SNPs_temp.dnbyds(node_seq,daughter_seq)
+					dndsout=Si_SNPs_temp.dnbyds(node_seq,daughter_seq, genetic_code_number=genetic_code_number)
 				except ValueError:
 					daughter_data.comment["annotation"][x]["frameshift"]=True
 					#print daughter_data.comment["annotation"][x]
@@ -2346,7 +2349,7 @@ def dNdS_per_branch(treeObject, node=-1):
 				
 
 				try:
-					dndsout=Si_SNPs_temp.dnbyds(node_seq,daughter_seq)
+					dndsout=Si_SNPs_temp.dnbyds(node_seq,daughter_seq, genetic_code_number=genetic_code_number)
 				except ValueError:
 					daughter_data.comment["annotation"][x]["frameshift"]=True
 					#print daughter_data.comment["annotation"][x]
@@ -2366,7 +2369,7 @@ def dNdS_per_branch(treeObject, node=-1):
 	
 	
 
-def branch_dnds(treeObject, node=-1):
+def branch_dnds(treeObject, node=-1, genetic_code_number=1):
 
 	if node==-1:
 		node=treeObject.root
@@ -2378,7 +2381,7 @@ def branch_dnds(treeObject, node=-1):
 	node_revcompseq=Si_SNPs_temp.revcomp(str(node_data.comment["sequence"][:]))
 	for daughter in daughters:
 		
-		treeObject=branch_dnds(treeObject, node=daughter)
+		treeObject=branch_dnds(treeObject, node=daughter, genetic_code_number=genetic_code_number)
 		
 		daughter_data=treeObject.node(daughter).get_data()
 
@@ -2427,7 +2430,7 @@ def branch_dnds(treeObject, node=-1):
 
 #				 Si_SNPs_temp.dnbyds(Si_SNPs_temp.revcomp(str(treeObject.node(node).get_data().comment["sequence"][feature.location.nofuzzy_start:feature.location.nofuzzy_end])),Si_SNPs_temp.revcomp(str(treeObject.node(daughter).get_data().comment["sequence"][feature.location.nofuzzy_start:feature.location.nofuzzy_end])))
 		try:
-			dndsout=Si_SNPs_temp.dnbyds(''.join(total_node_seq),''.join(total_daughter_seq))
+			dndsout=Si_SNPs_temp.dnbyds(''.join(total_node_seq),''.join(total_daughter_seq), genetic_code_number=genetic_code_number)
 			
 			
 			N=dndsout["N"]
@@ -2477,7 +2480,7 @@ def branch_dnds(treeObject, node=-1):
 	
 
 	
-def apply_annotation_to_root(treeObject, annotationObject):
+def apply_annotation_to_root(treeObject, annotationObject, genetic_code_number=1):
 
 	node=treeObject.root
 		
@@ -2496,7 +2499,7 @@ def apply_annotation_to_root(treeObject, annotationObject):
 		
 		if feature.location.strand==1:
 			
-			node_start, node_end=Si_SNPs_temp.find_gene_limits(str(node_data.comment["sequence"][feature.location.nofuzzy_start:feature.location.nofuzzy_end+9999]),0,feature.location.nofuzzy_end-feature.location.nofuzzy_start)
+			node_start, node_end=Si_SNPs_temp.find_gene_limits(str(node_data.comment["sequence"][feature.location.nofuzzy_start:feature.location.nofuzzy_end+9999]),0,feature.location.nofuzzy_end-feature.location.nofuzzy_start, genetic_code_number=genetic_code_number)
 			
 			#print "f", feature.location.nofuzzy_start, feature.location.nofuzzy_end, feature.location.nofuzzy_end-feature.location.nofuzzy_start
 			
@@ -2508,7 +2511,7 @@ def apply_annotation_to_root(treeObject, annotationObject):
 
 		else:
 			
-			node_start, node_end=Si_SNPs_temp.find_gene_limits(revcompseq[seqlen-feature.location.nofuzzy_end:(seqlen-feature.location.nofuzzy_start)+9999],  0,feature.location.nofuzzy_end-feature.location.nofuzzy_start)
+			node_start, node_end=Si_SNPs_temp.find_gene_limits(revcompseq[seqlen-feature.location.nofuzzy_end:(seqlen-feature.location.nofuzzy_start)+9999],  0,feature.location.nofuzzy_end-feature.location.nofuzzy_start, genetic_code_number=genetic_code_number)
 			
 			#print "r", feature.location.nofuzzy_start, feature.location.nofuzzy_end, feature.location.nofuzzy_end-feature.location.nofuzzy_start
 			
@@ -2560,11 +2563,11 @@ def apply_annotation_to_root(treeObject, annotationObject):
 
 
 
-def apply_annotation_to_branches(treeObject, annotationObject, node=-1):
+def apply_annotation_to_branches(treeObject, annotationObject, node=-1, genetic_code_number=1):
 
 	if node==-1:
 		node=treeObject.root
-		apply_annotation_to_root(treeObject, annotationObject)
+		apply_annotation_to_root(treeObject, annotationObject, genetic_code_number=genetic_code_number)
 	
 	def recurse_root_annotation_across_tree(treeObject, node=-1):
 		
@@ -2591,14 +2594,14 @@ def apply_annotation_to_branches(treeObject, annotationObject, node=-1):
 
 				if feature["strand"]==1:
 					
-					daughter_start, daughter_end=Si_SNPs_temp.find_gene_limits(str(daughter_data.comment["sequence"][feature["location"][0]:feature["location"][1]+9999]),0,feature["location"][1]-feature["location"][0])
+					daughter_start, daughter_end=Si_SNPs_temp.find_gene_limits(str(daughter_data.comment["sequence"][feature["location"][0]:feature["location"][1]+9999]),0,feature["location"][1]-feature["location"][0], genetic_code_number=genetic_code_number)
 					daughter_start=daughter_start+feature["location"][0]
 					daughter_end=daughter_end+feature["location"][0]
 #					if feature["location"][1]!=daughter_end:
 #						print node, daughter, "f", feature["location"][0], feature["location"][1], feature["location"][1]-feature["location"][0], daughter_start, daughter_end, daughter_end-daughter_start
 				else:
 					
-					daughter_start, daughter_end=Si_SNPs_temp.find_gene_limits(revcompseq[seqlen-feature["location"][1]:(seqlen-feature["location"][0])+9999],  0,feature["location"][1]-feature["location"][0])#need to work out start in revcomp?
+					daughter_start, daughter_end=Si_SNPs_temp.find_gene_limits(revcompseq[seqlen-feature["location"][1]:(seqlen-feature["location"][0])+9999],  0,feature["location"][1]-feature["location"][0], genetic_code_number=genetic_code_number)#need to work out start in revcomp?
 					
 					#daughter_start=daughter_start+feature["location"][0]
 					#daughter_end=daughter_end+feature["location"][0]
@@ -2657,7 +2660,7 @@ def apply_annotation_to_branches(treeObject, annotationObject, node=-1):
 
 
 
-def apply_annotation_to_node(treeObject, annotationObject, node):
+def apply_annotation_to_node(treeObject, annotationObject, node, genetic_code_number=1):
 		
 	
 	node_data=treeObject.node(node).get_data()
@@ -2674,7 +2677,7 @@ def apply_annotation_to_node(treeObject, annotationObject, node):
 		
 		if feature.location.strand==1:
 			
-			node_start, possible_node_starts, node_end, possible_node_ends=Si_SNPs_temp.find_gene_limits_new(str(node_data.comment["sequence"][feature.location.nofuzzy_start:feature.location.nofuzzy_end+9999]),0,feature.location.nofuzzy_end-feature.location.nofuzzy_start)
+			node_start, possible_node_starts, node_end, possible_node_ends=Si_SNPs_temp.find_gene_limits_new(str(node_data.comment["sequence"][feature.location.nofuzzy_start:feature.location.nofuzzy_end+9999]),0,feature.location.nofuzzy_end-feature.location.nofuzzy_start, genetic_code_number=genetic_code_number)
 			
 			#print "f", feature.location.nofuzzy_start, feature.location.nofuzzy_end, feature.location.nofuzzy_end-feature.location.nofuzzy_start
 			
@@ -2686,7 +2689,7 @@ def apply_annotation_to_node(treeObject, annotationObject, node):
 
 		else:
 			
-			node_start, possible_node_starts, node_end, possible_node_ends=Si_SNPs_temp.find_gene_limits_new(revcompseq[seqlen-feature.location.nofuzzy_end:(seqlen-feature.location.nofuzzy_start)+9999],  0,feature.location.nofuzzy_end-feature.location.nofuzzy_start)
+			node_start, possible_node_starts, node_end, possible_node_ends=Si_SNPs_temp.find_gene_limits_new(revcompseq[seqlen-feature.location.nofuzzy_end:(seqlen-feature.location.nofuzzy_start)+9999],  0,feature.location.nofuzzy_end-feature.location.nofuzzy_start, genetic_code_number=genetic_code_number)
 			
 			#print "r", feature.location.nofuzzy_start, feature.location.nofuzzy_end, feature.location.nofuzzy_end-feature.location.nofuzzy_start
 			
@@ -2970,7 +2973,7 @@ def print_changed_genes(treeObject, node=-1, handle=False, summary_handle=False)
 
 	
 	
-def calculate_branch_dNdS(treeObject, handle, node=-1):
+def calculate_branch_dNdS(treeObject, handle, node=-1, genetic_code_number=1):
 
 	if node==-1:
 		node=treeObject.root
@@ -2982,7 +2985,7 @@ def calculate_branch_dNdS(treeObject, handle, node=-1):
 	
 	for daughter in daughters:
 		
-		treeObject=calculate_branch_dNdS(treeObject, handle, node=daughter)
+		treeObject=calculate_branch_dNdS(treeObject, handle, node=daughter, genetic_code_number=genetic_code_number)
 		node_data=treeObject.node(daughter).get_data()
 	
 		N=0.0
@@ -3244,8 +3247,9 @@ def write_tab_output(treeObject, handle, node=-1, colour_snps_by="synonymous"):
 		if colour_snps_by=="synonymous" and daughter_data.comment.has_key("annotation") and node_data.comment.has_key("annotation"):
 		
 			for x, feature in enumerate(daughter_data.comment["annotation"]):
-		
-				if feature["location"][1]!=node_data.comment["annotation"][x]["location"][1]:
+				if (feature["strand"]==1 and feature["location"][1]!=node_data.comment["annotation"][x]["location"][1]) or (feature["strand"]==-1 and feature["location"][0]!=node_data.comment["annotation"][x]["location"][0]):
+
+#				if feature["location"][1]!=node_data.comment["annotation"][x]["location"][1]:
 		#				print feature["strand"], daughter_start, daughter_end
 		#				print feature["strand"], feature["location"][0], feature["location"][1]		
 	#				if daughter_data.comment.["annotation"][x]["location"][1]>daughter_data.comment.["annotation"][x]["location"][1]:
