@@ -644,7 +644,7 @@ def colour_nodes_by_splitting(treeObject):
 def print_node_colours(treeObject, handle):
 	
 	def print_node_colour(node):
-		print node
+		#print node
 		colour=treeObject.node(node).data.comment["colour"]
 		if treeObject.is_terminal(node):
 			printlist=[str(node), ' '.join([treeObject.node(node).data.taxon, str(int(colour[0])), str(int(colour[1])), str(int(colour[2]))]), str(RGBToHTMLColor(colour))]
