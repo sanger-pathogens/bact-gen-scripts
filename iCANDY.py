@@ -878,7 +878,7 @@ def read_dendropy_tree(treefile):
 							except:
 								continue
 						
-						print leaf.taxon.label, a.name, a.value
+#						print leaf.taxon.label, a.name, a.value
 						if isinstance(a.value, str) and a.name=="!color" and len (a.value)>1 and a.value[0]=="#":
 							try:
 								rgbint=int(a.value[1:])
@@ -891,6 +891,7 @@ def read_dendropy_tree(treefile):
 									break
 							leaf.taxon.annotations[x].name="Figtree_colour"
 							leaf.taxon.annotations[x].value=colors.Color(float(r)/255,float(g)/255,float(b)/255)
+							
 			
 		
 		#Check if tree is from BEAST (not sure best way to check this, but will check from height on root node)

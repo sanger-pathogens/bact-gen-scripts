@@ -921,7 +921,7 @@ def tree_to_figtree_string(treeObject, support_as_branchlengths=False,branchleng
 		
 		node_data=treeObject.node(taxon).get_data().comment
 		if node_data.has_key("colour"):
-			treeline.append('\t'+treeObject.node(taxon).get_data().taxon+' [&!color='+RGBToHTMLColor(node_data["colour"])+']\n')
+			treeline.append('\t'+treeObject.node(taxon).get_data().taxon+'[&!color='+RGBToHTMLColor(node_data["colour"])+']\n')
 		else:
 			treeline.append('\t'+treeObject.node(taxon).get_data().taxon+'\n')
 	treeline.append(';\nend;\n')		
