@@ -132,6 +132,8 @@ if __name__ == "__main__":
 			refstarts[seq.id]=int(seq.description.split("#")[1].split("..")[0].strip())+1
 		except ValueError:
 			refstarts[seq.id]=float("Inf")
+		except IndexError:
+			refstarts[seq.id]=float("Inf")
 
 	
 	

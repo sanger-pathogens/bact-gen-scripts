@@ -438,7 +438,8 @@ def open_annotation(filename, sequence="", quiet=False):
 					
 					IDline=line.split(";")
 					IDline=map(lambda x: x.strip(),IDline)
-					print IDline
+					if not quiet:
+						print IDline
 					if len(IDline[0].split())==2 and IDline[0].split()[0]=="ID":
 						IDname=IDline[0].split()[1]
 						
@@ -471,8 +472,8 @@ def open_annotation(filename, sequence="", quiet=False):
 					newembl.append(line)
 		
 		emblfile.close()
-		
-		print found_id_line, found_header, found_sequence, made_change
+		if not quiet:
+			print found_id_line, found_header, found_sequence, made_change
 		
 		if found_id_line==False or found_header==False or found_sequence==False or made_change==True:
 			if not quiet:

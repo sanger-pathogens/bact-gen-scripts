@@ -92,7 +92,7 @@ if __name__ == "__main__":
 	
 	print novelties
 	
-	for novelty in novelties[1:]:
+	for novnum, novelty in enumerate(novelties[1:]):
 		
 		try:
 			refseqs=read_seq_file(tmpname+".fa")
@@ -104,6 +104,7 @@ if __name__ == "__main__":
 		lens={}
 		seqs={}
 		totlen=0
+		count=0
 		for seq in refseqs:
 			newname=seq.id
 	#		if seq.id in querylist:
@@ -116,7 +117,9 @@ if __name__ == "__main__":
 			reflist.append(newname)
 			reflens.append(totlen)
 			
-		
+		if count==0:
+			os.system("cp "+novelties[novnum]+" "+tmpname+".fa")
+			continue
 		
 		try:
 			queryseqs=read_seq_file(novelty)
@@ -124,7 +127,7 @@ if __name__ == "__main__":
 			DoError("Cannot open query file")
 		
 		querylist=[]
-		
+		count=0
 		for seq in queryseqs:
 			newname=seq.id
 	#		if seq.id in querylist:
@@ -138,7 +141,8 @@ if __name__ == "__main__":
 			seqs[newname]=str(seq.seq).upper()
 			totlen+=len(seq.seq)
 			lens[newname]=len(seq.seq)
-		
+		if count==0:
+			continue
 		
 		if options.promer:
 			promerargs=shlex.split(MUMMER_DIR+"promer  --maxmatch --nosimplify -p "+options.output+" "+tmpname+".fa "+novelty)
