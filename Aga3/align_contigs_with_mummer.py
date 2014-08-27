@@ -56,6 +56,7 @@ def main():
 	parser.add_option("-o", "--output", action="store", dest="output", help="Prefix for output files", default="", metavar="STRING")
 	parser.add_option("-p", "--promer", action="store_true", dest="promer", help="Use promer instead of nucmer", default=False)
 	parser.add_option("-t", "--tab", action="store_true", dest="tab", help="Create tab file showing aligned blocks", default=False)
+	parser.add_option("-s", "--supress", action="store_true", dest="supress", help="Supress creation of fasta of novel regions", default=False)
 	
 	
 	
@@ -246,7 +247,7 @@ if __name__ == "__main__":
 			rend=block[1]
 			qstart=block[2]+qstarts[query]
 			qend=block[3]+qstarts[query]
-			percent_ID=block[4]
+			percent_ID=float(block[4])
 			strand=block[5]
 			ref=block[6]
 			
@@ -258,16 +259,16 @@ if __name__ == "__main__":
 				print >> tabhandle, "FT                   /reference_end="+str(rend)
 				if block[5]=="f":
 					print >> tabhandle, "FT                   /reference_strand=+"
-					print >> tabhandle, "FT                   /colour=2"
 				else:
 					print >> tabhandle, "FT                   /reference_strand=-"
-					print >> tabhandle, "FT                   /colour=3"
-				print >> tabhandle, "FT                   /ID="+str(percent_ID)
 					
+				print >> tabhandle, "FT                   /ID="+str(percent_ID)
+				print >> tabhandle, 'FT                   /colour='+str(int(((percent_ID-50)/50)*255)), 0, str(int(255-(((percent_ID-50)/50)*255)))
 	
 	if options.tab:
 		tabhandle.close()
-		
+	if options.supress:
+		sys.exit()
 	fastahandle=open(options.output+"_novel.fasta", "w")
 	for query in qseqs:
 		sequence=qseqs[query]
