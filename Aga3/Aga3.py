@@ -279,7 +279,7 @@ if __name__ == "__main__":
 	
 	job4 = farm.Bsub(tmpname+"/mummerb_bsub.out", tmpname+"/mummerb_bsub.err", tmpname+"_mummerb", "normal", 1, mummer_run_file_command, start=1, end=i+1)
 	job4.add_dependency(job3_id)
-	job4_id = job1.run()
+	job4_id = job4.run()
 	
 
 	
