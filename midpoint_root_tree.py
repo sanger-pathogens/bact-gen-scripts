@@ -23,6 +23,7 @@ def main():
 	parser.add_option("-o", "--output", action="store", dest="output", help="Output tree file name", default="")
 	parser.add_option("-f", "--format", choices=["nexus", "newick"], type="choice", action="store", dest="out_format", help="Output format "+", ".join(["nexus", "newick"])+" [default= %default]", default="newick")
 	parser.add_option("-l", "--ladderise", choices=["left", "right", "none"], type="choice", action="store", dest="ladderise", help="Laddersie tree "+", ".join(["nexus", "newick"])+" [default= %default]", default="none")
+	parser.add_option("-r", "--root", action="store", dest="outgroup", help="taxon to root on (if not specified, will midpoint root)", default="")
 	#Could add more options in here so people can specify similarities etc.
 	
 	
@@ -145,6 +146,13 @@ def read_dendropy_tree(treefile):
 			if t.schema=="nexus":
 				print "Warning: Midpoint rooting a BEAST tree may destroy temporal information represented in node positions"
 			t.reroot_at_midpoint(update_splits=True)
+		
+		else:
+			try:
+				outgroup_node = tree.find_node_with_taxon_label(options.outgroup)
+			except StandardError:
+				print "Could not find taxon", options.outgroup in tree
+			t.to_outgroup_position(outgroup_node, update_splits=False)
 			
 		#Ladderise the tree if the option is selected
 		if options.ladderise=="left":
@@ -186,7 +194,10 @@ if __name__ == "__main__":
 	#Get command line arguments
 
 	(options, args) = main()
-	options.midpoint=True
+	if options.outgroup=="":
+		options.midpoint=False
+	else:
+		options.midpoint=True
 	
 	if options.output=="":	
 		print " No output file specified"

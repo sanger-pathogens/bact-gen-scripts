@@ -61,7 +61,7 @@ def main():
 	parser.add_option("-t", "--tab", action="store", dest="tab", help="Reference tab file of MGEs", default="", metavar="FILE")
 	parser.add_option("-o", "--output_prefix", action="store", dest="prefix", help="Output prefix", default="")
 	parser.add_option("-T", "--tree", action="store", dest="tree", help="Tree file to allow ordering by clade (only works if taxon names are the same in the assemblies and tree)", default="")
-	parser.add_option("-M", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root tree[default= %default]", default=False, metavar="INT")
+	parser.add_option("-M", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root tree[default= %default]", default=False)
 	parser.add_option("-L", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="ladderise tree (choose from right or left) [default= %default]", type="choice", default=None)
 	
 
