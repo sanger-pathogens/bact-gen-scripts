@@ -2,6 +2,8 @@
 
 import os, sys
 from optparse import OptionParser, OptionGroup
+sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+from Si_general import *
 
 #############################################
 # Function to reverse complement a sequence #
@@ -33,11 +35,12 @@ def main():
 	parser.add_option("-r", "--reads", action="store", dest="reads", help="Fasta file containing reads", default="", metavar="FILE")
 	parser.add_option("-d", "--database", action="store", dest="database", help="Fasta file containing database of genes", default="", metavar="FILE")
 	parser.add_option("-c", "--cluster_seqs", action="store", dest="clusterseqs", help="cd-hid-est cluster representative sequence fasta file", default="", metavar="STRING")
-	parser.add_option("-C", "--clusters", action="store", dest="clusters", help="cd-hid-est cluster file", default=False)
+#	parser.add_option("-C", "--clusters", action="store", dest="clusters", help="cd-hid-est cluster file", default=False)
 	parser.add_option("-o", "--output", action="store", dest="output", help="Prefix for output files", default="", metavar="STRING")
 	parser.add_option("-t", "--threads", action="store", dest="threads", help="Number of threads for running glsearch", default=1, metavar="INT", type="int")
 	parser.add_option("-e", "--blastevalue", action="store", dest="bevalue", help="evalue cutoff for preliminary BLAST search", default=1e-10, metavar="FLOAT", type="float")
-	parser.add_option("-E", "--glseqrchevale", action="store", dest="gevalue", help="evalue cutoff for preliminary glsearch search", default=1e-50, metavar="FLOAT", type="float")
+	parser.add_option("-E", "--glseqrchevale", action="store", dest="gevalue", help="evalue cutoff for preliminary glsearch search", default=1e-100, metavar="FLOAT", type="float")
+	parser.add_option("-C", "--consensus", action="store", dest="consensus", help="Percent of reads possessing bae required to call consensus. Must be between 50 and 100.", default=50, metavar="FLOAT", type="float")
 #	parser.add_option("-t", "--tab", action="store_true", dest="tab", help="Create tab file showing aligned blocks", default=False)
 #	parser.add_option("-s", "--supress", action="store_true", dest="supress", help="Supress creation of fasta of novel regions", default=False)
 	
@@ -70,11 +73,9 @@ def check_input_validity(options, args):
 		DoError('No cd-hit cluster sequence fasta file selected (-c)')
 	elif not os.path.isfile(options.clusterseqs):
 		DoError('Cannot find file '+options.clusterseqs)
-	
-	if options.clusters=='':
-		DoError('No cd-hit database file selected (-C)')
-	elif not os.path.isfile(options.clusters):
-		DoError('Cannot find file '+options.clusters)
+	options.clusters=options.clusterseqs+".clstr"
+	if not os.path.isfile(options.clusters):
+		DoError('Cannot find cluster file '+options.clusters+" from cd-hit-est")
 	
 	if options.output=="":
 		DoError('No output prefix selected (-o)')
@@ -83,10 +84,13 @@ def check_input_validity(options, args):
 		DoError('Threads must be between 1 and 32')
 	
 	if options.bevalue>10 or options.bevalue<0:
-		DoError('BLAST evalue must be between 0 and 10')
+		DoError('BLAST evalue (-e) must be between 0 and 10')
 	
 	if options.gevalue>10 or options.gevalue<0:
-		DoError('glsearch evalue must be between 0 and 10')
+		DoError('glsearch evalue (-E) must be between 0 and 10')
+	
+	if options.consensus>100 or options.consensus<50:
+		DoError('Consensus percentage (-C) must be between 50 and 100.')
 	
 	return
 
@@ -309,9 +313,14 @@ if __name__ == "__main__":
 	
 	output=open("tmp_genes.fasta", "w")
 	inread=False
+	gene_comments={}
 	for line in open(options.database):
 		words=line.strip().split()
 		if words[0][0]==">":
+			if len(words)>1:
+				gene_comments[name]=' '.join(words[1:])
+			else:
+				gene_comments[name]=''
 			if inread and name in genes_passing:
 				print >> output, ">"+name
 				print >> output, ''.join(sequence)
@@ -467,6 +476,7 @@ if __name__ == "__main__":
 			ref_matches[ref][0]+=1
 			for x in xrange(len(querymatchdb[ref][match])):
 				ref_matches[ref][1]+=1
+				#if x==0:#This if makes the script only use the top match for each read against each cluster for consensus calculation
 				print >>  musclefile, ">"+match
 				if querymatchdb[ref][match][x][2]=="f":
 					print >>  musclefile, reads[match][querymatchdb[ref][match][x][0]:querymatchdb[ref][match][x][1]]
@@ -476,11 +486,11 @@ if __name__ == "__main__":
 		musclefile.close()
 		
 		os.system("muscle -in tmp.fasta -out tmp.aln -gapopen -6 &> /dev/null")
-		consensus_sequences[ref]=print_consensus("tmp.aln")
-			#sys.exit()
+		consensus_sequences[ref]=print_consensus("tmp.aln", percent=options.consensus)
+		#sys.exit()
 	
 	output=open(options.output+"_hits.txt", "w")
-	print >> output, '\t'.join(map(str,["Cluster number", "Cluster reference", "# matching reads", "# matches in reads", "Best match gene in cluster", "Alignment length", "Matches", "SNPs", "Gaps", "Ns", "Insertions", "Deletions", "Percent ID of called bases"]))
+	print >> output, '\t'.join(map(str,["Cluster number", "Cluster reference", "Comments", "# matching reads", "# matches in reads", "Best match gene in cluster", "Alignment length", "Matches", "SNPs", "Gaps", "Ns", "Insertions", "Deletions", "Percent ID of called bases"]))
 	print "Aligning consensuses with clusters"
 	#Align consensus sequence with cluster
 	for ref in consensus_sequences:
@@ -511,7 +521,7 @@ if __name__ == "__main__":
 	#	os.system("seaview tmp.aln")
 		stats=alignment_stats("tmp.aln")
 #		print stats
-		print >> output, '\t'.join(map(str,[ref_to_cluster[ref]]+[ref]+ref_matches[ref]+stats))
+		print >> output, '\t'.join(map(str,[ref_to_cluster[ref]]+[ref]+[gene_comments[ref]]+ref_matches[ref]+stats))
 		
 		#read the alignment and print some stats
 	output.close()
