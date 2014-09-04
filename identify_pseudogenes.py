@@ -118,7 +118,7 @@ if __name__ == "__main__":
 	
 	emblrecord=open_annotation(options.query, quiet=True)
 	pseudodict={}
-	print >> pseudofile, "\t".join(["Name", "Product", "Artemis colour", "pseudo qualifier in ref", "joins in ref", "joins in query", "ref length", "query length", "SNPs", "Stop codons in ref", "Stop codons in query", "Insertions", "deletions", "Notes"])
+	print >> pseudofile, "\t".join(["Name", "locus_tag", "Product", "Artemis colour", "pseudo qualifier in ref", "joins in ref", "joins in query", "ref length", "query length", "SNPs", "Stop codons in ref", "Stop codons in query", "Insertions", "deletions", "Notes"])
 	for feature in emblrecord.features:
 		if feature.type=="CDS":
 			featureseq=feature.extract(emblrecord.seq)
@@ -229,7 +229,7 @@ if __name__ == "__main__":
 	#			print SNPs, insertions, deletions, stopcount, refstopcount
 	
 				notes=[]
-				outlist=[name, product, colour, refpseudo, refjoins, joins, len(refdict[lname]), len(feature), SNPs, refstopcount, stopcount, insertions, deletions]
+				outlist=[name, lname, product, colour, refpseudo, refjoins, joins, len(refdict[lname]), len(feature), SNPs, refstopcount, stopcount, insertions, deletions]
 				pseudogene=False
 				SNPgene=False
 				if refjoins<joins:

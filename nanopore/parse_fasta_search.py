@@ -41,6 +41,7 @@ def main():
 	parser.add_option("-e", "--blastevalue", action="store", dest="bevalue", help="evalue cutoff for preliminary BLAST search", default=1e-10, metavar="FLOAT", type="float")
 	parser.add_option("-E", "--glseqrchevale", action="store", dest="gevalue", help="evalue cutoff for preliminary glsearch search", default=1e-100, metavar="FLOAT", type="float")
 	parser.add_option("-C", "--consensus", action="store", dest="consensus", help="Percent of reads possessing bae required to call consensus. Must be between 50 and 100.", default=50, metavar="FLOAT", type="float")
+	parser.add_option("-s", "--strict", action="store_true", dest="strict", help="Stricter search where only the best match from each read for each gene is included in consensus", default=False)
 #	parser.add_option("-t", "--tab", action="store_true", dest="tab", help="Create tab file showing aligned blocks", default=False)
 #	parser.add_option("-s", "--supress", action="store_true", dest="supress", help="Supress creation of fasta of novel regions", default=False)
 	
@@ -272,7 +273,7 @@ if __name__ == "__main__":
 	#Read blast output and make list of reads and genes to include in fasta search
 	reads_passing=set([])
 	genes_passing=set([])
-	
+	output=open(options.output+"_BLAST_matches.txt","w")
 	for line in open("tmp_blast.out"):
 		words=line.strip().split()
 		if words[0]!="#" and len(words)==12:
@@ -282,6 +283,8 @@ if __name__ == "__main__":
 			if evalue<options.bevalue:
 				reads_passing.add(subject)
 				genes_passing.add(query)
+				print >> output, line.strip()
+	output.close()
 
 	print "Found", len(reads_passing), "reads and", len(genes_passing), "clusters with matches"
 	
@@ -349,7 +352,7 @@ if __name__ == "__main__":
 	#Read the fasta output and save matches for each query to a dictionary
 	
 	matchdb={}
-	
+	output=open(options.output+"_glsearch_matches.txt","w")
 	for line in open("tmp_glsearch.out"):
 		words=line.strip().split()
 		if words[0]!="#" and len(words)==12:
@@ -371,7 +374,8 @@ if __name__ == "__main__":
 				if not query in matchdb[subject]:
 					matchdb[subject][query]=[]
 				matchdb[subject][query].append([bitscore, sstart, send, fr, evalue])
-	
+				print >> output, line.strip()
+	output.close()
 	
 	print "Removing overlapping matches"
 	sys.stdout.flush()
@@ -461,6 +465,8 @@ if __name__ == "__main__":
 	print "Found", len(cluster_ref_seqs), "clusters with matches"
 	
 	print "Aligning matches and creating consensuses"
+	if options.strict:
+		print "Using strict option whereby only best match from each contig for each gene will be used in consensus"
 	sys.stdout.flush()
 	#align each set of matched sequences and create 50% consensus
 	consensus_sequences={}
@@ -476,12 +482,12 @@ if __name__ == "__main__":
 			ref_matches[ref][0]+=1
 			for x in xrange(len(querymatchdb[ref][match])):
 				ref_matches[ref][1]+=1
-				#if x==0:#This if makes the script only use the top match for each read against each cluster for consensus calculation
-				print >>  musclefile, ">"+match
-				if querymatchdb[ref][match][x][2]=="f":
-					print >>  musclefile, reads[match][querymatchdb[ref][match][x][0]:querymatchdb[ref][match][x][1]]
-				else:
-					print >>  musclefile, revcomp(reads[match][querymatchdb[ref][match][x][0]:querymatchdb[ref][match][x][1]])
+				if x==0 or not options.strict:#This if makes the script only use the top match for each read against each cluster for consensus calculation
+					print >>  musclefile, ">"+match
+					if querymatchdb[ref][match][x][2]=="f":
+						print >>  musclefile, reads[match][querymatchdb[ref][match][x][0]:querymatchdb[ref][match][x][1]]
+					else:
+						print >>  musclefile, revcomp(reads[match][querymatchdb[ref][match][x][0]:querymatchdb[ref][match][x][1]])
 		
 		musclefile.close()
 		
@@ -489,6 +495,7 @@ if __name__ == "__main__":
 		consensus_sequences[ref]=print_consensus("tmp.aln", percent=options.consensus)
 		#sys.exit()
 	
+	csout=open(options.output+"_consensus_sequences.mfa", "w")
 	output=open(options.output+"_hits.txt", "w")
 	print >> output, '\t'.join(map(str,["Cluster number", "Cluster reference", "Comments", "# matching reads", "# matches in reads", "Best match gene in cluster", "Alignment length", "Matches", "SNPs", "Gaps", "Ns", "Insertions", "Deletions", "Percent ID of called bases"]))
 	print "Aligning consensuses with clusters"
@@ -499,6 +506,8 @@ if __name__ == "__main__":
 		sys.stdout.flush()
 		print >> tmpoutput, ">Consensus"
 		print >> tmpoutput, consensus_sequences[ref]
+		print >> csout, ">"+ref+"_match_consensus"
+		print >> csout, consensus_sequences[ref]
 		
 		inread=False
 		for line in open(options.database):
@@ -525,5 +534,6 @@ if __name__ == "__main__":
 		
 		#read the alignment and print some stats
 	output.close()
+	csout.close()
 	print "All Done"
 		
