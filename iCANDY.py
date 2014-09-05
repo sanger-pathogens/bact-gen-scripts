@@ -3185,10 +3185,11 @@ class Track:
 			feature=self.scaled_features[featurenum[1]]
 			unscaled_feature=self.features[featurenum[1]]
 				
-			#if the feature is white, outline it in black so we can see it and outline features in black if selected in the options
-			if feature.strokecolour==colors.Color(1,1,1,1) or options.outline_features:
-				feature.strokecolour=colors.Color(0,0,0,1)
-			elif feature.strokecolour==feature.fillcolour:
+#			#if the feature is white, outline it in black so we can see it and outline features in black if selected in the options
+#			if feature.strokecolour==colors.Color(1,1,1,1) or options.outline_features:
+#				feature.strokecolour=colors.Color(0,0,0,1)
+#			el
+			if feature.strokecolour==feature.fillcolour:
 				feature.strokecolour=None
 				feature.strokeweight=0
 			else:

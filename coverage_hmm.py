@@ -444,6 +444,14 @@ if __name__ == "__main__":
 	data=map(int,open(options.data, "rU").read().split("\n")[:-1])
 	print "Writing output files"
 	tabout=open(options.output,"w")
+	print >> tabout, "FT   misc_feature    1.."+str(len(data))
+	print >> tabout, "FT                   /colour=13"
+	print >> tabout, 'FT                   /note="Predicted region of 1x coverage"'
+	print >> tabout, 'FT                   /note="Mean coverage = '+str(mean(data))+'"'
+	print >> tabout, 'FT                   /note="Coverage standard deviation = '+str(std(data))+'"'
+	print >> tabout, 'FT                   /note="Median coverage = '+str(median(data))+'"'
+	print >> tabout, 'FT                   /note="Maximum coverage = '+str(max(data))+'"'
+	print >> tabout, 'FT                   /note="Minimum coverage = '+str(min(data))+'"'
 	for block in blocks:
 		#print block
 		if block[2] in [0,4] and block[1]-(block[0]-1)>options.minblock:
@@ -455,7 +463,7 @@ if __name__ == "__main__":
 			blockrelativecoverage=blockmean/(dataaverage*scalingratio)
 			print >> tabout, "FT   misc_feature    "+str(block[0])+".."+str(block[1])
 			if block[2]==0:
-				print >> tabout, "FT                   /colour=1"
+				print >> tabout, "FT                   /colour=0"
 				print >> tabout, 'FT                   /note="Predicted region of zero coverage"'
 				print >> tabout, 'FT                   /note="Mean coverage = '+str(blockmean)+'"'
 				print >> tabout, 'FT                   /note="Coverage standard deviation = '+str(blockstd)+'"'
@@ -465,7 +473,7 @@ if __name__ == "__main__":
 				print >> tabout, 'FT                   /note="Mean coverage relative to training data average = '+str(blockrelativecoverage)+'"'
 				
 			elif block[2]==4:
-				print >> tabout, "FT                   /colour=2"
+				print >> tabout, "FT                   /colour=14"
 				print >> tabout, 'FT                   /note="Predicted region of high coverage"'
 				print >> tabout, 'FT                   /note="Mean coverage = '+str(blockmean)+'"'
 				print >> tabout, 'FT                   /note="Coverage standard deviation = '+str(blockstd)+'"'
@@ -473,6 +481,7 @@ if __name__ == "__main__":
 				print >> tabout, 'FT                   /note="Maximum coverage = '+str(blockmax)+'"'
 				print >> tabout, 'FT                   /note="Minimum coverage = '+str(blockmin)+'"'
 				print >> tabout, 'FT                   /note="Mean coverage relative to training data average = '+str(blockrelativecoverage)+'"'
+
 				
 	
 	tabout.close()	
