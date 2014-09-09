@@ -38,7 +38,7 @@ def main():
 #	parser.add_option("-C", "--clusters", action="store", dest="clusters", help="cd-hid-est cluster file", default=False)
 	parser.add_option("-o", "--output", action="store", dest="output", help="Prefix for output files", default="", metavar="STRING")
 	parser.add_option("-t", "--threads", action="store", dest="threads", help="Number of threads for running glsearch", default=1, metavar="INT", type="int")
-	parser.add_option("-e", "--blastevalue", action="store", dest="bevalue", help="evalue cutoff for preliminary BLAST search", default=1e-10, metavar="FLOAT", type="float")
+	parser.add_option("-e", "--blastevalue", action="store", dest="bevalue", help="evalue cutoff for preliminary BLAST search", default=0.001, metavar="FLOAT", type="float")
 	parser.add_option("-E", "--glseqrchevale", action="store", dest="gevalue", help="evalue cutoff for preliminary glsearch search", default=1e-100, metavar="FLOAT", type="float")
 	parser.add_option("-C", "--consensus", action="store", dest="consensus", help="Percent of reads possessing bae required to call consensus. Must be between 50 and 100.", default=50, metavar="FLOAT", type="float")
 	parser.add_option("-s", "--strict", action="store_true", dest="strict", help="Stricter search where only the best match from each read for each gene is included in consensus", default=False)
@@ -107,6 +107,8 @@ def print_consensus(alignment_file, percent=50):
 	inread=False
 	for line in open(alignment_file):
 		words=line.strip().split()
+		if len(words)==0:
+			continue
 		if words[0][0]==">":
 			if inread:
 				seqs.append(''.join(sequence))
@@ -158,6 +160,8 @@ def alignment_stats(alignment_file, query="Consensus"):
 	inread=False
 	for line in open(alignment_file):
 		words=line.strip().split()
+		if len(words)==0:
+			continue
 		if words[0][0]==">":
 			if inread:
 				seqs[name]=''.join(sequence)
@@ -276,6 +280,8 @@ if __name__ == "__main__":
 	output=open(options.output+"_BLAST_matches.txt","w")
 	for line in open("tmp_blast.out"):
 		words=line.strip().split()
+		if len(words)==0:
+			continue
 		if words[0]!="#" and len(words)==12:
 			query=words[0]
 			subject=words[1]
@@ -296,6 +302,8 @@ if __name__ == "__main__":
 	inread=False
 	for line in open(options.reads):
 		words=line.strip().split()
+		if len(words)==0:
+			continue
 		if words[0][0]==">":
 			if inread and name in reads_passing:
 				print >> output, ">"+name
@@ -319,6 +327,8 @@ if __name__ == "__main__":
 	gene_comments={}
 	for line in open(options.database):
 		words=line.strip().split()
+		if len(words)==0:
+			continue
 		if words[0][0]==">":
 			if len(words)>1:
 				gene_comments[name]=' '.join(words[1:])
@@ -512,6 +522,8 @@ if __name__ == "__main__":
 		inread=False
 		for line in open(options.database):
 			words=line.strip().split()
+			if len(words)==0:
+				continue
 			if words[0][0]==">":
 				if inread and name in clusters[ref_to_cluster[ref]]:
 					print >> tmpoutput, ">"+name
