@@ -101,7 +101,7 @@ def check_input_validity(options, args):
 # Function to find a consensus from an alignment #
 ##################################################
 
-def print_consensus(alignment_file, percent=50):
+def print_consensus(alignment_file, percent=50, min_matches=0, ref=""):
 	
 	seqs=[]
 	inread=False
@@ -121,30 +121,43 @@ def print_consensus(alignment_file, percent=50):
 		seqs.append(''.join(sequence))
 	
 	#check they're all the same length
+	seqnum=0
 	for seq in seqs:
+		if ref!="" and seq==ref:
+			continue
+		seqnum+=1
 		if len(seq)!=len(seqs[0]):
 			print "Expecting sequences in alignment to all be of the same length"
 			return
 	
 	
 	consensus=[]
+	
 	for basenum in xrange(0, len(seqs[0])):
 		bases={'A':0, 'C':0, 'G':0, 'T':0, '-':0}
+		
 		for seq in seqs:
+			if ref!="" and seq==ref:
+				continue
 			if seq[basenum] in bases:
 				bases[seq[basenum]]+=1
 				
 		n=True
+		
 		for base in bases:
-			if base in ['A', 'C', 'G', 'T'] and bases[base]>=float(len(seqs))/(100.0/percent):
+			if min_matches!=0:
+				if base in ['A', 'C', 'G', 'T'] and (bases[base]>=float(seqnum)/(100.0/percent) or (bases[base]>=float(seqnum-bases["-"])/(100.0/percent) and bases[base]>min_matches)):
+					consensus.append(base)
+					n=False
+			elif base in ['A', 'C', 'G', 'T'] and bases[base]>=float(seqnum)/(100.0/percent):
 				consensus.append(base)
 				n=False
-				
-			elif base=='-' and bases[base]>=float(len(seqs))/(100.0/percent):
+			elif base=='-' and bases[base]>=float(seqnum)/(100.0/percent):
 				n=False
 				
 		if n:
 			consensus.append("N")
+	
 	
 	return ''.join(consensus)
 				
@@ -263,14 +276,16 @@ if __name__ == "__main__":
 	
 	#could add code here to run ch-dit-est
 	
-	print "Creating BLAST database...",
-	sys.stdout.flush()
-	os.system("formatdb -p F -i "+options.reads)
-	print "Done"
-	print "Running preliminary BLAST search...",
-	sys.stdout.flush()
-	os.system("blastall -p blastn -i "+options.clusterseqs+" -d "+options.reads+" -m 8 -e "+str(options.bevalue)+" -o tmp_blast.out")
-	print "Done"
+	options.run_blast=True
+	if options.run_blast:
+		print "Creating BLAST database...",
+		sys.stdout.flush()
+		os.system("formatdb -p F -i "+options.reads)
+		print "Done"
+		print "Running preliminary BLAST search...",
+		sys.stdout.flush()
+		os.system("blastall -p blastn -i "+options.clusterseqs+" -d "+options.reads+" -m 8 -e "+str(options.bevalue)+" -o tmp_blast.out")
+		print "Done"
 	
 	print "Parsing BLAST output...",
 	sys.stdout.flush()
@@ -300,6 +315,7 @@ if __name__ == "__main__":
 	
 	output=open("tmp_reads.fasta", "w")
 	inread=False
+	printed_warning=False
 	for line in open(options.reads):
 		words=line.strip().split()
 		if len(words)==0:
@@ -309,6 +325,9 @@ if __name__ == "__main__":
 				print >> output, ">"+name
 				print >> output, ''.join(sequence)
 			name=words[0][1:]
+			if len(name)>60 and not printed_warning:
+				print "WARNING!!! Your sequence names are very long. This is likely to make this script break"
+				printed_warning=True
 			sequence=[]
 			inread=True
 		else:
@@ -349,11 +368,15 @@ if __name__ == "__main__":
 	output.close()
 	print "Done"
 	
-	print "Running glsearch to find global gene matches...",
-	sys.stdout.flush()
-	#run global search to find gene matches in reads
-	os.system("glsearch -E "+str(options.gevalue)+" -T "+str(options.threads)+" -m 8C tmp_genes.fasta tmp_reads.fasta > tmp_glsearch.out")
-	print "Done"
+	options.run_glsearch=True
+	
+	if options.run_glsearch:
+	
+		print "Running glsearch to find global gene matches...",
+		sys.stdout.flush()
+		#run global search to find gene matches in reads
+		os.system("glsearch -E "+str(options.gevalue)+" -T "+str(options.threads)+" -m 8C tmp_genes.fasta tmp_reads.fasta > tmp_glsearch.out")
+		print "Done"
 	
 	#sys.exit()
 	
@@ -416,7 +439,7 @@ if __name__ == "__main__":
 				querymatchdb[um[1]]={}
 			if not s in querymatchdb[um[1]]:
 				querymatchdb[um[1]][s]=[]
-			querymatchdb[um[1]][s].append([um[2], um[3], um[4], um[5]])
+			querymatchdb[um[1]][s].append([um[2], um[3], um[4], um[5], um[0]])
 	
 	
 	print "Creating cluster dictionary"
@@ -433,7 +456,7 @@ if __name__ == "__main__":
 		else:
 			gene=words[2][1:-3]
 			clusters[cluster].append(gene)
-			if words[-1]=="*":
+			if words[-1]=="*" and gene in genes_passing:
 				ref_to_cluster[gene]=cluster
 	
 	print "Extracting matching reads"
@@ -441,6 +464,7 @@ if __name__ == "__main__":
 	#Extract reads which have been found with matches
 	
 	reads={}
+	sequence=[]
 	inread=False
 	for line in open(options.reads):
 		words=line.strip().split()
@@ -451,9 +475,10 @@ if __name__ == "__main__":
 			sequence=[]
 			inread=True
 		else:
-			sequence.append(line)
+			sequence.append(line.strip())
 	if inread and name in matchdb:
 		reads[name]=''.join(sequence)
+	
 	
 	print "Extracting matching gene sequences...",
 	sys.stdout.flush()
@@ -478,6 +503,13 @@ if __name__ == "__main__":
 	if options.strict:
 		print "Using strict option whereby only best match from each contig for each gene will be used in consensus"
 	sys.stdout.flush()
+	
+	options.limit=50
+	
+	if options.limit>0:
+		print "Limiting to", options.limit, "best matches in consensus alignment"
+	sys.stdout.flush()
+	
 	#align each set of matched sequences and create 50% consensus
 	consensus_sequences={}
 	ref_matches={}
@@ -485,23 +517,46 @@ if __name__ == "__main__":
 		musclefile=open("tmp.fasta", "w")
 		print "\t"+ref
 		sys.stdout.flush()
-	#	print >>  musclefile, ">"+ref
-	#	print >>  musclefile, cluster_ref_seqs[ref]
+#		print >>  musclefile, ">"+ref
+#		print >>  musclefile, cluster_ref_seqs[ref]
+		matchlist=[]
 		ref_matches[ref]=[0,0]
 		for match in querymatchdb[ref]:
 			ref_matches[ref][0]+=1
 			for x in xrange(len(querymatchdb[ref][match])):
 				ref_matches[ref][1]+=1
-				if x==0 or not options.strict:#This if makes the script only use the top match for each read against each cluster for consensus calculation
-					print >>  musclefile, ">"+match
-					if querymatchdb[ref][match][x][2]=="f":
-						print >>  musclefile, reads[match][querymatchdb[ref][match][x][0]:querymatchdb[ref][match][x][1]]
-					else:
-						print >>  musclefile, revcomp(reads[match][querymatchdb[ref][match][x][0]:querymatchdb[ref][match][x][1]])
+				if x==0 or not options.strict:
+					matchlist.append([querymatchdb[ref][match][x][4], match, x, querymatchdb[ref][match][x][0], querymatchdb[ref][match][x][1], querymatchdb[ref][match][x][2]])
+
+		
+		matchlist.sort()
+		matchlist.reverse()
+		
+		
+		for x, match in enumerate(matchlist):
+			if x>=options.limit:
+				break
+			print >>  musclefile, ">"+match[1]
+			if match[5]=="f":
+				print >>  musclefile, reads[match[1]][match[3]:match[4]]
+			else:
+				print >>  musclefile, revcomp(reads[match[1]][match[3]:match[4]])
+		
+#		for match in querymatchdb[ref]:
+#			ref_matches[ref][0]+=1
+#			for x in xrange(len(querymatchdb[ref][match])):
+#				ref_matches[ref][1]+=1
+#				if x==0 or not options.strict:#This if makes the script only use the top match for each read against each cluster for consensus calculation
+#					print >>  musclefile, ">"+match
+#					if querymatchdb[ref][match][x][2]=="f":
+#						print >>  musclefile, reads[match][querymatchdb[ref][match][x][0]:querymatchdb[ref][match][x][1]]
+#					else:
+#						print >>  musclefile, revcomp(reads[match][querymatchdb[ref][match][x][0]:querymatchdb[ref][match][x][1]])
 		
 		musclefile.close()
-		
+#		os.system("seaview tmp.fasta")
 		os.system("muscle -in tmp.fasta -out tmp.aln -gapopen -6 &> /dev/null")
+#		os.system("seaview tmp.aln")
 		consensus_sequences[ref]=print_consensus("tmp.aln", percent=options.consensus)
 		#sys.exit()
 	
