@@ -4,6 +4,8 @@ import os, sys
 from optparse import OptionParser, OptionGroup
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 from Si_general import *
+import string
+from random import *
 
 #############################################
 # Function to reverse complement a sequence #
@@ -274,6 +276,11 @@ if __name__ == "__main__":
 	
 	check_input_validity(options, args)
 	
+	
+	chars = string.ascii_letters + string.digits
+	tmpname='tmp'+"".join(choice(chars) for x in range(randint(8, 10)))
+	#tmpname="tmpZ5irP0sy"
+	
 	#could add code here to run ch-dit-est
 	
 	options.run_blast=True
@@ -284,7 +291,7 @@ if __name__ == "__main__":
 		print "Done"
 		print "Running preliminary BLAST search...",
 		sys.stdout.flush()
-		os.system("blastall -p blastn -i "+options.clusterseqs+" -d "+options.reads+" -m 8 -e "+str(options.bevalue)+" -o tmp_blast.out")
+		os.system("blastall -p blastn -i "+options.clusterseqs+" -d "+options.reads+" -m 8 -e "+str(options.bevalue)+" -o "+tmpname+"_blast.out")
 		print "Done"
 	
 	print "Parsing BLAST output...",
@@ -293,7 +300,7 @@ if __name__ == "__main__":
 	reads_passing=set([])
 	genes_passing=set([])
 	output=open(options.output+"_BLAST_matches.txt","w")
-	for line in open("tmp_blast.out"):
+	for line in open(tmpname+"_blast.out"):
 		words=line.strip().split()
 		if len(words)==0:
 			continue
@@ -313,7 +320,7 @@ if __name__ == "__main__":
 	sys.stdout.flush()
 	#Extract reads which have been found with matches
 	
-	output=open("tmp_reads.fasta", "w")
+	output=open(tmpname+"_reads.fasta", "w")
 	inread=False
 	printed_warning=False
 	for line in open(options.reads):
@@ -341,7 +348,7 @@ if __name__ == "__main__":
 	
 	#Extract genes which have been found with matches
 	
-	output=open("tmp_genes.fasta", "w")
+	output=open(tmpname+"_genes.fasta", "w")
 	inread=False
 	gene_comments={}
 	for line in open(options.database):
@@ -375,7 +382,7 @@ if __name__ == "__main__":
 		print "Running glsearch to find global gene matches...",
 		sys.stdout.flush()
 		#run global search to find gene matches in reads
-		os.system("glsearch -E "+str(options.gevalue)+" -T "+str(options.threads)+" -m 8C tmp_genes.fasta tmp_reads.fasta > tmp_glsearch.out")
+		os.system("glsearch -E "+str(options.gevalue)+" -T "+str(options.threads)+" -m 8C "+tmpname+"_genes.fasta "+tmpname+"_reads.fasta > "+tmpname+"_glsearch.out")
 		print "Done"
 	
 	#sys.exit()
@@ -386,7 +393,7 @@ if __name__ == "__main__":
 	
 	matchdb={}
 	output=open(options.output+"_glsearch_matches.txt","w")
-	for line in open("tmp_glsearch.out"):
+	for line in open(tmpname+"_glsearch.out"):
 		words=line.strip().split()
 		if words[0]!="#" and len(words)==12:
 			query=words[0]
@@ -514,7 +521,7 @@ if __name__ == "__main__":
 	consensus_sequences={}
 	ref_matches={}
 	for ref in cluster_ref_seqs:
-		musclefile=open("tmp.fasta", "w")
+		musclefile=open(tmpname+".fasta", "w")
 		print "\t"+ref
 		sys.stdout.flush()
 #		print >>  musclefile, ">"+ref
@@ -554,10 +561,10 @@ if __name__ == "__main__":
 #						print >>  musclefile, revcomp(reads[match][querymatchdb[ref][match][x][0]:querymatchdb[ref][match][x][1]])
 		
 		musclefile.close()
-#		os.system("seaview tmp.fasta")
-		os.system("muscle -in tmp.fasta -out tmp.aln -gapopen -6 &> /dev/null")
-#		os.system("seaview tmp.aln")
-		consensus_sequences[ref]=print_consensus("tmp.aln", percent=options.consensus)
+#		os.system("seaview "+tmpname+".fasta")
+		os.system("muscle -in "+tmpname+".fasta -out "+tmpname+".aln -gapopen -6 &> /dev/null")
+#		os.system("seaview "+tmpname+".aln")
+		consensus_sequences[ref]=print_consensus(tmpname+".aln", percent=options.consensus)
 		#sys.exit()
 	
 	csout=open(options.output+"_consensus_sequences.mfa", "w")
@@ -566,7 +573,7 @@ if __name__ == "__main__":
 	print "Aligning consensuses with clusters"
 	#Align consensus sequence with cluster
 	for ref in consensus_sequences:
-		tmpoutput=open("tmp.fasta","w")
+		tmpoutput=open(tmpname+".fasta","w")
 		print "\t"+ref
 		sys.stdout.flush()
 		print >> tmpoutput, ">Consensus"
@@ -593,9 +600,9 @@ if __name__ == "__main__":
 			print >> tmpoutput, ''.join(sequence)
 		tmpoutput.close()
 		
-		os.system("muscle -in tmp.fasta -out tmp.aln &> /dev/null")
-	#	os.system("seaview tmp.aln")
-		stats=alignment_stats("tmp.aln")
+		os.system("muscle -in "+tmpname+".fasta -out "+tmpname+".aln &> /dev/null")
+	#	os.system("seaview "+tmpname+".aln")
+		stats=alignment_stats(tmpname+".aln")
 #		print stats
 		print >> output, '\t'.join(map(str,[ref_to_cluster[ref]]+[ref]+[gene_comments[ref]]+ref_matches[ref]+stats))
 		
