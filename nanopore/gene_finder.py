@@ -42,6 +42,7 @@ def main():
 	parser.add_option("-t", "--threads", action="store", dest="threads", help="Number of threads for running glsearch", default=1, metavar="INT", type="int")
 	parser.add_option("-e", "--blastevalue", action="store", dest="bevalue", help="evalue cutoff for preliminary BLAST search", default=0.001, metavar="FLOAT", type="float")
 	parser.add_option("-E", "--glseqrchevale", action="store", dest="gevalue", help="evalue cutoff for preliminary glsearch search", default=1e-100, metavar="FLOAT", type="float")
+	parser.add_option("-i", "--ID", action="store", dest="percentid", help="Percent ID cutoff for preliminary glsearch search. Default = 0. Default for assembly mode = 70", default=0, metavar="FLOAT", type="float")
 	parser.add_option("-C", "--consensus", action="store", dest="consensus", help="Percent of reads possessing bae required to call consensus. Must be between 50 and 100.", default=50, metavar="FLOAT", type="float")
 	parser.add_option("-s", "--strict", action="store_true", dest="strict", help="Stricter search where only the best match from each read for each gene is included in consensus", default=False)
 	parser.add_option("-a", "--assembly", action="store_true", dest="assembly", help="Assembly mode when using the script on assemblies rather than reads, where multiple copies of genes should be treated independently", default=False)
@@ -88,6 +89,13 @@ def check_input_validity(options, args):
 	
 	if options.threads>32 or options.threads<1:
 		DoError('Threads must be between 1 and 32')
+	
+	if options.percentid>100 or options.percentid<0:
+		DoError('ID cutoff must be between 0 and 100')
+	
+	if options.assembly and not "-p" in sys.argv:
+		print "Assembly mode. Setting default %ID cutoff to 70%"
+		options.percentid=70
 	
 	if options.bevalue>10 or options.bevalue<0:
 		DoError('BLAST evalue (-e) must be between 0 and 10')
@@ -347,17 +355,22 @@ if __name__ == "__main__":
 		if len(words)==0:
 			continue
 		if words[0][0]==">":
-			seqcount+=1
+			
 			if inread and name in reads_passing:
 				print >> output, ">"+old_2_new_name[name]
 				print >> output, ''.join(sequence)
 			name=words[0][1:]
 			#to restart more recent runs
-#			old_2_new_name[name]="Seq"+str(seqcount)
-#			new_2_old_name["Seq"+str(seqcount)]=name
+			
+			if len(name)>50:
+				seqcount+=1
+				old_2_new_name[name]="Seq"+str(seqcount)
+				new_2_old_name["Seq"+str(seqcount)]=name
 			#to restart older runs
-			old_2_new_name[name]=name
-			new_2_old_name[name]=name
+			else:
+				old_2_new_name[name]=name
+				new_2_old_name[name]=name
+
 			
 			sequence=[]
 			inread=True
@@ -369,12 +382,14 @@ if __name__ == "__main__":
 	
 	output.close()
 	
-	
 	#Extract genes which have been found with matches
 	
 	output=open(tmpname+"_genes.fasta", "w")
 	inread=False
 	gene_comments={}
+	new_2_old_gene={}
+	old_2_new_gene={}
+	seqcount=0
 	for line in open(options.database):
 		words=line.strip().split()
 		if len(words)==0:
@@ -388,6 +403,17 @@ if __name__ == "__main__":
 				print >> output, ">"+name
 				print >> output, ''.join(sequence)
 			name=words[0][1:]
+			
+			if len(name)>50:
+				seqcount+=1
+				old_2_new_gene[name]="Gene"+str(seqcount)
+				new_2_old_gene["Gene"+str(seqcount)]=name
+			#to restart older runs
+			else:
+				old_2_new_gene[name]=name
+				new_2_old_gene[name]=name
+
+			
 			sequence=[]
 			inread=True
 		else:
@@ -420,7 +446,7 @@ if __name__ == "__main__":
 					fr="r"
 				else:
 					fr="f"
-				if evalue<options.gevalue:
+				if evalue<options.gevalue and percentid>=options.percentid:
 					if not subject in matchdb:
 						matchdb[subject]={}
 					if not query in matchdb[subject]:
@@ -462,7 +488,7 @@ if __name__ == "__main__":
 					fr="r"
 				else:
 					fr="f"
-				if evalue<options.gevalue:
+				if evalue<options.gevalue and percentid>=options.percentid:
 					if not subject in matchdb:
 						matchdb[subject]={}
 					if not query in matchdb[subject]:
@@ -491,6 +517,7 @@ if __name__ == "__main__":
 				matches.append([matchdb[s][q][x][0],q, matchdb[s][q][x][1], matchdb[s][q][x][2], matchdb[s][q][x][3], matchdb[s][q][x][4]])
 		matches.sort()
 		matches.reverse()
+		
 		unique_matches=[]
 		
 		for m in matches:
@@ -508,6 +535,7 @@ if __name__ == "__main__":
 			if not s in querymatchdb[um[1]]:
 				querymatchdb[um[1]][s]=[]
 			querymatchdb[um[1]][s].append([um[2], um[3], um[4], um[5], um[0]])
+	
 	
 	
 	print "Creating cluster dictionary"
