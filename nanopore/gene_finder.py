@@ -362,14 +362,14 @@ if __name__ == "__main__":
 			name=words[0][1:]
 			#to restart more recent runs
 			
-			if len(name)>50:
-				seqcount+=1
-				old_2_new_name[name]="Seq"+str(seqcount)
-				new_2_old_name["Seq"+str(seqcount)]=name
+			
+			seqcount+=1
+			old_2_new_name[name]="Seq"+str(seqcount)
+			new_2_old_name["Seq"+str(seqcount)]=name
 			#to restart older runs
-			else:
-				old_2_new_name[name]=name
-				new_2_old_name[name]=name
+			
+#			old_2_new_name[name]=name
+#			new_2_old_name[name]=name
 
 			
 			sequence=[]
@@ -400,18 +400,18 @@ if __name__ == "__main__":
 			else:
 				gene_comments[name]=''
 			if inread and name in genes_passing:
-				print >> output, ">"+name
+				print >> output, ">"+old_2_new_gene[name]
 				print >> output, ''.join(sequence)
 			name=words[0][1:]
 			
-			if len(name)>50:
-				seqcount+=1
-				old_2_new_gene[name]="Gene"+str(seqcount)
-				new_2_old_gene["Gene"+str(seqcount)]=name
+#			if len(name)>50:
+			seqcount+=1
+			old_2_new_gene[name]="Gene"+str(seqcount)
+			new_2_old_gene["Gene"+str(seqcount)]=name
 			#to restart older runs
-			else:
-				old_2_new_gene[name]=name
-				new_2_old_gene[name]=name
+			
+#			old_2_new_gene[name]=name
+#			new_2_old_gene[name]=name
 
 			
 			sequence=[]
@@ -419,7 +419,7 @@ if __name__ == "__main__":
 		else:
 			sequence.append(words[0].upper())
 	if inread and name in genes_passing:
-		print >> output, ">"+name
+		print >> output, ">"+old_2_new_gene[name]
 		print >> output, ''.join(sequence)
 	
 	output.close()
@@ -433,8 +433,8 @@ if __name__ == "__main__":
 		for line in open(options.output+"_glsearch_matches.txt"):
 			words=line.strip().split()
 			if words[0]!="#" and len(words)==12:
-				query=words[0]
-				subject=words[1]
+				query=new_2_old_gene[words[0]]
+				subject=new_2_old_name[words[1]]
 				qstart=int(words[6])
 				qend=int(words[7])
 				sstart=int(words[8])
@@ -475,8 +475,8 @@ if __name__ == "__main__":
 		for line in open(tmpname+"_glsearch.out"):
 			words=line.strip().split()
 			if words[0]!="#" and len(words)==12:
-				query=words[0]
-				subject=words[1]
+				query=new_2_old_gene[words[0]]
+				subject=new_2_old_name[words[1]]
 				qstart=int(words[6])
 				qend=int(words[7])
 				sstart=int(words[8])
@@ -621,9 +621,9 @@ if __name__ == "__main__":
 					ref_matches[ref][1]+=1
 					mymatch=[querymatchdb[ref][match][x][4], match, x, querymatchdb[ref][match][x][0], querymatchdb[ref][match][x][1], querymatchdb[ref][match][x][2]]
 					if mymatch[5]=="f":
-						consensus_sequences[ref].append(reads[new_2_old_name[mymatch[1]]][mymatch[3]-1:mymatch[4]])
+						consensus_sequences[ref].append(reads[mymatch[1]][mymatch[3]-1:mymatch[4]])
 					else:
-						consensus_sequences[ref].append(revcomp(reads[new_2_old_name[mymatch[1]]][mymatch[3]-1:mymatch[4]]))
+						consensus_sequences[ref].append(revcomp(reads[mymatch[1]][mymatch[3]-1:mymatch[4]]))
 				
 	else:
 		#align each set of matched sequences and create 50% consensus
@@ -652,11 +652,11 @@ if __name__ == "__main__":
 			for x, match in enumerate(matchlist):
 				if x>=options.limit:
 					break
-				print >>  musclefile, ">"+new_2_old_name[match[1]]
+				print >>  musclefile, ">"+match[1]
 				if match[5]=="f":
-					print >>  musclefile, reads[new_2_old_name[match[1]]][match[3]-1:match[4]]
+					print >>  musclefile, reads[match[1]][match[3]-1:match[4]]
 				else:
-					print >>  musclefile, revcomp(reads[new_2_old_name[match[1]]][match[3]-1:match[4]])
+					print >>  musclefile, revcomp(reads[match[1]][match[3]-1:match[4]])
 			
 	#		for match in querymatchdb[ref]:
 	#			ref_matches[ref][0]+=1
