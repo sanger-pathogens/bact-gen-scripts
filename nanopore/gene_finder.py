@@ -395,15 +395,15 @@ if __name__ == "__main__":
 		if len(words)==0:
 			continue
 		if words[0][0]==">":
-			if len(words)>1:
-				gene_comments[name]=' '.join(words[1:])
-			else:
-				gene_comments[name]=''
 			if inread and name in genes_passing:
 				print >> output, ">"+old_2_new_gene[name]
 				print >> output, ''.join(sequence)
 			name=words[0][1:]
 			
+			if len(words)>1:
+				gene_comments[name]=' '.join(words[1:])
+			else:
+				gene_comments[name]=''
 #			if len(name)>50:
 			seqcount+=1
 			old_2_new_gene[name]="Gene"+str(seqcount)
@@ -463,7 +463,9 @@ if __name__ == "__main__":
 		#run global search to find gene matches in reads
 		os.system("glsearch -E "+str(options.gevalue)+" -T "+str(options.threads)+" -m 8C "+tmpname+"_genes.fasta "+tmpname+"_reads.fasta > "+tmpname+"_glsearch.out")
 		print "Done"
-	
+		
+		
+		
 		#sys.exit()
 		
 		print "Parsing glsearch output"
@@ -493,14 +495,15 @@ if __name__ == "__main__":
 						matchdb[subject]={}
 					if not query in matchdb[subject]:
 						matchdb[subject][query]=[]
-					if options.measure==bitscore:
+					if options.measure=="bitscore":
 						matchdb[subject][query].append([bitscore, sstart, send, fr, evalue])
-					elif options.measure==percentid:
+					elif options.measure=="percentid":
 						matchdb[subject][query].append([percentid, sstart, send, fr, evalue])
-					elif options.measure==evalue:
+					elif options.measure=="evalue":
 						matchdb[subject][query].append([evalue, sstart, send, fr, evalue])
 					print >> output, line.strip()
 		output.close()
+	
 	
 	print "Removing overlapping matches"
 	sys.stdout.flush()
@@ -565,14 +568,14 @@ if __name__ == "__main__":
 	for line in open(options.reads):
 		words=line.strip().split()
 		if words[0][0]==">":
-			if inread and old_2_new_name[name] in matchdb:
+			if inread and name in matchdb:
 				reads[name]=''.join(sequence)
 			name=words[0][1:]
 			sequence=[]
 			inread=True
 		else:
 			sequence.append(line.strip())
-	if inread and old_2_new_name[name] in matchdb:
+	if inread and name in matchdb:
 		reads[name]=''.join(sequence)
 	
 	
@@ -607,7 +610,6 @@ if __name__ == "__main__":
 		if options.limit>0:
 			print "Limiting to", options.limit, "best matches in consensus alignment"
 		sys.stdout.flush()
-	
 	
 	if options.assembly:
 		consensus_sequences={}
