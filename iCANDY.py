@@ -1152,6 +1152,8 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			else:
 				max_date=0
 				min_date=max_depth
+			
+			
 				
 			date_range=max_depth
 			date_chunks=floor(date_range)
@@ -1410,6 +1412,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			gubbins_length=0.0
 			
 			colpos=0
+			
 			if options.taxon_names:
 				namewidth=get_text_width('Helvetica', fontsize, str(node.taxon))+name_offset
 				gubbins_length += namewidth
@@ -1465,6 +1468,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			else:
 				spacer=vertical_scaling_factor
 			#print metadata blocks
+			
 			for x, name_colour in enumerate(name_colours[colpos:]):
 				if block_length==0:
 					break
@@ -4741,7 +4745,11 @@ if __name__ == "__main__":
 			DoError("Cannot understand your value for the plot minimum. Must be a float or float followed by x/X")
 		if plotmaxx not in ["x", "x"]:
 			DoError("Cannot understand your value for the plot minimum. Must be a float or float followed by x/X")
-		
+	
+	
+	if options.names_as_shapes!="auto":
+		options.taxon_names=False
+	
 	
 	#get a list of available fonts
 	gfont_list= Canvas(options.outputfile).getAvailableFonts()

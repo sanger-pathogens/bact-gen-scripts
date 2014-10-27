@@ -116,8 +116,8 @@ if __name__=="__main__":
 			else:
 				print "Found a mergePatterns block, though. Perhaps you already replaced the patterns block in this file? It will not be replaced again."
 			patternsfile=""
-			if not add_model_comparison_block:
-				print "No model comparison block to be added, so nothing to do... exiting"
+			if not add_model_comparison_block and precisionfile=="":
+				print "No model comparison block to be added and no precisions file specified, so nothing to do... exiting"
 				sys.exit()
 		else:	
 			patternsnode.tag="mergePatterns"
