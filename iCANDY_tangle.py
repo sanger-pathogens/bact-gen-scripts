@@ -1446,23 +1446,26 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				d.add(Line(left_tree_proportion+margin, node.matching_node.vertpos, xmax-(treewidth+xoffset+(max_name_width)), node.vertpos, strokeWidth=linewidth, strokeColor=name_colours[0]))
 			
 			
-			if direction=="forward":
-				if vertical_scaling_factor>2:
-					spacer=2
-				else:
-					spacer=vertical_scaling_factor
-				#print metadata blocks
-				for x, name_colour in enumerate(name_colours[colpos:]):
-					if block_length==0:
-						break
-	
-					if options.names_as_shapes=="circle":
-						d.add(Circle(cx=block_xpos+block_length, cy=vertpos, r=(block_length/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-					elif options.names_as_shapes in ["square", "rectangle", "auto"]:
+			#if direction=="forward":
+			if vertical_scaling_factor>2:
+				spacer=2
+			else:
+				spacer=vertical_scaling_factor
+			#print metadata blocks
+			for x, name_colour in enumerate(name_colours[colpos:]):
+				if block_length==0:
+					break
+
+				if options.names_as_shapes=="circle" and direction=="forward":
+					d.add(Circle(cx=block_xpos+block_length, cy=vertpos, r=(block_length/2), fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
+				elif options.names_as_shapes in ["square", "rectangle", "auto"]:
+					if direction=="forward":
 						d.add(Rect(block_xpos, vertpos-(vertical_scaling_factor/2), block_length, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
-							
-					
-					block_xpos+=block_length+spacer
+					elif direction=="reverse":
+						d.add(Rect(xmax-(block_xpos+block_length), vertpos-(vertical_scaling_factor/2), block_length, vertical_scaling_factor, fillColor=name_colour, strokeColor=name_colour, strokeWidth=0))
+						
+				
+				block_xpos+=block_length+spacer
 			
 			
 		

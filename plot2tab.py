@@ -27,7 +27,7 @@ else:
 
 outfile=sys.argv[4]
 
-overwrite='n'
+overwrite='y'
 
 while overwrite!='y' and os.path.isfile(outfile):
 	overwrite=raw_input(outfile+' exists! Overwrite? (y/n): ')
@@ -58,13 +58,15 @@ for line in lines:
 		elif abovebelow=='a' and value<=cutoff and inblock[x]=='y':
 			featureline[x]=featureline[x]+str(count-1)
 			print >> output, featureline[x]
-			print >> output, 'FT                   /colour='+str(4-x)
+			print >> output, 'FT                   /colour=2'
+			#print >> output, 'FT                   /colour='+str(4-x)
 			#print >> output, 'FT                   /note="above '+str(cutoff)+'"'
 			inblock[x]='n'
 		elif abovebelow=='b' and value>=cutoff and inblock[x]=='y':
 			featureline[x]=featureline[x]+str(count-1)
 			print >> output, featureline[x]
-			print >> output, 'FT                   /colour='+str(4-x)
+			print >> output, 'FT                   /colour=2'
+			#print >> output, 'FT                   /colour='+str(4-x)
 			#print >> output, 'FT                   /note="below '+str(cutoff)+'"'
 			inblock[x]='n'
 	
