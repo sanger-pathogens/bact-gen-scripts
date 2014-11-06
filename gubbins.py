@@ -1935,7 +1935,7 @@ if __name__ == "__main__":
 			os.system("~sh16/scripts/iCANDY.py -q taxa -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+prefix+"_rec.tab")
 	else:
 		if options.outgroup!="":
-			os.system("~sh16/scripts/iCANDY.py -q taxa -M  -L right-t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+options.reference+" "+prefix+"_rec.tab")
+			os.system("~sh16/scripts/iCANDY.py -q taxa -M  -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+options.reference+" "+prefix+"_rec.tab")
 		else:
 			os.system("~sh16/scripts/iCANDY.py -q taxa -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+options.reference+" "+prefix+"_rec.tab")
 	
