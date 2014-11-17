@@ -109,7 +109,8 @@ if __name__ == "__main__":
 					t="_BaseCalled_1D"
 				except StandardError:
 					#print "Error: Cannot find dataset:", options.dataset, "within fast5 file:", fast5
-					#print "Skipping"
+					print "Skipping", fast5
+					print hdf["Analyses/"].keys()
 					nods1D+=1
 					if hopen:
 						hdf.close()
