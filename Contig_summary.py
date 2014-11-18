@@ -55,11 +55,14 @@ for filename in args:
 		seq=str(contig.seq)
 		length=len(seq)
 		
+		#if length>100000:
+			#print seq
+		
 		if length<options.minlength:
 			continue
 		
 		lengths.append(length)
-		test.append([length, contig.name])
+		#test.append([length, contig.name])
 		
 		lengthnons=len(seq.upper().replace("N",""))
 		if lengthnons==0:
@@ -70,9 +73,9 @@ for filename in args:
 		GCs.append(GC)
 	
 	
-	test.sort()
-	test.reverse()
-	print test[0]
+	#test.sort()
+	#test.reverse()
+	#print test[0]
 		
 	if len(lengths)==0:
 		print '\t'.join([filename, '0', '0', '0', '0', '0', '0', '0', '0', '0', "-", "-", "-", "-", "-"])
@@ -90,7 +93,7 @@ for filename in args:
 	fifty=float(numpy.sum(lengths))/2
 	count=0
 	sum=0
-	print lengths[0]
+	#print lengths[0]
 	
 	while sum<fifty:
 		N50=lengths[count]
