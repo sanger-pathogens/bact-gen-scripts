@@ -46,6 +46,7 @@ def get_user_options(args=[]):
 	parser.add_option("-I", "--interactive", action="store_true", dest="interactive", help="Run job in interactive mode", default=False)
 	parser.add_option("-n", "--nohup", action="store_true", dest="nohup", help="Nohup the command. Can only be used if job is interactive", default=False)
 	parser.add_option("-E", "--exclude", action="store", dest="exclude", help="Comma separated list of nodes to exclude. [Default= None]", default="")
+	parser.add_option("-P", "--print", action="store_true", dest="justprint", help="Print bsub command and exit.", default=False)
 	
 	if args==[]:
 		return parser.parse_args()
@@ -192,8 +193,9 @@ if __name__ == "__main__":
 	for x in xrange(len(args)):
 		args[x]=args[x].replace("(","\(")
 		args[x]=args[x].replace(")","\)")
-		args[x]=args[x].replace(" ","\ ")
+		#args[x]=args[x].replace(" ","\ ")
 		args[x]=args[x].replace('\\"','"')
+		args[x]=args[x].replace("'","\"")
 	
 	if options.restart:
 		bsubstring="brestart"
@@ -217,6 +219,7 @@ if __name__ == "__main__":
 	submitstring= ' '.join(' '.join([nohupstring, bsubstring, interactivestring, cstring, memstring, cpustring, rstring, qstring, ostring, estring, excludestring, arguments]).split())
 	print submitstring
 	#sys.exit()
-	os.system(submitstring)
+	if not options.justprint:
+		os.system(submitstring)
 	
 	

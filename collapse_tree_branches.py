@@ -7,7 +7,10 @@ sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/'])
 from Si_nexus import draw_ascii_tree, tree_to_string, midpoint_root
 from optparse import OptionParser
 
-
+def DoError(Errorstring):
+	print "Error:", Errorstring
+	print "Use -h for help"
+	sys.exit()
 
 ##########################################
 # Function to Get command line arguments #
@@ -37,12 +40,24 @@ if __name__ == "__main__":
 	#Get command line arguments
 	
 	(options, args) = main()
-
+	
+	if options.outfile=="":
+		DoError("No output file name selected")
+	
 	try:
 		tree_string = open(options.tree).read()
 	except IOError:
 		DoError("Cannot open tree file "+options.tree)
 	tree = Trees.Tree(tree_string, rooted=True)
+	
+	if options.min:
+		if options.cutoff>0:
+			print "Warning: Cutoff will be ignored as you also chose the minimum branch length cutoff option"
+	else:
+		if options.cutoff==0:
+			print "Warning: Cutoff value of zero chosen. Only negative branch lengths will be collapsed."
+		elif options.cutoff<0:
+			print "Warning: negative cutoff chosen. Only negative branch lengths will be collapsed."
 	
 	if options.min:
 		root=tree.root
