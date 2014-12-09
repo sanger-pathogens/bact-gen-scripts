@@ -76,7 +76,31 @@ if __name__ == "__main__":
                 #alignment = AlignIO.read(open(options.alignment), "fasta")
         except StandardError:
                 DoError("Cannot open alignment file "+options.alignment+". Is it in the correct format?")
+	
+	
+	
+	biallelic_bases=[]
+	excluded=[]
+	for basenum in xrange(0,len(str(alignment[0].seq))):
+		alleles=["?", "N", "-"]
+		added_alleles=0
+		bases=alignment[:,basenum]
+		for base in bases:
+			if not base in alleles:
+				added_alleles+=1
+				alleles.append(base)
+		if added_alleles==2:
+			biallelic_bases.append(basenum)
+		else:
+			excluded.append(basenum)
 		
+	print len(excluded), "bases excluded as not biallelic"
+	
+	output=open("tmp_bases", "w")
+	for base in excluded:
+		print >> output, base
+	output.close()
+	
 		
 	output=open(options.output, "w")
 		
@@ -84,6 +108,15 @@ if __name__ == "__main__":
 		if not record.id in metadata:
 			print "Sample in alignment not in metadata:", record.id
 		else:
-			print >> output, record.id,record.id, 0, 0, 1, metadata[record.id], ' '.join(list(str(record.seq).replace("N","0").replace("-","0")))
+			outseq=[]
+			sequence=str(record.seq)
+			for basenum in biallelic_bases:
+				base=sequence[basenum]
+				if base in ["-", "N", "?"]:
+					base="0"
+				outseq.append(base)
+				outseq.append(base)
+					
+			print >> output, record.id,record.id, 0, 0, 1, metadata[record.id], ' '.join(outseq)
 	
 	output.close()
