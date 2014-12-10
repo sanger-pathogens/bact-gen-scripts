@@ -1251,15 +1251,44 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			node.vertpos=(child_max+child_min)/2
 		
 
-		
+	def get_min_95HPD_value(hsf, mbd):
+		print hsf
+		max_HPD_height=0
+		for node in treeObject.preorder_node_iter():
+			if node.distance_from_root()==0:
+				for a  in node.annotations:
+					if a.name=="height":
+						root_height=a.value
+			for a  in node.annotations:
+				if a.name=="height_95%_HPD":
+					if a.value[1]>max_HPD_height:
+						max_HPD_height=a.value[1]
+					# HPDmax=((max_branch_depth-a.value[0])*horizontal_scaling_factor)+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
+		print root_height, max_HPD_height
+		hsf=(hsf*root_height)/max_HPD_height
+		HPD_offset=(max_HPD_height-root_height)*(root_height/mbd)
+
+
+
+		#*horizontal_scaling_factor
+		print hsf, HPD_offset
+		return hsf, HPD_offset
+
+
+
 	
 	def draw_branch(node):
 		
 		vertpos=node.vertpos+yoffset
 		
+		# if options.show_height_HPD:
+		# 	horizontal_scaling_factor, HPD_extra_bit=resize_for_HPDs()
+		# else:
+		# 	HPD_extra_bit=0
+
 		branchlength=node.edge_length*horizontal_scaling_factor
 		
-		horizontalpos=(node.distance_from_root()*horizontal_scaling_factor)+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
+		horizontalpos=(node.distance_from_root()*horizontal_scaling_factor)+HPD_offset+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
 		
 		brlabel=''
 		
@@ -1377,7 +1406,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 					max_down_leaf_vertpos=downsteam_leaf.vertpos+yoffset
 				if downsteam_leaf.vertpos+yoffset<min_down_leaf_vertpos:
 					min_down_leaf_vertpos=downsteam_leaf.vertpos+yoffset
-			d.add(Rect(horizontalpos+(branchlength/2), min_down_leaf_vertpos-(vertical_scaling_factor/2), treewidth+xoffset+max_name_width+(fontsize/2)-(horizontalpos+(branchlength/2)), (max_down_leaf_vertpos-min_down_leaf_vertpos)+vertical_scaling_factor, fillColor=clade_hilight, strokeColor=None, strokeWidth=0))
+			d.add(Rect(horizontalpos+(branchlength/2), min_down_leaf_vertpos-(vertical_scaling_factor/2), treewidth+HPD_offset+xoffset+max_name_width+(fontsize/2)-(horizontalpos+(branchlength/2)), (max_down_leaf_vertpos-min_down_leaf_vertpos)+vertical_scaling_factor, fillColor=clade_hilight, strokeColor=None, strokeWidth=0))
 		
 		#if the user has chosen to show 95%HPD, draw them now:
 		if options.show_height_HPD:
@@ -1387,8 +1416,8 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				median=0.0
 				for a  in node.annotations:
 					if a.name=="height_95%_HPD":
-						HPDmax=((max_branch_depth-a.value[0])*horizontal_scaling_factor)+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
-						HPDmin=((max_branch_depth-a.value[1])*horizontal_scaling_factor)+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
+						HPDmax=((max_branch_depth-a.value[0])*horizontal_scaling_factor)+HPD_offset+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
+						HPDmin=((max_branch_depth-a.value[1])*horizontal_scaling_factor)+HPD_offset+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
 					elif a.name=="height_median":
 						median=a.value
 				if HPDmax-HPDmin>0:
@@ -1572,7 +1601,9 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 #	max_branch_depth+=(-1*min_branch_depth)
 	
 	horizontal_scaling_factor=float(treewidth)/(max_branch_depth-min_branch_depth)
-	
+	print max_branch_depth, min_branch_depth
+	if options.show_height_HPD:
+		horizontal_scaling_factor, HPD_offset=get_min_95HPD_value(horizontal_scaling_factor, max_branch_depth)
 #	xoffset+=horizontal_scaling_factor*(-1*min_branch_depth)
 	
 	set_node_vertical_positions()
