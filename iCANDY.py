@@ -1605,6 +1605,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 	if options.show_height_HPD:
 		horizontal_scaling_factor, HPD_offset=get_min_95HPD_value(horizontal_scaling_factor, max_branch_depth)
 #	xoffset+=horizontal_scaling_factor*(-1*min_branch_depth)
+	else: HPD_offset=0
 	
 	set_node_vertical_positions()
 	
