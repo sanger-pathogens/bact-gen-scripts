@@ -1324,6 +1324,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			
 			else:
 				if hasattr(node, "annotations"):
+					linewidth=max_width
 					for a in node.annotations:
 						if a.name==options.tree_support:
 							try:
