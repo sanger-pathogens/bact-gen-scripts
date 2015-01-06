@@ -33,7 +33,7 @@ def main():
 	
 	parser.add_option("-t", "--tree", action="store", dest="tree", help="Input tree file (NOTE: tree must be fully bifurcating)", default="", metavar="FILE")
 	parser.add_option("-o", "--output_prefix", action="store", dest="output", help="Output prefix", default="")
-	parser.add_option("-s", "--significance", action="store", dest="significance", help="Significance butoff level [default= %default]", default=0.05, type="float", metavar="FLOAT")
+	parser.add_option("-s", "--significance", action="store", dest="significance", help="Significance cutoff level [default= %default]", default=0.05, type="float", metavar="FLOAT")
 	parser.add_option("-p", "--permutations", action="store", dest="permutations", help="Number of permutations to run to test significance [default= %default]", default=100, type="int", metavar="INT")
 	parser.add_option("-m", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root output tree pdf [default= %default]", default=False, metavar="INT")
 	parser.add_option("-l", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="ladderise tree (choose from right or left) [default= %default]", type="choice", default=None)
