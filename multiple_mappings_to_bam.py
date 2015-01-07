@@ -424,7 +424,8 @@ class SNPanalysis:
 		else:
 			print >> bashfile, BWA_DIR+"bwa aln -q 15 ", options.ref, self.fastqdir+self.name+".fastq >", self.runname+"/tmp.F.sai"
 			print >> bashfile, BWA_DIR+"bwa samse", ref,  self.runname+"/tmp.F.sai", self.fastqdir+self.name+".fastq >", self.runname+"/tmp.sam"
-		
+		if self.fastqdir==tmpname+"_unzipped/":
+			print >> bashfile, "rm "+self.fastqdir+self.name+"_1.fastq "+self.fastqdir+self.name+"_2.fastq"
 		
 		#produce the BAM file
 		#print >> bashfile, SAMTOOLS_DIR+"samtools view -b -q "+str(options.mapq)+" -S", self.runname+"/tmp.sam >", self.runname+"/tmp.bam"
@@ -478,6 +479,9 @@ class SNPanalysis:
 				print >> bashfile, "rm", self.runname+"/tmp1.sam"
 		else:
 			print >> bashfile, "cp ", self.bam, self.runname+"/tmp1.bam"
+		
+		if self.fastqdir==tmpname+"_unzipped/":
+			print >> bashfile, "rm "+self.fastqdir+self.name+"_1.fastq "+self.fastqdir+self.name+"_2.fastq"
 		
 		
 		#produce the BAM file
@@ -690,6 +694,7 @@ if __name__ == "__main__":
 				ziplist['.'.join(pool.split('/')[-1].split('.')[:-2])]=[pool]
 			
 			pool=tmpname+"_unzipped/"+'.'.join(pool.split('/')[-1].split('.')[:-1])
+			
 			
 			#ziplist.append(pool)
 			
