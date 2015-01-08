@@ -208,6 +208,7 @@ if __name__ == "__main__":
 		DoError("Failed to read tree file")
 	
 	clusters=[]
+	singletons=[]
 	
 	tree=copy.deepcopy(original_tree)
 	
@@ -341,6 +342,8 @@ if __name__ == "__main__":
 			print "\tNo significant clusters found"
 			if len(likelihoods)>0:
 				print "\tTop cluster has p-value of", pvalue
+			for j, taxon in enumerate(taxa):
+				singletons.append([taxon, i+j])
 		i+=1
 		
 		
@@ -368,6 +371,15 @@ if __name__ == "__main__":
 			lad="-L "+options.ladderise
 		os.system("~/scripts/iCANDY.py -t "+options.tree+" "+mid+" "+lad+" -m "+options.output+".csv -a 2 -C 2,2,3 -r deltran -O portrait -o "+options.output+".pdf")
 		
+		print "Printing PLINK output file"
+		output=open(options.output+"_plink.txt", "w")
+		
+		for x, cluster in enumerate(clusters):
+			for taxon in list(cluster[1]):
+				print >> output, "\t".join(map(str,[taxon, taxon, "cluster_"+str(cluster[0])]))
+		for x in singletons:
+			print >> output, "\t".join(map(str,[x[0], x[0], "cluster_"+str(x[1])]))
+		output.close()
 	else:
 		print "No clusters found, so no output to print"
 	
