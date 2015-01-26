@@ -46,6 +46,7 @@ def get_user_options(args=[]):
 	parser.add_option("-I", "--interactive", action="store_true", dest="interactive", help="Run job in interactive mode", default=False)
 	parser.add_option("-n", "--nohup", action="store_true", dest="nohup", help="Nohup the command. Can only be used if job is interactive", default=False)
 	parser.add_option("-E", "--exclude", action="store", dest="exclude", help="Comma separated list of nodes to exclude. [Default= None]", default="")
+	parser.add_option("-a", "--avx", action="store_true", dest="avx", help="Require avx.", default=False)
 	parser.add_option("-P", "--print", action="store_true", dest="justprint", help="Print bsub command and exit.", default=False)
 	
 	if args==[]:
@@ -137,6 +138,7 @@ if __name__ == "__main__":
 	cstring=""
 	crstring=""
 	memstring=""
+	avxstring=""
 	cpustring=""
 	excludestring=""
 	interactivestring=""
@@ -158,6 +160,8 @@ if __name__ == "__main__":
 	if options.CPUs>1:
 		rlist.append('span[hosts=1]')
 		cpustring="-n "+str(options.CPUs)
+	if options.avx:
+		avxstring="-R 'avx'"
 	
 	if options.interactive:
 		interactivestring="-I"
@@ -216,7 +220,7 @@ if __name__ == "__main__":
 		print "Nothing to bsub"
 		sys.exit()		
 	
-	submitstring= ' '.join(' '.join([nohupstring, bsubstring, interactivestring, cstring, memstring, cpustring, rstring, qstring, ostring, estring, excludestring, arguments]).split())
+	submitstring= ' '.join(' '.join([nohupstring, bsubstring, interactivestring, cstring, memstring, cpustring, rstring, avxstring, qstring, ostring, estring, excludestring, arguments]).split())
 	print submitstring
 	#sys.exit()
 	if not options.justprint:
