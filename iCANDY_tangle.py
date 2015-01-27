@@ -5456,7 +5456,7 @@ if __name__ == "__main__":
 			options.tree=""
 		else:
 #			d = Drawing(width, height)
-			options.midpoint=False
+			#options.midpoint=False
 			tree=read_dendropy_tree(options.tree)
 			
 #			renderPDF.drawToFile(d, options.outputfile)
@@ -5552,7 +5552,7 @@ if __name__ == "__main__":
 			print "Cannot find file:", options.tree2
 			sys.exit()
 		else:
-			
+			#options.midpoint=False
 			tree2_tangled=read_dendropy_tree(options.tree2)
 		
 		
