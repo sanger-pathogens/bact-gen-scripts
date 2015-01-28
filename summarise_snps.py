@@ -1132,6 +1132,7 @@ if __name__ == "__main__":
 
 		numsnpbases=1
 		sitesnpbases=[]
+		taxastring='\nFT                   /taxa="'
 		for name in seqsort:
 			if name!=ref:
 				if sequences[name][j]!='-' and sequences[name][j]!='N':# and name.SNPs[key][j][1]>8:# and name.SNPs[key][j][2]>(name.SNPs[key][j][3]*4):
@@ -1140,6 +1141,7 @@ if __name__ == "__main__":
 							strainsnpsummary[name][sequences[ref][j]][sequences[name][j]]+=1
 						if options.tabfile==True and sequences[ref][j]!='-':
 							tabstring=tabstring+name+'='+sequences[name][j]+' '
+							taxastring=taxastring+name+" "
 							if options.embl!='':
 								if snptypes[name].has_key(j):
 									if snptypes[name][j]=='S':
@@ -1172,10 +1174,10 @@ if __name__ == "__main__":
 					outstring=outstring+'\t'+sequences[name][j]
 				
 			snpsequence[name]=snpsequence[name]+sequences[name][j]
-			
+		taxastring=taxastring+'"'
 		print >> output, outstring
 		if options.tabfile==True and sequences[ref][j]!='-':
-			print >> tabout, tabstring+'"\nFT                   /colour='+snpcolour
+			print >> tabout, tabstring+'"\nFT                   /colour='+snpcolour+taxastring
 
 	
 	
