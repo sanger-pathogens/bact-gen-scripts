@@ -4,27 +4,64 @@ import string
 import os, sys
 import pysam
 from numpy import mean, std, median
+from optparse import OptionParser, OptionGroup
 
-#
-##############################################
-## Function to reverse complement a sequence #
-##############################################
-#
-#def revcomp(sequence):
-#	rev=sequence[::-1]
-#	revcomp=''
-#	d={'A':'T', 'T':'A', 'C':'G', 'G':'C', 'a':'t', 't':'a', 'g':'c', 'c':'g', "n":"n", "N":"N"}
-#	for i in rev:
-#		if d.has_key(i):
-#			revcomp=revcomp+d[i]
-#		else:
-#			revcomp=revcomp+i
-#	
-#	return revcomp
+##########################
+# Error message function #
+##########################
+
+def DoError(errorstring):
+	print "\nError:", errorstring
+	print "\nFor help use -h or --help\n"
+	sys.exit()
+
+##########################################
+# Function to Get command line arguments #
+##########################################
+
+
+def main():
+
+	usage = "usage: %prog [options] <list of fasta assemblies>"
+	parser = OptionParser(usage=usage)
+	
+	parser.add_option("-r", "--reference", action="store", dest="reference", help="Reference sequence file.", default="", metavar="FILE")
+	parser.add_option("-e", "--extended", action="store_true", dest="extended", help="Give extended output including error and indel stats and coverage information (slow) [default= %default]", default=False)
+	parser.add_option("-g", "--gc", action="store_true", dest="GC", help="Calculate mean GC content of reads (slow) [default= %default]", default=False)
+	
+
+	return parser.parse_args()
+
+
+################################
+# Check command line arguments #
+################################
+
+def check_input_validity(options, args):
+
+
+	if options.reference!='' and not os.path.isfile(options.reference):
+		DoError('Cannot find file '+options.ref)
+		
+	if len(args)==0:
+		DoError("No bam files specified")
+	
+	return
+
+
+
+#Get command line arguments
+
+(options, args) = main()
+	
+#Do some checking of the input files
+	
+check_input_validity(options, args)
+
+
 refseqs={}
-if sys.argv[1]=="-r":
-	doerrors=True
-	reflines=open(sys.argv[2]).read().split(">")[1:]
+if options.reference!="":
+	reflines=open(options.reference).read().split(">")[1:]
 	for ref in reflines:
 		seqlines=ref.split("\n")
 		refname=seqlines[0].split()[0]
@@ -32,17 +69,22 @@ if sys.argv[1]=="-r":
 	#if len(refseq.split(">"))>1:
 	#	print "Ref must be one contig"
 	#	sys.exit()
-
-	filestart=3
+	
+if options.reference!="":
+	if options.extended:
+		print "File\tContig\tContig length\tTotal Reads\tMean length\tGC Content\tMapped\tMapped length\tProper pairs\tUnmapped\tChimeras\tErrors\tInsertions\tDeletions\tErrors per mapped base\tInsertions per mapped base\tDeletions per mapped base\tMean depth\tStd depth\tMedian depth\tCount of unmapped bases in contig\t% ref mapped"
+	else:
+		print "File\tContig\tContig length\tTotal Reads\tMean length\tGC Content\tMapped\tMapped length\tProper pairs\tUnmapped\tChimeras"
+	
 else:
-	doerrors=False
-	filestart=1
-if doerrors:
-	print "File\tContig\tContig length\tTotal Reads\tMean length\tMapped\tMapped length\tProper pairs\tUnmapped\tChimeras\tErrors\tInsertions\tDeletions\tErrors per mapped base\tInsertions per mapped base\tDeletions per mapped base\tMean depth\tStd depth\tMedian depth\tCount of unmapped bases in contig\t% ref mapped"
-else:
-	print "File\tContig\tContig length\tTotal Reads\tMean length\tMapped\tMapped length\tProper pairs\tUnmapped\tChimeras\tInsertions\tDeletions\tInsertions per mapped base\tDeletions per mapped base\tMean depth\tStd depth\tMedian depth\tCount of unmapped bases in contig\t% ref mapped"
-
-for filename in sys.argv[filestart:]:
+	if options.extended:
+		print "File\tContig\tContig length\tTotal Reads\tMean length\tGC Content\tMapped\tMapped length\tProper pairs\tUnmapped\tChimeras\tInsertions\tDeletions\tInsertions per mapped base\tDeletions per mapped base\tMean depth\tStd depth\tMedian depth\tCount of unmapped bases in contig\t% ref mapped"
+	else:
+		print "File\tContig\tContig length\tTotal Reads\tMean length\tGC Content\tMapped\tMapped length\tProper pairs\tUnmapped\tChimeras"
+	
+	
+	
+for filename in args:
 	if filename.split(".")[-1]=="bam":
 		samfile = pysam.Samfile( filename, "rb" )
 	elif filename.split(".")[-1]=="sam":
@@ -54,7 +96,7 @@ for filename in sys.argv[filestart:]:
 	refs=samfile.references
 	lengths=samfile.lengths
 	
-	if doerrors:
+	if options.reference!="":
 		for x, ref in enumerate(refs):
 			if not ref in refseqs:
 				print "Error! Reference sequences in fasta and bam do not match"
@@ -76,6 +118,8 @@ for filename in sys.argv[filestart:]:
 	deletions=0.0
 	mappedlen=0.0
 	totallength=0.0
+	GC=0.0
+	AT=0.0
 	depth={}
 	insertion_types={}
 	deletion_types={}
@@ -113,8 +157,14 @@ for filename in sys.argv[filestart:]:
 		
 		if read.rname!=-1:
 			refstats[samfile.getrname(read.rname)]["total"]+=1
-
-		if doerrors and not read.is_unmapped:# and not read.is_reverse:
+		if options.GC:
+			for base in read.seq.upper():
+				if base in ['G', 'C']:
+					GC+=1
+				elif base in ['A', 'T']:
+					AT+=1
+		
+		if options.extended and options.reference!="" and not read.is_unmapped:# and not read.is_reverse:
 			start=read.pos
 			readpos=0
 			refpos=start
@@ -158,7 +208,7 @@ for filename in sys.argv[filestart:]:
 					continue
 				else:
 					print cig
-		elif not read.is_unmapped:
+		elif options.extended and not read.is_unmapped:
 			start=read.pos
 			readpos=0
 			refpos=start
@@ -199,10 +249,12 @@ for filename in sys.argv[filestart:]:
 		
 	totdepthstats=[mean(totdepth), std(totdepth), median(totdepth), totdepth.count(0), 100*((totlen-totdepth.count(0))/totlen)]
 	
+	try:
+		GC_content=str(GC/AT)
+	except ZeroDivisionError:
+		GC_content="_"
 	
-	
-	
-	if not doerrors:
+	if options.extended and options.reference=="":
 		if total==0:
 			totaltoreport="-"
 		else:
@@ -219,7 +271,7 @@ for filename in sys.argv[filestart:]:
 			refname="All contigs"
 		else:
 			refname=refs[0]
-		print "\t".join([filename, refname, str(totreflen), str(total), totaltoreport, str(mapped), str(mappedlen), str(proper_pair), str(unmapped), str(chimera), str(insertions), str(deletions), insertproportion, deletionproportion, str(totdepthstats[0]), str(totdepthstats[1]), str(totdepthstats[2]), str(totdepthstats[3]), str(totdepthstats[4])])
+		print "\t".join([filename, refname, str(totreflen), str(total), totaltoreport, GC_content, str(mapped), str(mappedlen), str(proper_pair), str(unmapped), str(chimera), str(insertions), str(deletions), insertproportion, deletionproportion, str(totdepthstats[0]), str(totdepthstats[1]), str(totdepthstats[2]), str(totdepthstats[3]), str(totdepthstats[4])])
 		if len(refs)>1:
 			for x, ref in enumerate(refs):
 				
@@ -231,8 +283,26 @@ for filename in sys.argv[filestart:]:
 					deletionproportion=str(refstats[ref]["deletions"]/refstats[ref]["mappedlen"])
 		
 		
-				print "\t".join([filename, ref, str(lengths[x]), "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["mappedlen"]), str(refstats[ref]["proper_pair"]), "-", "-", str(refstats[ref]["insertions"]), str(refstats[ref]["deletions"]), insertproportion, deletionproportion, str(depthstats[ref][0]), str(depthstats[ref][1]), str(depthstats[ref][2]), str(depthstats[ref][3]), str(depthstats[ref][4])])
-	else:
+				print "\t".join([filename, ref, str(lengths[x]), "-", "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["mappedlen"]), str(refstats[ref]["proper_pair"]), "-", "-", str(refstats[ref]["insertions"]), str(refstats[ref]["deletions"]), insertproportion, deletionproportion, str(depthstats[ref][0]), str(depthstats[ref][1]), str(depthstats[ref][2]), str(depthstats[ref][3]), str(depthstats[ref][4])])
+	
+	elif options.reference=="":
+		if total==0:
+			totaltoreport="-"
+		else:
+			totaltoreport=str(totallength/total)
+		if len(refs)>1:
+			refname="All contigs"
+		else:
+			refname=refs[0]
+		print "\t".join([filename, refname, str(totreflen), str(total), totaltoreport, GC_content, str(mapped), str(mappedlen), str(proper_pair), str(unmapped), str(chimera)])
+		if len(refs)>1:
+			for x, ref in enumerate(refs):
+				
+		
+		
+				print "\t".join([filename, ref, str(lengths[x]), "-", "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["mappedlen"]), str(refstats[ref]["proper_pair"]), "-", "-"])
+	
+	elif options.extended:
 		
 			
 		if total==0:
@@ -268,33 +338,53 @@ for filename in sys.argv[filestart:]:
 		
 		
 				print "\t".join([filename, ref, str(lengths[x]), "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["mappedlen"]), str(refstats[ref]["proper_pair"]), "-", "-", str(refstats[ref]["errors"]), str(refstats[ref]["insertions"]), str(refstats[ref]["deletions"]), errorproportion, insertproportion, deletionproportion, str(depthstats[ref][0]), str(depthstats[ref][1]), str(depthstats[ref][2]), str(depthstats[ref][3]), str(depthstats[ref][4])])
+
+
+	else:
+		
+			
+		if total==0:
+			totaltoreport="-"
+		else:
+			totaltoreport=str(totallength/total)
+		if len(refs)>1:
+			refname="All contigs"
+		else:
+			refname=refs[0]
+		
+		print "\t".join([filename, refname, str(totreflen), str(total), totaltoreport, str(mapped), str(mappedlen), str(proper_pair), str(unmapped), str(chimera)])
+		if len(refs)>1:
+			for x, ref in enumerate(refs):
+		
+				print "\t".join([filename, ref, str(lengths[x]), "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["mappedlen"]), str(refstats[ref]["proper_pair"]), "-", "-"])
+
 #	if doerrors:
 #		print "Errors\tInsertions\tDeletions\tMapped bases"
 #		print str(errors), str(insertions), str(deletions)
 #		print "Errors per mapped base\tInsertions per mapped base\tDeletions per mapped base"
 #		print str(errors/mappedlen), str(insertions/mappedlen), str(deletions/mappedlen)
-	if doerrors:
-		print "\nBreakdown of top 20 most common insertions"
-		ins=[]
-		for insertion in insertion_types:
-			ins.append([insertion_types[insertion],insertion])
-			#print insertion, insertion_types[insertion]
-		ins.sort()
-		ins.reverse()
-		for x, insertion in enumerate(ins):
-			print insertion[1], insertion[0]
-			if x==20:
-				break
-		
-		print "\nBreakdown of top 20 most common deletions"
-		dele=[]
-		for deletion in deletion_types:
-			dele.append([deletion_types[deletion],deletion])
-			#print insertion, insertion_types[insertion]
-		dele.sort()
-		dele.reverse()
-		for x, deletion in enumerate(dele):
-			print deletion[1], deletion[0]
-			if x==20:
-				break
+#	if doerrors:
+#		print "\nBreakdown of top 20 most common insertions"
+#		ins=[]
+#		for insertion in insertion_types:
+#			ins.append([insertion_types[insertion],insertion])
+#			#print insertion, insertion_types[insertion]
+#		ins.sort()
+#		ins.reverse()
+#		for x, insertion in enumerate(ins):
+#			print insertion[1], insertion[0]
+#			if x==20:
+#				break
+#		
+#		print "\nBreakdown of top 20 most common deletions"
+#		dele=[]
+#		for deletion in deletion_types:
+#			dele.append([deletion_types[deletion],deletion])
+#			#print insertion, insertion_types[insertion]
+#		dele.sort()
+#		dele.reverse()
+#		for x, deletion in enumerate(dele):
+#			print deletion[1], deletion[0]
+#			if x==20:
+#				break
 			
