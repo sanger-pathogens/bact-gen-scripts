@@ -515,8 +515,8 @@ class SNPanalysis:
 				javamem=options.mem
 			else:
 				javamem=2
-			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T RealignerTargetCreator -o", self.runname+'/tmp.intervals'
-			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T IndelRealigner -targetIntervals", self.runname+'/tmp.intervals', "-o", self.runname+"/tmp.bam"
+			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-et NO_ET -K /nfs/users/nfs_s/sh16/scripts/GATK.key -I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T RealignerTargetCreator -o", self.runname+'/tmp.intervals'
+			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-et NO_ET -K /nfs/users/nfs_s/sh16/scripts/GATK.key -I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T IndelRealigner -targetIntervals", self.runname+'/tmp.intervals', "-o", self.runname+"/tmp.bam"
 			print >> bashfile, "rm", self.runname+"/tmp1.bam", self.runname+"/tmp1.bam.bai",  self.runname+"/tmpref.*", self.runname+"/tmp.intervals", self.runname+"/tmphead.*"
 		
 		if options.plots:
@@ -967,10 +967,10 @@ if __name__ == "__main__":
 				os.system('echo '+summarystring+' | bsub -M '+memlimit+' -q long -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -w \'ended('+tmpname+'_joining)\' -o '+options.output+'_sum.out -e '+options.output+'_sum.err')
 			else:
 				if host=="farm3" or host=="pcs5":
-					memlimit=str(2*1000)
+					memlimit=str(5*1000)
 				else:
-					memlimit=str(2*1000000)
-				memresource=str(2*1000)
+					memlimit=str(5*1000000)
+				memresource=str(5*1000)
 				if count==0:
 					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J'+tmpname+'_joining -o '+options.output+'_join.out -e '+options.output+'_join.err')
 				else:
