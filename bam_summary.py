@@ -28,6 +28,7 @@ def main():
 	parser.add_option("-r", "--reference", action="store", dest="reference", help="Reference sequence file.", default="", metavar="FILE")
 	parser.add_option("-e", "--extended", action="store_true", dest="extended", help="Give extended output including error and indel stats and coverage information (slow) [default= %default]", default=False)
 	parser.add_option("-g", "--gc", action="store_true", dest="GC", help="Calculate mean GC content of reads (slow) [default= %default]", default=False)
+	parser.add_option("-i", "--indels", action="store_true", dest="doindels", help="Report the top 20 insertions and deletions [default= %default]", default=False)
 	parser.add_option("-o", "--output", action="store", dest="output", help="Output file name", default="", metavar="FILE")
 	
 
@@ -365,34 +366,30 @@ for filename in args:
 		
 				print >> output, "\t".join([filename, ref, str(lengths[x]), "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["mappedlen"]), str(refstats[ref]["proper_pair"]), "-", "-"])
 
-#	if doerrors:
-#		print "Errors\tInsertions\tDeletions\tMapped bases"
-#		print str(errors), str(insertions), str(deletions)
-#		print "Errors per mapped base\tInsertions per mapped base\tDeletions per mapped base"
-#		print str(errors/mappedlen), str(insertions/mappedlen), str(deletions/mappedlen)
-#	if doerrors:
-#		print "\nBreakdown of top 20 most common insertions"
-#		ins=[]
-#		for insertion in insertion_types:
-#			ins.append([insertion_types[insertion],insertion])
-#			#print insertion, insertion_types[insertion]
-#		ins.sort()
-#		ins.reverse()
-#		for x, insertion in enumerate(ins):
-#			print insertion[1], insertion[0]
-#			if x==20:
-#				break
-#		
-#		print "\nBreakdown of top 20 most common deletions"
-#		dele=[]
-#		for deletion in deletion_types:
-#			dele.append([deletion_types[deletion],deletion])
-#			#print insertion, insertion_types[insertion]
-#		dele.sort()
-#		dele.reverse()
-#		for x, deletion in enumerate(dele):
-#			print deletion[1], deletion[0]
-#			if x==20:
-#				break
+
+	if doindels:
+		print "\nBreakdown of top 20 most common insertions"
+		ins=[]
+		for insertion in insertion_types:
+			ins.append([insertion_types[insertion],insertion])
+			#print insertion, insertion_types[insertion]
+		ins.sort()
+		ins.reverse()
+		for x, insertion in enumerate(ins):
+			print insertion[1], insertion[0]
+			if x==20:
+				break
+		
+		print "\nBreakdown of top 20 most common deletions"
+		dele=[]
+		for deletion in deletion_types:
+			dele.append([deletion_types[deletion],deletion])
+			#print insertion, insertion_types[insertion]
+		dele.sort()
+		dele.reverse()
+		for x, deletion in enumerate(dele):
+			print deletion[1], deletion[0]
+			if x==20:
+				break
 			
 output.close()
