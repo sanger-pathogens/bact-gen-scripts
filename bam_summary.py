@@ -367,8 +367,8 @@ for filename in args:
 				print >> output, "\t".join([filename, ref, str(lengths[x]), "-", "-", str(refstats[ref]["mapped"]), str(refstats[ref]["mappedlen"]), str(refstats[ref]["proper_pair"]), "-", "-"])
 
 
-	if doindels:
-		print "\nBreakdown of top 20 most common insertions"
+	if options.doindels:
+		print >> output,  "\nBreakdown of top 20 most common insertions"
 		ins=[]
 		for insertion in insertion_types:
 			ins.append([insertion_types[insertion],insertion])
@@ -376,11 +376,11 @@ for filename in args:
 		ins.sort()
 		ins.reverse()
 		for x, insertion in enumerate(ins):
-			print insertion[1], insertion[0]
+			print >> output,  insertion[1], insertion[0]
 			if x==20:
 				break
 		
-		print "\nBreakdown of top 20 most common deletions"
+		print >> output,  "\nBreakdown of top 20 most common deletions"
 		dele=[]
 		for deletion in deletion_types:
 			dele.append([deletion_types[deletion],deletion])
@@ -388,7 +388,7 @@ for filename in args:
 		dele.sort()
 		dele.reverse()
 		for x, deletion in enumerate(dele):
-			print deletion[1], deletion[0]
+			print >> output,  deletion[1], deletion[0]
 			if x==20:
 				break
 			
