@@ -25,6 +25,7 @@ def main():
 	
 	parser.add_option("-q", "--base_qual_filter", action="store", dest="base_qual_filter", help="Base quality filter for bam file mapping plots [default= %default]", default=0, type="float")
 	parser.add_option("-Q", "--mapping_qual_filter", action="store", dest="mapping_qual_filter", help="Mapping quality filter for bam file plots [default= %default]", default=0, type="float")
+	parser.add_option("-l", "--read_length", action="store_true", dest="read_length", help="Also include mean read length in plot [default= %default]", default=False)
 	
 	return parser.parse_args()
 
@@ -84,9 +85,15 @@ if __name__ == "__main__":
 	
 	poscount=0
 	if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
-		print >> output, ' '.join(["#BASE", "High_Quality_Coverage", "Low_Quality_Coverage"])
+		header=["#BASE", "High_Quality_Coverage", "Low_Quality_Coverage"]
+		if options.read_length:
+			header.append("Mean_read_length")
+		print >> output, ' '.join(header)
 	else:
-		print >> output, ' '.join(["#BASE", "Coverage"])
+		header=["#BASE", "Coverage"]
+		if options.read_length:
+			header.append("Mean_read_length")
+		print >> output, ' '.join(header)
 	
 	totlen=0
 	
@@ -96,7 +103,6 @@ if __name__ == "__main__":
 		lastcolumn=-1
 		zerocount=0
 		for pileupcolumn in samfile.pileup(ref):
-			
 			poscount+=1
 			#print pileupcolumn.pos, lastcolumn+1, poscount
 			while pileupcolumn.pos!=lastcolumn+1:
@@ -113,17 +119,27 @@ if __name__ == "__main__":
 				if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
 					#print str(pileupcolumn)
 					filtered_depth=0
+					readlengths=0.0
 					for pileupread in pileupcolumn.pileups:
-						#print pileupread.alignment
+						readlengths+=pileupread.alignment.alen
 						q=ord(pileupread.alignment.qual[pileupread.qpos])-33
 						Q=pileupread.alignment.mapq
 						#print q, Q, options.base_qual_filter, options.mapping_qual_filter
 						if q>=options.base_qual_filter and Q>=options.mapping_qual_filter:
 							filtered_depth+=1
-					print >> output, ' '.join([str(poscount), str(filtered_depth), str(pileupcolumn.n-filtered_depth)])
+					outlist=[str(poscount), str(filtered_depth), str(pileupcolumn.n-filtered_depth)]
+					if options.read_length:
+						outlist.append(str(readlengths/pileupcolumn.n))
+					print >> output, ' '.join(outlist)
 					#sys.exit()
 				else:
-					print >> output, ' '.join([str(poscount), str(pileupcolumn.n)])
+					outlist=[str(poscount), str(pileupcolumn.n)]
+					if options.read_length:
+						readlengths=0.0
+						for pileupread in pileupcolumn.pileups:
+							readlengths+=pileupread.alignment.alen
+						outlist.append(str(readlengths/pileupcolumn.n))
+					print >> output, ' '.join(outlist)
 			lastcolumn=pileupcolumn.pos
 		
 #		while lastcolumn+1<lengths[x]:
@@ -147,9 +163,12 @@ if __name__ == "__main__":
 #		print poscount
 		if lastcolumn+1==lengths[x]:
 			if options.base_qual_filter!=0 or options.mapping_qual_filter!=0:
-				print >> output, ' '.join([str(totlen), "0", "0"])
+				outlist=[str(totlen), "0", "0"]
 			else:
-				print >> output, ' '.join([str(totlen), "0"])
+				outlist=[str(totlen), "0"]
+			if options.read_length:
+				outlist.append("0")
+			print >> output, ' '.join(outlist)
 		
 #		if ref=="5463_3#11_shuffled_141_cov_6":
 #			sys.exit()
