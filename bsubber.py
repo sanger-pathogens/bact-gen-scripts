@@ -61,8 +61,8 @@ def get_user_options(args=[]):
 
 def check_input_validity(options, args):
 
-	if options.LSFQ!="hugemem" and (options.mem>30 or options.mem<0):
-		DoError('Memory requirement (-M) must be between 0 and 30Gb')
+	if options.LSFQ!="hugemem" and (options.mem>100 or options.mem<0):
+		DoError('Memory requirement (-M) must be between 0 and 100Gb')
 	elif options.LSFQ=="hugemem" and (options.mem>250 or options.mem<30):
 		DoError('Memory requirement (-M) for hugemem queue must be between 30 and 250Gb')
 	if options.CPUs>30 or options.CPUs<1:
