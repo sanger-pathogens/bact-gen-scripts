@@ -33,8 +33,8 @@ def main():
 	parser = OptionParser(usage=usage)
 	
 	group = OptionGroup(parser, "General options")
-	group.add_option("-q", "--query", action="store", dest="query", help="Fasta file to use as the BLAST database", default="", metavar="FILE")
-	group.add_option("-s", "--subject", action="store", dest="subject", help="Fasta file to use as the BLAST query", default="", metavar="FILE")
+	group.add_option("-q", "--query", action="store", dest="query", help="Fasta file to use as the BLAST database. By default the scriopt will use the shortest sequence given as an argument.", default="", metavar="FILE")
+	group.add_option("-s", "--subject", action="store", dest="subject", help="Fasta file to use as the BLAST query. By default the scriopt will use the longest sequence given as an argument.", default="", metavar="FILE")
 	group.add_option("-o", "--output", action="store", dest="prefix", help="Prefix for output file(s). Note: Currently the script only produces a gzipped crunch file. Please ask for additional files to be added. [Default= %default]", default="", metavar="FILE")
 	group.add_option("-Q", "--queue", action="store", dest="queue", help="Queue to bsub to (choose from normal, long or basement). [Default= %default]", default="normal", type="choice", choices=['normal', 'long', 'basement'])
 	group.add_option("-p", "--program", action="store", dest="blastprog", help="BLAST program to use (choose from blastn or tblastx) This script doesn't support protein BLASTs, and won't unless people ask very nicely. [Default= %default]", default="blastn", type="choice", choices=['blastn', 'tblastx'])
@@ -57,6 +57,35 @@ def main():
 def check_input_validity(options, args):
 	
 	options.formatdb=True
+	
+	if len(args)>2:
+		DoError('A maximum of two sequences can be compared')
+	elif len(args)==2 and (options.query!='' or options.subject!=''):
+		DoError('A maximum of two sequences can be compared. This includes those provided with the query and subject flags and as arguments')
+	elif len(args)>0 and (options.query!='' and options.subject!=''):
+		DoError('A maximum of two sequences can be compared. This includes those provided with the query and subject flags and as arguments')	
+	elif len(args)==1 and (options.query=='' and options.subject!=''):
+		print "As you specified a subject sequence,", args[0], "will be used as the query sequence"
+		options.query=args[0]	
+	elif len(args)==1 and (options.subject=='' and options.query!=''):
+		print "As you specified a query sequence,", args[0], "will be used as the subject sequence"
+		options.subject=args[0]
+	elif len(args)==1 and (options.query=='' and options.subject==''):
+		print "As you specified only one sequence it will be used as query and subject"
+		options.query=args[0]
+		options.subject=args[0]
+	elif len(args)==2:
+		statinfo0 = os.stat(args[0])
+		statinfo1 = os.stat(args[1])
+		if statinfo1.st_size>statinfo0.st_size:
+			print "Using", args[0], "as subject and", args[1], "as query based on file size"
+			options.subject=args[0]
+			options.query=args[1]
+		else:
+			print "Using", args[1], "as subject and", args[0], "as query based on file size"
+			options.subject=args[1]
+			options.query=args[0]
+			
 	
 	if options.query=='':
 		DoError('No query file selected')
