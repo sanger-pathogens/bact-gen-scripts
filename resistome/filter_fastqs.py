@@ -84,7 +84,7 @@ def parse_CDHitEST_clstr_file(filehandle):
 		
 		
 	print "Found", len(clusters), "clusters"
-
+	
 	return clusters
 
 
@@ -174,9 +174,9 @@ if __name__ == "__main__":
 					print x["name"]+":", len(clusters[cluster])-1, "read matches"
 				else:
 					reads.add(x["name"].rstrip("1").rstrip("2").rstrip("/"))
-		else:
-			print "No matches found"
-			sys.exit()
+		#else:
+		#	print "No matches found"
+		#	sys.exit()
 
 	print len(reads), "reads in", len(genes), "genes"
 	
@@ -203,6 +203,9 @@ if __name__ == "__main__":
 		print "COMMAND: seqtk subseq -l 1000 ", options.rfastq, "tmp.lst", ">", rfastqname.split(".")[0]+"_subset.fastq"
 		sys.exit()
 	#options.db="test.fasta"
+	
+	sys.exit()
+	
 	returnval=os.system("smalt index -k 13 -s 1 index "+options.db)
 	
 	print "smalt index return value:", returnval
