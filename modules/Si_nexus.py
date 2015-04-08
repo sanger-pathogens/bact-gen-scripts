@@ -1710,7 +1710,7 @@ def parsimonious_sequence_reconstruction(treeObject, alignmentObject, transforma
 				sys.stdout.flush()
 			
 			#when we get the new version of biopython, this can be changed to slice notation alignmentObject[:,base]
-			column=alignmentObject.get_column(columnnumber)
+			column=alignmentObject[:,columnnumber]
 			
 			column=column.replace("N","").replace("?","").replace("X","")
 			firstbase=column[0]
@@ -1868,7 +1868,7 @@ def parsimonious_sequence_reconstruction(treeObject, alignmentObject, transforma
 		
 		for columnnumber in locations:
 			#when we get the new version of biopython, this can be changed to slice notation alignmentObject[:,base]
-			column=alignmentObject.get_column(columnnumber)
+			column=alignmentObject[:,columnnumber]
 #			if columnnumber>500:
 #				break
 			column=column.replace("N","").replace("?","").replace("X","")
@@ -2207,18 +2207,18 @@ def change_reference_location_to_alignment_location(seqFeature, translation_dict
 
 	#newFeature=copy.deepcopy(seqFeature)
 	
+	print "before",  seqFeature.location
+	for x, part in enumerate(seqFeature.location.parts):
 	
-	startoffset=translation_dict[int(seqFeature.location.nofuzzy_start)]-int(seqFeature.location.nofuzzy_start)
-	endoffset=(translation_dict[int(seqFeature.location.nofuzzy_end)-1]-int(seqFeature.location.nofuzzy_end)+1)
-	strand=seqFeature.location.strand
+		startoffset=translation_dict[int(part.nofuzzy_start)]-int(part.nofuzzy_start)
+		endoffset=(translation_dict[int(part.nofuzzy_end)-1]-int(part.nofuzzy_end)+1)
+		strand=part.strand
+		seqFeature.location.parts[x]=FeatureLocation(start = part.start._shift(startoffset),end = part.end._shift(endoffset), strand=strand)
+
 	
-	seqFeature.location=FeatureLocation(start = seqFeature.location._start._shift(startoffset),end = seqFeature.location._end._shift(endoffset), strand=strand)
-	#seqFeature.location.start=seqFeature.location.start._shift(shift)
 	
+	print "after", seqFeature.location
 	#what about fuzzy positions???
-	
-	for subFeature in seqFeature.sub_features:
-		subFeature=change_reference_location_to_alignment_location(subFeature, translation_dict)
 	
 	
 	return seqFeature

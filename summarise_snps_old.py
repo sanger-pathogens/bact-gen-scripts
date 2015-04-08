@@ -325,9 +325,9 @@ def dnbyds(CDS, SNPseq, CDSbasenumbers, genetic_code_number=1):
 	AAtotype={}
 	Fisher=-0
 	
-	#if len(CDS)!=len(SNPseq):
-	#	print "Error: sequences must be the same length to calculate dN/dS!"
-	#	[N, S, dN, dS, pN, pS, varianceS, varianceN, z, (len(CDS)-gapcount), Nd, Sd, Fisher], SNPtype, AAfromtype, AAtotype
+	if len(CDS)!=len(SNPseq):
+		print "Error: sequences must be the same length to calculate dN/dS!"
+		[N, S, dN, dS, pN, pS, varianceS, varianceN, z, (len(CDS)-gapcount), Nd, Sd, Fisher], SNPtype, AAfromtype, AAtotype
 	
 	
 	
@@ -455,95 +455,67 @@ def dnbyds(CDS, SNPseq, CDSbasenumbers, genetic_code_number=1):
 def concatenate_CDS_sequences(record, sequence, ref):
 	
 	def add_feature_seq(feature):
-		#start=ref_pos_to_aln_pos[feature.location.start.position]
-		#end=ref_pos_to_aln_pos[feature.location.end.position-1]
+		start=ref_pos_to_aln_pos[feature.location.start.position]
+		end=ref_pos_to_aln_pos[feature.location.end.position-1]
 		
-		#my_seq= Seq(sequences[sequence][start : end+1])
-		#if feature.strand==-1:
-		#	my_seq=my_seq.reverse_complement()
+		my_seq= Seq(sequences[sequence][start : end+1])
+		if feature.strand==-1:
+			my_seq=my_seq.reverse_complement()
 			#print len(my_seq),
-		
+		my_seq=str(my_seq)
 		#my_seq=str(feature.extract(sequences[sequence]))
 			
-		#my_ref= Seq(sequences[ref][start : end+1])
-		#if feature.strand==-1:
-		#	my_ref=my_ref.reverse_complement()
-		#	#print len(my_ref)
-		#my_ref=str(my_ref)
+		my_ref= Seq(sequences[ref][start : end+1])
+		if feature.strand==-1:
+			my_ref=my_ref.reverse_complement()
+			#print len(my_ref)
+		my_ref=str(my_ref)
 		
-		my_ref=str(feature.extract(sequences[ref]))
+		#my_ref=str(feature.extract(sequences[ref]))
 		
-		#for base in xrange(len(my_ref)):
-		#	if my_ref[base]=="-" and my_seq[base]=="-":
-		#		continue
-		#	elif my_ref[base]=="-" or my_seq[base]=="-":
-		#		return
-#
-#		if len(str(my_seq.replace("-",""))) % 3 or len(str(my_ref.replace("-",""))) % 3:
-#			return
-		#if len(str(my_seq)) % 3 or len(str(my_ref)) % 3:
-		#	return		
-		x=0
-		#for y in feature:
-		#	if my_ref[x]!="-":
-		#		CDSbasenumbers.append(ref_pos_to_aln_pos[y])
-		#	x+=1
-		
-		
-		my_seq=[]
-		my_ref=[]
-		tCDSbasenumbers=[]
-		for part in feature.location.parts:
-			start=ref_pos_to_aln_pos[part.start]
-			end=ref_pos_to_aln_pos[part.end]
-			tmy_seq= Seq(sequences[sequence][start : end])
-			if feature.strand==-1:
-				tmy_seq=tmy_seq.reverse_complement()
-			my_seq.append(str(tmy_seq))
-			tref_seq= Seq(sequences[ref][start : end])
-			if feature.strand==-1:
-				tref_seq=tref_seq.reverse_complement()
-			my_ref.append(str(tref_seq))
-			rmed=[]
-			if part.strand==-1:
-				for x, y in enumerate(xrange(end, start, -1)):	
-					if str(tref_seq)[x]!="-":
-						tCDSbasenumbers.append(y)
-					else:
-						rmed.append([x,y,str(tref_seq)[x], my_ref[-1][x], my_seq[-1][x]])
-			else:
-				for x, y in enumerate(xrange(start, end)):	
-					if str(tref_seq)[x]!="-":
-						tCDSbasenumbers.append(y)
-					else:
-						rmed.append([x,y,str(tref_seq)[x], my_ref[-1][x], my_seq[-1][x]])
-		
-		toprint=[len(my_seq)]
-		my_seq=''.join(my_seq)
-		my_ref=''.join(my_ref)
-		
-		toprint+=[str(tref_seq), rmed, len(my_seq), len(my_ref), len(tCDSbasenumbers), feature.strand, start, end, end-start, x]
-		#print len(str(my_seq.replace("-",""))) % 3, len(str(my_ref.replace("-",""))) % 3
 		for base in xrange(len(my_ref)):
 			if my_ref[base]=="-" and my_seq[base]=="-":
 				continue
 			elif my_ref[base]=="-" or my_seq[base]=="-":
-				return "", "", []
+				return
 
 		if len(str(my_seq.replace("-",""))) % 3 or len(str(my_ref.replace("-",""))) % 3:
-			return "", "", []
+			#print float(len(str(my_seq)))/3, float(len(str(my_ref))/3)
+			#print feature.location.start.position, feature.location.end.position, feature.location.end.position-feature.location.start.position
+			#print feature
+			#print feature.sub_features
+			return
+				
+
 			
-		
+		if feature.strand==-1:
+			for x, y in enumerate(range(end,start-1,-1)):
+				if my_ref[x]!="-":
+					CDSbasenumbers.append(y)
+		else:
+			for x, y in enumerate(range(start, end+1)):
+				if my_ref[x]!="-":
+					CDSbasenumbers.append(y)
 		
 		my_ref=my_ref.replace("-","")
 		my_seq=my_seq.replace("-","")
-		if len(my_seq)!=len(tCDSbasenumbers):
-			print ' '.join(map(str,toprint))
-			print len(my_seq), len(my_ref), len(tCDSbasenumbers), feature.strand
-			print my_seq
-			print my_ref
-			sys.exit()
-		return my_seq, my_ref, tCDSbasenumbers
+		
+		
+		concatenated_sequence.append(my_seq)
+		concatenated_ref.append(my_ref)
+			
+	
+	def iterate_subfeatures(feature):
+		if len(feature.sub_features)>0:
+			if feature.strand==-1:
+				for subfeature in feature.sub_features[::-1]:
+					iterate_subfeatures(subfeature)
+			else:
+				for subfeature in feature.sub_features:
+					iterate_subfeatures(subfeature)
+		else:
+			add_feature_seq(feature)
+	
 	
 	concatenated_sequence=[]
 	concatenated_ref=[]
@@ -551,13 +523,8 @@ def concatenate_CDS_sequences(record, sequence, ref):
 	
 	for feature in record.features:
 		if feature.type=="CDS" and not "pseudo" in feature.qualifiers:
-			ms, mr, tc=add_feature_seq(feature)
-			#print len(ms), len(concatenated_sequence)
-			concatenated_sequence.append(ms)
-			concatenated_ref.append(mr)
-			CDSbasenumbers=CDSbasenumbers+tc
-			#print len(ms), len(concatenated_sequence)
-			
+			add_feature_seq(feature)
+		
 	print len(''.join(concatenated_sequence)), len(''.join(concatenated_ref)), len(CDSbasenumbers)
 	return ''.join(concatenated_sequence), ''.join(concatenated_ref), CDSbasenumbers
 
@@ -896,16 +863,25 @@ if __name__ == "__main__":
 	
 
 	if options.embl!='' and ref!='':
-					
-		def add_subfeature_positions(feature, pseudo, featurenum):
+	
+		def add_feature_pos_to_basenums(feature, pseudo, featurenum):
+			start=ref_pos_to_aln_pos[feature.location.start.position]
+			end=ref_pos_to_aln_pos[feature.location.end.position-1]
+			
 			if feature.type in ['CDS', 'rRNA', 'tRNA']:
 				#print feature.id, feature.type, feature.location, start,end+1, len(embldata)
-				for part in feature.location.parts:
-					start=ref_pos_to_aln_pos[part.start]
-					end=ref_pos_to_aln_pos[part.end]
-					for x in xrange(start,end):
-						embldata[x]=featurenum
-		
+				for x in range(start,end+1):
+					embldata[x]=featurenum
+					
+		def add_subfeature_positions(feature, pseudo, featurenum):
+			if len(feature.sub_features)>0:
+				for subfeature in feature.sub_features:
+					add_subfeature_positions(subfeature, pseudo, featurenum)
+				
+			else:
+				add_feature_pos_to_basenums(feature, pseudo, featurenum)
+	
+	
 	
 	
 		print "\nCalculating dN/dS values...",# NEEDS FIXING!!!
@@ -933,10 +909,9 @@ if __name__ == "__main__":
 					pseudo=False
 				add_subfeature_positions(feature, pseudo, y)
 					
-		tmpout=open("tmpnew.txt","w")		
+		tmpout=open("tmpold.txt","w")		
 		print >> tmpout, embldata
-		tmpout.close()			
-		#print embldata
+		tmpout.close()
 		#refCDSseq=concatenate_CDS_sequences(record, ref)
 		
 		
@@ -951,6 +926,8 @@ if __name__ == "__main__":
 			if sequence==ref:
 				continue
 			
+#			h = hpy()
+#			print h.heap()
 
 			print sequence+'...',
 			sys.stdout.flush()
