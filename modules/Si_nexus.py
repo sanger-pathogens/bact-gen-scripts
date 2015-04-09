@@ -2207,17 +2207,21 @@ def change_reference_location_to_alignment_location(seqFeature, translation_dict
 
 	#newFeature=copy.deepcopy(seqFeature)
 	
-	print "before",  seqFeature.location
+	#print "before",  seqFeature.location
+	new_Feature_locations=[]
 	for x, part in enumerate(seqFeature.location.parts):
 	
 		startoffset=translation_dict[int(part.nofuzzy_start)]-int(part.nofuzzy_start)
 		endoffset=(translation_dict[int(part.nofuzzy_end)-1]-int(part.nofuzzy_end)+1)
 		strand=part.strand
-		seqFeature.location.parts[x]=FeatureLocation(start = part.start._shift(startoffset),end = part.end._shift(endoffset), strand=strand)
-
-	
-	
-	print "after", seqFeature.location
+		new_Feature_locations.append(FeatureLocation(start = part.start._shift(startoffset),end = part.end._shift(endoffset), strand=strand))
+		
+	#print "during", seqFeature.location, seqFeature.location.parts
+	new_locs=new_Feature_locations[0]
+	for x in new_Feature_locations[1:]:
+		new_locs=new_locs+x
+	seqFeature.location=new_locs			
+	#print "after", seqFeature.location, seqFeature.location.parts
 	#what about fuzzy positions???
 	
 	
