@@ -265,6 +265,7 @@ if __name__ == "__main__":
 		length=0.0
 		
 		downstream_meatadata={}
+		downstream_taxa=[]
 		for leaf in node.leaf_iter():
 			if not leaf.taxon.label in metadata:
 				print leaf.taxon.label, "not in metadata"
@@ -273,6 +274,7 @@ if __name__ == "__main__":
 				if not m in downstream_meatadata:
 					downstream_meatadata[m]=set([])
 				downstream_meatadata[m].add(metadata[leaf.taxon.label][m])
+			downstream_taxa.append(leaf.taxon.label)
 		
 		do=[]
 		for m in mlabels:
@@ -305,7 +307,8 @@ if __name__ == "__main__":
 			nodename=str(node.taxon)
 		else:
 			nodename=str(node)
-		
-		print '\t'.join([nodename, str(meanrate), str(medianrate), str(length)]+do)
+		downstream_taxa.sort()
+		taxa=','.join(downstream_taxa)
+		print '\t'.join([nodename, str(meanrate), str(medianrate), str(length)]+do+[taxa])
 		
 	
