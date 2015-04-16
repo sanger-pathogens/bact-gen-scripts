@@ -75,7 +75,7 @@ if __name__ == "__main__":
 		if not sequence.name in seqnames:
 			seqnames.append(sequence.name)
 	
-	
+	print '\t'.join(["Taxon1", "Taxon2", "SNPs", "%ID", "Aligned bases"])
 	for x, taxon in enumerate(seqnames):
 		taxonseq=""
 #		print x+1
@@ -103,11 +103,15 @@ if __name__ == "__main__":
 				continue
 			
 			count=0
-			ncount=0			
+			ncount=0
+			idcount=0			
 			
 			if len(taxonseq)==len(taxonbseq):
 			
 				for y, base in enumerate(taxonseq):
+					
+					if base not in gap_and_missing and taxonbseq[y] not in gap_and_missing:
+						idcount+=1
 					
 					if base!=taxonbseq[y] and base not in gap_and_missing and taxonbseq[y] not in gap_and_missing:
 						count+=1
@@ -118,4 +122,4 @@ if __name__ == "__main__":
 			else:
 				print taxon, "and", taxonb, "are not the same length"
 #			pairwise_distances[taxonb][taxon]=count
-			print taxon, taxonb, count, ncount
+			print '\t'.join(map(str, [taxon, taxonb, count, ((float(idcount)-float(count))/idcount)*100, idcount]))
