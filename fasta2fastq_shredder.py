@@ -18,9 +18,9 @@ if (len(sys.argv)!=6 and len(sys.argv)!=7) or '-h' in sys.argv[1:]:
 	print "fastq2fastq_shredder.py <fasta file (can be zipped and can be multifasta)> <output prefix> <read length> <step> <linear/circular (l/c)> <insert length>"
 	
 	print "E.g. to create 100bp paired reads from a 350bp insert every 3 bases along the circular genome of ref.fasta.gz"
-	print "\tfastq2fastq_shredder.py ref.fasta.gz outfiles 100 3 c 350"
+	print "\tfasta2fastq_shredder.py ref.fasta.gz outfiles 100 3 c 350"
 	print "E.g. to create 50bp paired reads from a 200bp insert every base along the linear genome of ref2.fasta"
-	print "\tfastq2fastq_shredder.py ref.fasta outfiles 50 1 c 200"
+	print "\tfasta2fastq_shredder.py ref.fasta outfiles 50 1 c 200"
 	sys.exit()
 
 if sys.argv[1].split('.')[-1]=='gz':
@@ -117,7 +117,7 @@ if len(sys.argv)==7 and sys.argv[6]=="z":
 	outputr.close()
 	os.system("gzip "+outprefix+"_1.fastq")
 	os.system("gzip "+outprefix+"_2.fastq")
-else:
+elif sys.argv[6]=="z":
 	os.system("gzip "+outprefix+".fastq")
 	
 		
