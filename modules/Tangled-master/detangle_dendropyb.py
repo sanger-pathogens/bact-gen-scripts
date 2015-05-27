@@ -414,6 +414,8 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 	orders = {}
 	ordered_names = {}
 	
+	print "here"
+	
 	if len(tree_list)>2 or len(tree_list)<2:
 		print "Can only cope with 2 trees"
 		sys.exit()
@@ -454,6 +456,7 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 	intensity = starting_intensity
 	last_success = 0
 	flip = 1
+	
 	while intensity > 0 and count < max_count:
         
 		if verbose:
@@ -471,6 +474,7 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 				
 				totcount=0
 				posdict={}
+				
 				dict_to_dict={}
 				for x in range(len(o)):
 					z=totcount
@@ -488,43 +492,12 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 				  
 				moved_set=set([])
 				randnum_set=set([])
-#				print len(keylist),
+
 				for r in keylist:
-					#r=random.randint(0,totcount-1)
+				
 					randnum=posdict[r]
-#					moved_set.add(randnum[3])
-#					randnum_set.add(r)
-#					print r, randnum[2]
-				    #print r, posdict[r],
-				    
-#					if randnum in used_nums and len(o[randnum])>2:
-#						continue
-#					else:
-#						used_nums.append(randnum)
 					
-#					if len(o[randnum])==2:
-#						o[randnum].reverse()
-#					
-#					elif len(o[randnum])>2:
-#						randpos=random.randint(0,len(o[randnum])-2)
-#						randnewpos=randpos
-#						while randnewpos==randpos:
-#							randnewpos=random.randint(0,len(o[randnum])-2)
-#						
-#						if randnewpos>randpos:
-#							posvalue=o[randnum][randpos]
-#							while randpos<randnewpos:
-#								o[randnum][randpos]=o[randnum][randpos+1]
-#							randpos+=1
-#							o[randnum][randnewpos]=posvalue
-#						else:
-#							posvalue=o[randnum][randpos]
-#							while randpos>randnewpos:
-#								o[randnum][randpos]=o[randnum][randpos-1]
-#							randpos-=1
-#							o[randnum][randnewpos]=posvalue
 					
-					#oldorder=copy.deepcopy(o[randnum[0]])
 					value=o[randnum[0]][randnum[1]]
 					order_minus_node=o[randnum[0]][:randnum[1]]+o[randnum[0]][randnum[1]+1:]
 					
@@ -567,14 +540,7 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 						#print totcount, randnum[0],y,randnum[2],randnum[3], oldposdict
 						posdict[totcount]=[randnum[0],y,oldposdict[2],oldposdict[3]]
 						totcount+=1
-#					print posdict
-#					print r, randnum
-#					print o[randnum[0]]
-#					sys.exit()
-		
-		#print o
-#				print len(moved_set)
-#				sys.exit()
+
 				trees[trees.keys()[i]].apply_orders(o)
 				cur = minimize_this(trees)
 				#print cur, best
@@ -624,6 +590,7 @@ if __name__=='__main__':
     Loop over all files, reading in all available trees.
     Print the results (for testing/validation purposes).
     """
+    
     for line in fileinput.input():
         #line = line.trim()
         if line[0:4] == 'tree':

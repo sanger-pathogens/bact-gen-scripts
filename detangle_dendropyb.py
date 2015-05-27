@@ -53,6 +53,7 @@ g_verbose=False
 def tangle_count_all(trees, Final=False):
 	""" This function applies a tangle counting function to every combination of trees
 	"""
+	#Final=True
 	
 	setlist=[]
 	for tr in trees.itervalues():
@@ -95,15 +96,16 @@ def tangle_count(a, b):
 	t = dict((b[i],i) for i in range(0,len(b)))
 	j=1
 	for i in range(1,min(len(a),len(b))):
-		try:
-			if t[a[i]] < t[a[i-j]]:
-				count += 1
-				j+=1
-				#print count, a[i], a[i-1], t[a[i]], t[a[i-j]]
-			else:
-				j=1
-		except KeyError, e:
-			pass
+		for j in range(0,i):
+			try:
+				if t[a[i]] < t[a[j]]:
+					count += 1
+					#j+=1
+					#print count, a[i], a[i-1], t[a[i]], t[a[i-j]]
+				#else:
+					#j=1
+			except KeyError, e:
+				pass
 	return count
 
 def flatness_count_all(trees):
@@ -528,50 +530,22 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 #				print len(keylist),
 				for r in keylist:
 					#r=random.randint(0,totcount-1)
+					
 					randnum=posdict[r]
-#					moved_set.add(randnum[3])
-#					randnum_set.add(r)
-#					print r, randnum[2]
-				    #print r, posdict[r],
-				    
-#					if randnum in used_nums and len(o[randnum])>2:
-#						continue
-#					else:
-#						used_nums.append(randnum)
+
 					
-#					if len(o[randnum])==2:
-#						o[randnum].reverse()
-#					
-#					elif len(o[randnum])>2:
-#						randpos=random.randint(0,len(o[randnum])-2)
-#						randnewpos=randpos
-#						while randnewpos==randpos:
-#							randnewpos=random.randint(0,len(o[randnum])-2)
-#						
-#						if randnewpos>randpos:
-#							posvalue=o[randnum][randpos]
-#							while randpos<randnewpos:
-#								o[randnum][randpos]=o[randnum][randpos+1]
-#							randpos+=1
-#							o[randnum][randnewpos]=posvalue
-#						else:
-#							posvalue=o[randnum][randpos]
-#							while randpos>randnewpos:
-#								o[randnum][randpos]=o[randnum][randpos-1]
-#							randpos-=1
-#							o[randnum][randnewpos]=posvalue
-					
-					#oldorder=copy.deepcopy(o[randnum[0]])
 					value=o[randnum[0]][randnum[1]]
 					order_minus_node=o[randnum[0]][:randnum[1]]+o[randnum[0]][randnum[1]+1:]
 					
 					
-					
 					neworders=copy.deepcopy(o)
+					
 					neworder=[value]+order_minus_node
 					neworders[randnum[0]]=neworder
+					
 					trees[trees.keys()[i]].apply_orders(neworders)
 					curbest = minimize_this(trees)
+					
 					curbestpos=0
 					if len(neworders[randnum[0]])>500:
 						print " Start", i, value, randnum[0], neworders[randnum[0]], curbest, curbestpos, str(tangle_count_all(trees, Final=False))
@@ -579,8 +553,10 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 					for x in range(0,len(neworders[randnum[0]])-1):
 						neworders[randnum[0]][x]=neworders[randnum[0]][x+1]
 						neworders[randnum[0]][x+1]=value
+						
 						trees[trees.keys()[i]].apply_orders(neworders)
 						curval = minimize_this(trees)
+						
 						if len(neworders[randnum[0]])>500:
 							print i, value, neworders[randnum[0]], curbest, curbestpos, curval, x+1, str(tangle_count_all(trees, Final=False))
 						if curval<curbest:
@@ -589,10 +565,7 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 							bestorder=copy.deepcopy(neworders)
 					if len(neworders[randnum[0]])>500:
 						print "Final Tree: Tangle Count = " + str(tangle_count_all(trees, Final=False))
-						#sys.exit()
-					#print bestorder
-#					trees[trees.keys()[i]].apply_orders(bestorder)
-#					print str(tangle_count_all(trees, Final=False))
+
 					o=copy.deepcopy(bestorder)
 					totcount=r
 #					print posdict
@@ -604,14 +577,7 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 						#print totcount, randnum[0],y,randnum[2],randnum[3], oldposdict
 						posdict[totcount]=[randnum[0],y,oldposdict[2],oldposdict[3]]
 						totcount+=1
-#					print posdict
-#					print r, randnum
-#					print o[randnum[0]]
-#					sys.exit()
-		
-		#print o
-#				print len(moved_set)
-#				sys.exit()
+
 				trees[trees.keys()[i]].apply_orders(o)
 				cur = minimize_this(trees)
 				#print cur, best

@@ -105,7 +105,7 @@ def main():
 	
 	group.add_option("-t", "--tree", action="store", dest="tree", help="tree file to align tab files to", default="")
 	group.add_option("-9", "--tree2", action="store", dest="tree2", help="second tree to create tanglegram on right side", default="")
-	group.add_option("--untangle_type", action="store", choices=['none', 'tree1', 'tree2', 'both'], dest="untangle_type", help="Untangle type (choose from none, tree1, tree2 or both) [default= %default]", type="choice", default="tree1")
+	group.add_option("--untangle_type", action="store", choices=['none', 'tree1', 'tree2', 'both'], dest="untangle_type", help="Untangle type (choose from none, tree1, tree2 or both) [default= %default]", type="choice", default="tree2")
 	group.add_option("-2", "--proportion", action="store", dest="treeproportion", help="Proportion of page to take up with the tree", default=0.3, type='float')
 	group.add_option("-s", "--support", action="store", dest="tree_support", help="Scale tree branch widths by value. For newick trees this can be any value stored in the tree. Otherwise, use 'support' to scale by branch support values (if present)", default="")
 	group.add_option("-7", "--height_HPD", action="store_true", dest="show_height_HPD", help="show branch 95% HPD heights (if present in tree) [default= %default]", default=False)
@@ -5592,6 +5592,7 @@ if __name__ == "__main__":
 			for i in [tree, tree2_tangled]:
 				tangled_trees[i.label]=i
 				tangled_tree_list.append(i)
+			print detangle_dendropyb.__file__
 			tree1, tree2=detangle_dendropyb.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = True, verbose=True)
 		elif untangle_type=="both":
 			print "Untangling both trees"
