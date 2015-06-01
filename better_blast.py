@@ -40,6 +40,7 @@ def main():
 	group.add_option("-p", "--program", action="store", dest="blastprog", help="BLAST program to use (choose from blastn or tblastx) This script doesn't support protein BLASTs, and won't unless people ask very nicely. [Default= %default]", default="blastn", type="choice", choices=['blastn', 'tblastx'])
 	group.add_option("-e", "--evalue", action="store", dest="e", help="evalue cutoff for BLAST. [Default= %default]", default=0.00001, type="float")
 	group.add_option("-f", "--filter", action="store_true", dest="filter", help="Turn off BLAST low complexity filter", default=False)
+	group.add_option("-a", "--act", action="store_true", dest="act", help="Runs act comparison after blasting is finished", default=False)
 	group.add_option("-S", "--self", action="store_true", dest="filter_self", help="Filter self BLAST matches (i.e. to the same contig name)", default=False)
 	group.add_option("-E", "--extras", action="store", dest="extras", help="Extra BLAST options to use. Note: These will not be sanity checked.", default="")
 	group.add_option("-d", "--tmpdir", action="store", dest="tmpdir", help="Temporary directory prefix. [Default= %default]", default="better_blast_tmp_dir")
@@ -317,13 +318,19 @@ if __name__ == "__main__":
 	print "Job ID =", job2_id
 	sys.stdout.flush()
 	
-	if options.formatdb:
-		print "Once these jobs are finished, you can run a comparison in act using:"
+	if options.formatdb and not options.act:
+		print "Once these jobs are finished, you can run a comparison in act the following command:"
 		print "act", options.subject, options.prefix+".crunch.gz", options.query
 	
 	job3 = farm.Bsub(options.prefix+"_bb_bsub.out", options.prefix+"_bb_bsub.err", tmpname+"_cleanup", "normal", 0.5, "rm -rf formatdb.log "+options.tmpdir)
 	job3.add_dependency(job2_id) 
 	job3_id = job3.run()
 		
+	if options.act:
+		print "Once these jobs are finished, act will be run using the following command:"
+		print "act", options.subject, options.prefix+".crunch.gz", options.query
 	
+		job4 = farm.Bsub(options.prefix+"_bb_bsub.out", options.prefix+"_bb_bsub.err", tmpname+"_act", "normal", 2, "act "+options.subject+" "+options.prefix+".crunch.gz "+options.query)
+		job4.add_dependency(job2_id) 
+		job4_id = job4.run()
 	
