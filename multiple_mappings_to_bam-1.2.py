@@ -87,7 +87,7 @@ def get_user_options():
 	group = OptionGroup(parser, "Mapping Options")
 	group.add_option("-p", "--program", action="store", type="choice", dest="program", choices=["bwa","ssaha", "smalt", "BWA","SSAHA", "SMALT"], help="Mapping program to use (choose from bwa, ssaha or smalt) [default= %default]", default="bwa")
 	group.add_option("-1", "--nomap", action="store_false", dest="domapping", help="Do not remap data - only available when input is bam (default is to map)", default=True)
-	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3", "0.6.4", "0.7.4"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3, 0.6.4, 0.7.4 and latest (currently 0.7.4) [default= %default]", default="0.7.4")
+	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3", "0.6.4", "0.7.4", "0.7.6"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3, 0.6.4, 0.7.4, 0.7.6 and latest (currently 0.7.6) [default= %default]", default="0.7.4")
 	group.add_option("-H", "--human", action="store_true", dest="human", help="Mapping against human (or other large euk)", default=False)
 	#group.add_option("-l", "--length", action="store", dest="readlength", help="Read length [default= %default]", default=54, type="int", metavar="INT")
 	group.add_option("-s", "--single", action="store_false", dest="pairedend", help="reads are single ended (not paired)", default=True)
@@ -106,16 +106,17 @@ def get_user_options():
 	group.add_option("-x", "--noref", action="store_false", dest="incref", help="Do not include reference in pseudosequence alignment", default=True)
 	group.add_option("-I", "--indels", action="store_false", dest="indels", help="Do not include small indels in pseudosequence alignment (i.e. alignment will be the same length as the reference)", default=True)
 	group.add_option("-q", "--quality", action="store", type="int", dest="quality", help="Minimum base call quality to call a SNP (see samtools help for more information) [default= %default]", default=50, metavar="INT")
-	group.add_option("-Q", "--mapq", action="store", type="int", dest="mapq", help="Minimum mapping quality to call a SNP (see samtools help for more information) [default= %default]", default=30, metavar="INT")	
-	group.add_option("-d", "--depth", action="store", dest="depth", help="Minimum number of reads matching SNP [default= %default]", default=4, type="int")
-	group.add_option("-D", "--stranddepth", action="store", dest="stranddepth", help="Minimum number of reads matching SNP per strand [default= %default]", default=2, type="int")
+	group.add_option("-Q", "--mapq", action="store", type="int", dest="mapq", help="Minimum mapping quality to call a SNP (see samtools help for more information) [default= %default]", default=20, metavar="INT")	
+	group.add_option("-d", "--depth", action="store", dest="depth", help="Minimum number of reads matching SNP [default= %default]", default=8, type="int")
+	group.add_option("-D", "--stranddepth", action="store", dest="stranddepth", help="Minimum number of reads matching SNP per strand [default= %default]", default=3, type="int")
 	group.add_option("-A", "--dontuseanomolous", action="store_false", dest="anomolous", help="Do not use anomolous reads in mpileup (default is to use them) ", default=True)
 	group.add_option("-B", "--BAQ", action="store_false", dest="BAQ", help="Turn off samtools base alignment quality option (BAQ) ", default=True)
 	group.add_option("-c", "--circular", action="store_false", dest="circular", help="Contigs are not circular, so do not try to fix them", default=True)
 	#parser.add_option("-q", "--quality", action="store", dest="quality", help="Minimum base quality [default= %default]", default=120, type="int")
 	#group.add_option("-S", "--RMS", action="store", dest="RMS", help="Minimum root mean squared mapping quality [default= %default]", default=25, type="int")
 	#parser.add_option("-Q", "--strandquality", action="store", dest="strandquality", help="Minimum per strand base quality [default= %default]", default=60, type="int")
-	group.add_option("-R", "--ratio", action="store", dest="ratio", help="SNP/Mapping quality ratio cutoff [default= %default]", default=0.75, type="float")
+	group.add_option("-R", "--ratio", action="store", dest="ratio", help="SNP/Mapping quality ratio cutoff [default= %default]", default=0.8, type="float")
+	group.add_option("-P", "--prior", action="store", dest="prior", help="mutation rate (use bigger for greater sensitivity) [default= %default]", default=0.001, type="float")
 	
 	#group.add_option("-S", "--SNPquality", action="store", type="int", dest="snpquality", help="Minimum site mapping quality for SNP calling [default= %default]", default=90, metavar="INT")
 	#group.add_option("-R", "--ratio", action="store", type="float", dest="ratio", help="SNP/site mapping quality ratio cutoff [default= %default]", default=0.75, metavar="FLOAT")
@@ -127,10 +128,9 @@ def get_user_options():
 	group.add_option("-O", "--dir_output", action="store", dest="diroutput", help="output directory suffix", default="")
 	group.add_option("-f", "--force", action="store_true", dest="force", help="force overwrite of output files", default=False)
 	group.add_option("-F", "--filter_bam", action="store", dest="filter", help="filter or split bam file. Choose one of the following: 1) Include all reads, 2) Include only mapped reads 3) Include properly paired reads 4) Split into two files: mapped reads and unmapped reads, 5) Split into two files: properly paired and not properly paired [Default=%default]", type="choice", choices=["1", "2", "3", "4", "5"], default="1")
-	group.add_option("-g", "--plots", action="store_true", dest="plots", help="create mapping plots", default=False)
 	group.add_option("-t", "--tabfiles", action="store_true", dest="tabfile", help="Create tabfile of snps", default=False)
 	group.add_option("-a", "--align", action="store_true", dest="alnfile", help="Create snp alignment file (in phylip format)", default=False)
-	group.add_option("-P", "--phylogeny", action="store_true", dest="raxml", help="Run phylogeny with RAxML", default=False)
+	group.add_option("-Y", "--phylogeny", action="store_true", dest="raxml", help="Run phylogeny with RAxML", default=False)
 	group.add_option("-m", "--model", action="store", dest="model", help="Model of evolution to use. [Default= %default]", default="GTRGAMMA", type="choice", choices=["GTRGAMMA","GTRGAMMAI", "GTRCAT", "GTRMIX", "GTRMIXI"])
 	group.add_option("-b", "--bootstrap", action="store", dest="bootstrap", help="Number of bootstrap replicates (0 = do not run bootstrap). [Default= %default]", default=100, type="int", metavar="int")
 	parser.add_option_group(group)
@@ -192,6 +192,8 @@ def check_input_validity(options, args):
 #		DoError('Minimum site mapping quality for SNP calling (-q) must be between 1 and 100!')
 	elif options.ratio>1 or options.ratio<0:
 		DoError('SNP/site mapping quality ratio cutoff (-R) must be between 0 and 1')
+	elif options.prior>1 or options.prior<0:
+		DoError('Estimated mutation rate (-P) must be between 0 and 1')
 #	elif options.readlength>1000 or options.readlength<36:
 #		DoError('Read length (-l) must be between 36 and 1000!')
 	elif options.mem>30 or options.mem<0:
@@ -420,20 +422,16 @@ class SNPanalysis:
 		#Map the reads against the genome
 		if pool.is_zipped:
 			if self.pairedend:
-				print >> bashfile, BWA_DIR+"bwa mem -M -a -t 1 ", options.ref, self.fastqdir+self.name+"_1.fastq.gz", self.fastqdir+self.name+"_2.fastq.gz |", SAMTOOLS_DIR+"samtools view -b -S - -t "+ref+".fai >", self.runname+"/tmp1.bam"
+				print >> bashfile, BWA_DIR+"bwa mem -v 1 -M -a -t 1 ", options.ref, self.fastqdir+self.name+"_1.fastq.gz", self.fastqdir+self.name+"_2.fastq.gz |", SAMTOOLS_DIR+"samtools view -b -S - -t "+ref+".fai >", self.runname+"/tmp1.bam"
 			else:
-				print >> bashfile, BWA_DIR+"bwa mem -M -a -t 1 ", options.ref, self.fastqdir+self.name+".fastq.gz |", SAMTOOLS_DIR+"samtools view -b -S - -t "+ref+".fai >", self.runname+"/tmp1.bam"
+				print >> bashfile, BWA_DIR+"bwa mem -v 1 -M -a -t 1 ", options.ref, self.fastqdir+self.name+".fastq.gz |", SAMTOOLS_DIR+"samtools view -b -S - -t "+ref+".fai >", self.runname+"/tmp1.bam"
 		else:
 			if self.pairedend:
-				print >> bashfile, BWA_DIR+"bwa mem -M -a -t 1 ", options.ref, self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq |", SAMTOOLS_DIR+"samtools view -b -S - -t "+ref+".fai >", self.runname+"/tmp1.bam"
+				print >> bashfile, BWA_DIR+"bwa mem -v 1 -M -a -t 1 ", options.ref, self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq |", SAMTOOLS_DIR+"samtools view -b -S - -t "+ref+".fai >", self.runname+"/tmp1.bam"
 			else:
-				print >> bashfile, BWA_DIR+"bwa mem -M -a -t 1 ", options.ref, self.fastqdir+self.name+".fastq |", SAMTOOLS_DIR+"samtools view -b -S - -t "+ref+".fai >", self.runname+"/tmp1.bam"
+				print >> bashfile, BWA_DIR+"bwa mem -v 1 -M -a -t 1 ", options.ref, self.fastqdir+self.name+".fastq |", SAMTOOLS_DIR+"samtools view -b -S - -t "+ref+".fai >", self.runname+"/tmp1.bam"
 	
 		
-		#produce the BAM file
-		#print >> bashfile, SAMTOOLS_DIR+"samtools view -b -q "+str(options.mapq)+" -S", self.runname+"/tmp.sam >", self.runname+"/tmp.bam"
-		#print >> bashfile, SAMTOOLS_DIR+"samtools view -b -S",self.runname+"/tmp.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
-		#print >> bashfile, "rm", self.runname+"/tmp.sam"
 			
 	def runSMALT(self, ref, bashfile):	
 		
@@ -485,35 +483,28 @@ class SNPanalysis:
 
 		
 	def makepileup_from_sam(self, ref, bashfile):
-		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 sort', self.runname+"/tmp1.bam", self.runname+"/tmpsort"
-		print >> bashfile, PICKARD_DIR+" MarkDuplicates INPUT="+self.runname+"/tmpsort.bam OUTPUT="+self.runname+"/tmp.bam METRICS_FILE="+self.runname+"/"+self.name+"_metrics.txt"
-		print >> bashfile, "rm", self.runname+"/tmp1.bam"
-
-#		if self.pairedend and options.circular:
-#			print >> bashfile, MY_SCRIPTS_DIR+"fix_circular_bams.py -b", self.runname+"/tmp1.bam -o", self.runname+"/tmp"
-#			print >> bashfile, "rm", self.runname+"/tmp1.bam"
-#		else:
-#			print >> bashfile, "mv", self.runname+"/tmp1.bam", self.runname+"/tmp.bam"
 		
+		#Add read groups and fix smalt header
+		print >> bashfile, SAMTOOLS_DIR+"samtools view -H", self.runname+"/tmp1.bam | sed 's/SO:unknown/SO:coordinate/g' | sed 's/\\x00//g'  >", self.runname+"/tmphead.sam"
+		now = datetime.datetime.now()
+		now = now.replace(microsecond=0)
+		if options.program in ["smalt", "SMALT"]:
+			print >> bashfile, 'echo "@RG\tID:'+self.name+'\tCN:Sanger\tDT:'+now.isoformat()+'\tPG:SMALT\tPL:ILLUMINA\tSM:'+self.name+'" >>', self.runname+"/tmphead.sam"
+			if self.domapping and not newsmalt:
+				print >> bashfile, "smaltversion=$( "+SMALT_DIR+" version  | grep Version | awk '{print $2}' )"
+				print >> bashfile, 'echo "@PG\tID:SMALT\tPN:SMALT\tCL:'+' '.join(map(str,cmdline))+'\tVN:$smaltversion" >>', self.runname+'/tmphead.sam'
+		elif options.program in ["bwa", "BWA"]:
+			print >> bashfile, 'echo "@RG\tID:'+self.name+'\tCN:Sanger\tDT:'+now.isoformat()+'\tPG:BWA MEM\tPL:ILLUMINA\tSM:'+self.name+'" >>', self.runname+"/tmphead.sam"
+		
+		#sort and mark duplicates
+		print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 reheader ", self.runname+'/tmphead.sam', self.runname+"/tmp1.bam >", self.runname+"/tmp.bam"
+		print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/tmp1.bam"
+		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 sort', self.runname+"/tmp1.bam", self.runname+"/tmpsort"
+		print >> bashfile, PICKARD_DIR+" MarkDuplicates INPUT="+self.runname+"/tmpsort.bam OUTPUT="+self.runname+"/tmp1.bam METRICS_FILE="+self.runname+"/"+self.name+"_metrics.txt"
+		print >> bashfile, "rm", self.runname+"/tmpsort.bam"
+
+		#run GATK indel realignment if selected
 		if options.GATK:
-			print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/"+self.name+".bam"
-			print >> bashfile, SAMTOOLS_DIR+"samtools view -H", self.runname+"/"+self.name+".bam | sed 's/SO:unknown/SO:coordinate/g' | sed 's/\\x00//g'  >", self.runname+"/tmphead.sam"
-			now = datetime.datetime.now()
-			now = now.replace(microsecond=0)
-			if options.program in ["smalt", "SMALT"]:
-				print >> bashfile, 'echo "@RG\tID:'+self.name+'\tCN:Sanger\tDT:'+now.isoformat()+'\tPG:SMALT\tPL:ILLUMINA\tSM:'+self.name+'" >>', self.runname+"/tmphead.sam"
-				if self.domapping and not newsmalt:
-					print >> bashfile, "smaltversion=$( "+SMALT_DIR+" version  | grep Version | awk '{print $2}' )"
-					print >> bashfile, 'echo "@PG\tID:SMALT\tPN:SMALT\tCL:'+' '.join(map(str,cmdline))+'\tVN:$smaltversion" >>', self.runname+'/tmphead.sam'
-			elif options.program in ["bwa", "BWA"]:
-				print >> bashfile, 'echo "@RG\tID:'+self.name+'\tCN:Sanger\tDT:'+now.isoformat()+'\tPG:BWA MEM\tPL:ILLUMINA\tSM:'+self.name+'" >>', self.runname+"/tmphead.sam"
-			
-			
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -b -o", self.runname+'/tmphead.bam' ,"-H", self.runname+"/"+self.name+".bam"
-			print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 merge -r -h ', self.runname+'/tmphead.sam', self.runname+"/tmp1.bam", self.runname+"/"+self.name+".bam", self.runname+'/tmphead.bam'
-			print >> bashfile, "rm", self.runname+"/"+self.name+".bam"
-			print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 sort', self.runname+"/tmp1.bam", self.runname+"/tmpsort"
-			print >> bashfile, 'mv', self.runname+"/tmpsort.bam", self.runname+"/tmp1.bam"
 			print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 index', self.runname+"/tmp1.bam"
 			print >> bashfile, "cp", ref, self.runname+'/tmpref.fa'
 			print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 faidx', self.runname+"/tmpref.fa"
@@ -523,44 +514,26 @@ class SNPanalysis:
 				javamem=2
 			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-et NO_ET -K /nfs/users/nfs_s/sh16/scripts/GATK.key -I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T RealignerTargetCreator -o", self.runname+'/tmp.intervals'
 			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-et NO_ET -K /nfs/users/nfs_s/sh16/scripts/GATK.key -I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T IndelRealigner -targetIntervals", self.runname+'/tmp.intervals', "-o", self.runname+"/tmp.bam"
-			print >> bashfile, "rm", self.runname+"/tmp1.bam", self.runname+"/tmp1.bam.bai",  self.runname+"/tmpref.*", self.runname+"/tmp.intervals", self.runname+"/tmphead.*"
+			print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/tmp1.bam"
+			print >> bashfile, "rm", self.runname+"/tmp1.bam.bai",  self.runname+"/tmpref.*", self.runname+"/tmp.intervals", self.runname+"/tmphead.*"
 		
-		if options.plots:
-			#add header to sam file for making plots - no need. Can read bams too!
-
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -h ",self.runname+"/tmp.bam >", self.runname+"/tmp.sam"
-		else:
-			print >> bashfile, "rm", self.runname+"/tmp1.sam"
 		
-			#print >> bashfile, "cat", self.runname+"/tmp2.sam", self.runname+"/tmp1.sam > ", self.runname+"/tmp.sam"
-			#		
-			#print >> bashfile, "rm", self.runname+"/tmp2.sam", self.runname+"/tmp1.sam"
-			#print >> bashfile, SAMTOOLS_DIR+"samtools reheader", self.runname+"/tmp1.sam", self.runname+"/tmp.bam"
-	
-		#create plots from sam file
-		if options.plots:
-			print >> bashfile, MY_SCRIPTS_DIR+"odd_plots_from_sam.py", self.runname+"/tmp.sam", self.runname+"/"+self.name+" >  /dev/null 2>&1"
-			print >> bashfile, "rm", self.runname+"/tmp1.sam"
-		
-		#remove the sam file as it is no longer needed
-		print >> bashfile, "rm", self.runname+"/tmp.sam"
-		
-		#order the bam file
-		print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 sort ", self.runname+"/tmp.bam", self.runname+"/tmp1"
+		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 sort', self.runname+"/tmp1.bam", self.runname+"/tmp"
+		print >> bashfile, "rm", self.runname+"/tmp1.bam"
 		
 		#filter the bam file if requested
 		if options.filter=="1":
-			print >> bashfile, "mv", self.runname+"/tmp1.bam", self.runname+"/"+self.name+".bam"
+			print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/"+self.name+".bam"
 		elif options.filter=="2":
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -F 4 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp1.bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -F 4 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
 		elif options.filter=="3":
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -f 2 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp1.bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -f 2 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
 		elif options.filter=="4":
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -F 4 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp1.bam"
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -f 4 -b -o", self.runname+"/"+self.name+"_unmapped.bam", self.runname+"/tmp1.bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -F 4 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -f 4 -b -o", self.runname+"/"+self.name+"_unmapped.bam", self.runname+"/tmp.bam"
 		elif options.filter=="5":
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -f 2 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp1.bam"
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -F 2 -b -o", self.runname+"/"+self.name+"_unpaired.bam", self.runname+"/tmp1.bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -f 2 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -F 2 -b -o", self.runname+"/"+self.name+"_unpaired.bam", self.runname+"/tmp.bam"
 		
 		
 		print >> bashfile, "rm", self.runname+"/tmp.bam", self.runname+"/tmp1.bam"	
@@ -581,20 +554,25 @@ class SNPanalysis:
 		
 		print >>  bashfile, 'echo "'+self.name+'	1" >', self.runname+"/"+self.name+".ploidy" 
 		
-		
-		if options.BAQ:
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -d 1000 -m", options.depth, anomolous, " -ugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+		if options.program in ["bwa", "BWA"]:
+			if options.BAQ:
+				print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -C 50 -L 1000 -d 1000 -m", options.depth, anomolous, " -ugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+			else:
+				print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -C 50 -L 1000 -d 1000 -m", options.depth, anomolous, " -ugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 		else:
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -d 1000 -m", options.depth, anomolous, " -ugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+			if options.BAQ:
+				print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -L 1000 -d 1000 -m", options.depth, anomolous, " -ugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+			else:
+				print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -L 1000 -d 1000 -m", options.depth, anomolous, " -ugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 			
 		
-		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 call -O b -A -M -S", self.runname+"/"+self.name+".ploidy -c", self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"
+		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 call -P "+str(options.prior)+" -O b -A -M -S", self.runname+"/"+self.name+".ploidy -c", self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"
 		
 		#print >> bashfile, BCFTOOLS_DIR+"bcftools view -bcg", self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"
 		
 		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 index", self.runname+"/"+self.name+".bcf"
 		
-		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 call -O b -A -M -v -S", self.runname+"/"+self.name+".ploidy -c", self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+"_variant.bcf"
+		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 call -P "+str(options.prior)+" -O b -A -M -v -S", self.runname+"/"+self.name+".ploidy -c", self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+"_variant.bcf"
 		
 		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 index", self.runname+"/"+self.name+"_variant.bcf"
 				
@@ -603,14 +581,9 @@ class SNPanalysis:
 			print >> bashfile, "rm", self.runname+"/tmp.*"
 
 		#produce pseudosequence if requested
-		#if options.pseudosequence==True:
-		#print MY_SCRIPTS_DIR+"samtools_pileup_2_pseudosequence.py -p", self.runname+"/"+self.name+".pileup", "-b", self.runname+"/"+self.name+".bam", "-r", options.ratio, "-q", options.snpquality, "-o", self.runname+"/"+self.name
 		if options.pseudosequence:
 			print >> bashfile, MY_SCRIPTS_DIR+"bcf_2_pseudosequence-1.2.py -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
-			#print >> bashfile, 'cat '+self.runname+"/"+self.name+'.dna >> '+options.output+".aln"
-			#print >> bashfile, 'gzip -f '+self.runname+"/"+self.name+'.dna '+self.runname+"/"+self.name+'.mfa '+self.runname+"/"+self.name+'.pileup '+self.runname+"/"+self.name+'*.plot'
-		if options.plots:
-			print >> bashfile, 'gzip -f '+self.runname+"/"+self.name+'*.plot'
+			
 		if not options.LSF:
 			print >> bashfile, MY_SCRIPTS_DIR+'heterozygosity_plot.py -b', self.runname+"/"+self.name+".bcf -o", self.runname+"/"+self.name+"_contamination_plot.pdf", "-r", options.ratio, "-d", options.depth, "-D", options.stranddepth, "-q", options.quality
 		
@@ -630,8 +603,10 @@ if __name__ == "__main__":
 	#print options, args
 	check_input_validity(options, args)
 	
-	
-	if options.version=="latest" or options.version=="0.7.4":
+	if options.version=="0.7.6":
+		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.7.6/bin/smalt"
+		newsmalt=True
+	elif options.version=="latest" or options.version=="latest" or options.version=="0.7.4":
 		SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.7.4/smalt_x86_64"
 		newsmalt=True
 	elif options.version=="0.6.4":
