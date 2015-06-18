@@ -117,6 +117,7 @@ def get_user_options():
 	#parser.add_option("-Q", "--strandquality", action="store", dest="strandquality", help="Minimum per strand base quality [default= %default]", default=60, type="int")
 	group.add_option("-R", "--ratio", action="store", dest="ratio", help="SNP/Mapping quality ratio cutoff [default= %default]", default=0.8, type="float")
 	group.add_option("-P", "--prior", action="store", dest="prior", help="mutation rate (use bigger for greater sensitivity) [default= %default]", default=0.001, type="float")
+	group.add_option("-C", "--call_type", action="store", dest="call", help="bcftools caller (choose from c for old algorithm or m for multiallelic) [default= %default]", default="m", type="choice", choices=["c", "m"])
 	
 	#group.add_option("-S", "--SNPquality", action="store", type="int", dest="snpquality", help="Minimum site mapping quality for SNP calling [default= %default]", default=90, metavar="INT")
 	#group.add_option("-R", "--ratio", action="store", type="float", dest="ratio", help="SNP/site mapping quality ratio cutoff [default= %default]", default=0.75, metavar="FLOAT")
@@ -484,8 +485,15 @@ class SNPanalysis:
 		
 	def makepileup_from_sam(self, ref, bashfile):
 		
+		#Sort and mark duplicates
+		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 sort', self.runname+"/tmp1.bam", self.runname+"/tmpsort"
+		print >> bashfile, PICKARD_DIR+" MarkDuplicates INPUT="+self.runname+"/tmpsort.bam OUTPUT="+self.runname+"/tmp1.bam METRICS_FILE="+self.runname+"/"+self.name+"_metrics.txt"
+		print >> bashfile, "rm", self.runname+"/tmpsort.bam"
+		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 sort', self.runname+"/tmp1.bam", self.runname+"/"+self.name
+		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 index', self.runname+"/"+self.name+".bam"
+		
 		#Add read groups and fix smalt header
-		print >> bashfile, SAMTOOLS_DIR+"samtools view -H", self.runname+"/tmp1.bam | sed 's/SO:unknown/SO:coordinate/g' | sed 's/\\x00//g'  >", self.runname+"/tmphead.sam"
+		print >> bashfile, SAMTOOLS_DIR+"samtools view -H", self.runname+"/"+self.name+".bam | sed 's/SO:unknown/SO:coordinate/g' | sed 's/\\x00//g'  >", self.runname+"/tmphead.sam"
 		now = datetime.datetime.now()
 		now = now.replace(microsecond=0)
 		if options.program in ["smalt", "SMALT"]:
@@ -496,13 +504,12 @@ class SNPanalysis:
 		elif options.program in ["bwa", "BWA"]:
 			print >> bashfile, 'echo "@RG\tID:'+self.name+'\tCN:Sanger\tDT:'+now.isoformat()+'\tPG:BWA MEM\tPL:ILLUMINA\tSM:'+self.name+'" >>', self.runname+"/tmphead.sam"
 		
-		#sort and mark duplicates
-		print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 reheader ", self.runname+'/tmphead.sam', self.runname+"/tmp1.bam >", self.runname+"/tmp.bam"
+		print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -b -o", self.runname+'/tmphead.bam' ,"-H", self.runname+"/"+self.name+".bam"
+		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 merge -c -p -f -r -h ', self.runname+'/tmphead.sam', self.runname+"/tmp.bam", self.runname+"/"+self.name+".bam", self.runname+'/tmphead.bam'
+		
+		#print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 reheader ", self.runname+'/tmphead.sam', self.runname+"/tmp1.bam >", self.runname+"/tmp.bam"
 		print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/tmp1.bam"
-		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 sort', self.runname+"/tmp1.bam", self.runname+"/tmpsort"
-		print >> bashfile, PICKARD_DIR+" MarkDuplicates INPUT="+self.runname+"/tmpsort.bam OUTPUT="+self.runname+"/tmp1.bam METRICS_FILE="+self.runname+"/"+self.name+"_metrics.txt"
-		print >> bashfile, "rm", self.runname+"/tmpsort.bam"
-
+		
 		#run GATK indel realignment if selected
 		if options.GATK:
 			print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 index', self.runname+"/tmp1.bam"
@@ -554,6 +561,7 @@ class SNPanalysis:
 		
 		print >>  bashfile, 'echo "'+self.name+'	1" >', self.runname+"/"+self.name+".ploidy" 
 		
+		
 		if options.program in ["bwa", "BWA"]:
 			if options.BAQ:
 				print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -C 50 -L 1000 -d 1000 -m", options.depth, anomolous, " -ugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
@@ -566,13 +574,13 @@ class SNPanalysis:
 				print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -L 1000 -d 1000 -m", options.depth, anomolous, " -ugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 			
 		
-		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 call -P "+str(options.prior)+" -O b -A -M -S", self.runname+"/"+self.name+".ploidy -c", self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"
+		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 call -P "+str(options.prior)+" -O b -A -M -S", self.runname+"/"+self.name+".ploidy -"+options.call, self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"
 		
 		#print >> bashfile, BCFTOOLS_DIR+"bcftools view -bcg", self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"
 		
 		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 index", self.runname+"/"+self.name+".bcf"
 		
-		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 call -P "+str(options.prior)+" -O b -A -M -v -S", self.runname+"/"+self.name+".ploidy -c", self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+"_variant.bcf"
+		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 call -P "+str(options.prior)+" -O b -A -M -v -S", self.runname+"/"+self.name+".ploidy -c"+options.call, self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+"_variant.bcf"
 		
 		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 index", self.runname+"/"+self.name+"_variant.bcf"
 				
@@ -682,7 +690,7 @@ if __name__ == "__main__":
 			is_zipped=True
 		elif options.program=='BWA'and pool.split('.')[-1]=="gz" :
 			is_zipped=True
-			pool='.'.join(pool.split('/')[-1].split('.')[:-1])
+			pool=originalfastqdir+'.'.join(pool.split('/')[-1].split('.')[:-1])
 			
 			#ziplist.append(pool)
 			
@@ -705,6 +713,7 @@ if __name__ == "__main__":
 #			print "File "+pool+" not found! Skipping..."
 #			continue
 		fastqdir=''
+		
 		if pool[-1]=='/':
 			pool=pool[:-1]
 		if len(pool.split('/'))>1:
