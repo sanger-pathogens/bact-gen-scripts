@@ -117,7 +117,7 @@ def get_user_options():
 	#parser.add_option("-Q", "--strandquality", action="store", dest="strandquality", help="Minimum per strand base quality [default= %default]", default=60, type="int")
 	group.add_option("-R", "--ratio", action="store", dest="ratio", help="SNP/Mapping quality ratio cutoff [default= %default]", default=0.8, type="float")
 	group.add_option("-P", "--prior", action="store", dest="prior", help="mutation rate (use bigger for greater sensitivity) [default= %default]", default=0.001, type="float")
-	group.add_option("-C", "--call_type", action="store", dest="call", help="bcftools caller (choose from c for old algorithm or m for multiallelic) [default= %default]", default="m", type="choice", choices=["c", "m"])
+	group.add_option("-C", "--call_type", action="store", dest="call", help="bcftools caller (choose from c for old algorithm or m for multiallelic) [default= %default]", default="c", type="choice", choices=["c", "m"])
 	
 	#group.add_option("-S", "--SNPquality", action="store", type="int", dest="snpquality", help="Minimum site mapping quality for SNP calling [default= %default]", default=90, metavar="INT")
 	#group.add_option("-R", "--ratio", action="store", type="float", dest="ratio", help="SNP/site mapping quality ratio cutoff [default= %default]", default=0.75, metavar="FLOAT")
