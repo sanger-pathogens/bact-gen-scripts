@@ -96,8 +96,8 @@ def get_user_options():
 	group.add_option("-S", "--ssahaquality", action="store", dest="ssahaquality", help="minimum ssaha quality score while mapping (ssaha only) [default= %default]", default=30, type="int", metavar="INT")
 	group.add_option("-E", "--maprepeats", action="store_true", dest="maprepeats", help="randomly map repeats when using SMALT (default is to not map repeats)", default=False)
 	group.add_option("-z", "--nomapid", action="store", dest="nomapid", help="Minimum identity threshold to report a mapping Specified as a positive integer or proportion of read length (smalt only) [default= %default]", default=0, type="float", metavar="float")
-	group.add_option("-G", "--GATK", action="store_false", dest="GATK", help="Turn off GATK indel realignment (it is highly recommended you use GATK indel realignment). [Default= %default]", default=True)
-	
+	group.add_option("-G", "--GATK", action="store_false", dest="GATK", help="Turn off GATK indel realignment (it is highly recommended you use GATK indel realignment). [Default= run GATK indelRealigner]", default=True)
+	group.add_option("-u", "--MarkDuplicates", action="store_false", dest="markdup", help="Turn off Mark duplicates. [Default= run Pcikard MarkDuplicates]", default=True)
 	
 	parser.add_option_group(group)
 	
@@ -486,11 +486,14 @@ class SNPanalysis:
 	def makepileup_from_sam(self, ref, bashfile):
 		
 		#Sort and mark duplicates
-		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 sort', self.runname+"/tmp1.bam", self.runname+"/tmpsort"
-		print >> bashfile, PICKARD_DIR+" MarkDuplicates INPUT="+self.runname+"/tmpsort.bam OUTPUT="+self.runname+"/tmp1.bam METRICS_FILE="+self.runname+"/"+self.name+"_metrics.txt"
-		print >> bashfile, "rm", self.runname+"/tmpsort.bam"
+		if options.markdup:
+			print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 sort', self.runname+"/tmp1.bam", self.runname+"/tmpsort"
+			print >> bashfile, PICKARD_DIR+" MarkDuplicates INPUT="+self.runname+"/tmpsort.bam OUTPUT="+self.runname+"/tmp1.bam METRICS_FILE="+self.runname+"/"+self.name+"_metrics.txt"
+			print >> bashfile, "rm", self.runname+"/tmpsort.bam"
+			
 		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 sort', self.runname+"/tmp1.bam", self.runname+"/"+self.name
 		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 index', self.runname+"/"+self.name+".bam"
+		print >> bashfile, "rm", self.runname+"/tmp1.bam"
 		
 		#Add read groups and fix smalt header
 		print >> bashfile, SAMTOOLS_DIR+"samtools view -H", self.runname+"/"+self.name+".bam | sed 's/SO:unknown/SO:coordinate/g' | sed 's/\\x00//g'  >", self.runname+"/tmphead.sam"
@@ -509,6 +512,7 @@ class SNPanalysis:
 		
 		#print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 reheader ", self.runname+'/tmphead.sam', self.runname+"/tmp1.bam >", self.runname+"/tmp.bam"
 		print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/tmp1.bam"
+		print >> bashfile, "rm", self.runname+"/"+self.name+".bam"
 		
 		#run GATK indel realignment if selected
 		if options.GATK:
@@ -542,8 +546,6 @@ class SNPanalysis:
 			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -f 2 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
 			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -F 2 -b -o", self.runname+"/"+self.name+"_unpaired.bam", self.runname+"/tmp.bam"
 		
-		
-		print >> bashfile, "rm", self.runname+"/tmp.bam", self.runname+"/tmp1.bam"	
 		
 		#index the bam file, to get the bai file.
 		print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 index",  self.runname+"/"+self.name+".bam"
@@ -580,7 +582,7 @@ class SNPanalysis:
 		
 		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 index", self.runname+"/"+self.name+".bcf"
 		
-		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 call -P "+str(options.prior)+" -O b -A -M -v -S", self.runname+"/"+self.name+".ploidy -c"+options.call, self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+"_variant.bcf"
+		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 call -P "+str(options.prior)+" -O b -A -M -v -S", self.runname+"/"+self.name+".ploidy -"+options.call, self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+"_variant.bcf"
 		
 		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 index", self.runname+"/"+self.name+"_variant.bcf"
 				
@@ -590,10 +592,14 @@ class SNPanalysis:
 
 		#produce pseudosequence if requested
 		if options.pseudosequence:
-			print >> bashfile, MY_SCRIPTS_DIR+"bcf_2_pseudosequence-1.2.py -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
+			if options.call=="m":
+				print >> bashfile, MY_SCRIPTS_DIR+"bcf_2_pseudosequence-1.2.py -A -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
+			elif options.call=="c":
+				print >> bashfile, MY_SCRIPTS_DIR+"bcf_2_pseudosequence-1.2.py -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
 			
-		if not options.LSF:
-			print >> bashfile, MY_SCRIPTS_DIR+'heterozygosity_plot.py -b', self.runname+"/"+self.name+".bcf -o", self.runname+"/"+self.name+"_contamination_plot.pdf", "-r", options.ratio, "-d", options.depth, "-D", options.stranddepth, "-q", options.quality
+			
+		#if not options.LSF:
+		#	print >> bashfile, MY_SCRIPTS_DIR+'heterozygosity_plot.py -b', self.runname+"/"+self.name+".bcf -o", self.runname+"/"+self.name+"_contamination_plot.pdf", "-r", options.ratio, "-d", options.depth, "-D", options.stranddepth, "-q", options.quality
 		
 	
 	

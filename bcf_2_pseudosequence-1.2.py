@@ -56,6 +56,7 @@ def main():
 	group.add_option("-q", "--QUAL", action="store", dest="QUAL", help="Minimum base quality [default= %default]", default=50.0, type="float", metavar="float")
 	group.add_option("-m", "--MQUAL", action="store", dest="MQUAL", help="Minimum mapping quality [default= %default]", default=0.0, type="float", metavar="float")
 	group.add_option("-a", "--AF1", action="store", dest="AF1", help="Minimum allele frequency (you would expect an AF of 1 for haploid SNPs). For non-SNP bases, the program will use 1- this number. [default= %default]", default=0.95, type="float")
+	group.add_option("-A", "--noAF1", action="store_false", dest="useAF1", help="Do not use AF1 for filtering. [default= use AF1]", default=True)
 	group.add_option("-c", "--CI95", action="store", dest="CI95", help="Maximum 95% confidence interval variation from AF. [default= %default]", default=0.0, type="float", metavar="float")
 	group.add_option("-S", "--strandbias", action="store", dest="strand_bias", help="p-value cutoff for strand bias. [default= %default]", default=0.001, type="float", metavar="float")
 	group.add_option("-Q", "--baseqbias", action="store", dest="baseq_bias", help="p-value cutoff for base quality bias. [default= %default]", default=0.0, type="float", metavar="float")
@@ -344,6 +345,9 @@ if __name__ == "__main__":
 		if BASEINFO["ALT"]=="." or BASEINFO["INFO"]["DP4rratio"]>=0.5:
 			SNP=False
 		
+		if options.useAF1 and not "AF1" in BASEINFO["INFO"]:
+			SNP=False
+		
 		
 		if BASEINFO["QUAL"]<options.QUAL:
 			keep=False
@@ -398,11 +402,11 @@ if __name__ == "__main__":
 			keep=False
 			rratiofail+=1
 			failedfilters.append("RRA"+str(options.ratio))
-		if not SNP and "AF1" in BASEINFO["INFO"] and BASEINFO["INFO"]["AF1"]>(1-options.AF1):
+		if options. useAF1 and not SNP and "AF1" in BASEINFO["INFO"] and BASEINFO["INFO"]["AF1"]>(1-options.AF1):
 			keep=False
 			AFfail+=1
 			failedfilters.append("AF"+str(1-options.AF1))
-		if SNP and BASEINFO["INFO"]["AF1"]<options.AF1:
+		if if options.useAF1 and SNP and BASEINFO["INFO"]["AF1"]<options.AF1:
 			#print BASEINFO["POS"], "13"
 			keep=False
 			AFfail+=1
@@ -556,7 +560,8 @@ if __name__ == "__main__":
 	print >> out,'  Reverse depth:', rdepthfail
 	print >> out,'  Forward SNP ratio:', fratiofail
 	print >> out,'  Reverse SNP ratio:', rratiofail
-	print >> out,'  Allele frequency:', AFfail
+	if options.useAF1:
+		print >> out,'  Allele frequency:', AFfail
 	print >> out,'Reasons for SNP specific base call rejections:'
 	print >> out,'  Heterozygous SNP calls:', heterocount
 	print >> out,'  Strand bias:', strandbiasfail
