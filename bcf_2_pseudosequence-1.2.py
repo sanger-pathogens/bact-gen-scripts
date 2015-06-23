@@ -406,7 +406,7 @@ if __name__ == "__main__":
 			keep=False
 			AFfail+=1
 			failedfilters.append("AF"+str(1-options.AF1))
-		if if options.useAF1 and SNP and BASEINFO["INFO"]["AF1"]<options.AF1:
+		if options.useAF1 and SNP and BASEINFO["INFO"]["AF1"]<options.AF1:
 			#print BASEINFO["POS"], "13"
 			keep=False
 			AFfail+=1
