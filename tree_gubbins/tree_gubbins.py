@@ -35,10 +35,10 @@ def main():
 	parser.add_option("-o", "--output_prefix", action="store", dest="output", help="Output prefix", default="")
 	parser.add_option("-s", "--significance", action="store", dest="significance", help="Significance cutoff level [default= %default]", default=0.05, type="float", metavar="FLOAT")
 	parser.add_option("-p", "--permutations", action="store", dest="permutations", help="Number of permutations to run to test significance [default= %default]", default=100, type="int", metavar="INT")
-	parser.add_option("-m", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root output tree pdf [default= %default]", default=False, metavar="INT")
+	parser.add_option("-m", "--midpoint", action="store_true", dest="midpoint", help="Midpoint root output tree pdf [default= %default]", default=False)
 	parser.add_option("-l", "--ladderise", action="store", choices=['right', 'left'], dest="ladderise", help="ladderise tree (choose from right or left) [default= %default]", type="choice", default=None)
+	parser.add_option("-i", "--iterative", action="store_true", dest="iterative", help="Run in iterative mode, which allows nested clusters. Default = do not run iteratively (much faster)", default=False)
 	
-
 
 	return parser.parse_args()
 
@@ -75,13 +75,14 @@ def read_tree(treefile):
 	opened=False
 	for treeschema in ["nexus", "newick"]:#["beast-summary-tree",  "nexus", "newick"]:
 		try: 
-			t = dendropy.Tree.get_from_path(treefile, schema=treeschema, as_rooted=True, preserve_underscores=True, case_insensitive_taxon_labels=False, set_node_attributes=True, extract_comment_metadata=True)
+			t = dendropy.Tree.get_from_path(treefile, schema=treeschema, rooting='force-rooted', preserve_underscores=True, extract_comment_metadata=True)
 			opened=True
 			t.schema=treeschema
 			break
 		except dendropy.utility.error.DataParseError:
+			print "DataParseError"
 			continue
-		except ValueError as e:
+		except StandardError as e:
 			print "Encountered ValueError while trying to read tree file as", treeschema+":", e
 			continue
 			
@@ -128,6 +129,7 @@ def get_clade_lengths(t, treelength, node_count):
 					node.downstream_set.update(child.downstream_set)
 		else:
 			node.downstream_set.add(node.taxon.label)
+		#print float(node.downstream_count)/2, len(node.downstream_set)
 			
 	return t
 
@@ -166,7 +168,7 @@ def getlikelihood(N, C, n, c):
 	return likelihood
 
 
-def get_tree_node_likelihoods(t, treelength, node_count, multiplier):
+def get_tree_node_likelihoods(t, treelength, node_count, multiplier, verbose=False):
 	likelihoods=[]
 	for node in t.postorder_internal_node_iter():
 		if node.edge_length!=None:
@@ -178,11 +180,14 @@ def get_tree_node_likelihoods(t, treelength, node_count, multiplier):
 		
 		if (node.downstream_count)>1 and (node.upstream_count+1)>0 and (multiplier*treelength)/node_count>((multiplier)*node.downstream_length)/node.downstream_count:
 			node.downstream_likelihood=getlikelihood(multiplier*treelength, node_count, (multiplier)*node.downstream_length, node.downstream_count)
-			likelihoods.append([node.downstream_likelihood, node, "d"])
-			
+			likelihoods.append([node.downstream_likelihood, node, "d", multiplier, node.downstream_length, node.downstream_count])
+			if verbose:
+				print node, len(node.downstream_set), node.downstream_length, node.downstream_count, node.downstream_likelihood
 		if (node.upstream_count)>1 and (node.downstream_count+1)>0 and (multiplier*treelength)/node_count>((multiplier)*node.upstream_length)/node.upstream_count:
 			node.upstream_likelihood=getlikelihood(multiplier*treelength, node_count, (multiplier)*node.upstream_length, node.upstream_count)
-			likelihoods.append([node.upstream_likelihood, node, "u"])
+			likelihoods.append([node.upstream_likelihood, node, "u", multiplier, node.upstream_length, node.upstream_count])
+			if verbose:
+				print node, (float(node_count)/2)-len(node.downstream_set), node.upstream_length, node.upstream_count, node.upstream_likelihood
 	
 	return likelihoods
 
@@ -200,6 +205,9 @@ if __name__ == "__main__":
 	#Do some checking of the input files
 	
 	check_input_validity(options, args)
+	
+	if options.iterative:
+		print "Running in iterative mode"
 
 	
 	try:
@@ -216,7 +224,8 @@ if __name__ == "__main__":
 	i=1
 	while significant:
 		significant=False
-		print "Iteration", i
+		if options.iterative:
+			print "Iteration", i
 		
 		node_count=0.0
 		
@@ -244,10 +253,10 @@ if __name__ == "__main__":
 		multiplier=node_count/min_length
 		treelength=float(tree.length())
 		
-		get_clade_lengths(tree, treelength, node_count)
+		tree=get_clade_lengths(tree, treelength, node_count)
 		
 		
-		likelihoods=get_tree_node_likelihoods(tree, treelength, node_count, multiplier)
+		likelihoods=get_tree_node_likelihoods(tree, treelength, node_count, multiplier, verbose=False)
 		
 		likelihoods.sort()
 		
@@ -290,7 +299,7 @@ if __name__ == "__main__":
 					node.edge_length=lengths[y]
 					y+=1
 				
-			get_clade_lengths(new_tree, treelength, node_count)
+			new_tree=get_clade_lengths(new_tree, treelength, node_count)
 			tlikelihoods=get_tree_node_likelihoods(new_tree, treelength, node_count, multiplier)
 			tlikelihoods.sort()
 			try:
@@ -302,7 +311,10 @@ if __name__ == "__main__":
 		test_values.reverse()
 		
 		removedset=set([])
-		for likelihood in likelihoods[:1]:
+#		for likelihood in likelihoods[:1]:
+		for x, likelihood in enumerate(likelihoods):
+			if options.iterative and x>0:
+				break
 			node=likelihood[1]
 			
 			bettercount=0.0
@@ -312,6 +324,8 @@ if __name__ == "__main__":
 				t+=1
 			
 			pvalue=(float(options.permutations)-bettercount)/options.permutations
+			
+			#correction for multiple testing
 			
 			if likelihood[2]=="d":	
 				cluster=likelihood[1].downstream_set
@@ -323,7 +337,7 @@ if __name__ == "__main__":
 				continue
 			
 			if pvalue<=options.significance:
-				clusters.append([i, cluster, pvalue, likelihood[0]])
+				clusters.append([i+x, cluster, pvalue, likelihood[0], likelihood[3], likelihood[4], likelihood[5]])
 				significant=True
 				
 				taxa_to_prune=[]
@@ -345,6 +359,8 @@ if __name__ == "__main__":
 			for j, taxon in enumerate(taxa):
 				singletons.append([taxon, i+j])
 		i+=1
+		if not options.iterative:
+			break
 		
 		
 		
@@ -352,10 +368,14 @@ if __name__ == "__main__":
 	if len(clusters)>0:
 		print "Printing output csv"
 		output=open(options.output+".csv", "w")
-		print >> output, ",".join(["Taxon", "Iteration", "p-value:c:"+str(1.0/options.permutations)+":"+str(options.significance), "Likelihood"])
+		if options.iterative:
+			iterative="Iteration"
+		else:
+			iterative="Cluster"
+		print >> output, ",".join(["Taxon", iterative, "p-value:c:"+str(1.0/options.permutations)+":"+str(options.significance), "Likelihood:c", "Multiplier:c", "Length:c", "Count:c"])
 		for x, cluster in enumerate(clusters):
 			for taxon in list(cluster[1]):
-				print >> output, ",".join(map(str,[taxon, cluster[0], cluster[2], cluster[3]]))
+				print >> output, ",".join(map(str,[taxon, cluster[0], cluster[2], cluster[3], cluster[4], cluster[5], cluster[6],  cluster[5]/cluster[6]]))
 		output.close()
 			
 		print "Drawing tree"
@@ -369,8 +389,10 @@ if __name__ == "__main__":
 			lad=""
 		else:
 			lad="-L "+options.ladderise
-		os.system("~/scripts/iCANDY.py -t "+options.tree+" "+mid+" "+lad+" -m "+options.output+".csv -a 2 -C 2,2,3 -r deltran -O portrait -o "+options.output+".pdf")
-		
+		if options.iterative:
+			os.system("~sh16/scripts/iCANDY.py -t "+options.tree+" "+mid+" "+lad+" -m "+options.output+".csv -a 2 -C 2,2,3,6,7 -r deltran -O portrait -o "+options.output+".pdf")
+		else:
+			os.system("~sh16/scripts/iCANDY.py -t "+options.tree+" "+mid+" "+lad+" -m "+options.output+".csv -a 2 -C 2,2,4,3,6,7 -r deltran -O portrait -o "+options.output+".pdf")
 		print "Printing PLINK output file"
 		output=open(options.output+"_plink.txt", "w")
 		

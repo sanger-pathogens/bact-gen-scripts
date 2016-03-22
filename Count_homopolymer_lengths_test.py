@@ -36,6 +36,7 @@ def get_user_options():
 	parser.add_option("-m", "--min", action="store", dest="min", help="minimum length of homopolymer to analyse", default=6, type="int")
 	parser.add_option("-o", "--output", action="store", dest="output", help="output file name prefix", default="", metavar="FILE")
 	parser.add_option("-s", "--skip", action="store_true", dest="skip", help="Skip homopolymers for which no sample mean varies from reference number", default=False)
+	parser.add_option("-t", "--tandem", action="store", dest="tandem", help="File containing positions of tandem repeats. csv file containing rows of location,repeat", default=False)
 	parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Print verbose output", default=False)
 
 #	parser.add_option("-f", "--features", action="store", dest="features", help="feature keys to use as homopolymer regions [default=%default]", default="misc_feature", metavar="FILE")

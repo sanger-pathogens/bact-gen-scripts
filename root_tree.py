@@ -47,30 +47,33 @@ if __name__ == "__main__":
 	sys.stdout.flush()
 	
 	try:
-		tree_string = open(options.tree).read()
+		tree_strings = open(options.tree).readlines()
 	except IOError:
 		DoError("Cannot open tree file "+options.tree)
-	tree = Trees.Tree(tree_string, rooted=True)
-	
-	
-	if options.outgroup!="":
-		print "Rooting tree on", options.outgroup
-		sys.stdout.flush()
-		tree.root_with_outgroup(outgroup=options.outgroup)
-	else:
-		print "Midpoint rooting tree"
-		tree=Si_nexus.midpoint_root(tree)
-
-	
-	
-	#Print tree
-	
-	treestring=Si_nexus.tree_to_string(tree,plain=False,ladderize=options.ladderise)#tree with branch lengths and support
-
-	if treestring[-1]!=";":
-		treestring=treestring+";"
-		
-	
 	handle = open(options.outputfile, "w")
-	print >> handle, treestring
+	for tree_string in tree_strings:
+		
+		tree = Trees.Tree(tree_string, rooted=True)
+		
+		
+		if options.outgroup!="":
+			print "Rooting tree on", options.outgroup
+			sys.stdout.flush()
+			tree.root_with_outgroup(outgroup=options.outgroup)
+		else:
+			print "Midpoint rooting tree"
+			tree=Si_nexus.midpoint_root(tree)
+	
+		
+		
+		#Print tree
+		
+		treestring=Si_nexus.tree_to_string(tree,plain=False,ladderize=options.ladderise)#tree with branch lengths and support
+	
+		if treestring[-1]!=";":
+			treestring=treestring+";"
+				
+		
+		
+		print >> handle, treestring
 	handle.close()

@@ -22,7 +22,7 @@ def DoError(errorstring):
 
 def main():
 
-	usage = "usage: %prog [options] <list of fasta assemblies>"
+	usage = "usage: %prog [options] <list of bam files>"
 	parser = OptionParser(usage=usage)
 	
 	parser.add_option("-r", "--reference", action="store", dest="reference", help="Reference sequence file.", default="", metavar="FILE")

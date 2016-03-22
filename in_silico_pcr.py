@@ -300,9 +300,9 @@ if __name__ == "__main__":
 						if p1min>=p2max and (p1min-p2max)<=patterns[primername][2] and (p1min-p2max)>=patterns[primername][3] and p1[1]!=p2[1]:
 							found=True
 							if count==0:
-								print >> primeroutput[primername], ">"+seq
+								print >> primeroutput[primername], ">"+options.prefix+seq
 							else:
-								print >> primeroutput[primername], ">"+seq+"_"+str(count+1)
+								print >> primeroutput[primername], ">"+options.prefix+seq+"_"+str(count+1)
 							count+=1
 							if options.incprimer:
 								print >> primeroutput[primername], revcomp(seqs[seq][p2min:p1max])
@@ -336,9 +336,9 @@ if __name__ == "__main__":
 						elif p2min>=p1max and (p2min-p1max)<=patterns[primername][2] and p1[1]!=p2[1]:
 							found=True
 							if count==0:
-								print >> primeroutput[primername], ">"+seq
+								print >> primeroutput[primername], ">"+options.prefix+seq
 							else:
-								print >> primeroutput[primername], ">"+seq+"_"+str(count+1)
+								print >> primeroutput[primername], ">"+options.prefix+seq+"_"+str(count+1)
 							count+=1
 							if options.incprimer:
 								print >> primeroutput[primername], seqs[seq][p1min:p2max]
@@ -376,9 +376,9 @@ if __name__ == "__main__":
 							if (p2min+len(seqs[seq]))>=p1max and ((p2min+len(seqs[seq]))-p1max)<=patterns[primername][2] and p1[1]!=p2[1]:
 								found=True
 								if count==0:
-									print >> primeroutput[primername], ">"+seq
+									print >> primeroutput[primername], ">"+options.prefix+seq
 								else:
-									print >> primeroutput[primername], ">"+seq+"_"+str(count+1)
+									print >> primeroutput[primername], ">"+options.prefix+seq+"_"+str(count+1)
 								count+=1
 								if options.incprimer:
 									print >> primeroutput[primername], seqs[seq][p1min:]+seqs[seq][:p2max]
@@ -414,9 +414,9 @@ if __name__ == "__main__":
 							elif (p1min+len(seqs[seq]))>=p2max and ((p1min+len(seqs[seq]))-p2max)<=patterns[primername][2] and ((p1min+len(seqs[seq]))-p2max)>=patterns[primername][3] and p1[1]!=p2[1]:
 									found=True
 									if count==0:
-										print >> primeroutput[primername], ">"+seq
+										print >> primeroutput[primername], ">"+options.prefix+seq
 									else:
-										print >> primeroutput[primername], ">"+seq+"_"+str(count+1)
+										print >> primeroutput[primername], ">"+options.prefix+seq+"_"+str(count+1)
 									count+=1
 									if options.incprimer:
 										print >> primeroutput[primername], revcomp(seqs[seq][:p1max])+revcomp(seqs[seq][p2min:])

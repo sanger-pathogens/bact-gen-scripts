@@ -9,6 +9,7 @@ import os, sys
 sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/site-packages/reportlab-3.1.8-py2.7-linux-x86_64.egg')
 sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/site-packages/')
 sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/')
+sys.path.insert(1, '/nfs/users/nfs_s/sh16/scripts/modules/')
 import dendropy
 import string, re
 import random
@@ -21,7 +22,7 @@ from colorsys import hsv_to_rgb
 #on my laptop
 #sys.path.extend(map(os.path.abspath, ['/Users/sh16/Documents/scripts/modules/']))
 #on pcs4
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+#sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 from Si_general import *
 from Si_SeqIO import *
 #from Si_nexus import midpoint_root, tree_to_string
@@ -52,8 +53,10 @@ import datetime
 #SAMTOOLS_DIR="/Users/sh16/Applications/samtools-0.1.18/"
 #BCFTOOLS_DIR="/Users/sh16/Applications/samtools-0.1.18/bcftools/"
 #on pcs4
-SAMTOOLS_DIR="/nfs/users/nfs_s/sh16/samtools-0.1.17/"
-BCFTOOLS_DIR="/nfs/users/nfs_s/sh16/samtools-0.1.17/bcftools/"
+OLD_SAMTOOLS_DIR="/nfs/users/nfs_s/sh16/samtools-0.1.17/"
+OLD_BCFTOOLS_DIR="/nfs/users/nfs_s/sh16/samtools-0.1.17/bcftools/"
+SAMTOOLS_DIR=""
+BCFTOOLS_DIR=""
 
 #################################
 # Set up some global converters #
@@ -138,6 +141,7 @@ def main():
 	group.add_option("-k", "--nometadatakey", action="store_false", dest="show_metadata_key", help="Do not show metadata keys. [default=show keys]", default=True)
 	group.add_option("-r", "--parsimony_reconstruction", action="store", dest="transformation", help="Reconstruct colours across branches using parsimony. Select from acctran or deltran transformations [default=%default]", default=None, type="choice", choices=['acctran', 'deltran'])
 	group.add_option("-i", "--suffix", action="store", dest="suffix", help="suffix to remove from filenames", default="")
+	group.add_option("-W", "--listcolours", action="store_true", dest="printcolours", help="Print list of available colours for columns and exit", default=False)
 	
 	parser.add_option_group(group)
 	
@@ -1159,10 +1163,10 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			date_chunks=floor(date_range)
 			if date_chunks>10:
 				while date_chunks>10:
-					date_chunks=round(date_chunks/10)
-			if date_chunks<1:
-				while date_chunks<1:
-					date_chunks=round(date_chunks*10)
+					date_chunks=round(date_chunks/2)
+			if date_chunks<5:
+				while date_chunks<5:
+					date_chunks=round(date_chunks*2)
 			
 			
 			if options.time_type=="years":
@@ -1395,7 +1399,6 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			else:
 				name_colours=[colors.black]
 		
-			
 		
 		#If a node is hilighted, draw the hilight box now
 		if clade_hilight!=None:
@@ -4442,13 +4445,14 @@ class control_options:
 		self.bcf_minimum_feature_length=1#minimum size for variants on bcf tracks (in points)
 		
 		#metadata column colour options
-		self.metadata_colour_start_angle=0.0#angle on HSV colour circle to start metadata colour ranges (e.g. red=0, green=120, blue=240)
-		self.metadata_colour_end_angle=240.0#angle on HSV colour circle to end metadata colour ranges (e.g. red=0, green=120, blue=240)
+		self.metadata_colour_start_angle=240.0#angle on HSV colour circle to start metadata colour ranges (e.g. red=0, green=120, blue=240)
+		self.metadata_colour_end_angle=0.0#angle on HSV colour circle to end metadata colour ranges (e.g. red=0, green=120, blue=240)
 		self.metadata_colour_start_saturation=0.8#Saturation value for metadata colour ranges
 		self.metadata_colour_end_saturation=0.8#Saturation value for metadata colour ranges
 		self.metadata_colour_start_value=0.9#Value parameter to use for metadata colour ranges
 		self.metadata_colour_end_value=0.9#Value parameter to use for metadata colour ranges
-		self.metadata_colour_direction="anticlockwise"#Direction of metadata colour range (e.g. clockwise = blue -> green -> red -> blue, anticlockwise = blue -> red -> green -> blue)
+		self.metadata_colour_direction="clockwise"#Direction of metadata colour range (e.g. clockwise = blue -> green -> red -> blue, anticlockwise = blue -> red -> green -> blue)
+		self.metadata_missing_colour="black"
 		
 		#metadata label options
 		self.metadata_column_labels=True#show metadata column labels (True or False)
@@ -4626,7 +4630,8 @@ class control_options:
 			'metadata_column_label': 'boolean',
 			'metadata_column_label_font': 'choice',
 			'metadata_column_label_size': 'float',
-			'metadata_column_label_angle': 'float'
+			'metadata_column_label_angle': 'float',
+			'metadata_missing_colour': 'choice'
 			
 			
 			
@@ -4686,7 +4691,8 @@ class control_options:
 			'embl_tick_mark_label_font': gfont_list,
 			'embl_feature_label_font': gfont_list,
 			'metadata_colour_direction':["clockwise", "anticlockwise", "counterclockwise"],
-			'metadata_column_label_font': gfont_list
+			'metadata_column_label_font': gfont_list,
+			'metadata_missing_colour': ["white", "black"]
 			
 			}
 		
@@ -4741,6 +4747,16 @@ if __name__ == "__main__":
 
 	(options, args) = main()
 	
+	if options.printcolours:
+		list_of_colours=[]
+		for key in colourconverter:
+			list_of_colours.append(key)
+		list_of_colours.sort()
+		for colour in list_of_colours:
+			print colour
+		print "See http://html-color-codes.info/color-names/"
+		sys.exit()
+	
 	if (options.colour_by_annotation!="" and options.figtree and options.transformation in ["acctran", "deltran"]):
 		print "Can only colour tree once. You have chosen to colour by Figtree colours, annotations and parsimony!"
 		sys.exit()
@@ -4778,6 +4794,7 @@ if __name__ == "__main__":
 			DoError("Cannot understand your value for the plot minimum. Must be a float or float followed by x/X")
 		if plotmaxx not in ["x", "x"]:
 			DoError("Cannot understand your value for the plot minimum. Must be a float or float followed by x/X")
+	
 	
 	
 	if options.names_as_shapes!="auto":
@@ -4979,6 +4996,8 @@ if __name__ == "__main__":
 					for x, column in enumerate(colour_columns):
 						if column==0:
 							continue
+						if column>len(words):
+							DoError("Metadata row does not have enough columns: "+','.join(words))
 						try:
 							colour_column_entry=int(words[column-1].strip())
 						except ValueError:
@@ -5148,7 +5167,10 @@ if __name__ == "__main__":
 									value=newtrack.datamin
 								elif value>newtrack.datamax:
 									value=newtrack.datamax
-							
+								
+								if newtrack.datamax==newtrack.datamin:
+									proportion=newtrack.datamin=(newtrack.datamax-(newtrack.datamax/1000000))
+									
 								proportion=((float(value)-newtrack.datamin)/((newtrack.datamax-newtrack.datamin)))
 								
 								h=(start_angle/360)+(direction_multiplier*(((proportion/360)*rotation_degrees)))
@@ -5555,7 +5577,10 @@ if __name__ == "__main__":
 								namecolour=namecolours[terminal][x]
 								terminal_node.name_colour.append(colour_dict[x][namecolour])
 							else:
-								terminal_node.name_colour.append((0,0,0))
+								if control.metadata_missing_colour=="white":
+									terminal_node.name_colour.append((255,255,255))
+								else:
+									terminal_node.name_colour.append((0,0,0))
 								namecolours[terminal][x]="-"
 					else:
 						terminal_node.name_colour.append((0,0,0))
@@ -5565,7 +5590,10 @@ if __name__ == "__main__":
 					terminal_node.name_colour=[]
 					if len(colour_columns)>0:
 						for x in xrange(len(colour_columns)):
-							terminal_node.name_colour.append((0,0,0))
+							if control.metadata_missing_colour=="white":
+								terminal_node.name_colour.append((255,255,255))
+							else:
+								terminal_node.name_colour.append((0,0,0))
 							namecolours[terminal][x]="-"
 #					else:
 #						terminal_node.name_colour.append((0,0,0))

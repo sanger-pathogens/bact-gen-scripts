@@ -74,12 +74,12 @@ if __name__ == "__main__":
 		print "\nDistribution of branch lengths (*=one branch):\n"
 		for br in brlens:
 			if curbrlen!=float("Inf") and br!=curbrlen:
-				print curbrlen, "*"*curcount
+				print curbrlen, "*"*curcount, curcount
 				curcount=0
 			curbrlen=br
 			curcount+=1
 		print
-		
+		print type(brlens[0]), brlens[0], brlens[:1]
 		minbrlen=brlens[0]
 		nextbrlen=float("Inf")
 		for br in brlens:

@@ -876,7 +876,7 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 		print "branch has fewer than 100 nongap sites. Results would be poor... skipping"
 		return [] 
 	
-	windowcounts=[0]*(int(lennogaps))
+	#windowcounts=[0]*(int(lennogaps))
 	
 	window=int(float(lennogaps)/(totalsnps/10))
 	
@@ -901,24 +901,24 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 	
 	#sys.exit()
 	
-	for position in snpposns:
-		
-		y=position-(window/2)
-		curposn=int(y)
-		while (y+window)>curposn:
-			if curposn<0:
-				actualposn=lennogaps+curposn
-			elif curposn>(lennogaps-1):
-				actualposn=curposn-lennogaps
-			else:
-				actualposn=curposn
-			try:
-				windowcounts[actualposn]=windowcounts[actualposn]+1
-			except IndexError:
-				print "Error: window position is out of range of alignment length"
-				print curposn, actualposn, position, len(windowcounts), lennogaps, window
-				sys.exit()
-			curposn=curposn+1
+	#for position in snpposns:
+	#	
+	#	y=position-(window/2)
+	#	curposn=int(y)
+	#	while (y+window)>curposn:
+	#		if curposn<0:
+	#			actualposn=lennogaps+curposn
+	#		elif curposn>(lennogaps-1):
+	#			actualposn=curposn-lennogaps
+	#		else:
+	#			actualposn=curposn
+	#		try:
+	#			windowcounts[actualposn]=windowcounts[actualposn]+1
+	#		except IndexError:
+	#			print "Error: window position is out of range of alignment length"
+	#			print curposn, actualposn, position, len(windowcounts), lennogaps, window
+	#			sys.exit()
+	#		curposn=curposn+1
 
 	
 	
@@ -930,7 +930,7 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 	startingdensity=float(totalsnps)/lennogaps
 	while added and totalsnps>=options.minsnps:
 	
-	
+		
 		window=int(float(lennogaps)/(totalsnps/10))
 		
 		if window<100:
@@ -940,6 +940,8 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 			
 		if window>float(lennogaps)/10:
 			window=int(float(lennogaps)/10)
+			
+
 #		downstreamnamelist=[]
 #		for taxon in downstreamtaxa:
 #			downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
@@ -967,7 +969,25 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 		
 		
 		if cutoff!=lastcutoff:
-		
+			windowcounts=[0]*(int(lennogaps))
+			for position in snpposns:
+			
+				y=position-(window/2)
+				curposn=int(y)
+				while (y+window)>curposn:
+					if curposn<0:
+						actualposn=lennogaps+curposn
+					elif curposn>(lennogaps-1):
+						actualposn=curposn-lennogaps
+					else:
+						actualposn=curposn
+					try:
+						windowcounts[actualposn]=windowcounts[actualposn]+1
+					except IndexError:
+						print "Error: window position is out of range of alignment length"
+						print curposn, actualposn, position, len(windowcounts), lennogaps, window
+						sys.exit()
+					curposn=curposn+1
 			newblocks=get_blocks_from_windowcounts(binsnps, windowcounts, cutoff, nongapposns)
 				
 		else:
@@ -978,6 +998,8 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 		
 		added=False
 		newblocks.sort()
+		print node, newblocks
+		sys.stdout.flush()
 		testblock=0
 		while len(newblocks)>testblock and added==False:
 #			if node==1:		
@@ -1016,11 +1038,12 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 				pvalue=1.0-round(pvalue,10)
 				pvaluethreshold=(0.05/float(lennogaps))
 				
-#				downstreamnamelist=[]
-#				for taxon in downstreamtaxa:
-#					downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
-#				
-#				print node, downstreamnamelist, blocklen, pvaluethreshold, snpcount, pvalue, oldtotalsnps, 1-threshold
+				downstreamnamelist=[]
+				for taxon in downstreamtaxa:
+					downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
+				
+				print node, downstreamnamelist, blocklen, pvaluethreshold, snpcount, pvalue, oldtotalsnps, 1-threshold
+				sys.stdout.flush()
 				if pvalue<pvaluethreshold:
 					blocks.append([newblocks[testblock][1], newblocks[testblock][2], newblocks[testblock][0], snpcount, pvalue])
 					added=True
@@ -1930,14 +1953,14 @@ if __name__ == "__main__":
 #	os.system("mv "+prefix+"_iteration"+str(iteration)+".tre "+prefix+"_Final.tre")
 	if options.reference=="":
 		if options.outgroup!="":
-			os.system("~sh16/scripts/iCANDY.py -q taxa -M -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+prefix+"_rec.tab")
+			os.system("~sh16/scripts/iCANDY.py -q taxa -M -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb.pdf "+prefix+"_rec.tab")
 		else:
-			os.system("~sh16/scripts/iCANDY.py -q taxa -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+prefix+"_rec.tab")
+			os.system("~sh16/scripts/iCANDY.py -q taxa -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb.pdf "+prefix+"_rec.tab")
 	else:
 		if options.outgroup!="":
-			os.system("~sh16/scripts/iCANDY.py -q taxa -M  -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+options.reference+" "+prefix+"_rec.tab")
+			os.system("~sh16/scripts/iCANDY.py -q taxa -M  -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb.pdf "+options.reference+" "+prefix+"_rec.tab")
 		else:
-			os.system("~sh16/scripts/iCANDY.py -q taxa -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+options.reference+" "+prefix+"_rec.tab")
+			os.system("~sh16/scripts/iCANDY.py -q taxa -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb.pdf "+options.reference+" "+prefix+"_rec.tab")
 	
 	os.system("rm "+prefix+"temp.tmp baseml.ctl rst rst1 2base.t mlb lnf rub rstnew rstnew2 RAxML_*.SNPS_"+prefix+" "+prefix+".tre SNPS_"+prefix+".phy")
 	

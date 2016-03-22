@@ -86,7 +86,7 @@ def get_user_options():
 	group = OptionGroup(parser, "Mapping Options")
 	group.add_option("-p", "--program", action="store", type="choice", dest="program", choices=["bwa","ssaha", "smalt", "BWA","SSAHA", "SMALT"], help="Mapping program to use (choose from bwa, ssaha or smalt) [default= %default]", default="smalt")
 	group.add_option("-1", "--nomap", action="store_false", dest="domapping", help="Do not remap data - only available when input is bam (default is to map)", default=True)
-	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3", "0.6.4", "0.7.4", "0.7.6"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3, 0.6.4, 0.7.4, 0.7.6 and latest (currently 0.7.6) [default= %default]", default="0.5.8")
+	group.add_option("-v", "--smaltversion", action="store", type="choice", dest="version", choices=["latest","0.5.8", "0.6.3", "0.6.4", "0.7.4", "0.7.6"], help="Version of SMALT to use (for backward compatibility). Choose from 0.5.8, 0.6.3, 0.6.4, 0.7.4 and latest (currently 0.7.4) [default= %default]", default="0.5.8")
 	group.add_option("-H", "--human", action="store_true", dest="human", help="Mapping against human (or other large euk)", default=False)
 	#group.add_option("-l", "--length", action="store", dest="readlength", help="Read length [default= %default]", default=54, type="int", metavar="INT")
 	group.add_option("-s", "--single", action="store_false", dest="pairedend", help="reads are single ended (not paired)", default=True)
@@ -638,7 +638,13 @@ if __name__ == "__main__":
 	else:
 		print "Unknown smalt version"
 		sys.exit()
-
+	
+	output=open("MM_command_"+datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S")+".txt", "w")
+	
+	print >> output, ' '.join(sys.argv)
+	
+	output.close()
+	
 	print '\nChecking input files...'
 	sys.stdout.flush()
 	

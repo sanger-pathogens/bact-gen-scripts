@@ -9,6 +9,7 @@ from Bio.Alphabet import IUPAC, Gapped
 from optparse import OptionParser, OptionGroup
 import glob
 from random import *
+from math import ceil
 
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 from Si_general import *
@@ -95,7 +96,7 @@ def main():
 	parser.add_option_group(group)
 	group = OptionGroup(parser, "LSF options")
 	group.add_option("-q", "--queue", action="store", dest="queue", help="LSF queue [Choices = normal, long, basement, hugemem (farm only)] [Default = %default]", default="normal", type="choice", choices=["normal","long", "basement", "hugemem"])
-	group.add_option("-M", "--memory", action="store", dest="mem", help="Amount of memory required for analysis (Gb). e.g. 10 means ask for at least 10Gb. [Default= %default]", default=1, type="int")
+	group.add_option("-M", "--memory", action="store", dest="mem", help="Amount of memory required for analysis (Gb). e.g. 10 means ask for at least 10Gb. If memory is set to 0, it will be automatically (over)estimated as long as the model is AA+GAMMA, AA+CAT, DNA+GAMMA or DNA+CAT. For any other model it will be set back to the default of 1Gb. [Default= %default]", default=1, type="float")
 	group.add_option("-O", "--bsubout", action="store_true", dest="bsubout", help="Save bsub outputs", default=False)
 	group.add_option("-E", "--bsuberr", action="store_true", dest="bsuberr", help="Save bsub errors", default=False)
 	group.add_option("-n", "--threads", action="store", dest="threads", help="Number of threads to run - allows parallelisation of the analysis. Max=32. [Default= %default]", default=1, type="int")
@@ -172,8 +173,8 @@ def check_input_validity(options, args):
 		if userinput=='y':
 			for f in filelist:
 				os.remove(f)
-	elif options.mem>1000 or options.mem<=0:
-		DoError('Memory requirement (-M) must be greater than 0 and less than 1Tb')
+	elif options.mem>1000 or (options.mem<0.1 and options.mem!=0):
+		DoError('Memory requirement (-M) must be greater than or equal to 0.1Gb (100Mb) and less than 1000Gb (1Tb) or 0 for automatic calculation')
 	elif options.mem>30:
 		print "Warning: You have requested", str(options.mem)+"Mb of memory. Some queues may not have sufficient memory to run this job"
 	if options.proportion<=0 or options.proportion>1:
@@ -362,7 +363,9 @@ if __name__ == "__main__":
 	
 	print "Creating final alignment of", taxacount, "taxa and",  alnlen-len(toremove), "sites"
 	
+	
 	output_handle=open(tmpname+".phy", "w")
+	fasta_output_handle=open("rr_"+options.suffix+".aln", "w")
 	
 	print >> output_handle, taxacount, alnlen-len(toremove)
 	for seq in alignment:
@@ -371,14 +374,51 @@ if __name__ == "__main__":
 			if not x in toremove:
 				newseq.append(base)
 		print >> output_handle, seq, ''.join(newseq)
+		print >> fasta_output_handle, ">"+seq
+		print >> fasta_output_handle, ''.join(newseq)
 	
 	
 	output_handle.close()
+	fasta_output_handle.close()
+	
+	n=float(taxacount)
+	m=float(alnlen-len(toremove))
+	if options.analysistype=="protein":
+		if options.asrv=="GAMMA":
+			automem=((n-2) * m * (80 * 8))/1073741824
+			print "Memory calculation suggests maximum memory usage would be "+str(round(automem, 4))+"Gb"
+		elif options.asrv=="CAT":
+			automem=((n-2) * m * (20 * 8))/1073741824
+			print "Memory calculation suggests maximum memory usage would be "+str(round(automem, 4))+"Gb"
+		else:
+			automem==1
+	elif options.analysistype=="DNA":
+		if options.asrv=="GAMMA":
+			automem=((n-2) * m * (16 * 8))/1073741824
+			print "Memory calculation suggests maximum memory usage would be "+str(round(automem, 4))+"Gb"
+		elif options.asrv=="CAT":
+			automem=((n-2) * m * (4 * 8))/1073741824
+			print "Memory calculation suggests maximum memory usage would be "+str(round(automem, 4))+"Gb"
+		else:
+			automem=1
+	else:
+		automem=1
 	
 	
-	
-
-
+	if options.mem==0:
+		if automem<0.1:
+			automem=0.1
+		if automem>=1:
+			print "Setting memory to "+str(int(ceil(automem)))+"Gb"
+		else:
+			print "Setting memory to "+str(int(ceil(automem*1000)))+"Mb"
+			
+		if m>10000:
+			print "Please note that for alignment with large numbers of sites it's more likely that this is an overestimate of the memory usage. Please consider calculating the number of site patterns and using the online memory calculator"
+		options.mem=int(ceil(automem*1000))
+	else:
+		options.mem=int(options.mem*1000)
+		
 	
 	#MEM(AA+GAMMA)    = (n-2) * m * (80 * 8) bytes
 	#MEM(AA+CAT)           = (n-2) * m * (20 * 8) bytes
@@ -386,7 +426,7 @@ if __name__ == "__main__":
 	#MEM(DNA+CAT)        = (n-2) * m * (4  * 8)  bytes
 	#1GB=1073741824 bytes
 	#1MB=1048576 bytes
-
+	
 	
 	host=getclustername()
 	print "Running on "+host
@@ -426,7 +466,7 @@ if __name__ == "__main__":
 	#bsubcommand.append("-R \"select[hname!='pcs4l']\"")
 	
 	if options.mem>0:
-		bsubcommand.append("-M "+str(options.mem)+'000 -R \'select[mem>'+str(options.mem)+'000] rusage[mem='+str(options.mem)+'000]\'')
+		bsubcommand.append("-M "+str(options.mem)+' -R \'select[mem>'+str(options.mem)+'] rusage[mem='+str(options.mem)+']\'')
 	else:
 		bsubcommand.append("-M 1000 -R \'select[mem>1000] rusage[mem=1000]\'")
 		

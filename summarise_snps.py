@@ -440,7 +440,7 @@ def dnbyds(CDS, SNPseq, CDSbasenumbers, genetic_code_number=1):
 	#print "N =", N
 	#print "S =", S
 	#print "dN/dS =", dN/dS
-	
+	#print [N, S, dN, dS, pN, pS, varianceS, varianceN, z, (len(CDS)-gapcount), Nd, Sd, Fisher], SNPtype, AAfromtype, AAtotype
 	return [N, S, dN, dS, pN, pS, varianceS, varianceN, z, (len(CDS)-gapcount), Nd, Sd, Fisher], SNPtype, AAfromtype, AAtotype
 	
 
@@ -506,24 +506,28 @@ def concatenate_CDS_sequences(record, sequence, ref):
 			my_ref.append(str(tref_seq))
 			rmed=[]
 			if part.strand==-1:
-				for x, y in enumerate(xrange(end, start, -1)):	
+				for x, y in enumerate(xrange(end-1, start-1, -1)):	
 					if str(tref_seq)[x]!="-":
 						tCDSbasenumbers.append(y)
 					else:
 						rmed.append([x,y,str(tref_seq)[x], my_ref[-1][x], my_seq[-1][x]])
+			
 			else:
 				for x, y in enumerate(xrange(start, end)):	
 					if str(tref_seq)[x]!="-":
 						tCDSbasenumbers.append(y)
 					else:
 						rmed.append([x,y,str(tref_seq)[x], my_ref[-1][x], my_seq[-1][x]])
+			#print start, end, tCDSbasenumbers, part.strand
+			#if part.strand==-1:
+			#	sys.exit()
 		
 		toprint=[len(my_seq)]
 		my_seq=''.join(my_seq)
 		my_ref=''.join(my_ref)
 		
 		toprint+=[str(tref_seq), rmed, len(my_seq), len(my_ref), len(tCDSbasenumbers), feature.strand, start, end, end-start, x]
-		#print len(str(my_seq.replace("-",""))) % 3, len(str(my_ref.replace("-",""))) % 3
+		#print feature.id, feature.strand, len(str(my_seq.replace("-",""))) % 3, len(str(my_ref.replace("-",""))) % 3
 		for base in xrange(len(my_ref)):
 			if my_ref[base]=="-" and my_seq[base]=="-":
 				continue
@@ -559,6 +563,7 @@ def concatenate_CDS_sequences(record, sequence, ref):
 			#print len(ms), len(concatenated_sequence)
 			
 	#print len(''.join(concatenated_sequence)), len(''.join(concatenated_ref)), len(CDSbasenumbers)
+	#print CDSbasenumbers
 	return ''.join(concatenated_sequence), ''.join(concatenated_ref), CDSbasenumbers
 
 
@@ -817,8 +822,9 @@ if __name__ == "__main__":
 					
 		def add_subfeature_positions(feature, pseudo, featurenum):
 			if feature.type in ['CDS', 'rRNA', 'tRNA']:
-				#print feature.id, feature.type, feature.location, start,end+1, len(embldata)
+				#print feature.id, feature.strand, feature.type, feature.location, len(embldata)
 				for part in feature.location.parts:
+					#print part.start, part.end
 					start=ref_pos_to_aln_pos[part.start]
 					end=ref_pos_to_aln_pos[part.end]
 					for x in xrange(start,end):

@@ -5,6 +5,7 @@
 use strict;
 use warnings;
 use Getopt::Std;
+#use Data::Dumper;
 
 &main;
 exit;
@@ -14,7 +15,7 @@ sub main {
   my $command = shift(@ARGV);
   my %func = (subsam=>\&subsam, listsam=>\&listsam, fillac=>\&fillac, qstats=>\&qstats, varFilter=>\&varFilter,
 			  hapmap2vcf=>\&hapmap2vcf, ucscsnp2vcf=>\&ucscsnp2vcf, filter4vcf=>\&varFilter, ldstats=>\&ldstats,
-			  gapstats=>\&gapstats, splitchr=>\&splitchr, vcf2fq=>\&vcf2fq);
+			  gapstats=>\&gapstats, splitchr=>\&splitchr, vcf2fq=>\&vcf2fq, vcf2fa=>\&vcf2fa);
   die("Unknown command \"$command\".\n") if (!defined($func{$command}));
   &{$func{$command}};
 }
@@ -142,10 +143,9 @@ sub ldstats {
 }
 
 sub qstats {
-  my %opts = (r=>'', s=>0.02, v=>undef);
+  my %opts = (r=>'', s =>0.02, v=>undef);
   getopts('r:s:v', \%opts);
-  die("Usage: vcfutils.pl qstats [-r ref.vcf] <in.vcf>\n
-Note: This command discards indels. Output: QUAL #non-indel #SNPs #transitions #joint ts/tv #joint/#ref #joint/#non-indel \n") if (@ARGV == 0 && -t STDIN);
+  die("Usage: vcfutils.pl qstats [-r ref.vcf] <in.vcf>\nNote: This command discards indels. Output: QUAL #non-indel #SNPs #transitions #joint ts/tv #joint/#ref #joint/#non-indel \n") if (@ARGV == 0 && -t STDIN);
   my %ts = (AG=>1, GA=>1, CT=>1, TC=>1);
   my %h = ();
   my $is_vcf = defined($opts{v})? 1 : 0;
@@ -465,7 +465,6 @@ sub hapmap2vcf {
 	}
   }
 }
-
 sub vcf2fq {
   my %opts = (d=>3, D=>100000, Q=>10, l=>5, o=>'sequence');
   getopts('d:D:Q:l:o:', \%opts);
@@ -484,7 +483,7 @@ Options: -d INT    minimum depth          [$opts{d}]
   my $_d = $opts{d};
   my $_D = $opts{D};
   my $_o = $opts{o};
-  
+
 
   #my %het = (AC=>'M', AG=>'R', AT=>'W', CA=>'M', CG=>'S', CT=>'Y', GA=>'R', GC=>'S', GT=>'K', TA=>'W', TC=>'Y', TG=>'K');
   my %het = (AC=>'N', AG=>'N', AT=>'N', CA=>'N', CG=>'N', CT=>'N', GA=>'N', GC=>'N', GT=>'N', TA=>'N', TC=>'N', TG=>'N');
@@ -540,8 +539,8 @@ sub v2q_post_process {
 	$end = length($$seq) if ($end > length($$seq));
 	substr($$seq, $beg, $end - $beg) = lc(substr($$seq, $beg, $end - $beg));
   }
-  print "\>${seqname}_${chr}\n"; &v2q_print_str($seq);
-  #print "+\n"; &v2q_print_str($qual);
+  print "\@${seqname}_${chr}\n"; &v2q_print_str($seq);
+  print "+\n"; &v2q_print_str($qual);
 }
 
 sub v2q_print_str {
@@ -550,6 +549,118 @@ sub v2q_print_str {
   for (my $i = 0; $i < $l; $i += 60) {
 	print substr($$s, $i, 60), "\n";
   }
+}
+sub vcf2fa {
+  my %opts = (d=>3, D=>100000, Q=>10, l=>5, o=>'sequence');
+  getopts('d:D:Q:l:o:', \%opts);
+  die(qq/
+Usage:   vcfutils.pl vcf2fa [options] <all-site.vcf>
+
+Options: -d INT    minimum depth          [$opts{d}]
+         -D INT    maximum depth          [$opts{D}]
+         -Q INT    min RMS mapQ           [$opts{Q}]
+         -l INT    INDEL filtering window [$opts{o}]
+	 	 -o INT    output file name       [$opts{l}]
+\n/) if (@ARGV == 0 && -t STDIN);
+
+  my ($last_chr, $seq, $qual, $last_pos, @gaps);
+  my $_Q = $opts{Q};
+  my $_d = $opts{d};
+  my $_D = $opts{D};
+  my $_o = $opts{o};
+
+
+  #my %het = (AC=>'M', AG=>'R', AT=>'W', CA=>'M', CG=>'S', CT=>'Y', GA=>'R', GC=>'S', GT=>'K', TA=>'W', TC=>'Y', TG=>'K');
+  my %het = (AC=>'N', AG=>'N', AT=>'N', CA=>'N', CG=>'N', CT=>'N', GA=>'N', GC=>'N', GT=>'N', TA=>'N', TC=>'N', TG=>'N');
+  my %chrLens = ();
+  $last_chr = '';
+  while (<>) {
+  	# get contig lengths
+  	if(/^##contig/) {  # e.g. ##contig=<ID=Shigella_sonnei_Ss046_1MB_to_3MB,length=2000001>
+  		$_ =~ /ID=(.+),length=(\d+)/;
+  		print STDERR "chr name ".$1."\n";
+  		print STDERR "chr len  ".$2."\n";
+  		$chrLens{ $1 } = $2;
+  	}
+  	next if (/^#/);
+	my @t = split;
+	if ($last_chr ne $t[0]) { ## new chromosome time :)
+	  $_o = $last_chr if ($_o eq 'sequence');
+	  &v2a_post_process($_o, $last_chr, \$seq, \$qual, \@gaps, $opts{l}, \%chrLens) if ($last_chr);
+	  ($last_chr, $last_pos) = ($t[0], 0);
+	  $seq = $qual = '';
+	  @gaps = ();
+	}
+	die("[vcf2fa] unsorted input\n") if ($t[1] - $last_pos < 0);
+	if ($t[1] - $last_pos > 1) {
+	  $seq .= 'N' x ($t[1] - $last_pos - 1);
+	  $qual .= '!' x ($t[1] - $last_pos - 1);
+	}
+	if (length($t[3]) == 1 && $t[7] !~ /INDEL/ && $t[4] =~ /^([A-Za-z.])(,[A-Za-z])*$/) { # a SNP or reference
+	  my ($ref, $alt) = ($t[3], $1);
+	  my ($b, $q);
+	  $q = $1 if ($t[7] =~ /FQ=(-?[\d\.]+)/);
+	  if ($q < 0) {
+		$_ = ($t[7] =~ /AF1=([\d\.]+)/)? $1 : 0;
+		$b = ($_ < .5 || $alt eq '.')? $ref : $alt;
+		$q = -$q;
+	  } else {
+		$b = $het{"$ref$alt"};
+		$b ||= 'N';
+	  }
+	  $b = lc($b);
+	  $b = uc($b) if (($t[7] =~ /MQ=(\d+)/ && $1 >= $_Q) && ($t[7] =~ /DP=(\d+)/ && $1 >= $_d && $1 <= $_D));
+	  $b = "N" if ($b eq lc($b));
+	  $q = int($q + 33 + .499);
+	  $q = chr($q <= 126? $q : 126);
+	  $seq .= $b;
+	  $qual .= $q;
+	} elsif ($t[4] ne '.') { # an INDEL
+	  push(@gaps, [$t[1], length($t[3])]);
+	}
+	$last_pos = $t[1];
+  }
+  $_o = $last_chr if ($_o eq 'sequence');
+  &v2a_post_process($_o, $last_chr, \$seq, \$qual, \@gaps, $opts{l}, \%chrLens);
+}
+
+sub v2a_post_process {
+  my ($seqname, $chr, $seq, $qual, $gaps, $l, $chrLens) = @_;
+  # what is the expected length?
+  # print "Data dumper:\n";
+  # print Dumper(%$chrLens);
+  # print "\n\n";
+
+  my $exp_len = $chrLens -> { $chr } or die "Chromosome ".$chr." couldn't be associated with a genome length";
+  print STDERR "Writing ".$chr." with expected length ".$exp_len."\n";
+
+  for my $g (@$gaps) {
+	my $beg = $g->[0] > $l? $g->[0] - $l : 0;
+	my $end = $g->[0] + $g->[1] + $l;
+	$end = length($$seq) if ($end > length($$seq));
+	substr($$seq, $beg, $end - $beg) = lc(substr($$seq, $beg, $end - $beg));
+  }
+  my $bases2add = '';
+  if ( length($$seq) < $exp_len ) {
+  	print STDERR "\t(adding some Ns as the length ".length($$seq)." was less than expected)\n";
+  	my $bases_short = $exp_len - length($$seq);
+  	$bases2add = 'N'x$bases_short
+  }
+  print "\>${seqname}_${chr}\n"; &v2a_print_str($seq, \$bases2add);
+  #print "+\n"; &v2q_print_str($qual);
+}
+
+sub v2a_print_str {
+  my ($s, $add) = @_;
+  my $x = $$s.$$add;
+  my $l = length($x);
+  for (my $i = 0; $i < $l; $i += 60) {
+	print substr($x, $i, 60), "\n";
+  }
+ #  my $l = length($$s);
+ #  for (my $i = 0; $i < $l; $i += 60) {
+	# print substr($$s, $i, 60), "\n";
+ #  }
 }
 
 sub usage {
@@ -565,6 +676,7 @@ Command: subsam       get a subset of samples
 
          varFilter    filtering short variants (*)
          vcf2fq       VCF->fastq (**)
+         vcf2fa       VCF->fasta (**)
 
 Notes: Commands with description ending with (*) may need bcftools
        specific annotations.

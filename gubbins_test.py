@@ -7,11 +7,14 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Nexus import Trees, Nodes
 from Bio.Align import AlignInfo
+from Bio.Align import MultipleSeqAlignment
 from Bio.Align.Generic import Alignment
+from Bio.Alphabet import generic_dna
 from Bio.Alphabet import IUPAC, Gapped
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from optparse import OptionParser
 import math
+from numpy import mean, median, max, min, std, bincount, argmax
 #sys.path.extend(map(os.path.abspath, ['/usr/lib/python2.4/site-packages/']))
 #sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.5/site-packages/']))
 #from scipy.stats import chi2
@@ -22,8 +25,19 @@ from Si_SeqIO import *
 from Si_nexus import draw_ascii_tree, tree_to_string, midpoint_root
 import random
 import numpy
+import subprocess
 
 #Requires Biopython and Pysam
+
+
+
+####################
+# Set some globals #
+####################
+
+
+pcs4_RAxML_DIR="/software/pathogen/external/applications/RAxML/RAxML-7.0.4/raxmlHPC"
+farm3_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC"
 
 
 ##########################################
@@ -51,6 +65,7 @@ def main():
 	parser.add_option("-P", "--PAML", action="store_false", dest="runpaml", help="do not run PAML to reconstruct ancestral sequences [default=run PAML]", default=True)
 	parser.add_option("-x", "--oldPAML", action="store_true", dest="usepreviouspamlrun", help="start from previous paml data", default=False)
 	parser.add_option("-g", "--geodesic", action="store_true", dest="geodesic", help="calculate geodesic distance between trees", default=False)
+	parser.add_option("-G", "--show_gaps", action="store_true", dest="show_gaps", help="Include gap locations in recombinations tab file and NSPs tab file", default=False)
 	parser.add_option("-r", "--reference", action="store", dest="reference", help="reference embl file to add to final diagram (optional)", default="")
 	
 	return parser.parse_args()
@@ -65,24 +80,48 @@ def DoError(ErrorString):
 	sys.exit()
 
 
+####################
+# Get cluster name #
+####################
+
+def getclustername():
+	mycluster="unknown"
+	try:
+		lsid_output=subprocess.check_output(["lsid"])
+		
+		for line in lsid_output.split("\n"):
+			words=line.strip().split()
+			if len(words)>0:
+				if words[1]=="cluster":
+					mycluster=words[4]
+	
+		
+	except StandardError:
+		return mycluster
+	
+	return mycluster
+
+
 ###################################################################
 # Function to create a SNP alignment #
 ###################################################################
 
 def Create_SNP_alignment(alignment, SNPlocations):
 	
-	alphabet = Gapped(IUPAC.unambiguous_dna)
-
-	SNPalignment = Alignment(alphabet)
+	#alphabet = Gapped(IUPAC.unambiguous_dna)
 
 	
+
+	seqlist=[]
 	for record in alignment:
 		SNPseq=""
 		
 		for base in SNPlocations:
 			SNPseq=SNPseq+record.seq[base].replace("-","?")
-		
-		SNPalignment.add_sequence(record.id, SNPseq)
+			
+		seqlist.append(SeqRecord(Seq(SNPseq, generic_dna), id=str(record.id)))
+	
+	SNPalignment = MultipleSeqAlignment(seqlist, alphabet=generic_dna)
 		
 	
 	return SNPalignment
@@ -108,6 +147,8 @@ def Find_SNP_and_gap_locations(alignment):
 	count=0
 	total=0.0
 	
+	constants={'A':0, 'C':0, 'G':0, 'T':0, 'N':0}
+	
 	for x in range(0,alignment.get_alignment_length()):
 
 		count=count+1
@@ -131,11 +172,17 @@ def Find_SNP_and_gap_locations(alignment):
 			if len(foundbases)>1:
 				SNPlocations.append(x)
 				break
+			
+		if len(foundbases)==1:
+			constants[foundbases[0]]+=1
+		elif len(foundbases)==0:
+			constants["N"]+=1
+	
 	
 
 	print "100.00% complete\n"#Found %d SNP locations" % len(SNPlocations),
 	sys.stdout.flush()
-	return SNPlocations, gaplocations
+	return SNPlocations, gaplocations, constants
 
 
 
@@ -155,7 +202,7 @@ def Find_SNP_locations(alignment, startinglocations):
 	
 	count=0
 	total=0.0
-	
+	constants={'A':0, 'C':0, 'G':0, 'T':0, 'N':0}
 	for x in startinglocations:
 
 		count=count+1
@@ -176,11 +223,14 @@ def Find_SNP_locations(alignment, startinglocations):
 			if len(foundbases)>1:
 				SNPlocations.append(x)
 				break
-	
+		if len(foundbases)==1:
+			constants[foundbases[0]]+=1
+		elif len(foundbases)==0:
+			constants["N"]+=1
 
 	print "100.00% complete\n"#Found %d SNP locations" % len(SNPlocations),
 	sys.stdout.flush()
-	return SNPlocations
+	return SNPlocations, constants
 
 
 
@@ -492,7 +542,7 @@ def detect_recombination_using_moving_windows_old(binsnps, treeobject, node, dau
 					loc=loc+1
 			
 			if inblock=="y":
-				print binsnps[nongapposns[x]:nongapposns[position]:-1]
+#				print binsnps[nongapposns[x]:nongapposns[position]:-1]
 #				print "here"
 #				sys.exit()
 				if nongapposns[(x-loc)]+1>blockstart:
@@ -556,8 +606,9 @@ def detect_recombination_using_moving_windows_old(binsnps, treeobject, node, dau
 				print >> tabout, 'FT                   /taxa="'+sequencenames[daughternames[daughter][1]]+'"'
 				print >> tabout, 'FT                   /node="'+nodenames[1]+'->'+sequencenames[daughternames[daughter][1]]+'"'
 				print >> tabout, 'FT                   /SNP_count='+str(snpcount)	
-				print >> tabout, 'FT                   /N_count='+str(Ncount)	
-
+				print >> tabout, 'FT                   /N_count='+str(Ncount)
+				
+				
 
 	
 	return blocks
@@ -874,9 +925,9 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 	added=True
 	
 	blocks=[]
-	
+	testblock=0
 	lastcutoff=-1
-	
+	startingdensity=float(totalsnps)/lennogaps
 	while added and totalsnps>=options.minsnps:
 	
 	
@@ -889,15 +940,18 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 			
 		if window>float(lennogaps)/10:
 			window=int(float(lennogaps)/10)
-		#print lennogaps, totalsnps, window
-		
-		#print float(lennogaps)/(totalsnps), (totalsnps/float(lennogaps))
+#		downstreamnamelist=[]
+#		for taxon in downstreamtaxa:
+#			downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
+#		print node, downstreamnamelist, lennogaps, totalsnps, window
+#		
+#		print float(lennogaps)/(totalsnps), (totalsnps/float(lennogaps))
 		
 		threshold=1-(0.05/(float(lennogaps)/(window/10)))
 		cutoff=0
 		pvalue=0.0
 		while pvalue<=threshold:
-			#print window, cutoff, pvalue, threshold, totalsnps, reduce_factorial(float(window),cutoff), reduce_factorial(window,cutoff), reduce_factorial(cutoff,cutoff)
+#			print window, cutoff, pvalue, threshold, totalsnps, reduce_factorial(float(window),cutoff), reduce_factorial(window,cutoff), reduce_factorial(cutoff,cutoff)
 			part1=reduce_factorial(window,cutoff)-reduce_factorial(cutoff,cutoff)
 			part2=math.log((float(totalsnps)/lennogaps),10)*cutoff
 			part3=math.log((1.0-(float(totalsnps)/lennogaps)),10)*(window-cutoff)
@@ -916,37 +970,38 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 		
 			newblocks=get_blocks_from_windowcounts(binsnps, windowcounts, cutoff, nongapposns)
 				
-				
-			
 		else:
-			newblocks=newblocks[1:]
+			newblocks=newblocks[testblock:]
 		
 		lastcutoff=cutoff
 		
 		
 		added=False
-		if len(newblocks)>0:
-			newblocks.sort()			
-			
+		newblocks.sort()
+		print newblocks
+		testblock=0
+		while len(newblocks)>testblock and added==False:
+#			if node==1:		
+#				print newblocks
 			snpcount=0
 			oldtotalsnps=totalsnps
 			oldlennogaps=lennogaps
-			
-			for x, snp in enumerate(binsnps[newblocks[0][1]:newblocks[0][2]+1]):
+			oldbinsnps=binsnps[:]
+			for x, snp in enumerate(binsnps[newblocks[testblock][1]:newblocks[testblock][2]+1]):
 				if snp==1:
 					snpcount+=1
-					binsnps[newblocks[0][1]+x]=0
+					binsnps[newblocks[testblock][1]+x]=0
 					totalsnps-=1
 				lennogaps-=1
 			
 			
 			if snpcount>=options.minsnps:
 				numgaps=0
-				for x in binsnps[newblocks[0][1]:newblocks[0][2]+1]:
+				for x in binsnps[newblocks[testblock][1]:newblocks[testblock][2]+1]:
 					if x==2:
 						numgaps+=1
 				
-				blocklen=(((newblocks[0][2]+1)-newblocks[0][1])-numgaps)
+				blocklen=(((newblocks[testblock][2]+1)-newblocks[testblock][1])-numgaps)
 				x=0
 				pvalue=0.0
 				while x<snpcount:
@@ -961,15 +1016,30 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 					x+=1
 				pvalue=1.0-round(pvalue,10)
 				pvaluethreshold=(0.05/float(lennogaps))
-				#print blocklen, pvaluethreshold, snpcount, pvalue, oldtotalsnps, 1-threshold
+				
+#				downstreamnamelist=[]
+#				for taxon in downstreamtaxa:
+#					downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
+#				
+				print node, downstreamnamelist, blocklen, pvaluethreshold, snpcount, pvalue, oldtotalsnps, 1-threshold
 				if pvalue<pvaluethreshold:
-					blocks.append([newblocks[0][1], newblocks[0][2], newblocks[0][0], snpcount, pvalue])
+					blocks.append([newblocks[testblock][1], newblocks[testblock][2], newblocks[testblock][0], snpcount, pvalue])
 					added=True
-
+				else:
+					lennogaps=oldlennogaps
+					totalsnps=oldtotalsnps
+					binsnps=oldbinsnps[:]
+			else:
+				lennogaps=oldlennogaps
+				totalsnps=oldtotalsnps
+				binsnps=oldbinsnps[:]
+			testblock+=1
 	
+	
+	blsnpdensity=[]
 	for block in blocks:
 		downstreamnamelist=[]
-
+		blsnpdensity.append(float(block[3])/((block[1]+1)-block[0]))
 		print >> tabout, "FT   misc_feature    "+str(block[0]+1)+".."+str(block[1]+1)
 		if node==0 and options.outgroup!="" and options.outgroup!="None":
 			
@@ -999,7 +1069,22 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 			
 		print >> tabout, 'FT                   /neg_log_likelihood='+str(block[2])
 		print >> tabout, 'FT                   /SNP_count='+str(block[3])
+		if totalsnps>0:
+			print >> tabout, 'FT                   /Recombination_to_background_SNP_ratio='+str((float(block[3])/((block[1]+1)-block[0]))/(totalsnps/lennogaps))
+		else:
+			print >> tabout, 'FT                   /Recombination_to_background_SNP_ratio=Inf'
 		print >> tabout, 'FT                   /pvalue='+str(block[4])
+	
+	if len(blocks)==0:
+		blsnpdensity=[0.0]
+	else:
+		if node==0 and options.outgroup!="" and options.outgroup!="None":
+			print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+options.outgroup, startingdensity, totalsnps, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity), cutoff, window, len(blocks)]))
+		elif treeobject.is_internal(daughter):
+			print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], startingdensity, totalsnps, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity), cutoff, window, len(blocks)]))
+		else:
+			print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], startingdensity, totalsnps, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity), cutoff, window, len(blocks)]))
+		
 	
 	return blocks
 		
@@ -1024,7 +1109,9 @@ def tree_recurse(node,treeobject):
 	if node==treeobject.root:
 		isroot=True
 		daughters=treeobject.node(node).get_succ()
+		rootnode=node
 		node=daughters[0]
+		
 		if treeobject.is_internal(node):
 			nodenames=(str(int(treeobject.node(node).get_data().support)),str(int(treeobject.node(node).get_data().support)))
 		else:
@@ -1051,10 +1138,33 @@ def tree_recurse(node,treeobject):
 	
 
 	if isroot:
-		tree_recurse(node,pamltree)
+#		downstreamtaxa=treeobject.get_taxa(node)
+#		downstreamnames1=[]
+#		for downtax in downstreamtaxa:
+#			downstreamnames1.append(sequencenames[downtax.split("_")[1]])
+#		print nodenames, node, daughters, downstreamnames1,
+#		for daughter in daughters:
+#			downstreamtaxa=treeobject.get_taxa(daughter)
+#			downstreamnames2=[]
+#			for downtax in downstreamtaxa:
+#				downstreamnames2.append(sequencenames[downtax.split("_")[1]])
+#		 	print downstreamnames2,
+#		print
+		tree_recurse(node,treeobject)
 	for daughter in daughters:
+#		downstreamtaxa=treeobject.get_taxa(node)
+#		downstreamnames1=[]
+#		for downtax in downstreamtaxa:
+#			downstreamnames1.append(sequencenames[downtax.split("_")[1]])
+#		print nodenames, node, daughters, downstreamnames1,
+#		downstreamtaxa=treeobject.get_taxa(daughter)
+#		downstreamnames2=[]
+#		for downtax in downstreamtaxa:
+#			downstreamnames2.append(sequencenames[downtax.split("_")[1]])
+#		print downstreamnames2
+
 		if not gaplocations.has_key(daughternames[daughter][0]):
-			tree_recurse(daughter,pamltree)
+			tree_recurse(daughter,treeobject)
 	
 	
 	#identify missing sites in non-terminal nodes
@@ -1083,16 +1193,20 @@ def tree_recurse(node,treeobject):
 		
 		numsnps=0
 		
-		for x in range(0,pamlalignment.get_alignment_length()):
-				
+		downstreamtaxa=treeobject.get_taxa(daughter)
+		downstreamnames=[]
+		for downtax in downstreamtaxa:
+			downstreamnames.append(sequencenames[downtax.split("_")[1]])
 			
-				
+		for x in range(0,pamlalignment.get_alignment_length()):
+
 					
 				if pamlsequences[nodenames[1]][x]=="?" or pamlsequences[daughternames[daughter][1]][x]=="?":# or pamlsequences[nodenames[1]][x]=="N" or pamlsequences[daughternames[daughter][1]][x]=="N":
 					try:
 						binsnps[AllSNPlocations[x]]=2
 					except StandardError:
 						print x, len(AllSNPlocations), len(binsnps)
+						sys.exit()
 					
 				elif pamlsequences[nodenames[1]][x]!=pamlsequences[daughternames[daughter][1]][x] and pamlsequences[daughternames[daughter][1]][x]!="N" and pamlsequences[nodenames[1]][x]!="N":
 					binsnps[AllSNPlocations[x]]=1
@@ -1103,10 +1217,7 @@ def tree_recurse(node,treeobject):
 						print >> snplocout, str(AllSNPlocations[x]+1)+",node_"+str(nodenames[1])+"->node_"+str(daughternames[daughter][1])+","+pamlsequences[nodenames[1]][x]+","+pamlsequences[daughternames[daughter][1]][x]
 						print >>snptabout, "FT   SNP             "+str(AllSNPlocations[x]+1)
 						print >>snptabout, 'FT                   /node="'+str(nodenames[1])+'->'+str(daughternames[daughter][1])+'"'
-						downstreamtaxa=treeobject.get_taxa(daughter)
-						downstreamnames=[]
-						for downtax in downstreamtaxa:
-							downstreamnames.append(sequencenames[downtax.split("_")[1]])
+						
 						print >>snptabout, 'FT                   /taxa="'+', '.join(downstreamnames)+'"'
 						print >>snptabout, 'FT                   /SNP="'+pamlsequences[nodenames[1]][x]+'->'+pamlsequences[daughternames[daughter][1]][x]+'"'
 						print >>snptabout, 'FT                   /colour=1'
@@ -1114,10 +1225,7 @@ def tree_recurse(node,treeobject):
 						print >> snplocout, str(AllSNPlocations[x]+1)+",node_"+str(nodenames[1])+"->"+str(sequencenames[daughternames[daughter][1]])+","+pamlsequences[nodenames[1]][x]+","+pamlsequences[daughternames[daughter][1]][x]
 						print >>snptabout, "FT   SNP             "+str(AllSNPlocations[x]+1)
 						print >>snptabout, 'FT                   /node="'+str(nodenames[1])+'->'+str(sequencenames[daughternames[daughter][1]])+'"'
-						downstreamtaxa=treeobject.get_taxa(daughter)
-						downstreamnames=[]
-						for downtax in downstreamtaxa:
-							downstreamnames.append(sequencenames[downtax.split("_")[1]])
+						
 						print >>snptabout, 'FT                   /taxa="'+', '.join(downstreamnames)+'"'
 						print >>snptabout, 'FT                   /SNP="'+pamlsequences[nodenames[1]][x]+'->'+pamlsequences[daughternames[daughter][1]][x]+'"'
 						print >>snptabout, 'FT                   /colour=1'
@@ -1128,6 +1236,7 @@ def tree_recurse(node,treeobject):
 		
 		y=0
 		z=0
+		
 		
 		
 		#create files to convert positions back once the 2s have been removed from binsnps
@@ -1144,6 +1253,9 @@ def tree_recurse(node,treeobject):
 				nongapposns[y]=x
 				y=y+1
 		
+		lennogaps=len(nongapposns)	
+#		if isroot:
+#			print snpposns
 
 		if numsnps>options.minsnps:
 			#print
@@ -1154,12 +1266,21 @@ def tree_recurse(node,treeobject):
 			if options.detectiontype=="movingwindow":
 				
 				blocks=detect_recombination_using_moving_windows(binsnps, treeobject, node, daughter, nodenames, daughternames, downstreamtaxa)
-					
+				if len(blocks)==0:
+					if treeobject.is_internal(daughter):
+						print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
+					else:
+						print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
 
 			else:
 				binsnplist[str(node)+"_"+str(daughter)]=binsnps
 				binsnppositions[str(node)+"_"+str(daughter)]=nongapposns
-					
+		
+		else:
+			if treeobject.is_internal(daughter):
+				print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
+			else:
+				print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
 
 
 
@@ -1256,15 +1377,13 @@ def add_node_names_to_tree(tree, pamltree):
 			nodename=str(int(pamltree.node(node).get_data().support))		
 		else:
 			return
-		
-		
-		
+
 		downstreamtaxa=pamltree.get_taxa(node)
 		downstreamnamelist=[]
 		for taxon in downstreamtaxa:
 			downstreamnamelist.append(taxon.split("_")[1])
+			#print downstreamnamelist
 		
-		print node, nodename, downstreamnamelist
 		downstreamnamelist.sort()
 		paml_node_names[' '.join(downstreamnamelist)]=nodename
 		daughters=pamltree.node(node).get_succ()
@@ -1272,8 +1391,6 @@ def add_node_names_to_tree(tree, pamltree):
 			get_paml_nodes(daughter)
 	
 	get_paml_nodes(pamltree.root)
-
-	print paml_node_names
 	
 	
 	def add_nodenames_to_tree(node):
@@ -1286,12 +1403,9 @@ def add_node_names_to_tree(tree, pamltree):
 			downstreamnamelist.append(taxon)
 		
 		downstreamnamelist.sort()
-		print node, downstreamnamelist, paml_node_names[' '.join(downstreamnamelist)]
 		daughters=tree.node(node).get_succ()
 		node_data=tree.node(node).get_data()
-		print node_data.taxon
 		node_data.taxon=paml_node_names[' '.join(downstreamnamelist)]
-		print node_data.taxon
 		tree.node(node).set_data(node_data)
 		for daughter in daughters:
 			add_nodenames_to_tree(daughter)
@@ -1335,11 +1449,16 @@ if __name__ == "__main__":
 #	sys.exit()
 	
 	sys.stdout.flush()
+	
+	if not os.path.isfile(options.alignment):
+		DoError('Cannot find file '+options.alignment)
+	
 	try:
 		alignment=read_alignment(options.alignment)
 		#alignment = AlignIO.read(open(options.alignment), "fasta")
-	except ValueError:
+	except StandardError:
 		DoError("Cannot open alignment file "+options.alignment+". Is it in the correct format?")
+
 		
 	#Create a copy of the alignment that can be changed
 	
@@ -1363,43 +1482,61 @@ if __name__ == "__main__":
 		
 		
 		
-#		
-#		
-#		#create newalignment from edited alignment for making the tree
-#		
-#		newalignment=Alignment(Gapped(IUPAC.unambiguous_dna))
-#		for record in alignment:
-#			newalignment.add_sequence(str(record.id),  str(editablealignment[record.id]))
-#			editablealignment[record.id]=record.seq
-#	
-#		#locate sites with a SNP
-#		
-#		if iteration==1:
-#			SNPlocations, gaplocations=Find_SNP_and_gap_locations(newalignment)
-#		else:
-#			SNPlocations=Find_SNP_locations(newalignment, AllSNPlocations)
-#			gaplocations=Allgaplocations.copy()
-#
-#		
-#		
-#		#create alignment of just the SNP sites
-#		if options.wholedata:
-#			SNPalignment=newalignment
-#		else:
-#			SNPalignment=Create_SNP_alignment(newalignment, SNPlocations)
-#		
-#		#print a phylip file of the SNP alignment
-#		
+		
+		
+		#create newalignment from edited alignment for making the tree
+		
+		
+		newalnlist=[]
+		for record in alignment:
+			newalnlist.append(SeqRecord(editablealignment[record.id], id=str(record.id)))
+			editablealignment[record.id]=record.seq
+		newalignment=MultipleSeqAlignment(newalnlist, alphabet=generic_dna)
+	
+		#locate sites with a SNP
+		
+		if iteration==1:
+			SNPlocations, gaplocations, constants=Find_SNP_and_gap_locations(newalignment)
+			lochandle=open(prefix+"_iteration_"+str(iteration)+"_constant_sites.txt","w")
+			print >>lochandle, "A\tC\tG\tT\tN"
+			constantslist=[]
+			for base in ['A','C','G','T', 'N']:
+				constantslist.append(constants[base])
+			print >>lochandle, '\t'.join(map(str,constantslist))
+			lochandle.close()
+		else:
+			SNPlocations, constants=Find_SNP_locations(newalignment, AllSNPlocations)
+			gaplocations=Allgaplocations.copy()
+			lochandle=open(prefix+"_iteration_"+str(iteration)+"_extra_constant_sites.txt","w")
+			print >>lochandle, "A\tC\tG\tT\tN"
+			constantslist=[]
+			for base in ['A','C','G','T', 'N']:
+				constantslist.append(constants[base])
+			print >>lochandle, '\t'.join(map(str,constantslist))
+			lochandle.close()
+		
+		
+		#create alignment of just the SNP sites
+		if options.wholedata:
+			SNPalignment=newalignment
+		else:
+			lochandle=open(prefix+"_iteration_"+str(iteration)+"_alignment_locations.txt","w")
+			print >>lochandle, "SNP alignment position\tFull alignment position"
+			for x, SNPbase in enumerate(SNPlocations):
+				print >>lochandle, '\t'.join(map(str,[x+1, SNPbase+1]))
+			lochandle.close()
+			SNPalignment=Create_SNP_alignment(newalignment, SNPlocations)
+		
+		#print a phylip file of the SNP alignment
+		
 		sequencenames={}
 		convertnameback={}
 		seqnametoindex={}
-#		
-#		handle = open("SNPS_"+prefix+".phy", "w")
-#		handleb = open(prefix+"_iteration"+str(iteration)+".aln", "w")	
-		SNPalignment=read_alignment(prefix+"_iteration"+str(iteration)+".aln")
-#		print >> handle, len(SNPalignment), SNPalignment.get_alignment_length()
+		
+		handle = open("SNPS_"+prefix+".phy", "w")
+		handleb = open(prefix+"_iteration"+str(iteration)+".aln", "w")	
+		print >> handle, len(SNPalignment), SNPalignment.get_alignment_length()
 		count=1
-		print SNPalignment
 		for record in SNPalignment:
 	
 			name="seq"+str(count)
@@ -1407,72 +1544,76 @@ if __name__ == "__main__":
 			sequencenames[name]=record.id
 			convertnameback[record.id]=name
 			seqnametoindex[name]=count-1
-			count+=1
+			
+			print >> handle, name+"  "+record.seq
+			print >> handleb, ">"+record.id
+			print >> handleb, record.seq
+	# add this back in to split the alignment into blocks of 60 bases
+	#		for f in range(0,len(record.seq),60):
+	#			if f+60< len(record.seq):
+	#				print >> handle, record.seq[f:f+60]
+	#			else:
+	#				print >> handle, record.seq[f:]
+				
+			count=count+1
+		handle.close()
+		handleb.close()
+		
+		
+		#the first time, make a copy of the SNP alignment file to be used in all future iterations of the PAML analyses
+		
+		if iteration==1:
+			os.system("cp SNPS_"+prefix+".phy AllSNPS_"+prefix+".phy")
+			AllSNPlocations=list(SNPlocations)
+			Allgaplocations=gaplocations.copy()
+			if options.maxiterations>1:
+				treedistances=open(prefix+"_treedistances.txt", "w")
+				if options.geodesic:
+					print >> treedistances, "Tree1,Tree2,Recomb SNPs in 1,Recomb SNPs in 2,Recomb SNPs in both,RF,GD,Tree1 RAxML -ll, Tree2 RAxML -ll"
+				else:
+					print >> treedistances, "Tree1,Tree2,Recomb SNPs in 1,Recomb SNPs in 2,Recomb SNPs in both,RF,Tree1 RAxML -ll, Tree2 RAxML -ll"
+		
+				
+		
+		
+		#run tree
+		
+		if (options.runtree or options.tree=="") or iteration>1:
+			
+			if os.path.isfile("RAxML_info.SNPS_"+prefix):
+				print "Removing old RAxML files"
+				os.system("rm RAxML_*.SNPS_"+prefix)
+				sys.stdout.flush()
+				
+			print "Running tree with RAxML"
+			sys.stdout.flush()
+			
+			host=getclustername()
+			if host in ["farm3", "pcs5"]:
+				RAxML=farm3_RAxML_DIR
+			else:
+				RAxML=pcs4_RAxML_DIR
+			
+			os.system(RAxML+" -f d -p "+str(randrange(1,99999))+" -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
+			
+			os.system("mv RAxML_result."+"SNPS_"+prefix+" "+prefix+"_Initial.tre")
+			options.tree=prefix+"_Initial.tre"
+			
+			#extract stats from raxml output files
+			
+			treestats=os.popen('grep "Inference\[0\]" RAxML_info.SNPS_'+prefix).read()
+			
+			alpha=float(treestats.split(":")[2].split()[0])
 
-		print sequencenames
-#			
-#			print >> handle, name+"  "+record.seq
-#			print >> handleb, ">"+record.id
-#			print >> handleb, record.seq
-#	# add this back in to split the alignment into blocks of 60 bases
-#	#		for f in range(0,len(record.seq),60):
-#	#			if f+60< len(record.seq):
-#	#				print >> handle, record.seq[f:f+60]
-#	#			else:
-#	#				print >> handle, record.seq[f:]
-#				
-#			count=count+1
-#		handle.close()
-#		handleb.close()
-#		
-#		
-#		#the first time, make a copy of the SNP alignment file to be used in all future iterations of the PAML analyses
-#		
-#		if iteration==1:
-#			os.system("cp SNPS_"+prefix+".phy AllSNPS_"+prefix+".phy")
-#			AllSNPlocations=list(SNPlocations)
-#			Allgaplocations=gaplocations.copy()
-#			if options.maxiterations>1:
-#				treedistances=open(prefix+"_treedistances.txt", "w")
-#				if options.geodesic:
-#					print >> treedistances, "Tree1,Tree2,Recomb SNPs in 1,Recomb SNPs in 2,Recomb SNPs in both,RF,GD,Tree1 RAxML -ll, Tree2 RAxML -ll"
-#				else:
-#					print >> treedistances, "Tree1,Tree2,Recomb SNPs in 1,Recomb SNPs in 2,Recomb SNPs in both,RF,Tree1 RAxML -ll, Tree2 RAxML -ll"
-#		
-#				
-#		
-#		
-#		#run tree
-#		
-#		if (options.runtree or options.tree=="") or iteration>1:
-#			
-#			if os.path.isfile("RAxML_info.SNPS_"+prefix):
-#				print "Removing old RAxML files"
-#				os.system("rm RAxML_*.SNPS_"+prefix)
-#				sys.stdout.flush()
-#				
-#			print "Running tree with RAxML"
-#			sys.stdout.flush()
-#			os.system("/software/pathogen/external/applications/RAxML/RAxML-7.0.4/raxmlHPC -f d -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
-#			
-#			os.system("mv RAxML_result."+"SNPS_"+prefix+" "+prefix+"_Initial.tre")
-#			options.tree=prefix+"_Initial.tre"
-#			
-#			#extract stats from raxml output files
-#			
-#			treestats=os.popen('grep "Inference\[0\]" RAxML_info.SNPS_'+prefix).read()
-#			
-#			alpha=float(treestats.split(":")[2].split()[0])
-#
-#			treestats=os.popen('grep "Likelihood" RAxML_info.SNPS_'+prefix).read()
-#			
-#			negloglike=float(treestats.strip().split(":")[1].replace("-",""))
-#
-#			print "RAxML -log likelihood =", negloglike
-#		else:
-#			alpha=options.alpha
-#			negloglike="Unknown"
-#	
+			treestats=os.popen('grep "Likelihood" RAxML_info.SNPS_'+prefix).read()
+			
+			negloglike=float(treestats.strip().split(":")[1].split()[0].replace("-",""))
+
+			print "RAxML -log likelihood =", negloglike
+		else:
+			alpha=options.alpha
+			negloglike="Unknown"
+	
 		#Read tree file
 		
 		print "Reading tree file"
@@ -1507,6 +1648,7 @@ if __name__ == "__main__":
 		elif options.outgroup!="None":
 			print "Midpoint rooting tree"
 			midpoint_root(tree)
+			
 			daughters=tree.node(tree.root).succ
 			if len(daughters)>2:
 				print "too many daughters in rooted tree"
@@ -1519,92 +1661,95 @@ if __name__ == "__main__":
 			tree.node(daughters[1]).set_data(daughter2_data)
 	
 		newtree=tree
-#		treestring=tree_to_string(tree, False, True, True, True,collapse=True, cutoff=1.0/(len(SNPlocations)+1))
-#		
-#		for name in sequencenames.keys():
-#			treestring=treestring.replace(name+":", sequencenames[name]+":")
-#		handle = open(prefix+"_iteration"+str(iteration)+".tre", "w")
-#		print >> handle, treestring+";"
-#		handle.close()
-#		
-#		#print treestring.replace(sequencenames[name]+":", name+":")
-#		
-#		
-##		print oldtree
-##		print newtree
-#	
-#		
-#		if iteration>1:
-#			os.system("cat "+prefix+"_iteration"+str(iteration)+".tre "+prefix+"_iteration"+str(iteration-1)+".tre | sed 's/:0.0;/;/g' > tmptrees.tre")
-#			
-#			os.system('~sh16/hashRF/hashrf tmptrees.tre 2 > rfout.tmp')
-#			try:
-#				rfout=open('rfout.tmp', 'rU').readlines()
-#				rf=float(rfout[11].split()[1])
-#			except IOError:
-#				rf="err"
-#			if options.geodesic:
-#				os.system('java -jar ~sh16/geodemaps/geodeMAPS.jar -o gdout.tmp tmptrees.tre >  /dev/null 2>&1')
-#				try:
-#					gdout=open('gdout.tmp', 'rU').readlines()
-#					gd=float(gdout[0].split()[2])
-#				except IOError:
-#					gd="err"
-#				print >> treedistances, ","+str(rf)+","+str(gd)+","+str(oldloglike)+","+str(negloglike)
-#				os.system("rm tmptrees.tre gdout.tmp rfout.tmp")
-#			else:
-#				print >> treedistances, ","+str(rf)+","+str(oldloglike)+","+str(negloglike)
-#				os.system("rm tmptrees.tre rfout.tmp")
-#				treedistances.flush()
-#			if int(rf)==0:
-#				break
-#	
-#		if oldtree.is_identical(newtree):
-#			break
-#		
-#		oldloglike=negloglike
-#		
-#		treestring=tree.to_string(False, True, True, True)
-#		for name in sequencenames.keys():
-#			treestring=treestring.replace(sequencenames[name]+":", name+":")
-#		handle = open(prefix+".tre", "w")
-#		print >> handle, treestring+";"
-#		handle.close()
-#			
-#		
-#		#If we have chosen to run paml
-#		
-#		if options.runpaml and (not options.usepreviouspamlrun or iteration>1):
-#			
-#			#create baseml control file for paml
-#			
-#			print "Running PAML to reconstruct ancestral states"
-#			sys.stdout.flush()
-#		
-#			create_baseml_control_file("AllSNPS_"+prefix+".phy", prefix+".tre", alpha)
-#			
-#			#run paml
-#			
-#			os.system("/nfs/users/nfs_m/mh10/software/paml41/bin/baseml > "+prefix+"temp.tmp")
-#
-#		elif options.usepreviouspamlrun:
-#			print "Using previous paml run"
-#		
-#		#remove spaces from rst alignment (necessary to allow easier reading of tree and ancestral sequences
-#		
-#		os.system("sed 's/node #//g' rst > rstnew")
-#		os.system('grep -a -v "^$" rstnew > rstnew2')
-#		
-#		#extract the tree with all nodes numbered from PAML rst output file
-#		
-#		print "Reading PAML tree"
-#		sys.stdout.flush()
-#
-#		negloglikefile=os.popen("tail -n 1 rub")
-#
-#		negloglike=negloglikefile.read().strip().split()[1]
-#
-#		print "PAML -log likelihood =", negloglike
+#		treestring=tree_to_string(tree, support_as_branchlengths=False,branchlengths_only=True,plain=False,plain_newick=False,collapse=True, cutoff=1.0/(len(SNPlocations)+1), treename=False, comments=False, node_names=True)
+		treestring=tree_to_string(tree, False, True, True, True,collapse=True, cutoff=1.0/(len(SNPlocations)+1))
+		
+		
+		for name in sequencenames:
+			treestring=treestring.replace(name+":", sequencenames[name]+":")
+		handle = open(prefix+"_iteration"+str(iteration)+".tre", "w")
+		print >> handle, treestring+";"
+		handle.close()
+		
+		#print treestring.replace(sequencenames[name]+":", name+":")
+		
+		
+#		print oldtree
+#		print newtree
+	
+		
+		if iteration>1:
+			os.system("cat "+prefix+"_iteration"+str(iteration)+".tre "+prefix+"_iteration"+str(iteration-1)+".tre | sed 's/:0.0;/;/g' > tmptrees.tre")
+			
+			os.system('~sh16/hashRF/hashrf tmptrees.tre 2 > rfout.tmp')
+			try:
+				rfout=open('rfout.tmp', 'rU').readlines()
+				rf=float(rfout[11].split()[1])
+			except IOError:
+				rf="err"
+			if options.geodesic:
+				os.system('java -jar ~sh16/geodemaps/geodeMAPS.jar -o gdout.tmp tmptrees.tre >  /dev/null 2>&1')
+				try:
+					gdout=open('gdout.tmp', 'rU').readlines()
+					gd=float(gdout[0].split()[2])
+				except IOError:
+					gd="err"
+				print >> treedistances, ","+str(rf)+","+str(gd)+","+str(oldloglike)+","+str(negloglike)
+				os.system("rm tmptrees.tre gdout.tmp rfout.tmp")
+			else:
+				print >> treedistances, ","+str(rf)+","+str(oldloglike)+","+str(negloglike)
+				os.system("rm tmptrees.tre rfout.tmp")
+				treedistances.flush()
+			if int(rf)==0:
+				break
+	
+		if oldtree.is_identical(newtree):
+			break
+		
+		oldloglike=negloglike
+		
+		treestring=tree.to_string(False, True, True, True)
+		for name in sequencenames:
+			treestring=treestring.replace(sequencenames[name]+":", name+":")
+		handle = open(prefix+".tre", "w")
+		print >> handle, treestring+";"
+		handle.close()
+			
+		
+		#If we have chosen to run paml
+		
+		if options.runpaml and (not options.usepreviouspamlrun or iteration>1):
+			
+			#create baseml control file for paml
+			
+			print "Running PAML to reconstruct ancestral states"
+			sys.stdout.flush()
+		
+			create_baseml_control_file("AllSNPS_"+prefix+".phy", prefix+".tre", alpha)
+			
+			#run paml
+			
+			#os.system("/nfs/users/nfs_m/mh10/software/paml41/bin/baseml > "+prefix+"temp.tmp")
+			os.system("baseml > "+prefix+"temp.tmp")
+
+		elif options.usepreviouspamlrun:
+			print "Using previous paml run"
+		
+		#remove spaces from rst alignment (necessary to allow easier reading of tree and ancestral sequences
+		
+		os.system("sed 's/node #//g' rst > rstnew")
+		os.system('grep -a -v "^$" rstnew > rstnew2')
+		
+		#extract the tree with all nodes numbered from PAML rst output file
+		
+		print "Reading PAML tree"
+		sys.stdout.flush()
+
+		negloglikefile=os.popen("tail -n 1 rub")
+
+		negloglike=negloglikefile.read().strip().split()[1]
+
+		print "PAML -log likelihood =", negloglike
 		
 		pamltreefile=os.popen('grep -a -A 1 "tree with node labels for Rod Page\'s TreeView" rstnew | tail -n 1')
 		
@@ -1619,22 +1764,11 @@ if __name__ == "__main__":
 		
 		pamltree.branchlength2support()
 		
+		#tree=add_node_names_to_tree(tree, pamltree)
+		
 		#get the root node number from the paml tree (I think this might always be 0)
 		
 		rootnode=pamltree.root
-		
-		
-		tree.display()
-		pamltree.display()
-		
-		tree=add_node_names_to_tree(tree, pamltree)
-		
-		tree.display()
-		treestring=tree_to_string(tree, support_as_branchlengths=False,branchlengths_only=True,plain=False,plain_newick=False,ladderize=None, collapse=False, cutoff=0.0, treename=False, comments=False, node_names=True)
-		for name in sequencenames.keys():
-			treestring=treestring.replace(name+":", sequencenames[name]+":")
-		print treestring
-		sys.exit()
 		
 		#extract alignment PAML rst output file
 		
@@ -1674,13 +1808,50 @@ if __name__ == "__main__":
 		
 		snplocout=open(prefix+"_SNPS_per_branch.csv","w")
 		snptabout=open(prefix+"_SNPS_per_branch.tab","w")
+		branch_stats=open(prefix+"_branch_SNP_density_stats.csv","w")
 		print >> snplocout, "SNP_location,Branch,ancestral_base,Daughter_base"
+		print >> branch_stats, "Branch,Starting branch SNP density,Number of SNPs post recombination removal,Final branch SNP density,Mean recombination block SNP density,Maximum recombination block SNP density,Minimum recombination block SNP density,Cutoff,Window,Number of Recombinations"
 		tree_recurse(rootnode,pamltree)
+		
+		if options.show_gaps:
+			for name in convertnameback:
+				
+				currgapbase=0
+				gapstart=0
+				lastgapbase=0
+				ingapblock=False
+				for gapbase in Allgaplocations[name]:
+					if not ingapblock:
+						start=gapbase
+						ingapblock=True
+					elif gapbase!=lastgapbase+1:
+						print >> tabout, "FT   misc_feature    "+str(start+1)+".."+str(lastgapbase+1)
+						print >> tabout, "FT                   /colour=13"
+						print >> tabout, "FT                   /note=\"missing data\""
+						print >> tabout, "FT                   /taxa="+name
+						print >> snptabout, "FT   misc_feature    "+str(start+1)+".."+str(lastgapbase+1)
+						print >> snptabout, "FT                   /colour=13"
+						print >> snptabout, "FT                   /note=\"missing data\""
+						print >> snptabout, "FT                   /taxa="+name
+						start=gapbase
+					
+					lastgapbase=gapbase
+				if ingapblock:
+					print >> tabout, "FT   misc_feature    "+str(start+1)+".."+str(lastgapbase+1)
+					print >> tabout, "FT                   /colour=13"
+					print >> tabout, "FT                   /note=\"missing data\""
+					print >> tabout, "FT                   /taxa=\""+name+"\""
+					print >> snptabout, "FT   misc_feature    "+str(start+1)+".."+str(lastgapbase+1)
+					print >> snptabout, "FT                   /colour=13"
+					print >> snptabout, "FT                   /note=\"missing data\""
+					print >> snptabout, "FT                   /taxa="+name
+				
+		#print >>snptabout, "FT   SNP             "+str(AllSNPlocations[x]+1)
+		
 		snplocout.close()
 		snptabout.close()
 		tabout.close()
-		
-
+		branch_stats.close()
 		
 			
 		all_in1butnot2=0
@@ -1744,23 +1915,32 @@ if __name__ == "__main__":
 		treedistances.close()
 	
 	#print final tree
-	
-	treestring=tree.to_string(False, True, True, True)
-	for name in sequencenames.keys():
+	#tree=add_node_names_to_tree(tree, pamltree)
+		
+	#tree.display()
+	treestring=tree_to_string(tree, support_as_branchlengths=False,branchlengths_only=True,plain=False,plain_newick=False,ladderize=None, collapse=False, cutoff=0.0, treename=False, comments=False, node_names=True)
+	#treestring=tree.to_string(False, True, True, True)
+	for name in sequencenames:
 		treestring=treestring.replace(name+":", sequencenames[name]+":")
 	
 	
-#	handle = open(prefix+"_Final.tre", "w")
-#	print >> handle, treestring+";"
-#	handle.close()
+	handle = open(prefix+"_Final.tre", "w")
+	print >> handle, treestring+";"
+	handle.close()
 
-	os.system("mv "+prefix+"_iteration"+str(iteration)+".tre "+prefix+"_Final.tre")
+#	os.system("mv "+prefix+"_iteration"+str(iteration)+".tre "+prefix+"_Final.tre")
 	if options.reference=="":
-		os.system("~sh16/scripts/Genome_Diagram.py -q taxa -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+prefix+"_rec.tab")
+		if options.outgroup!="":
+			os.system("~sh16/scripts/iCANDY.py -q taxa -M -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+prefix+"_rec.tab")
+		else:
+			os.system("~sh16/scripts/iCANDY.py -q taxa -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+prefix+"_rec.tab")
 	else:
-		os.system("~sh16/scripts/Genome_Diagram.py -q taxa -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+options.reference+" "+prefix+"_rec.tab")
+		if options.outgroup!="":
+			os.system("~sh16/scripts/iCANDY.py -q taxa -M  -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+options.reference+" "+prefix+"_rec.tab")
+		else:
+			os.system("~sh16/scripts/iCANDY.py -q taxa -L right -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+options.reference+" "+prefix+"_rec.tab")
 	
-	#os.system("rm "+prefix+"temp.tmp baseml.ctl rst rst1 2base.t mlb lnf rub rstnew rstnew2 RAxML_*.SNPS_"+prefix+" "+prefix+".tre SNPS_"+prefix+".phy")
+	os.system("rm "+prefix+"temp.tmp baseml.ctl rst rst1 2base.t mlb lnf rub rstnew rstnew2 RAxML_*.SNPS_"+prefix+" "+prefix+".tre SNPS_"+prefix+".phy")
 	
 	
 	if options.bootstrap:

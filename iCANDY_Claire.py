@@ -953,6 +953,11 @@ def deltran_parsimony_reconstruction(t, transformation="deltran"):
 		t.seed_node.parent_node.edge_colours=t.seed_node.edge_colours
 	
 	dendropy.treecalc.fitch_up_pass(preorder_node_list, attr_name='edge_colours', taxa_to_state_set_map=None)
+	
+	for node in postorder_node_list:
+		for child in node.child_nodes():
+			if node.edge_colours != child.edge_colours:
+				print node, node.edge_colours, child, child.edge_colours
 
 	
 
@@ -1201,8 +1206,8 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 								brlabel=''
 		
 		
-		if hasattr(node, "label") and node.label!=None:
-			print str(node)+"\t"+', '.join(get_downstream_taxa(node))+"\t"+node.label
+#		if hasattr(node, "label") and node.label!=None:
+#			print str(node)+"\t"+', '.join(get_downstream_taxa(node))+"\t"+node.label
 		
 		if options.tree_support!="":
 			max_width=vertical_scaling_factor*0.8

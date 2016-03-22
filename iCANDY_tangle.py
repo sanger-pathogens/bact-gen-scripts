@@ -10,6 +10,7 @@ import os, sys
 sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/site-packages/reportlab-3.1.8-py2.7-linux-x86_64.egg')
 sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/site-packages/')
 sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/')
+sys.path.insert(1, '/nfs/users/nfs_s/sh16/scripts/modules/')
 import dendropy
 import random
 from math import sqrt, pow, log, floor, sin, log10, ceil
@@ -1397,7 +1398,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 						spacer=2
 					else:
 						spacer=vertical_scaling_factor
-					if x!=0:
+					if x!=1:
 						gubbins_length += spacer
 			
 			#Add the taxon names if present
@@ -1444,7 +1445,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			
 			
 			if direction=="reverse" and hasattr(node, "matching_node"):
-				d.add(Line(left_tree_proportion+margin, node.matching_node.vertpos, xmax-(treewidth+xoffset+(max_name_width)), node.vertpos, strokeWidth=linewidth, strokeColor=name_colours[0]))
+				d.add(Line(left_tree_proportion+margin+gubbins_length-namewidth, node.matching_node.vertpos, xmax-(treewidth+xoffset+max_name_width+(fontsize/2)), node.vertpos, strokeWidth=linewidth, strokeColor=name_colours[0]))
 			
 			
 			#if direction=="forward":

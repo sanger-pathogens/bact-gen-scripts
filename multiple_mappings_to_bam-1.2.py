@@ -29,7 +29,7 @@ PICKARD_DIR="/software/hgi/pkglocal/picard-tools-1.127/bin/picard-tools"
 
 #SMALT_DIR="smalt"
 MY_SCRIPTS_DIR="/nfs/users/nfs_s/sh16/scripts/"
-GATK_LOC="/software/vertres/bin-external/GenomeAnalysisTK-1.5-9-ga05a7f2/GenomeAnalysisTK.jar"
+GATK_LOC="/software/vertres/bin-external/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar"
 pcs4_JAVA_DIR="/software/jdk1.6.0_01/bin/"
 farm3_JAVA_DIR="/software/pathogen/external/apps/usr/local/jdk1.7.0_21/bin/"
 
@@ -98,6 +98,7 @@ def get_user_options():
 	group.add_option("-z", "--nomapid", action="store", dest="nomapid", help="Minimum identity threshold to report a mapping Specified as a positive integer or proportion of read length (smalt only) [default= %default]", default=0, type="float", metavar="float")
 	group.add_option("-G", "--GATK", action="store_false", dest="GATK", help="Turn off GATK indel realignment (it is highly recommended you use GATK indel realignment). [Default= run GATK indelRealigner]", default=True)
 	group.add_option("-u", "--MarkDuplicates", action="store_false", dest="markdup", help="Turn off Mark duplicates. [Default= run Pcikard MarkDuplicates]", default=True)
+	group.add_option("-2", "--detect-overlaps", action="store_true", dest="detectOverlaps", help="enable read-pair overlap detection in mpileup. [Default= use -x option in samtools-1.2 mpileup]", default=False)
 	
 	parser.add_option_group(group)
 	
@@ -423,16 +424,17 @@ class SNPanalysis:
 		#Map the reads against the genome
 		if pool.is_zipped:
 			if self.pairedend:
-				print >> bashfile, BWA_DIR+"bwa mem -v 1 -M -a -t 1 ", options.ref, self.fastqdir+self.name+"_1.fastq.gz", self.fastqdir+self.name+"_2.fastq.gz |", SAMTOOLS_DIR+"samtools view -b -S - -t "+ref+".fai >", self.runname+"/tmp1.bam"
+				print >> bashfile, BWA_DIR+"bwa mem -v 1 -M -a -t 1 ", options.ref, self.fastqdir+self.name+"_1.fastq.gz", self.fastqdir+self.name+"_2.fastq.gz >", self.runname+"/tmp.sam"
 			else:
-				print >> bashfile, BWA_DIR+"bwa mem -v 1 -M -a -t 1 ", options.ref, self.fastqdir+self.name+".fastq.gz |", SAMTOOLS_DIR+"samtools view -b -S - -t "+ref+".fai >", self.runname+"/tmp1.bam"
+				print >> bashfile, BWA_DIR+"bwa mem -v 1 -M -a -t 1 ", options.ref, self.fastqdir+self.name+".fastq.gz >", self.runname+"/tmp.sam"
 		else:
 			if self.pairedend:
-				print >> bashfile, BWA_DIR+"bwa mem -v 1 -M -a -t 1 ", options.ref, self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq |", SAMTOOLS_DIR+"samtools view -b -S - -t "+ref+".fai >", self.runname+"/tmp1.bam"
+				print >> bashfile, BWA_DIR+"bwa mem -v 1 -M -a -t 1 ", options.ref, self.fastqdir+self.name+"_1.fastq", self.fastqdir+self.name+"_2.fastq >", self.runname+"/tmp.sam"
 			else:
-				print >> bashfile, BWA_DIR+"bwa mem -v 1 -M -a -t 1 ", options.ref, self.fastqdir+self.name+".fastq |", SAMTOOLS_DIR+"samtools view -b -S - -t "+ref+".fai >", self.runname+"/tmp1.bam"
-	
-		
+				print >> bashfile, BWA_DIR+"bwa mem -v 1 -M -a -t 1 ", options.ref, self.fastqdir+self.name+".fastq >", self.runname+"/tmp.sam"
+				
+		print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -b -S",self.runname+"/tmp.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
+		print >> bashfile, "rm -f", self.runname+"/tmp.sam"
 			
 	def runSMALT(self, ref, bashfile):	
 		
@@ -473,7 +475,7 @@ class SNPanalysis:
 					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+rbit+" -x -f "+smaltoutput+" -o "+self.runname+"/tmp1."+smaltoutputsuffix, tmpname+".index", self.fastqdir+self.name+".fastq"
 					cmdline="map -y "+str(options.nomapid)+rbit+" -x -f "+smaltoutput+" -o "+self.runname+"/tmp1."+smaltoutputsuffix, tmpname+".index", self.fastqdir+self.name+".fastq"
 			if not newsmalt:
-				print >> bashfile, SAMTOOLS_DIR+"samtools view -b -S",self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
+				print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -b -S",self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
 				print >> bashfile, "rm", self.runname+"/tmp1.sam"
 		else:
 			print >> bashfile, "cp ", self.bam, self.runname+"/tmp1.bam"
@@ -496,7 +498,7 @@ class SNPanalysis:
 		print >> bashfile, "rm", self.runname+"/tmp1.bam"
 		
 		#Add read groups and fix smalt header
-		print >> bashfile, SAMTOOLS_DIR+"samtools view -H", self.runname+"/"+self.name+".bam | sed 's/SO:unknown/SO:coordinate/g' | sed 's/\\x00//g'  >", self.runname+"/tmphead.sam"
+		print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -H", self.runname+"/"+self.name+".bam | sed 's/SO:unknown/SO:coordinate/g' | sed 's/\\x00//g'  >", self.runname+"/tmphead.sam"
 		now = datetime.datetime.now()
 		now = now.replace(microsecond=0)
 		if options.program in ["smalt", "SMALT"]:
@@ -519,12 +521,13 @@ class SNPanalysis:
 			print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 index', self.runname+"/tmp1.bam"
 			print >> bashfile, "cp", ref, self.runname+'/tmpref.fa'
 			print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 faidx', self.runname+"/tmpref.fa"
+			print >> bashfile, PICKARD_DIR, 'CreateSequenceDictionary R=', self.runname+'/tmpref.fa O=', self.runname+'/tmpref.dict'
 			if options.mem>0:
 				javamem=options.mem
 			else:
 				javamem=2
 			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-et NO_ET -K /nfs/users/nfs_s/sh16/scripts/GATK.key -I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T RealignerTargetCreator -o", self.runname+'/tmp.intervals'
-			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-et NO_ET -K /nfs/users/nfs_s/sh16/scripts/GATK.key -I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T IndelRealigner -targetIntervals", self.runname+'/tmp.intervals', "-o", self.runname+"/tmp.bam"
+			print >> bashfile, JAVA_DIR+"java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-et NO_ET -K /nfs/users/nfs_s/sh16/scripts/GATK.key -I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T IndelRealigner --filter_bases_not_stored -targetIntervals", self.runname+'/tmp.intervals', "-o", self.runname+"/tmp.bam"
 			print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/tmp1.bam"
 			print >> bashfile, "rm", self.runname+"/tmp1.bam.bai",  self.runname+"/tmpref.*", self.runname+"/tmp.intervals", self.runname+"/tmphead.*"
 		
@@ -565,15 +568,26 @@ class SNPanalysis:
 		
 		
 		if options.program in ["bwa", "BWA"]:
-			if options.BAQ:
-				print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -C 50 -L 1000 -d 1000 -m", options.depth, anomolous, " -ugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+			if not options.BAQ:
+				BAQ="-B"
 			else:
-				print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -C 50 -L 1000 -d 1000 -m", options.depth, anomolous, " -ugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+				BAQ=""
+			if options.detectOverlaps:
+				overlaps=""
+			else:
+				overlaps="-x"
+			
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -C 50 -L 1000 -d 1000 -m", options.depth, anomolous, BAQ, overlaps, " -ugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 		else:
 			if options.BAQ:
-				print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -L 1000 -d 1000 -m", options.depth, anomolous, " -ugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+				BAQ=""
 			else:
-				print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -L 1000 -d 1000 -m", options.depth, anomolous, " -ugBf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+				BAQ="-B"
+			if options.detectOverlaps:
+				overlaps="-x"
+			else:
+				overlaps=""
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -L 1000 -d 1000 -m", options.depth, anomolous, BAQ, overlaps, " -ugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 			
 		
 		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 call -P "+str(options.prior)+" -O b -A -M -S", self.runname+"/"+self.name+".ploidy -"+options.call, self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"
@@ -638,6 +652,13 @@ if __name__ == "__main__":
 
 	print '\nChecking input files...'
 	sys.stdout.flush()
+	
+	
+	output=open("MM_command_"+datetime.datetime.now().strftime("%Y-%m-%d.%H.%M.%S")+".txt", "w")
+	
+	print >> output, ' '.join(sys.argv)
+	
+	output.close()
 	
 	#make random name for files
 	chars = string.ascii_letters + string.digits
@@ -937,9 +958,9 @@ if __name__ == "__main__":
 				else:
 					memlimit=str(options.mem*1000000)
 				memresource=str(options.mem*1000)
-				os.system('echo \'bash ${LSB_JOBINDEX}'+tmpname+'_sbs.sh\' | bsub -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -q '+options.LSFQ+'  -J'+tmpname+'_'+options.program+'"[1-'+str(count)+']%'+str(options.nodes)+'"  -M '+memlimit+' -o '+tmpname+options.program+'-%I.out -e '+tmpname+options.program+'-%I.err > '+tmpname+'jobid')# run all ssaha jobs in job array . add this to exclude a node: -R \'hname!=pcs4k\'
+				os.system('echo \'bash ${LSB_JOBINDEX}'+tmpname+'_sbs.sh\' | bsub -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -q '+options.LSFQ+' -J '+tmpname+'_'+options.program+'"[1-'+str(count)+']%'+str(options.nodes)+'"  -M '+memlimit+' -o '+tmpname+options.program+'-%I.out -e '+tmpname+options.program+'-%I.err > '+tmpname+'jobid')# run all ssaha jobs in job array . add this to exclude a node: -R \'hname!=pcs4k\'
 			else:
-				os.system('echo \'bash ${LSB_JOBINDEX}'+tmpname+'_sbs.sh\' | bsub -q '+options.LSFQ+' -J'+tmpname+'_'+options.program+'"[1-'+str(count)+']%'+str(options.nodes)+'"" -o '+tmpname+options.program+'-%I.out -e '+tmpname+options.program+'-%I.err > '+tmpname+'jobid')
+				os.system('echo \'bash ${LSB_JOBINDEX}'+tmpname+'_sbs.sh\' | bsub -q '+options.LSFQ+' -J '+tmpname+'_'+options.program+'"[1-'+str(count)+']%'+str(options.nodes)+'"" -o '+tmpname+options.program+'-%I.out -e '+tmpname+options.program+'-%I.err > '+tmpname+'jobid')
 			
 			jobid=open(tmpname+'jobid', "rU").read().split(">")[0].split("<")[1]
 			print "jobid <"+str(jobid)+"> submitted"
@@ -959,9 +980,9 @@ if __name__ == "__main__":
 					memlimit=str(10*1000000)
 				memresource=str(10*1000)
 				if count==0:
-					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -q long -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J'+tmpname+'_joining -o '+options.output+'_join.out -e '+options.output+'_join.err')
+					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -q long -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J '+tmpname+'_joining -o '+options.output+'_join.out -e '+options.output+'_join.err')
 				else:
-					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -q long -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J'+tmpname+'_joining -w \'ended('+tmpname+'_'+options.program+')\' -o '+options.output+'_join.out -e '+options.output+'_join.err ')
+					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -q long -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J '+tmpname+'_joining -w \'ended('+tmpname+'_'+options.program+')\' -o '+options.output+'_join.out -e '+options.output+'_join.err ')
 				
 				if host=="farm3" or host=="pcs5":
 					memlimit=str(16*1000)
@@ -976,9 +997,9 @@ if __name__ == "__main__":
 					memlimit=str(5*1000000)
 				memresource=str(5*1000)
 				if count==0:
-					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J'+tmpname+'_joining -o '+options.output+'_join.out -e '+options.output+'_join.err')
+					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J '+tmpname+'_joining -o '+options.output+'_join.out -e '+options.output+'_join.err')
 				else:
-					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J'+tmpname+'_joining -w \'ended('+tmpname+'_'+options.program+')\' -o '+options.output+'_join.out -e '+options.output+'_join.err ')
+					os.system('echo '+joinstring+' | bsub -M '+memlimit+' -R \'select[mem>'+memresource+'] rusage[mem='+memresource+']\' -J '+tmpname+'_joining -w \'ended('+tmpname+'_'+options.program+')\' -o '+options.output+'_join.out -e '+options.output+'_join.err ')
 				if host=="farm3" or host=="pcs5":
 					memlimit=str(16*1000)
 				else:

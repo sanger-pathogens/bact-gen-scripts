@@ -63,8 +63,8 @@ def check_input_validity(options, args):
 
 	if options.LSFQ!="hugemem" and (options.mem>100 or options.mem<0):
 		DoError('Memory requirement (-M) must be between 0 and 100Gb')
-	elif options.LSFQ=="hugemem" and (options.mem>250 or options.mem<30):
-		DoError('Memory requirement (-M) for hugemem queue must be between 30 and 250Gb')
+	elif options.LSFQ=="hugemem" and (options.mem>512 or options.mem<30):
+		DoError('Memory requirement (-M) for hugemem queue must be between 30 and 512Gb')
 	if options.CPUs>30 or options.CPUs<1:
 		DoError('Number of CPUs must be between 1 and 30')
 	if options.checkpoint and not options.checkpoint_directory:

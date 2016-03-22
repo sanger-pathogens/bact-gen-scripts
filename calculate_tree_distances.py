@@ -3,10 +3,10 @@
 #################################
 # Import some necessary modules #
 #################################
-
+import os, sys
+sys.path.insert(1, '/nfs/users/nfs_s/sh16/scripts/modules/')
 import dendropy
 import string, re
-import os, sys
 
 ##############################################
 # Function toread a tree file using dendropy #

@@ -57,6 +57,7 @@ def get_user_options():
 	group = OptionGroup(parser, "Required")
 	group.add_option("-i", "--input", action="store", dest="inputfile", help="Input file name", default="")
 	group.add_option("-o", "--output", action="store", dest="outfile", help="Output file name", default="")
+	group.add_option("-w", "--overwrite", action="store_true", dest="overwrite", help="Force overwrite", default=False)
 	group.add_option("-d", "--dates", action="store", dest="dates", help="Dates csv file name (Name,date)", default="")
 	group.add_option("-n", "--nons", action="store_true", dest="nons", help="Exclude sites which are constant other than Ns", default=False)
 	group.add_option("-g", "--gaps", action="store_true", dest="gaps", help="Gaps (-) are real", default=False)
@@ -84,7 +85,6 @@ def check_input_validity(options, args):
 	if options.outfile=='':
 		options.outfile=options.ref.split("/")[-1].split(".")[0]
 
-	options.overwrite=False
 	while os.path.isfile(options.outfile) and options.overwrite==False:
 		outopt=""
 		outopt=raw_input('\nOutput files with chosen prefix already exist.\n\nWould you like to overwrite (o), choose a new output file prefix (n) or quit (Q): ')
@@ -117,7 +117,7 @@ def read_metadata(filehandle, name_column=1, unit_column=2, value_column=3, head
 		
 		else:
 			columns=line.split()
-			if len(clolumns)<max([unit_column, value_column]):
+			if len(columns)<max([unit_column, value_column]):
 				print 'metadata has rows without correct number of columns...skipping:'
 				print line
 			else:
@@ -159,7 +159,7 @@ if __name__ == "__main__":
 				
 				
 			try:
-				dates[words[0]]=float(words[1])
+				dates[words[0]]=int(words[1])
 			except ValueError:
 				continue
 	
