@@ -28,7 +28,7 @@ def DoError(errorstring):
 
 def get_user_options():
 	usage = "usage: %prog [options]"
-	version="%prog 1.0."
+	version="%prog 1.0. Written by Simon Harris, Wellcome Trust Sanger Institute, 2012"
 	parser = OptionParser(usage=usage, version=version)
 	
 	#do not allow arguments to be interspersed. e.g. -a -b arg1 agr2. MUST be -a arg1 -b arg2.
@@ -103,13 +103,14 @@ if __name__ == "__main__":
 		nons=sequence.replace("n"," ").replace("N"," ").split()
 		if len(nons)>1:
 			for x, seq in enumerate(nons):
-				if len(nons[x])>13:#remove contigs smaller than has length - will die in smalt otherwise
+				if len(nons[x])>13:#remove contigs smaller than has length - will dies in smalt otherwise
 					print >> fastaout, ">"+name+"_part"+str(x+1)
 					print >> fastaout, nons[x]
 					#print name+"_part"+str(x+1), len(nons[x])
 		else:
 			print >> fastaout, ">"+name
 			print >> fastaout, nons[0]
+			#print name, len(nons[0])
 	fastaout.close()
 
 	os.system(SAMTOOLS_DIR+"samtools faidx "+options.output+"_no_Ns.fasta")
@@ -119,4 +120,4 @@ if __name__ == "__main__":
 	os.system(SAMTOOLS_DIR+"samtools sort "+options.output+".1.bam "+options.output)
 	os.system(SAMTOOLS_DIR+"samtools index "+options.output+".bam")
 	os.system("rm -f "+options.output+".1.bam "+options.output+".sam "+options.output+"_no_Ns.fasta.fai "+options.output+"_no_Ns.fasta.index.sma "+options.output+"_no_Ns.fasta.index.smi ")#+options.output+"_no_Ns.fasta.fai "+options.output+"_no_Ns.fasta.index.*")
-	os.system("~sh16/scripts/map_resistome_release/filter_resistome.py -i "+str(options.id)+" -c "+options.output+"_no_Ns.fasta -b "+options.output+".bam -g "+options.genes+" -o "+options.output+" -f "+options.forward+" -r "+options.reverse)
+	os.system("~sh16/scripts/filter_resistome.py -i "+str(options.id)+" -c "+options.output+"_no_Ns.fasta -b "+options.output+".bam -g "+options.genes+" -o "+options.output+" -f "+options.forward+" -r "+options.reverse)
