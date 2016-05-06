@@ -142,7 +142,7 @@ def get_user_options():
 	group.add_option("-k", "--keep", action="store_true", dest="keep", help="If old mapping files are present, do not rerun them", default=False)
 	group.add_option("-L", "--LSF", action="store_false", dest="LSF", help="Do not use LSF to parallelise analyses", default=True)
 	group.add_option("-U", "--queue", action="store", dest="LSFQ", help="LSF queue to submit to. [Default= %default]", default="normal", type="choice", choices=["normal","long", "basement", "hugemem"])
-	group.add_option("-M", "--memory", action="store", dest="mem", help="Amount of memory required for analysis (Gb). [Default= %default]", default=2, type="int")#change to be able to specify amount of memory to use per analysis?
+	group.add_option("-M", "--memory", action="store", dest="mem", help="Amount of memory required for analysis (Gb). [Default= %default]", default=5, type="int")#change to be able to specify amount of memory to use per analysis?
 	group.add_option("-n", "--nodes", action="store", dest="nodes", help="Maximum number of jobs to run on nodes in parallel. [Default= %default]", default=20, type="int")#change to be able to specify amount of memory to use per analysis?
 	group.add_option("-y", "--dirty", action="store_true", dest="dirty", help="Do not clean up temporary files. [Default= %default]", default=False)#change to be able to specify amount of memory to use per analysis?
 	parser.add_option_group(group)
