@@ -97,7 +97,7 @@ seqlen=len(sequs[currseq])
 
 for key in sequs.keys():
 	if len(sequs[key])!=seqlen:
-		print "Sequences of different lengths! Exciting..."
+		print "Sequences of different lengths! Exiting..."
 		sys.exit()
 
 #Find sites that are informative
@@ -107,9 +107,9 @@ infsites=[]
 for i in range(0,seqlen):
 	states={}
 	for key in sequs.keys():
-		if sequs[key][i].lower() not in ['-','X','?'] and states.has_key(sequs[key][i]):
-			states[sequs[key][i].lower()]=states[sequs[key][i]]+1
-		elif sequs[key][i].lower() not in ['-','X','?']:
+		if sequs[key][i].lower() not in ['-','x','?', 'n'] and sequs[key][i].lower() in states:
+			states[sequs[key][i].lower()]+=1
+		elif sequs[key][i].lower() not in ['-','x','?', 'n']:
 			states[sequs[key][i].lower()]=1
 
 	#count number of states that are in more than one taxon
@@ -120,7 +120,8 @@ for i in range(0,seqlen):
 	for key in states.keys():
 		if states[key]>1:
 			nostatesoverone=nostatesoverone+1
-
+	
+	
 	if inftype=='m':
 		if nostatesoverone>1 or nostates>2:
 			infsites.append(i)
