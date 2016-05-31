@@ -75,9 +75,6 @@ def check_input_validity(options, args):
 if __name__ == "__main__":
 
 
-	print "This script is deprecated. Please consider using ARIBA instead. https://github.com/sanger-pathogens/ariba/wiki"	
-	print "To continue to use the old map_resistome script, use ~sh16/scripts/map_resistome_deprecated.py"
-	sys.exit()
 	(options, args)=get_user_options()
 	#print options, args
 	check_input_validity(options, args)
