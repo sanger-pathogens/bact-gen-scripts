@@ -30,12 +30,14 @@ def main():
 
 	parser.add_option("-v", "--vcf", action="store", dest="vcf", help="SNP_sites output vcf file name.", default="", metavar="FILE")
 	parser.add_option("-b", "--bcf", action="store", dest="bcf", help="bcf file name of test isolate.", default="", metavar="FILE")
-	parser.add_option("-t", "--tree", action="store", dest="tree", help="tree file name", default="", metavar="FILE")
+	parser.add_option("-B", "--bcftools_version", action="store", dest="bcftools_version", help="bcftools version to use to read bcf files.", type="choice", choices=['bcftools', 'bcftools-1.2'], default="bcftools-1.2", metavar="CHOICE")
 	parser.add_option("-i", "--id", action="store", dest="id", help="Name of test isolate.", default="", metavar="STRING")
-	parser.add_option("-n", "--Nproportion", action="store", dest="Nproportion", help="maximum proportion of Ns to allow in isolates at a site for it to be included in the test (i.e. ignore any sites with > than this proportion of Ns) [default=%default]", default=0.05, type="float")
-	parser.add_option("-p", "--proportion", action="store", dest="proportion", help="minimum proportion of mapped reads to allow to include an allele in the test [default=%default]", default=0.05, type="float")
-	parser.add_option("-c", "--count", action="store", dest="count", help="minimum number of mapped reads to allow to include an allele in the test [default=%default]", default=5, type="int")
+	parser.add_option("-n", "--Nproportion", action="store", dest="Nproportion", help="Maximum proportion of Ns to allow in isolates at a site for it to be included in the test (i.e. ignore any sites with > than this proportion of Ns) [default=%default]", default=0.05, type="float")
+	parser.add_option("-p", "--min_proportion", action="store", dest="proportion", help="Minimum proportion of mapped reads to allow to include an allele in the test [default=%default]", default=0.2, type="float")
+	parser.add_option("-e", "--error_rate", action="store", dest="error_rate", help="Predicted seqeucing error rate. This is used to set a maximum proportion of mapped reads to allow to replace a minor allele with a major allele for the test [default=%default]", default=0.01, type="float")
+	parser.add_option("-c", "--count", action="store", dest="count", help="minimum number of mapped reads to allow to include an allele in the test [default=%default]", default=8, type="int")
 	parser.add_option("-V", "--verbose", action="store_true", dest="verbose", help="Be verbose", default=False)
+	parser.add_option("-s", "--strand_bias", action="store", dest="strand_bias", help="strand bias p-value cutoff [default=%default]", default=0.05, type="float")
 	
 	return parser.parse_args()
 
@@ -53,17 +55,14 @@ def check_input_validity(options, args):
 		DoError('No vcf file selected!')
 	elif not os.path.isfile(options.vcf):
 		DoError('Cannot find file '+options.vcf+'!')
-	if options.tree=='':
-		DoError('No tree file selected!')
-	elif not os.path.isfile(options.tree):
-		DoError('Cannot find file '+options.tree+'!')
 	if options.Nproportion>1 or options.Nproportion<0:
 		DoError('Maximum proportion of Ns must be between 0 and 1!')
 	if options.proportion>1 or options.proportion<0:
 		DoError('Minimum proportion of mapped reads must be between 0 and 1!')
 	if options.count<0:
 		DoError('Minimum number of mapped reads must be greater than or equal to 0!')
-	
+	if options.strand_bias>1 or options.strand_bias<0:
+		DoError('Strand bias be between 0 and 1!')
 	if options.bcf=="":
 		DoError('No bcf file selected!')
 	
@@ -116,6 +115,51 @@ def chisquarepvalue(taxon,taxonb,taxonc):
 #	print p.right_tail
 	return p.right_tail	, diffNpositions
 
+
+
+def pairwise_distance_from_snp_sites_vcf(handle, taxona, taxonb, toremove):
+	#Read the vcf file
+	if options.verbose:
+		print "Calculating pairwise ID from snp_sites vcf file"
+	poscount=0
+	nposcount=0
+	abmatches=0.0
+	missing=0
+	for line in open(handle, "rU"):
+		line=line.strip()
+		if len(line)<2:
+			continue
+		elif line[0]=="#":
+			continue
+					
+		else:
+			words=line.split()
+			
+			CHROM=words[0]
+			POS=int(words[1])
+			if POS in toremove[CHROM]:
+				continue
+		#	if POS>100000:
+		#		break
+			ref_alleles=words[3].split(",")
+			alt_alleles=words[4].split(",")
+			alleles=ref_alleles+alt_alleles
+			poscount+=1
+			nposcount+=1
+			if alleles[int(words[taxona+9])]==alleles[int(words[taxonb+9])] and alleles[int(words[taxona+9])] not in [".", "*"]:
+				abmatches+=1
+			elif alleles[int(words[taxona+9])]=="*" or alleles[int(words[taxonb+9])]=="*":
+				missing+=1
+				nposcount-=1
+			
+	abid=(abmatches/poscount)*100
+	abid_missing=(abmatches/(poscount-missing))*100
+			
+	if options.verbose:
+		print "Pairwise matches between "+str(taxon_list[taxona])+" and "+str(taxon_list[taxonb])+" = "+str(abmatches)+" at "+str(poscount)+" ("+str(nposcount)+") sites. %ID = "+str(abid), abid_missing, (abmatches/nposcount)*100
+	return nposcount-abmatches, abid
+
+
 def parse_snp_sites_vcf(handle):
 	#Read the vcf file
 	if options.verbose:
@@ -125,7 +169,6 @@ def parse_snp_sites_vcf(handle):
 	taxon_ids={}
 	taxa=[]
 	poscount=0
-	percent_id={}
 	for line in open(handle, "rU"):
 		line=line.strip()
 		if len(line)<2:
@@ -139,16 +182,14 @@ def parse_snp_sites_vcf(handle):
 			for i, name in enumerate(headings[9:]):
 				taxon_ids[i]=name
 				taxa.append(name)
-				percent_id[i]={}
-				for j, nameb in enumerate(headings[9+i+1:]):
-					percent_id[i][i+j]=0.0
+				
 		else:
 			words=line.split()
 			
 			CHROM=words[0]
 			POS=int(words[1])
-#			if POS>10000:
-#				break
+		#	if POS>100000:
+		#		break
 			if not CHROM in data:
 				DoError("CHROM ("+CHROM+") missing from data dictionary")
 			data[CHROM][POS]={}
@@ -161,30 +202,25 @@ def parse_snp_sites_vcf(handle):
 			
 			for i, isolate in enumerate(words[9:]):
 				data[CHROM][POS][alleles[int(isolate)]].append(i)
-				for j, isolateb in enumerate(words[9+i+1:]):
-					if alleles[int(isolate)]==alleles[int(isolateb)] and alleles[int(isolate)] not in [".", "*"]:
-						percent_id[i][i+j]+=1
+				
 			
 	
-	
-	for i in percent_id:
-		for j in percent_id[i]:
-			percent_id[i][j]=(percent_id[i][j]/poscount)*100
-			if not j in percent_id:
-				percent_id[j]={}
-			percent_id[j][i]=(percent_id[i][j]/poscount)*100
+
 			
 	if options.verbose:
 		print "Found "+str(poscount)+" sites"
-	return taxa, taxon_ids, data, percent_id
+	return taxa, taxon_ids, data
 	
+		
 
 def remove_dodgy_sites(data):
 	#"Remove sites with more than the specified proportion of Ns"
 	if options.verbose:
 		print ("Removing sites with a proportion of Ns greater than "+str(options.Nproportion))
 	toremove=[]
+	removed={}
 	for chromosome in data:
+		removed[chromosome]=set([])
 		for position in data[chromosome]:
 			total_taxa=0.0
 			Ns=0.0
@@ -195,6 +231,7 @@ def remove_dodgy_sites(data):
 			N_proportion=Ns/total_taxa
 			if N_proportion>options.Nproportion:
 				toremove.append([chromosome, position])
+				removed[chromosome].add(position)
 	
 	for chromosome, position in toremove:
 		del data[chromosome][position]
@@ -202,27 +239,16 @@ def remove_dodgy_sites(data):
 	if options.verbose:
 		print "Removed "+str(len(toremove))+" sites"
 	
-	return data
+	return data, removed
 
 
 def open_bcf(filename):
 	if options.verbose:
 		print "Trying to open bcf file"
 	fileopen=False
-#	try:
-#		bcffile=open(filename, "rU")
-#		fileopen=True
-#	except StandardError:
-#		print "Cannot open bcf file as vcf"
-#	if not fileopen:
-#		try:
-#			bcffile=os.popen("bcftools view "+filename)
-#			fileopen=True
-#		except StandardError:
-#			print "Cannot open bcf file with default bcftools"
-#	if not fileopen:
+
 	try:
-		bcffile=os.popen("bcftools-1.2 view "+filename)
+		bcffile=os.popen(options.bcftools_version+" view "+filename)
 		fileopen=True
 	except StandardError:
 		if options.verbose:
@@ -261,6 +287,8 @@ def parse_bcf(handle, vcf_data):
 						#print "skipping INDEL", POS
 						continue
 					founddp4=False
+					foundpv4=False
+					strand_bias_p=0
 					for i in INFO:
 						var=i.split("=")[0]
 						val=i.split("=")[1]
@@ -269,7 +297,15 @@ def parse_bcf(handle, vcf_data):
 							REFcount=dp4vals[0]+dp4vals[1]
 							ALTcount=dp4vals[2]+dp4vals[3]
 							founddp4=True
-					if founddp4 and REFcount+ALTcount>0:
+						if var=="PV4":
+							pv4vals=map(float,val.split(","))
+							strand_bias_p=dp4vals[0]
+							baseq_bias_p=dp4vals[1]
+							mapq_bias_p=dp4vals[2]
+							tail_distance_bias_p=dp4vals[3]
+							foundpv4=True
+					
+					if founddp4 and REFcount+ALTcount>0 and strand_bias_p>options.strand_bias:
 						if REFcount>=ALTcount:
 							maj_allele=REF
 							maj_allele_count=REFcount
@@ -307,7 +343,7 @@ if __name__ == "__main__":
 	
 	#Read the vcf file
 	
-	taxon_list, taxon_id_dictionary, vcf_data, percent_id=parse_snp_sites_vcf(options.vcf)
+	taxon_list, taxon_id_dictionary, vcf_data=parse_snp_sites_vcf(options.vcf)
 	tid=-1
 	for t, taxon in enumerate(taxon_list):
 		if taxon==options.id:
@@ -315,7 +351,7 @@ if __name__ == "__main__":
 	if tid==-1:
 		DoError("Specified name not in vcf")
 	
-	vcf_data=remove_dodgy_sites(vcf_data)
+	vcf_data, toremove=remove_dodgy_sites(vcf_data)
 	
 	
 	
@@ -330,23 +366,30 @@ if __name__ == "__main__":
 		maj_allele_identities[x]=0.0
 		min_allele_identities[x]=0.0
 	
+	bcfHetCount=0
+	bcfUnknownCount=0
+	bcfErrorCount=0
 	for chromosome in bcf_data:
 		for i in bcf_data[chromosome]:
-			if i[3]>options.count:
+			if i[3]>=options.count:
 				if i[1] in vcf_data[chromosome][i[0]]:
 					maj_allele_match_count+=1
 					for taxon in vcf_data[chromosome][i[0]][i[1]]:
 						maj_allele_identities[taxon]+=1
-			if float(i[4])/(i[3]+i[4])>options.proportion and i[4]>options.count:
+			if float(i[4])/(i[3]+i[4])>=options.proportion and i[4]>=options.count:
+				bcfHetCount+=1
 				if i[2] in vcf_data[chromosome][i[0]]:
 					min_allele_match_count+=1
 				#print i, float(i[4])/(i[3]+i[4])
 					for taxon in vcf_data[chromosome][i[0]][i[2]]:
 						min_allele_identities[taxon]+=1
-			#elif i[3]>options.count:
-			#	min_allele_match_count+=1
-			#	for taxon in vcf_data[chromosome][i[0]][i[1]]:
-			#		min_allele_identities[taxon]+=1
+			elif i[3]>=options.count and float(i[4])/(i[3]+i[4])<options.error_rate:
+				min_allele_match_count+=1
+				bcfErrorCount+=1
+				for taxon in vcf_data[chromosome][i[0]][i[1]]:
+					min_allele_identities[taxon]+=1
+			elif float(i[4])/(i[3]+i[4])>=options.error_rate and float(i[4])/(i[3]+i[4])<options.proportion:
+				bcfUnknownCount+=1
 	
 	maxmax=0
 	topmaj=""
@@ -374,24 +417,27 @@ if __name__ == "__main__":
 	if min_allele_match_count==0:
 		minval=0
 	else:
-		minval=maxmax/min_allele_match_count
+		minval=maxmin/min_allele_match_count
 		
 		
 	if topmaj=="" or topmin=="":
 		majminperc="-"
+		majmindist="-"
 	else:
-		majminperc=percent_id[topmajid][topminid]
+		majmindist, majminperc=pairwise_distance_from_snp_sites_vcf(options.vcf , topminid, topmajid, toremove)
 		
 	if topmaj=="" or tid=="":
 		majtperc="-"
+		majtdist="-"
 	else:
-		majtperc=percent_id[topmajid][tid]
+		majtdist,majtperc=pairwise_distance_from_snp_sites_vcf(options.vcf ,topmajid, tid, toremove)
 	if topmin=="" or tid=="":
 		mintperc="-"
+		mintdist="-"
 	else:
-		mintperc=percent_id[topminid][tid]
+		mintdist, mintperc=pairwise_distance_from_snp_sites_vcf(options.vcf ,topminid, tid, toremove)
 	
-	print ','.join(map(str, [options.id, topmaj, maxmax, majval, topmin, maxmin, minval, majtperc, mintperc, majminperc]))
+	print ','.join(map(str, [options.id, topmaj, maxmax, majval, topmin, maxmin, minval, majtdist, mintdist, majmindist, (majtdist+mintdist)<majmindist, bcfHetCount, bcfUnknownCount, bcfErrorCount]))
 	sys.exit()
 	
 	
