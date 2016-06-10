@@ -33,8 +33,8 @@ def main():
 	parser.add_option("-B", "--bcftools_version", action="store", dest="bcftools_version", help="bcftools version to use to read bcf files.", type="choice", choices=['bcftools', 'bcftools-1.2'], default="bcftools-1.2", metavar="CHOICE")
 	parser.add_option("-i", "--id", action="store", dest="id", help="Name of test isolate.", default="", metavar="STRING")
 	parser.add_option("-n", "--Nproportion", action="store", dest="Nproportion", help="Maximum proportion of Ns to allow in isolates at a site for it to be included in the test (i.e. ignore any sites with > than this proportion of Ns) [default=%default]", default=0.05, type="float")
-	parser.add_option("-p", "--min_proportion", action="store", dest="proportion", help="Minimum proportion of mapped reads to allow to include an allele in the test [default=%default]", default=0.2, type="float")
-	parser.add_option("-e", "--error_rate", action="store", dest="error_rate", help="Predicted seqeucing error rate. This is used to set a maximum proportion of mapped reads to allow to replace a minor allele with a major allele for the test [default=%default]", default=0.01, type="float")
+	parser.add_option("-p", "--min_proportion", action="store", dest="proportion", help="Minimum proportion of mapped reads to allow to include an allele in the test [default=%default]", default=0.1, type="float")
+	parser.add_option("-e", "--error_rate", action="store", dest="error_rate", help="Predicted seqeucing error rate. This is used to set a maximum proportion of mapped reads to allow to replace a minor allele with a major allele for the test [default=%default]", default=0.02, type="float")
 	parser.add_option("-c", "--count", action="store", dest="count", help="minimum number of mapped reads to allow to include an allele in the test [default=%default]", default=8, type="int")
 	parser.add_option("-V", "--verbose", action="store_true", dest="verbose", help="Be verbose", default=False)
 	parser.add_option("-s", "--strand_bias", action="store", dest="strand_bias", help="strand bias p-value cutoff [default=%default]", default=0.05, type="float")
@@ -384,10 +384,11 @@ if __name__ == "__main__":
 					for taxon in vcf_data[chromosome][i[0]][i[2]]:
 						min_allele_identities[taxon]+=1
 			elif i[3]>=options.count and float(i[4])/(i[3]+i[4])<options.error_rate:
-				min_allele_match_count+=1
 				bcfErrorCount+=1
-				for taxon in vcf_data[chromosome][i[0]][i[1]]:
-					min_allele_identities[taxon]+=1
+				if i[1] in vcf_data[chromosome][i[0]]:
+					min_allele_match_count+=1
+					for taxon in vcf_data[chromosome][i[0]][i[1]]:
+						min_allele_identities[taxon]+=1
 			elif float(i[4])/(i[3]+i[4])>=options.error_rate and float(i[4])/(i[3]+i[4])<options.proportion:
 				bcfUnknownCount+=1
 	
