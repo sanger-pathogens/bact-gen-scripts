@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 
-#Compares mummer snp taboutput files.  NOTE: must be from the same reference sequence
-
-
-
 ##################
 # Import modules #
 ##################
@@ -11,8 +7,8 @@
 import string, re
 import os, sys
 from optparse import OptionParser
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
-from Si_general import *
+#sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+#from Si_general import *
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/bin/lib/pkgconfig']))
 import tre
 
@@ -31,7 +27,13 @@ def replace_ambiguity_codes(sequence):
 	return ''.join(regexlist)
 		
 
+#################################
+# Simple Error Printing Funtion #
+#################################
 
+def DoError(ErrorString):
+	print "!!!Error:", ErrorString,"!!!"
+	sys.exit()
 
 
 ##########################################
