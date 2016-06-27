@@ -372,7 +372,7 @@ if __name__ == "__main__":
 			iterative="Iteration"
 		else:
 			iterative="Cluster"
-		print >> output, ",".join(["Taxon", iterative, "p-value:c1", "Likelihood:c2", "Multiplier:c3", "Length:c4", "Count:c5"])
+		print >> output, ",".join(["Taxon", iterative, "p-value:c:"+str(1.0/options.permutations)+":"+str(options.significance), "Likelihood:c", "Multiplier:c", "Length:c", "Count:c"])
 		for x, cluster in enumerate(clusters):
 			for taxon in list(cluster[1]):
 				print >> output, ",".join(map(str,[taxon, cluster[0], cluster[2], cluster[3], cluster[4], cluster[5], cluster[6],  cluster[5]/cluster[6]]))
@@ -389,10 +389,10 @@ if __name__ == "__main__":
 			lad=""
 		else:
 			lad="-L "+options.ladderise
-		#if options.iterative:
-		#	os.system("~sh16/scripts/iCANDY.py -t "+options.tree+" "+mid+" "+lad+" -m "+options.output+".csv -a 2 -C 2,2,3,6,7 -r deltran -O portrait -o "+options.output+".pdf")
-		#else:
-		#	os.system("~sh16/scripts/iCANDY.py -t "+options.tree+" "+mid+" "+lad+" -m "+options.output+".csv -a 2 -C 2,2,4,3,6,7 -r deltran -O portrait -o "+options.output+".pdf")
+		if options.iterative:
+			os.system("~sh16/scripts/iCANDY.py -t "+options.tree+" "+mid+" "+lad+" -m "+options.output+".csv -a 2 -C 2,2,3,6,7 -r deltran -O portrait -o "+options.output+".pdf")
+		else:
+			os.system("~sh16/scripts/iCANDY.py -t "+options.tree+" "+mid+" "+lad+" -m "+options.output+".csv -a 2 -C 2,2,4,3,6,7 -r deltran -O portrait -o "+options.output+".pdf")
 		print "Printing PLINK output file"
 		output=open(options.output+"_plink.txt", "w")
 		
