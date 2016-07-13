@@ -29,11 +29,11 @@ import time
 ####################
 
 
-RAxML_DIR="/software/pathogen/external/applications/RAxML/RAxML-7.0.4/raxmlHPC"
-AVX_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-AVX"
-SSE3_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-SSE3"
-AVX_PARALLEL_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-PTHREADS-AVX"
-SSE3_PARALLEL_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-PTHREADS-SSE3"
+RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-8.2.8"
+AVX_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-AVX-8.2.8"
+SSE3_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-SSE3-8.2.8"
+AVX_PARALLEL_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-PTHREADS-AVX-8.2.8"
+SSE3_PARALLEL_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-PTHREADS-SSE3-8.2.8"
 
 
 gap_and_missing=set(["-", "N", "?"])
@@ -85,6 +85,7 @@ def main():
 	group.add_option("-F", "--frequencies", action="store_true", dest="f", help="Use empirical base frequencies (protein models only)", default=False)
 	group.add_option("-N", "--number", action="store", dest="number", help="Number of alternative ML runs on distinct starting trees [Default = %default]", default=1, type="int", metavar="INT")
 	group.add_option("-d", "--distance", action="store_true", dest="distance", help="Compute pairwise ML distances (GAMMA-based models of ASRV only). Will use a parsimony tree unless you specify a tree with the -T option", default=False)
+	group.add_option("-A", "--ancestral", action="store_true", dest="ancestral", help="Reconstruct ancestral states on tree. Will override other methods. Requires a tree to be provided with the -T flag.", default=False)
 	group.add_option("-g", "--constraint", action="store", dest="constraint", help="File name of a multifurcating constraint tree. Does not have to contain all taxa", default="", metavar="FILE")
 	group.add_option("-T", "--tree", action="store", dest="tree", help="File name of a user-specified starting tree", default="", metavar="FILE")
 	
@@ -153,6 +154,12 @@ def check_input_validity(options, args):
 	if options.distance and options.asrv!="GAMMA":
 		print "Only GAMMA-based asrv models can be used when calculating distance. Setting asrv to GAMMA"
 		options.asrv="GAMMA"
+	
+	if options.ancestral and options.tree=="":
+		DoError('Tree file requried for ancestral state reconstruction')
+	
+	if options.ancestral and options.distance:
+		DoError('Distance and ancestral state estimation options are not compatible in one analysis')
 	
 	if options.threads<1 or options.threads>32:
 		DoError('Number of threads to run must be between 1 and 32')
@@ -514,6 +521,13 @@ if __name__ == "__main__":
 		
 		os.system(bsub+' -J "'+tmpname+'_dist" '+RAxML+' -f x -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
 		os.system('bsub -w \'ended('+tmpname+'_dist)\' rm -rf \'*'+tmpname+'*\'')
+	elif options.ancestral:
+		print "Running RAxML to calculate ancestral sequences using "+model+" model of evolution..."
+		print "Using user-specified tree:", options.tree
+		model=model+" -t "+options.tree
+		
+		os.system(bsub+' -J "'+tmpname+'_anc" '+RAxML+' -f A -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
+		os.system('bsub -w \'ended('+tmpname+'_anc)\' rm -rf \'*'+tmpname+'*\'')
 	#If they want to make a tree rather than distances
 	else:
 		if options.fast:
