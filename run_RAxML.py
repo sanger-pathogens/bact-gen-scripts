@@ -80,7 +80,7 @@ def main():
 	group.add_option("-t", "--type", action="store", dest="analysistype", help="Data type (DNA or protein). [Choices = DNA, protein] [Default = %default]", default="DNA", type="choice", choices=["DNA","protein"])
 #	group.add_option("-d", "--dmodel", action="store", dest="dmodel", help="Model of evolution to use (for DNA anlysis). [Default= %default]", default="GTRGAMMA", type="choice", choices=["GTRGAMMA","GTR", "GTR", "GTR", "GTR"])
 	group.add_option("-m", "--model", action="store", dest="model", help="Model of evolution to use (for protein analysis only). [Choices = DAYHOFF, DCMUT, JTT, MTREV, WAG, RTREV, CPREV, VT, BLOSUM62, MTMAM, LG] [Default = %default]", default="WAG", type="choice", choices=["DAYHOFF","DCMUT", "JTT", "MTREV", "WAG", "RTREV", "CPREV", "VT", "BLOSUM62", "MTMAM", "LG"])
-	group.add_option("-v", "--asrv", action="store", dest="asrv", help="Method of correction for among site rate variation [Choices = GAMMA, CAT, CAT_GAMMA, MIX] [Default = %default]", default="GAMMA", type="choice", choices=["GAMMA","CAT", "CAT_GAMMA", "MIX"])
+	group.add_option("-v", "--asrv", action="store", dest="asrv", help="Method of correction for among site rate variation [Choices = GAMMA, CAT, CAT_GAMMA, MIX] [Default = %default]", default="GAMMA", type="choice", choices=["GAMMA","CAT", "CAT_GAMMA", "MIX", "None"])
 	group.add_option("-i", "--pinvar", action="store_true", dest="pinvar", help="Use correction for proportion of invariant sites", default=False)
 	group.add_option("-F", "--frequencies", action="store_true", dest="f", help="Use empirical base frequencies (protein models only)", default=False)
 	group.add_option("-N", "--number", action="store", dest="number", help="Number of alternative ML runs on distinct starting trees [Default = %default]", default=1, type="int", metavar="INT")
@@ -388,6 +388,13 @@ if __name__ == "__main__":
 	output_handle.close()
 	fasta_output_handle.close()
 	
+	
+	if options.asrv=="None":
+		options.asrv="CAT"
+		options.V=True
+	else:
+		options.V=False
+	
 	n=float(taxacount)
 	m=float(alnlen-len(toremove))
 	if options.analysistype=="protein":
@@ -505,6 +512,9 @@ if __name__ == "__main__":
 			model=model+"F"
 		if options.model=="LG":
 			model=model+" -P ~sh16/data/LG.dat"
+	
+	if options.V:
+		model=model+" -V "
 
 	#Add the random seed parameter that is now essential
 	
