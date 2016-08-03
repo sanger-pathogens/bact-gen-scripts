@@ -88,6 +88,7 @@ def main():
 	group.add_option("-A", "--ancestral", action="store_true", dest="ancestral", help="Reconstruct ancestral states on tree. Will override other methods. Requires a tree to be provided with the -T flag.", default=False)
 	group.add_option("-g", "--constraint", action="store", dest="constraint", help="File name of a multifurcating constraint tree. Does not have to contain all taxa", default="", metavar="FILE")
 	group.add_option("-T", "--tree", action="store", dest="tree", help="File name of a user-specified starting tree", default="", metavar="FILE")
+	group.add_option("-P", "--optimise", action="store_true", dest="optimise", help="Optimise model and branch lengths on user defined tree. Only works it GAMMA.", default=False)
 	
 	parser.add_option_group(group)
 	
@@ -164,6 +165,12 @@ def check_input_validity(options, args):
 	if options.threads<1 or options.threads>32:
 		DoError('Number of threads to run must be between 1 and 32')
 	
+	if options.optimise and options.asrv!="GAMMA":
+		print "Only GAMMA-based asrv models can be used to optimise a model on a tree. Setting asr to GAMMA"
+		options.asrv="GAMMA"
+	
+	if options.optimise and options.tree=="":
+		DoError("Tree file required for model optimisation")
 		
 	
 	userinput=""
@@ -538,6 +545,11 @@ if __name__ == "__main__":
 		
 		os.system(bsub+' -J "'+tmpname+'_anc" '+RAxML+' -f A -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
 		os.system('bsub -w \'ended('+tmpname+'_anc)\' rm -rf \'*'+tmpname+'*\'')
+	elif options.optimise:
+		print "Running RAxML to optimise model and branch lengths on a user defined tree"
+		model=model+" -t "+options.tree
+		os.system(bsub+' -J "'+tmpname+'_opt" '+RAxML+' -f e -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
+		os.system('bsub -w \'ended('+tmpname+'_opt)\' rm -rf \'*'+tmpname+'*\'')
 	#If they want to make a tree rather than distances
 	else:
 		if options.fast:
