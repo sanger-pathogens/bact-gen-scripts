@@ -711,8 +711,8 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 			
 		else:
 			for taxon in downstreamtaxa:
-				downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
-				editablealignment[sequencenames[taxon.split("_")[1]]]=editablealignment[sequencenames[taxon.split("_")[1]]][:block[0]]+"?"*(block[1]-block[0])+editablealignment[sequencenames[taxon.split("_")[1]]][block[1]:]
+				downstreamnamelist.append(taxon)
+				editablealignment[taxon]=editablealignment[taxon][:block[0]]+"?"*(block[1]-block[0])+editablealignment[taxon][block[1]:]
 
 			#This bit adds each block to the rec.tab output file
 	
@@ -723,8 +723,8 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 						
 			else:
 				print >> tabout, "FT                   /colour=4"
-				print >> tabout, 'FT                   /taxa="'+sequencenames[daughternames[daughter][1]]+'"'
-				print >> tabout, 'FT                   /node="'+nodenames[1]+'->'+sequencenames[daughternames[daughter][1]]+'"'
+				print >> tabout, 'FT                   /taxa="'+daughternames[daughter][1]+'"'
+				print >> tabout, 'FT                   /node="'+nodenames[1]+'->'+daughternames[daughter][1]+'"'
 			
 		print >> tabout, 'FT                   /neg_log_likelihood='+str(block[2])
 		print >> tabout, 'FT                   /SNP_count='+str(block[3])
@@ -742,7 +742,7 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 		elif treeobject.is_internal(daughter):
 			print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], startingdensity, totalsnps, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity), cutoff, window, len(blocks)]))
 		else:
-			print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], startingdensity, totalsnps, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity), cutoff, window, len(blocks)]))
+			print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], startingdensity, totalsnps, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity), cutoff, window, len(blocks)]))
 		
 	
 	return blocks
@@ -771,64 +771,42 @@ def tree_recurse(node,treeobject):
 		rootnode=node
 		node=daughters[0]
 		
-		if treeobject.is_internal(node):
-			nodenames=(str(int(treeobject.node(node).get_data().support)),str(int(treeobject.node(node).get_data().support)))
-		else:
-			nodenames=(sequencenames[treeobject.node(node).get_data().taxon.split("_")[1]],treeobject.node(node).get_data().taxon.split("_")[1])
+		#if treeobject.is_internal(node):
+		#	nodenames=(str(int(treeobject.node(node).get_data().support)),str(int(treeobject.node(node).get_data().support)))
+		#else:
+		nodenames=(treeobject.node(node).get_data().taxon.strip("'"),treeobject.node(node).get_data().taxon.strip("'"))
 		
 		daughters=daughters[1:]
 	else:
 		isroot=False
-		if treeobject.is_internal(node):
-			nodenames=(str(int(treeobject.node(node).get_data().support)),str(int(treeobject.node(node).get_data().support)))
-		else:
-			nodenames=(sequencenames[treeobject.node(node).get_data().taxon.split("_")[1]],treeobject.node(node).get_data().taxon.split("_")[1])
+		#if treeobject.is_internal(node):
+		#	nodenames=(str(int(treeobject.node(node).get_data().support)),str(int(treeobject.node(node).get_data().support)))
+		#else:
+		nodenames=(treeobject.node(node).get_data().taxon.strip("'"),treeobject.node(node).get_data().taxon.strip("'"))
 	
 		daughters=treeobject.node(node).get_succ()
-	
 	
 	#convert daughter node_ids to their names
 	daughternames={}
 	for daughter in daughters:
-		if treeobject.is_internal(daughter):
-			daughternames[daughter]=(str(int(treeobject.node(daughter).get_data().support)),str(int(treeobject.node(daughter).get_data().support)))
-		else:
-			daughternames[daughter]=(sequencenames[treeobject.node(daughter).get_data().taxon.split("_")[1]],treeobject.node(daughter).get_data().taxon.split("_")[1])
+		#if treeobject.is_internal(daughter):
+		#	daughternames[daughter]=(str(int(treeobject.node(daughter).get_data().support)),str(int(treeobject.node(daughter).get_data().support)))
+		#else:
+		daughternames[daughter]=(treeobject.node(daughter).get_data().taxon.strip("'"),treeobject.node(daughter).get_data().taxon.strip("'"))
 	
-
+	
 	if isroot:
-#		downstreamtaxa=treeobject.get_taxa(node)
-#		downstreamnames1=[]
-#		for downtax in downstreamtaxa:
-#			downstreamnames1.append(sequencenames[downtax.split("_")[1]])
-#		print nodenames, node, daughters, downstreamnames1,
-#		for daughter in daughters:
-#			downstreamtaxa=treeobject.get_taxa(daughter)
-#			downstreamnames2=[]
-#			for downtax in downstreamtaxa:
-#				downstreamnames2.append(sequencenames[downtax.split("_")[1]])
-#		 	print downstreamnames2,
-#		print
 		tree_recurse(node,treeobject)
 	for daughter in daughters:
-#		downstreamtaxa=treeobject.get_taxa(node)
-#		downstreamnames1=[]
-#		for downtax in downstreamtaxa:
-#			downstreamnames1.append(sequencenames[downtax.split("_")[1]])
-#		print nodenames, node, daughters, downstreamnames1,
-#		downstreamtaxa=treeobject.get_taxa(daughter)
-#		downstreamnames2=[]
-#		for downtax in downstreamtaxa:
-#			downstreamnames2.append(sequencenames[downtax.split("_")[1]])
-#		print downstreamnames2
-
 		if not gaplocations.has_key(daughternames[daughter][0]):
 			tree_recurse(daughter,treeobject)
 	
 	
 	#identify missing sites in non-terminal nodes
-	
-	missingset=set(gaplocations[daughternames[daughters[0]][0]])
+	if len(daughters)>0:
+		missingset=set(gaplocations[daughternames[daughters[0]][0]])
+	else:
+		missingset=set([])
 	for daughter in daughters[1:]:
 		daughterset=set(gaplocations[daughternames[daughter][0]])
 		comparisonset=missingset
@@ -852,10 +830,8 @@ def tree_recurse(node,treeobject):
 		
 		numsnps=0
 		
-		downstreamtaxa=treeobject.get_taxa(daughter)
+		downstreamnames=treeobject.get_taxa(daughter)
 		downstreamnames=[]
-		for downtax in downstreamtaxa:
-			downstreamnames.append(sequencenames[downtax.split("_")[1]])
 			
 		for x in range(0,pamlalignment.get_alignment_length()):
 
@@ -881,9 +857,9 @@ def tree_recurse(node,treeobject):
 						print >>snptabout, 'FT                   /SNP="'+pamlsequences[nodenames[1]][x]+'->'+pamlsequences[daughternames[daughter][1]][x]+'"'
 						print >>snptabout, 'FT                   /colour=1'
 					else:
-						print >> snplocout, str(AllSNPlocations[x]+1)+",node_"+str(nodenames[1])+"->"+str(sequencenames[daughternames[daughter][1]])+","+pamlsequences[nodenames[1]][x]+","+pamlsequences[daughternames[daughter][1]][x]
+						print >> snplocout, str(AllSNPlocations[x]+1)+",node_"+str(nodenames[1])+"->"+str(daughternames[daughter][1])+","+pamlsequences[nodenames[1]][x]+","+pamlsequences[daughternames[daughter][1]][x]
 						print >>snptabout, "FT   SNP             "+str(AllSNPlocations[x]+1)
-						print >>snptabout, 'FT                   /node="'+str(nodenames[1])+'->'+str(sequencenames[daughternames[daughter][1]])+'"'
+						print >>snptabout, 'FT                   /node="'+str(nodenames[1])+'->'+str(daughternames[daughter][1])+'"'
 						
 						print >>snptabout, 'FT                   /taxa="'+', '.join(downstreamnames)+'"'
 						print >>snptabout, 'FT                   /SNP="'+pamlsequences[nodenames[1]][x]+'->'+pamlsequences[daughternames[daughter][1]][x]+'"'
@@ -929,7 +905,7 @@ def tree_recurse(node,treeobject):
 					if treeobject.is_internal(daughter):
 						print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
 					else:
-						print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
+						print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
 
 			else:
 				binsnplist[str(node)+"_"+str(daughter)]=binsnps
@@ -939,7 +915,7 @@ def tree_recurse(node,treeobject):
 			if treeobject.is_internal(daughter):
 				print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
 			else:
-				print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
+				print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
 
 
 
@@ -1204,7 +1180,7 @@ if __name__ == "__main__":
 			convertnameback[record.id]=name
 			seqnametoindex[name]=count-1
 			
-			print >> handle, name+"  "+record.seq
+			print >> handle, record.id+"  "+record.seq
 			print >> handleb, ">"+record.id
 			print >> handleb, record.seq
 	# add this back in to split the alignment into blocks of 60 bases
@@ -1223,6 +1199,7 @@ if __name__ == "__main__":
 		
 		if iteration==1:
 			os.system("cp SNPS_"+prefix+".phy AllSNPS_"+prefix+".phy")
+			os.system("cp "+prefix+"_iteration"+str(iteration)+".aln AllSNPS_"+prefix+".aln")
 			AllSNPlocations=list(SNPlocations)
 			Allgaplocations=gaplocations.copy()
 			if options.maxiterations>1:
@@ -1241,7 +1218,7 @@ if __name__ == "__main__":
 			
 			if os.path.isfile("RAxML_info.SNPS_"+prefix):
 				print "Removing old RAxML files"
-				os.system("rm RAxML_*.SNPS_"+prefix)
+				os.system("rm RAxML_*SNPS_"+prefix)
 				sys.stdout.flush()
 				
 			print "Running tree with RAxML"
@@ -1255,7 +1232,9 @@ if __name__ == "__main__":
 			
 			os.system(RAxML+" -f d -p "+str(randrange(1,99999))+" -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
 			
-			os.system("mv RAxML_result."+"SNPS_"+prefix+" "+prefix+"_Initial.tre")
+			os.system("mv RAxML_result."+"SNPS_"+prefix+" "+prefix+"_Current.tre")
+			if iteration==1:
+				os.system("cp "+prefix+"_Current.tre "+prefix+"_Initial.tre")
 			
 			#extract stats from raxml output files
 			
@@ -1269,15 +1248,16 @@ if __name__ == "__main__":
 
 			print "RAxML -log likelihood =", negloglike
 			
-			os.system(RAxML+" -f e -p "+str(randrange(1,99999))+" -s ALLSNPS_"+prefix+".phy -t "+prefix+"_Initial.tre -m GTRGAMMA -n ALLSNPS_"+prefix+" > "+prefix+"temp.tmp")
-			os.system("mv RAxML_result."+"ALLSNPS_"+prefix+" "+prefix+"_All_SNPS.tre")
+			os.system(RAxML+" -f e -p "+str(randrange(1,99999))+" -s AllSNPS_"+prefix+".phy -t "+prefix+"_Current.tre -m GTRGAMMA -n ALLSNPS_"+prefix+" > "+prefix+"temp.tmp")
+			os.system("mv RAxML_result."+"ALLSNPS_"+prefix+" "+prefix+"_All_SNPs.tre")
 			options.tree=prefix+"_All_SNPs.tre"
-			
+			treeinfofile="RAxML_info."+"ALLSNPS_"+prefix
 			
 		else:
-			os.system(RAxML+" -f e -p "+str(randrange(1,99999))+" -s ALLSNPS_"+prefix+".phy -t "+options.tree+" -m GTRGAMMA -n ALLSNPS_"+prefix+" > "+prefix+"temp.tmp")
-			os.system("mv RAxML_result."+"ALLSNPS_"+prefix+" "+prefix+"_All_SNPS.tre")
+			os.system(RAxML+" -f e -p "+str(randrange(1,99999))+" -s AllSNPS_"+prefix+".phy -t "+options.tree+" -m GTRGAMMA -n ALLSNPS_"+prefix+" > "+prefix+"temp.tmp")
+			os.system("mv RAxML_result."+"ALLSNPS_"+prefix+" "+prefix+"_All_SNPs.tre")
 			options.tree=prefix+"_All_SNPs.tre"
+			treeinfofile="RAxML_info."+"ALLSNPS_"+prefix
 			alpha=options.alpha
 			negloglike="Unknown"
 	
@@ -1332,8 +1312,8 @@ if __name__ == "__main__":
 		treestring=tree_to_string(tree, False, True, True, True,collapse=True, cutoff=1.0/(len(SNPlocations)+1))
 		
 		
-		for name in sequencenames:
-			treestring=treestring.replace(name+":", sequencenames[name]+":")
+		#for name in sequencenames:
+		#	treestring=treestring.replace(name+":", sequencenames[name]+":")
 		handle = open(prefix+"_iteration"+str(iteration)+".tre", "w")
 		print >> handle, treestring+";"
 		handle.close()
@@ -1376,82 +1356,52 @@ if __name__ == "__main__":
 		oldloglike=negloglike
 		
 		treestring=tree.to_string(False, True, True, True)
-		for name in sequencenames:
-			treestring=treestring.replace(sequencenames[name]+":", name+":")
+		#for name in sequencenames:
+		#	treestring=treestring.replace(sequencenames[name]+":", name+":")
 		handle = open(prefix+".tre", "w")
 		print >> handle, treestring+";"
 		handle.close()
 			
+	
 		
-		#If we have chosen to run paml
+		print "Running jar to reconstruct ancestral states"
+		sys.stdout.flush()
 		
-		if options.runpaml and (not options.usepreviouspamlrun or iteration>1):
-			
-			#create baseml control file for paml
-			
-			print "Running PAML to reconstruct ancestral states"
-			sys.stdout.flush()
+		#run jar
 		
-			create_baseml_control_file("AllSNPS_"+prefix+".phy", prefix+".tre", alpha)
-			
-			#run paml
-			
-			#os.system("/nfs/users/nfs_m/mh10/software/paml41/bin/baseml > "+prefix+"temp.tmp")
-			os.system("baseml > "+prefix+"temp.tmp")
+		#os.system("/nfs/users/nfs_m/mh10/software/paml41/bin/baseml > "+prefix+"temp.tmp")
+		os.system("/nfs/users/nfs_s/sh16/scripts/gubbins/jar.py AllSNPS_"+prefix+".aln "+options.tree+" "+treeinfofile)
 
-		elif options.usepreviouspamlrun:
-			print "Using previous paml run"
-		
-		#remove spaces from rst alignment (necessary to allow easier reading of tree and ancestral sequences
-		
-		os.system("sed 's/node #//g' rst > rstnew")
-		os.system('grep -a -v "^$" rstnew > rstnew2')
 		
 		#extract the tree with all nodes numbered from PAML rst output file
 		
-		print "Reading PAML tree"
+		print "Reading jar tree"
 		sys.stdout.flush()
-
-		negloglikefile=os.popen("tail -n 1 rub")
-
-		negloglike=negloglikefile.read().strip().split()[1]
-
-		print "PAML -log likelihood =", negloglike
 		
-		pamltreefile=os.popen('grep -a -A 1 "tree with node labels for Rod Page\'s TreeView" rstnew | tail -n 1')
-		
-		pamltreestring=pamltreefile.read().strip()
+		jartreestring=open("jar.tre", "rU").read().strip()
+		jartreestring=jartreestring.strip("[&R] ")
 		
 		
 		#read paml tree into memory (note that node ids will be stored as branchlengths)
 		
-		pamltree=Trees.Tree(pamltreestring, rooted=True)
+		jartree=Trees.Tree(jartreestring, rooted=True)
 		
 		#convert branchlengths (node ids) into support attributes
 		
-		pamltree.branchlength2support()
+		jartree.branchlength2support()
 		
 		#tree=add_node_names_to_tree(tree, pamltree)
 		
 		#get the root node number from the paml tree (I think this might always be 0)
 		
-		rootnode=pamltree.root
+		rootnode=jartree.root
 		
 		#extract alignment PAML rst output file
 		
-		print "Reading ancestral sequences from PAML"
+		print "Reading ancestral sequences from jar"
 		sys.stdout.flush()
 		
-		pamlalignstats=os.popen('grep -a -A 1 "List of extant and reconstructed sequences" rstnew2 | tail -n 1')
-		
-		try:
-			n=int(pamlalignstats.read().split()[0])
-		except ValueError:
-			DoError("PAML analysis failed")
-		
-		pamlalignfile=os.popen('grep -a -A '+str(n+1)+' "List of extant and reconstructed sequences" rstnew2 | tail -n '+str(n+1))
-		
-		pamlalignment = AlignIO.read(pamlalignfile, "phylip")
+		pamlalignment = AlignIO.read("jar.aln", "fasta")
 		
 		#Now we have the ancestral state reconstructions and tree in memory we need to make the input for the recombination detection program
 		
@@ -1460,6 +1410,7 @@ if __name__ == "__main__":
 		pamlsequences={}
 		for record in pamlalignment:
 			pamlsequences[record.id]=record.seq
+		
 		
 				
 		#then run the recombination detection script recursively across the branches of the tree, and create tab file of blocks found
@@ -1478,7 +1429,7 @@ if __name__ == "__main__":
 		branch_stats=open(prefix+"_branch_SNP_density_stats.csv","w")
 		print >> snplocout, "SNP_location,Branch,ancestral_base,Daughter_base"
 		print >> branch_stats, "Branch,Starting branch SNP density,Number of SNPs post recombination removal,Final branch SNP density,Mean recombination block SNP density,Maximum recombination block SNP density,Minimum recombination block SNP density,Cutoff,Window,Number of Recombinations"
-		tree_recurse(rootnode,pamltree)
+		tree_recurse(rootnode,jartree)
 		
 		if options.show_gaps:
 			for name in convertnameback:
@@ -1583,17 +1534,8 @@ if __name__ == "__main__":
 	
 	#print final tree
 	#tree=add_node_names_to_tree(tree, pamltree)
-		
-	#tree.display()
-	treestring=tree_to_string(tree, support_as_branchlengths=False,branchlengths_only=True,plain=False,plain_newick=False,ladderize=None, collapse=False, cutoff=0.0, treename=False, comments=False, node_names=True)
-	#treestring=tree.to_string(False, True, True, True)
-	for name in sequencenames:
-		treestring=treestring.replace(name+":", sequencenames[name]+":")
 	
-	
-	handle = open(prefix+"_Final.tre", "w")
-	print >> handle, treestring+";"
-	handle.close()
+	os.system("mv "+prefix+"_Current.tre "+prefix+"_Final.tre")
 
 #	os.system("mv "+prefix+"_iteration"+str(iteration)+".tre "+prefix+"_Final.tre")
 	if options.reference=="":
