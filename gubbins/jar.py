@@ -66,6 +66,8 @@ def read_info(infofile):
 		elif "freq pi(T):" in line:
 			words=line.split()
 			f[3]=float(words[2])
+	print "Frequencies:", ', '.join(map(str,f))
+	print "Rates:", ", ".join(map(str,r))
 	return f, r
 
 
@@ -79,6 +81,10 @@ def create_rate_matrix(f, r):
 	rm[3][3]=numpy.sum(rm[3])*-1
 	
 	return rm
+
+
+
+starttime=time.clock()
 
 #Lookup for each base
 mb={"A": 0, "C": 1, "G": 2, "T":3 }
@@ -176,9 +182,9 @@ allbases=set(["A", "C", "G", "T"])
 # For each base
 t=0
 timestart=time.clock()
-onetime=0.0
-twotime=0.0
-threetime=0.0
+#onetime=0.0
+#twotime=0.0
+#threetime=0.0
 for x, column in enumerate(base_patterns):
 	t=t+1
 	if t==1000:
@@ -203,7 +209,7 @@ for x, column in enumerate(base_patterns):
 	#Denote the three sons of the root by x, y, and z. For each amino acid k, compute the expression Pk x Lx(k) x Ly(k) x Lz(k). Reconstruct r by choosing the amino acid k maximizing this expression. The maximum value found is the likelihood of the best reconstruction.
 	
 	
-	onestart=time.clock()
+	#onestart=time.clock()
 	for y in xrange(postorderlen):
 		nt=postorder[y]
 		node=mytree[nt]
@@ -285,13 +291,13 @@ for x, column in enumerate(base_patterns):
 	#new_alignment[node.taxon.label].append(node.r)
 	
 	
-	oneend=time.clock()
-	onetime+=oneend-onestart
+	#oneend=time.clock()
+	#onetime+=oneend-onestart
 	
 	
 	
 	#Traverse the tree from the root in the direction of the OTUs, assigning to each node its most likely ancestral character as follows:
-	twostart=time.clock()
+	#twostart=time.clock()
 	for y in xrange(preorderlen):
 		nt=preorder[y]
 		node=mytree[nt]
@@ -304,13 +310,13 @@ for x, column in enumerate(base_patterns):
 		node["r"]=node["C"][i]
 		#new_alignment[node.taxon.label].append(node.r)
 
-	twoend=time.clock()
-	twotime+=twoend-twostart
+	#twoend=time.clock()
+	#twotime+=twoend-twostart
 	
 	
 	
 	
-	threestart=time.clock()
+	#threestart=time.clock()
 	#Put gaps back in and check that any ancestor with only gaps downstream is made a gap
 	for y in xrange(postorderlen):
 		nt=postorder[y]
@@ -327,11 +333,10 @@ for x, column in enumerate(base_patterns):
 				node["r"]="-"
 			for bp in base_patterns[column]:
 				new_alignment[nt][bp]=node["r"]
-	threeend=time.clock()
-	threetime+=threeend-threestart
-	
-
-print onetime, twotime, threetime
+	#threeend=time.clock()
+	#threetime+=threeend-threestart
+timeend=time.clock()
+print "Reconstruction stage completed in", timeend-timestart, "seconds"	
 
 output = open("jar.aln", "w")
 for taxon in new_alignment:
@@ -340,7 +345,7 @@ for taxon in new_alignment:
 output.close()
 
 output=open("jar.tre", "w")
-print >> output, tree.as_string("newick")
+print >> output, tree.as_string("newick", unquoted_underscores=True, suppress_rooting=True)
 output.close()
-
-
+timeend=time.clock()
+print "Total time taken:", timeend-starttime, "seconds"

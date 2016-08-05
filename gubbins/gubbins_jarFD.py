@@ -1230,7 +1230,7 @@ if __name__ == "__main__":
 			else:
 				RAxML=pcs4_RAxML_DIR
 			
-			os.system(RAxML+" -f d -p "+str(randrange(1,99999))+" -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
+			os.system(RAxML+" -f d -F -D -p "+str(randrange(1,99999))+" -s SNPS_"+prefix+".phy -m GTRGAMMA -n SNPS_"+prefix+" > "+prefix+"temp.tmp")
 			
 			os.system("mv RAxML_result.SNPS_"+prefix+" "+prefix+"_Current.tre")
 			if iteration==1:
