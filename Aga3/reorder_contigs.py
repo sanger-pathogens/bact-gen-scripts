@@ -128,7 +128,7 @@ def read_tree(treefile):
 				break_on_node = cur_node
 				#FIX
 				break         #when find the  midpoint, it should break the loop
-
+#
 		assert break_on_node is not None or target_edge is not None
 
 		if break_on_node:
@@ -148,13 +148,13 @@ def read_tree(treefile):
 			self.update_splits(delete_outdegree_one=False)
 		return self.seed_node
 	
-	dendropy.dataobject.Tree.reroot_at_midpoint=reroot_at_midpoint
+#	dendropy.dataobject.Tree.reroot_at_midpoint=reroot_at_midpoint
 
 	#Try opening the tree using various schemas
 	opened=False
 	for treeschema in ["nexus", "newick"]:#["beast-summary-tree",  "nexus", "newick"]:
 		try: 
-			t = dendropy.Tree.get_from_path(treefile, schema=treeschema, as_rooted=True, preserve_underscores=True, case_insensitive_taxon_labels=False, set_node_attributes=True, extract_comment_metadata=True)
+			t = dendropy.Tree.get_from_path(treefile, schema=treeschema, rooting='force-rooted', preserve_underscores=True, case_sensitive_taxon_labels=True, extract_comment_metadata=True)
 			opened=True
 			t.schema=treeschema
 			break
@@ -188,7 +188,7 @@ def read_tree(treefile):
 	
 	leaf_order=[]
 	
-	for n in t.leaf_iter():
+	for n in t.leaf_node_iter():
 		leaf_order.append(n.taxon.label)
 	
 #	print t.as_ascii_plot()
