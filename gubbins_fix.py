@@ -13,9 +13,7 @@ from Bio.Alphabet import generic_dna
 from Bio.Alphabet import IUPAC, Gapped
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from optparse import OptionParser
-from itertools import izip
 import math
-import time
 from numpy import mean, median, max, min, std, bincount, argmax
 #sys.path.extend(map(os.path.abspath, ['/usr/lib/python2.4/site-packages/']))
 #sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.5/site-packages/']))
@@ -53,7 +51,7 @@ def main():
 	parser = OptionParser(usage=usage)
 
 	parser.add_option("-a", "--alignment", action="store", dest="alignment", help="alignment file name", default="")
-	parser.add_option("-d", "--detectiontype", action="store", dest="detectiontype", type="choice", choices=["hmm", "movingwindow", "zip"], help="recombination detection method to use (choose from 'hmm', 'movingwindow', 'zip') [default=%default]", default="movingwindow")
+	parser.add_option("-d", "--detectiontype", action="store", dest="detectiontype", type="choice", choices=["hmm", "movingwindow"], help="recombination detection method to use (choose from 'hmm', 'movingwindow') [default=%default]", default="movingwindow")
 	parser.add_option("-i", "--iterations", action="store", dest="maxiterations", type="int", help="maximum number of iterations to run [default=%default]", default=5)
 	parser.add_option("-m", "--minsnps", action="store", dest="minsnps", type="int", help="minimum number of snps required on branch to run recombination detection algorithm [default=%default]", default=3)
 	parser.add_option("-o", "--outgroup", action="store", dest="outgroup", help="outgroup", default="")
@@ -672,28 +670,7 @@ def get_block_likelihood(start, end, binsnps, N, C):
 	return likelihood
 
 
-def get_zip_block_likelihood(n, c, N, C):
 
-	#print start, end, c, n, C, N
-	part1=math.log((c/n),10)*c
-	if n-c==0:
-		part2=0
-	else:
-		part2=math.log((((n-c)/n)),10)*(n-c)
-	if C-c==0:
-		part3=0
-	else:
-		part3=math.log((((C-c)/(N-n))),10)*(C-c)
-	if ((N-n)-(C-c))==0:
-		part4=0
-	else:
-		part4=math.log(((((N-n)-(C-c))/(N-n))),10)*((N-n)-(C-c))
-	
-	likelihood=(part1+part2+part3+part4)*-1
-	
-	#print start, end, c, n, C, N, likelihood
-	
-	return likelihood
 
 
 def reduce_factorial(l,i):
@@ -740,7 +717,7 @@ def get_blocks_from_windowcounts(binsnps, windowcounts, cutoff, nongapposns):
 	if inblock:
 		tempblocks.append([0.0,blockstart,nongapposns[-1]])
 	
-	#print tempblocks
+	print tempblocks
 	
 	#print len(binsnps), nongapposns[-1], len(windowcounts)
 	
@@ -901,15 +878,15 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 	
 	#windowcounts=[0]*(int(lennogaps))
 	
-	window=int(float(lennogaps)/(totalsnps/10))
-	
-	if window<100:
-		window=100
-	elif window>10000:
-		window=10000
-	
-	if window>float(lennogaps)/10:
-		window=int(float(lennogaps)/10)
+#	window=int(float(lennogaps)/(totalsnps/10))
+#	
+#	if window<100:
+#		window=100
+#	elif window>10000:
+#		window=10000
+#	
+#	if window>float(lennogaps)/10:
+#		window=int(float(lennogaps)/10)
 	
 	#print lennogaps, totalsnps, window
 	
@@ -917,7 +894,7 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 	
 	#print float(lennogaps)/(totalsnps), (totalsnps/float(lennogaps))
 	
-	threshold=1-(0.05/(float(lennogaps)/(window/10)))
+#	threshold=1-(0.05/(float(lennogaps)/(window/10)))
 	
 	
 	#print float(lennogaps)/window, threshold
@@ -946,7 +923,11 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 	
 	
 	added=True
-	
+	minwindow=10
+	maxwindow=10000
+	if maxwindow>lennogaps/10:
+		maxwindow=lennogaps/10
+	print "max", maxwindow
 	blocks=[]
 	testblock=0
 	lastcutoff=-1
@@ -954,17 +935,40 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 	while added and totalsnps>=options.minsnps:
 	
 		
-		window=int(float(lennogaps)/(totalsnps/10))
-		
-		if window<100:
-			window=100
-		elif window>10000:
-			window=10000
+		#window=int(float(lennogaps)/(totalsnps/10))
+		#if window<100:
+		#	window=100
+		#elif window>10000:
+		#	window=10000
 			
-		if window>float(lennogaps)/10:
-			window=int(float(lennogaps)/10)
-			
-
+		#if window>float(lennogaps)/10:
+		#	window=int(float(lennogaps)/10)
+		#print "window", window, lennogaps, totalsnps
+		cutoff=float(options.minsnps)
+#		pvalue=0.0
+#		window=minwindow
+#		threshold=1-(0.05/(float(lennogaps)/(window/10)))
+#		while pvalue<=threshold and window<=maxwindow:
+#			#print window, cutoff, pvalue, threshold, totalsnps, reduce_factorial(float(window),cutoff), reduce_factorial(window,cutoff), reduce_factorial(cutoff,cutoff)
+#			part1=reduce_factorial(window,cutoff)-reduce_factorial(cutoff,cutoff)
+#			part2=math.log((float(totalsnps)/lennogaps),10)*cutoff
+#			part3=math.log((1.0-(float(totalsnps)/lennogaps)),10)*(window-cutoff)
+#			
+#			logthing=part1 + part2 + part3
+#			
+#			pvalue+=10**logthing
+#			
+#			window+=1
+#			threshold=1-(0.05/(float(lennogaps)/(window/10)))
+#		window-=1
+#		if window<minwindow:
+#			window=minwindow
+#		elif window>maxwindow:
+#			window=maxwindow
+#		if window>float(lennogaps)/10:
+#			window=int(float(lennogaps)/10)
+#		print "window", window, lennogaps, totalsnps
+#
 #		downstreamnamelist=[]
 #		for taxon in downstreamtaxa:
 #			downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
@@ -972,56 +976,62 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 #		
 #		print float(lennogaps)/(totalsnps), (totalsnps/float(lennogaps))
 		
-		threshold=1-(0.05/(float(lennogaps)/(window/10)))
-		cutoff=0
-		pvalue=0.0
-		while pvalue<=threshold:
-#			print window, cutoff, pvalue, threshold, totalsnps, reduce_factorial(float(window),cutoff), reduce_factorial(window,cutoff), reduce_factorial(cutoff,cutoff)
-			part1=reduce_factorial(window,cutoff)-reduce_factorial(cutoff,cutoff)
-			part2=math.log((float(totalsnps)/lennogaps),10)*cutoff
-			part3=math.log((1.0-(float(totalsnps)/lennogaps)),10)*(window-cutoff)
-			
-			logthing=part1 + part2 + part3
-			
-			pvalue+=10**logthing
-			
-			cutoff+=1
-			
-			
-		cutoff-=1
-		
-		
-		if cutoff!=lastcutoff:
-			windowcounts=[0]*(int(lennogaps))
-			for position in snpposns:
-			
-				y=position-(window/2)
-				curposn=int(y)
-				while (y+window)>curposn:
-					if curposn<0:
-						actualposn=lennogaps+curposn
-					elif curposn>(lennogaps-1):
-						actualposn=curposn-lennogaps
-					else:
-						actualposn=curposn
-					try:
-						windowcounts[actualposn]=windowcounts[actualposn]+1
-					except IndexError:
-						print "Error: window position is out of range of alignment length"
-						print curposn, actualposn, position, len(windowcounts), lennogaps, window
-						sys.exit()
-					curposn=curposn+1
-			newblocks=get_blocks_from_windowcounts(binsnps, windowcounts, cutoff, nongapposns)
+	#	threshold=1-(0.05/(float(lennogaps)/(window/10)))
+	#	cutoff=0
+	#	pvalue=0.0
+	#	while pvalue<=threshold:
+	#		print window, cutoff, pvalue, threshold, totalsnps, reduce_factorial(float(window),cutoff), reduce_factorial(window,cutoff), reduce_factorial(cutoff,cutoff)
+	#		part1=reduce_factorial(window,cutoff)-reduce_factorial(cutoff,cutoff)
+	#		part2=math.log((float(totalsnps)/lennogaps),10)*cutoff
+	#		part3=math.log((1.0-(float(totalsnps)/lennogaps)),10)*(window-cutoff)
+	#		
+	#		logthing=part1 + part2 + part3
+	#		
+	#		pvalue+=10**logthing
+	#		
+	#		cutoff+=1
+	#		
+	#		
+	#	cutoff-=1
+	#	print cutoff, window
+		#cutoff=options.minsnps-1
+		#print cutoff, window
+		newblocks=[]
+		window=minwindow
+		while window<=maxwindow:
+			if cutoff!=0:
+				windowcounts=[0]*(int(lennogaps))
+				for position in snpposns:
 				
-		else:
-			newblocks=newblocks[testblock:]
-		
-		lastcutoff=cutoff
+					y=position-(window/2)
+					curposn=int(y)
+					while (y+window)>curposn:
+						if curposn<0:
+							actualposn=lennogaps+curposn
+						elif curposn>(lennogaps-1):
+							actualposn=curposn-lennogaps
+						else:
+							actualposn=curposn
+						try:
+							windowcounts[actualposn]=windowcounts[actualposn]+1
+						except IndexError:
+							print "Error: window position is out of range of alignment length"
+							print curposn, actualposn, position, len(windowcounts), lennogaps, window
+							sys.exit()
+						curposn=curposn+1
+				newblocks+=get_blocks_from_windowcounts(binsnps, windowcounts, cutoff, nongapposns)
+				print window, newblocks
+					
+			else:
+				newblocks=newblocks[testblock:]
+			
+			lastcutoff=cutoff
+			window=window*10
 		
 		
 		added=False
 		newblocks.sort()
-		#print node, newblocks
+		print node, newblocks
 		sys.stdout.flush()
 		testblock=0
 		while len(newblocks)>testblock and added==False:
@@ -1065,7 +1075,7 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 				for taxon in downstreamtaxa:
 					downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
 				
-				#print node, downstreamnamelist, blocklen, pvaluethreshold, snpcount, pvalue, oldtotalsnps, 1-threshold
+				print node, downstreamnamelist, blocklen, pvaluethreshold, snpcount, pvalue, oldtotalsnps
 				sys.stdout.flush()
 				if pvalue<pvaluethreshold:
 					blocks.append([newblocks[testblock][1], newblocks[testblock][2], newblocks[testblock][0], snpcount, pvalue])
@@ -1138,280 +1148,9 @@ def detect_recombination_using_moving_windows(binsnps, treeobject, node, daughte
 
 
 
-################################################################
-# Function to detect recombination regions using moving window #
-################################################################
 
 
-def detect_recombination_using_zip(binsnps, treeobject, node, daughter, nodenames, daughternames, downstreamtaxa):
-	
 
-	window=100
-	totallen=len(binsnps)
-	X2=[]
-	pvalues=[]
-	currwindowcount=0
-	currposn=0
-	X2converter={}
-	
-	snpposns=[]
-	gapposns=[]
-	nongapposns=[]
-	snpindex=[]
-	
-	for x, binsnp in enumerate(binsnps):
-		if binsnp==1:
-			snpposns.append(len(nongapposns))
-			nongapposns.append(x)
-			snpindex.append(x)
-		elif binsnp==2:
-			gapposns.append(x)
-		elif binsnp==0:
-			nongapposns.append(x)
-	
-	lennogaps=len(nongapposns)
-	totalsnps=float(len(snpposns))
-	startingdensity=float(totalsnps)/lennogaps
-	if totalsnps<options.minsnps:
-		return []
-	
-	elif lennogaps<100:
-		print "branch has fewer than 100 nongap sites. Results would be poor... skipping"
-		return []
-	
-	
-	tstart = time.clock()
-	added=True
-	blocks=[]
-	reducedsnpposns=[]
-	for s in snpposns:
-		reducedsnpposns.append(s)
-		
-	while added and totalsnps>=options.minsnps:
-		#print len(reducedsnpposns), reducedsnpposns
-		#print len(snpindex), snpindex
-		added=False
-		
-		
-		windowcutoff=options.minsnps
-		threshold=1-(0.05/(float(lennogaps)))
-		pvalue=0.0
-		while pvalue<=threshold:
-#			print window, cutoff, pvalue, threshold, totalsnps, reduce_factorial(float(window),cutoff), reduce_factorial(window,cutoff), reduce_factorial(cutoff,cutoff)
-			part1=reduce_factorial(windowcutoff,options.minsnps)-reduce_factorial(options.minsnps,options.minsnps)
-			part2=math.log((float(totalsnps)/lennogaps),10)*options.minsnps
-			part3=math.log((1.0-(float(totalsnps)/lennogaps)),10)*(window-options.minsnps)
-			
-			logthing=part1 + part2 + part3
-			
-			pvalue+=10**logthing
-			
-			windowcutoff+=1
-			
-			
-		windowcutoff-=1
-		min_density=float(options.minsnps)/int(windowcutoff)
-		
-		print "Window cutoff = ", int(windowcutoff), "Minimum Density = ", min_density
-		#min_density=0.0
-		
-		
-		
-		
-		zipblocks=[]
-		for num_snps in xrange(3, len(reducedsnpposns)):
-			plist=[[(b+1)-a,a,b] for a, b in izip(reducedsnpposns, reducedsnpposns[num_snps-1:])]
-			min_dists=[]
-			max_dists=[]
-			min_dist=float("inf")
-			max_dist=0.0
-			for element in plist:
-				#if element[0]>float(lennogaps)/2:
-				#	continue
-				if num_snps>=options.minsnps:
-					if element[0]<min_dist:
-						min_dist=element[0]
-						min_dists=[element]
-					elif element[0]==min_dist:
-						min_dists.append(element)
-			#	if (element[0])>max_dist:
-			#		max_dist=element[0]
-			#		max_dists=[element]
-			#	elif element[0]==max_dist:
-			#		max_dists.append(element)
-					
-			#mindist=min([[b-a,a,b] for a, b in izip(snpposns, snpposns[num_snps:])])
-			
-			#print min_dist, num_snps, lennogaps, totalsnps
-			#print float(max_dist),float(num_snps-2),float(lennogaps),float(totalsnps)
-			if (float(num_snps)/min_dist)>=min_density:
-				ll=get_zip_block_likelihood(float(min_dist),float(num_snps),float(lennogaps),float(totalsnps))
-				#print num_snps, min_dists,ll
-				zipblocks.append([ll, num_snps, min_dists[0][0], min_dists[0][1], min_dists[0][2], "high"])
-			#if max_dist>0:
-			#	ll=get_zip_block_likelihood(float(max_dist-2),float(num_snps-2),float(lennogaps),float(totalsnps))
-			#	#print num_snps, min_dists,ll
-			#	zipblocks.append([ll, num_snps-2, max_dists[0][0]-2, max_dists[0][1]+1, max_dists[0][2]-1, "low"])
-		#print zipblocks
-		
-		if len(zipblocks)>0:
-			x=0
-			pvalue=0.0
-			zipblocks.sort()
-			#print zipblocks
-			
-			ptype='calculated'
-			
-			if ptype=='calculated':
-				while x<zipblocks[0][1]:
-					#print x, zipblocks[0], totalsnps, lennogaps
-					part1=reduce_factorial(zipblocks[0][2],x)-reduce_factorial(x,x)
-					part2=math.log((float(totalsnps)/lennogaps),10)*x
-					part3=math.log((1.0-(float(totalsnps)/lennogaps)),10)*(zipblocks[0][2]-x)
-				
-					logthing=part1 + part2 + part3
-					
-					pvalue+=10**logthing
-					x+=1
-				pvalue=1.0-round(pvalue,10)
-				pvaluethreshold=(0.05/float(lennogaps)) #This is what old Gubbins uses for the threshold
-				#pvaluethreshold=(0.05/float(lennogaps*totalsnps)) #multiply by the total number of SNPs as this is the number of possible windows tested.
-			
-			
-			elif ptype=='randomisation':
-				plls=[zipblocks[0][0]]
-				numrandomisations=100
-				for iter in xrange(0,numrandomisations-1):
-					randsnpposns=random.sample(xrange(int(lennogaps)), int(totalsnps))
-					randsnpposns.sort()
-					pzipblocks=[]
-					for pnum_snps in xrange(3, len(randsnpposns)):
-						pplist=[[(b+1)-a,a,b] for a, b in izip(randsnpposns, randsnpposns[pnum_snps-1:])]
-						pmin_dists=[]
-						pmax_dists=[]
-						pmin_dist=float("inf")
-						pmax_dist=0.0
-						for pelement in pplist:
-							#if element[0]>float(lennogaps)/2:
-							#	continue
-							if pnum_snps>=options.minsnps:
-								if pelement[0]<pmin_dist:
-									pmin_dist=pelement[0]
-									pmin_dists=[pelement]
-								elif element[0]==min_dist:
-									pmin_dists.append(pelement)
-						#	if (pelement[0])>pmax_dist:
-						#		pmax_dist=pelement[0]
-						#		pmax_dists=[pelement]
-						#	elif pelement[0]==pmax_dist:
-						#		pmax_dists.append(pelement)
-						
-						#mindist=min([[b-a,a,b] for a, b in izip(snpposns, snpposns[num_snps:])])
-				
-						#print pmin_dist, pnum_snps, (float(pnum_snps)/pmin_dist), min_density
-						#print float(max_dist),float(num_snps-2),float(lennogaps),float(totalsnps)
-						if (float(pnum_snps)/pmin_dist)>min_density:
-							ll=get_zip_block_likelihood(float(pmin_dist),float(pnum_snps),float(lennogaps),float(totalsnps))
-							#print num_snps, min_dists,ll
-							pzipblocks.append([ll, pnum_snps, pmin_dists[0][0], pmin_dists[0][1], pmin_dists[0][2], "high"])
-						#if max_dist>0:
-						#	ll=get_zip_block_likelihood(float(max_dist-2),float(num_snps-2),float(lennogaps),float(totalsnps))
-						#	#print num_snps, min_dists,ll
-						#	pzipblocks.append([ll, num_snps-2, max_dists[0][0]-2, max_dists[0][1]+1, max_dists[0][2]-1, "low"])
-					print pzipblocks
-					pzipblocks.sort()
-					if len(pzipblocks)>0:
-						plls.append(pzipblocks[0][0])
-				
-				pcount=0.0
-				for ll in plls:
-					if ll<=zipblocks[0][0]:
-						pcount+=1
-				pvalue=pcount/numrandomisations
-				
-				pvaluethreshold=0.05
-			
-			
-			if pvalue<pvaluethreshold:
-				added=True
-				block=[snpindex[reducedsnpposns.index(zipblocks[0][3])], snpindex[reducedsnpposns.index(zipblocks[0][4])], zipblocks[0][0], zipblocks[0][1], pvalue, zipblocks[0][2], totalsnps, lennogaps]
-				#print block[5], block
-				blocks.append(block)
-				newreducedsnpposns=[]
-				newsnpindex=[]
-				for i, s in enumerate(reducedsnpposns):
-					if s<zipblocks[0][3]:
-						newreducedsnpposns.append(s)
-						newsnpindex.append(snpindex[i])
-					elif s>zipblocks[0][4]:
-						newreducedsnpposns.append(s-block[5])
-						newsnpindex.append(snpindex[i])
-							
-				reducedsnpposns=newreducedsnpposns
-				snpindex=newsnpindex
-				totalsnps-=block[3]
-				lennogaps-=block[5]
-		
-	
-	
-	#print "z", blocks, (time.clock() - tstart)*1000
-	
-	
-	blsnpdensity=[]
-	for block in blocks:
-		downstreamnamelist=[]
-		blsnpdensity.append(float(block[3])/((block[1]+1)-block[0]))
-		print >> tabout, "FT   misc_feature    "+str(block[0]+1)+".."+str(block[1]+1)
-		if node==0 and options.outgroup!="" and options.outgroup!="None":
-			
-			editablealignment[options.outgroup]=editablealignment[options.outgroup][:block[0]]+"?"*(block[1]-block[0])+editablealignment[options.outgroup][block[1]:]
-			
-			
-			print >> tabout, "FT                   /colour=3"
-			print >> tabout, 'FT                   /taxa="'+options.outgroup+'"'
-			print >> tabout, 'FT                   /node="'+nodenames[1]+'->'+options.outgroup+'"'	
-			
-		else:
-			for taxon in downstreamtaxa:
-				downstreamnamelist.append(sequencenames[taxon.split("_")[1]])
-				editablealignment[sequencenames[taxon.split("_")[1]]]=editablealignment[sequencenames[taxon.split("_")[1]]][:block[0]]+"?"*(block[1]-block[0])+editablealignment[sequencenames[taxon.split("_")[1]]][block[1]:]
-
-			#This bit adds each block to the rec.tab output file
-	
-			if treeobject.is_internal(daughter):
-				print >> tabout, "FT                   /colour=2"
-				print >> tabout, 'FT                   /taxa="'+', '.join(downstreamnamelist)+'"'
-				print >> tabout, 'FT                   /node="'+nodenames[1]+'->'+daughternames[daughter][1]+'"'
-						
-			else:
-				print >> tabout, "FT                   /colour=4"
-				print >> tabout, 'FT                   /taxa="'+sequencenames[daughternames[daughter][1]]+'"'
-				print >> tabout, 'FT                   /node="'+nodenames[1]+'->'+sequencenames[daughternames[daughter][1]]+'"'
-			
-		print >> tabout, 'FT                   /neg_log_likelihood='+str(block[2])
-		print >> tabout, 'FT                   /SNP_count='+str(block[3])
-		print >> tabout, 'FT                   /length='+str((block[1]+1)-block[0])
-		if totalsnps>0:
-			print >> tabout, 'FT                   /Recombination_to_background_SNP_ratio='+str((float(block[3])/((block[1]+1)-block[0]))/(totalsnps/lennogaps))
-			print str((float(block[3])/((block[1]+1)-block[0]))/(totalsnps/lennogaps)), str((block[1]+1)-block[0]), str(block[3]), (float(block[3])/((block[1]+1)-block[0])), (totalsnps/lennogaps)
-		else:
-			print >> tabout, 'FT                   /Recombination_to_background_SNP_ratio=Inf'
-		print >> tabout, 'FT                   /pvalue='+str(block[4])
-		
-	
-	if len(blocks)==0:
-		blsnpdensity=[0.0]
-	else:
-		if node==0 and options.outgroup!="" and options.outgroup!="None":
-			print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+options.outgroup, startingdensity, totalsnps, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity), len(blocks)]))
-		elif treeobject.is_internal(daughter):
-			print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], startingdensity, totalsnps, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity), len(blocks)]))
-		else:
-			print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], startingdensity, totalsnps, totalsnps/lennogaps, mean(blsnpdensity), max(blsnpdensity), min(blsnpdensity), len(blocks)]))
-		
-	
-	return blocks
-	
 
 	
 
@@ -1582,14 +1321,6 @@ def tree_recurse(node,treeobject):
 			if options.detectiontype=="movingwindow":
 				
 				blocks=detect_recombination_using_moving_windows(binsnps, treeobject, node, daughter, nodenames, daughternames, downstreamtaxa)
-				if len(blocks)==0:
-					if treeobject.is_internal(daughter):
-						print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
-					else:
-						print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+sequencenames[daughternames[daughter][1]], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
-
-			elif options.detectiontype=="zip":
-				blocks=detect_recombination_using_zip(binsnps, treeobject, node, daughter, nodenames, daughternames, downstreamtaxa)
 				if len(blocks)==0:
 					if treeobject.is_internal(daughter):
 						print >> branch_stats, ','.join(map(str,[nodenames[1]+'->'+daughternames[daughter][1], float(numsnps)/lennogaps, numsnps, float(numsnps)/lennogaps, 0, 0, 0, options.minsnps, 10000, 0]))
