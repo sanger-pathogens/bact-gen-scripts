@@ -1225,6 +1225,7 @@ def detect_recombination_using_zip(binsnps, treeobject, node, daughter, nodename
 			max_dists=[]
 			min_dist=float("inf")
 			max_dist=0.0
+			all_dists=[]
 			for element in plist:
 				#if element[0]>float(lennogaps)/2:
 				#	continue
@@ -1234,6 +1235,11 @@ def detect_recombination_using_zip(binsnps, treeobject, node, daughter, nodename
 						min_dists=[element]
 					elif element[0]==min_dist:
 						min_dists.append(element)
+					
+					if len(all_dists)==0 or element[1]>all_dists[-1][2]:
+						all_dists.append(element)
+					elif element[0]<all_dists[-1][0]:
+						all_dists[-1]=element
 			#	if (element[0])>max_dist:
 			#		max_dist=element[0]
 			#		max_dists=[element]
@@ -1241,24 +1247,29 @@ def detect_recombination_using_zip(binsnps, treeobject, node, daughter, nodename
 			#		max_dists.append(element)
 					
 			#mindist=min([[b-a,a,b] for a, b in izip(snpposns, snpposns[num_snps:])])
+			#print all_dists
 			
 			#print min_dist, num_snps, lennogaps, totalsnps
 			#print float(max_dist),float(num_snps-2),float(lennogaps),float(totalsnps)
-			if (float(num_snps)/min_dist)>=min_density:
-				ll=get_zip_block_likelihood(float(min_dist),float(num_snps),float(lennogaps),float(totalsnps))
-				#print num_snps, min_dists,ll
-				zipblocks.append([ll, num_snps, min_dists[0][0], min_dists[0][1], min_dists[0][2], "high"])
+			for min_dists in all_dists:
+				min_dist=min_dists[0]
+				if (float(num_snps)/min_dist)>=min_density:
+					ll=get_zip_block_likelihood(float(min_dist),float(num_snps),float(lennogaps),float(totalsnps))
+					#print num_snps, min_dists,ll
+					zipblocks.append([ll, num_snps, min_dists[0], min_dists[1], min_dists[2], "high"])
+				#else:
+					#print num_snps, min_dists[0], min_dists[1], min_dists[2]
 			#if max_dist>0:
 			#	ll=get_zip_block_likelihood(float(max_dist-2),float(num_snps-2),float(lennogaps),float(totalsnps))
 			#	#print num_snps, min_dists,ll
 			#	zipblocks.append([ll, num_snps-2, max_dists[0][0]-2, max_dists[0][1]+1, max_dists[0][2]-1, "low"])
-		#print zipblocks
+		print zipblocks
 		
 		if len(zipblocks)>0:
 			x=0
 			pvalue=0.0
 			zipblocks.sort()
-			#print zipblocks
+			print len(zipblocks)
 			
 			ptype='calculated'
 			
