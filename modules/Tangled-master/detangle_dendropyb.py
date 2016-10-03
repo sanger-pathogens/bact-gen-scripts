@@ -390,7 +390,7 @@ tree_list = []
 g_starting_intensity = 50
 g_number_of_iterations_before_reducing_intensity = 5
 g_max_count = 100
-g_max_iterations_without_improvement = 5
+g_max_iterations_without_improvement = 2
 g_intensity_reduction = 0.95
 g_skip_first_tree = False
 
@@ -420,7 +420,7 @@ def process_trees(tree_list, starting_intensity=g_starting_intensity,
 		print "Can only cope with 2 trees"
 		sys.exit()
 	
-	reroot_tree2=True
+	reroot_tree2=False
 	if reroot_tree2:
 		print "Rerooting second tree to find best match"
 		tree_list[1]=find_best_root(tree_list[0], tree_list[1])

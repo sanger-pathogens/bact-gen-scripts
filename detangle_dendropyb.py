@@ -429,7 +429,7 @@ tree_list = []
 g_starting_intensity = 50
 g_number_of_iterations_before_reducing_intensity = 5
 g_max_count = 100
-g_max_iterations_without_improvement = 5
+g_max_iterations_without_improvement = 2
 g_intensity_reduction = 0.95
 g_skip_first_tree = False
 
