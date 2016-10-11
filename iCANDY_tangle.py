@@ -1390,6 +1390,8 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				namewidth=get_text_width('Helvetica', fontsize, str(node.taxon))+name_offset
 				gubbins_length += namewidth
 				colpos=1
+			else:
+				namewidth=0.0
 			
 			if direction=="forward":
 				for x in xrange(colpos,len(name_colours)):
