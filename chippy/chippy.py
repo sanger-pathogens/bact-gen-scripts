@@ -74,11 +74,10 @@ def split_references(reffile):
 			print >> output, ">"+seq[0]+" "+seq[1]
 			print >> output, seq[2]
 		output.close()
-		#sketch_file(filename, s=sketch, k=kmer, i=True)
+		sketch_file(filename, s=sketch, k=kmer, i=True)
 	
 	return ref_lengths, sketches.keys()
 	
-
 
 try:
 	references=sys.argv[1]
@@ -91,7 +90,6 @@ except:
 ref_lengths,sketches=split_references(references)
 		
 print len(ref_lengths), "contigs split into", len(sketches), "reference sketches"
-
 
 for x, sketch in enumerate(sketches):
 	sketch_file(assembly, s=sketch, k=kmer, i=True)

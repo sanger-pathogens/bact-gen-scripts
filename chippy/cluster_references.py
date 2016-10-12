@@ -7,25 +7,70 @@ from sklearn import metrics
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
+from itertools import cycle
+import scipy.spatial.distance as ssd
+import scipy.cluster.hierarchy as cluster
+from scipy.cluster.hierarchy import cophenet
+from scipy.spatial.distance import pdist
 
-
+cutoff=0.005
+method='average' #clustering method. Can choose from 'single', 'complete', 'average', 'weighted'. Testing shows average performs best
+print_dendrogram=True
 
 distances=[]
+matches=[]
 my_labels=[]
 subject=""
 for line in open(sys.argv[1], "rU"):
 	words=line.strip().split("\t")
 	if words[1]!=subject:
 		distances.append([])
+		matches.append([])
 		subject=words[1]
 		my_labels.append(words[1])
-	distances[-1].append(float(words[3]))
-
-#labels_true=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3]
-
-print len(distances)
-
+	matches[-1].append(float(words[4].split("/")[0]))
+	distances[-1].append(float(words[2]))
+Num_sequences=len(distances)
+print Num_sequences, "sequences found"
 X=np.array(distances)
+Y = ssd.squareform(X)
+Z=cluster.linkage(Y, method=method)
+c, coph_dists = cophenet(Z, pdist(X))
+num_clusters=Num_sequences
+clusters={}
+for x in xrange(Num_sequences):
+	clusters[x]=[x]
+toremove=[]
+for z in Z:
+	if z[2]>cutoff:
+		print "cutoff"
+		break
+	seq1=int(z[0])
+	seq2=int(z[1])
+	clusters[len(clusters)]=clusters[seq1]+clusters[seq2]
+	toremove.append(seq1)
+	toremove.append(seq2)
+	#print z, seq1, seq2,len(clusters)
+for c in toremove:
+	del clusters[c]
+print len(clusters), "clusters identified using", cutoff, "cutoff and", method, "method"
+print clusters
+
+if print_dendrogram:
+	# calculate full dendrogram
+	plt.title('Hierarchical Clustering Dendrogram')
+	plt.xlabel('sample index')
+	plt.ylabel('distance')
+	cluster.dendrogram(
+	    Z,
+	    leaf_rotation=90.,  # rotates the x axis labels
+	    leaf_font_size=8.,  # font size for the x axis labels
+	)
+	plt.savefig(sys.argv[1]+'.dendrogram.png')
+	
+sys.exit()
+	
+X=np.array(matches)
 
 af = AffinityPropagation().fit(X)
 cluster_centers_indices = af.cluster_centers_indices_
@@ -37,8 +82,7 @@ print('Estimated number of clusters (affinity propagation): %d' % n_clusters_)
 for x in xrange(len(labels)):
 	print labels[x], my_labels[x]
 
-
-from itertools import cycle
+sys.exit()
 
 plt.close('all')
 plt.figure(1)
@@ -56,9 +100,9 @@ for k, col in zip(range(n_clusters_), colors):
 
 plt.title('Estimated number of clusters: %d' % n_clusters_)
 plt.savefig("AffinityPropagation.png")
-
-
-db = DBSCAN(metric="precomputed", eps=float(0.05)).fit(X)
+#print distances
+X=np.array(distances)
+db = DBSCAN(metric="precomputed").fit(X)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
 core_samples_mask[db.core_sample_indices_] = True
 labels = db.labels_
