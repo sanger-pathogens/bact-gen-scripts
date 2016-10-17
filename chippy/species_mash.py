@@ -84,8 +84,19 @@ except:
 index=cPickle.load(idx)
 idx.close()
 output=open(sys.argv[1]+".chippy.cluster_reps.fasta", "w")
+
+if len(sys.argv)>2:
+	species_list=[" ".join(sys.argv[2:])]
+else:
+	species_list=index.keys()
+	
+species_list.sort()
+#print species_list
 i=0
-for species in index:
+for species in species_list:
+	if not species in index or not species[0].isupper():
+		print species, "not in index. Skipping"
+		continue
 	print "found", len(index[species]), "sequences for", species
 	if len(index[species])>1:
 		i+=1
