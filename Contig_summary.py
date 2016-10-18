@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, sys, string, numpy
+import os, sys, string, numpy, scipy.stats
 from Bio.Seq import Seq
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 from Si_SeqIO import *
@@ -32,7 +32,7 @@ def check_input_options(options, args):
 (options, args) = main()
 check_input_options(options, args)
 
-print '\t'.join(["File", "Total length", "No. contigs", "Mean length", "Stdev lengths", "Median length", "Max length", "Min length", "N50", "N50n", "MeanGC", "GC% stdev", "Median GC%", "Max GC%", "MinGC%"])
+print '\t'.join(["File", "Total length", "No. contigs", "Mean length", "Stdev lengths", "Median length", "Max length", "Min length", "Skewness", "Kurtosis", "N50", "N50n", "MeanGC", "GC% stdev", "Median GC%", "Max GC%", "MinGC%"])
 
 for filename in args:
 	try:
@@ -78,7 +78,7 @@ for filename in args:
 	#print test[0]
 		
 	if len(lengths)==0:
-		print '\t'.join([filename, '0', '0', '0', '0', '0', '0', '0', '0', '0', "-", "-", "-", "-", "-"])
+		print '\t'.join([filename, '0', '0', '0', '0', '0', '0', '0', '0', '0', '-', '-', "-", "-", "-", "-", "-"])
 		continue
 		
 	
@@ -100,7 +100,7 @@ for filename in args:
 		sum+=lengths[count]
 		count+=1
 	try:
-		print '\t'.join(map(str,[filename, numpy.sum(lengths), len(lengths), numpy.mean(lengths), numpy.std(lengths), numpy.median(lengths), numpy.max(lengths), numpy.min(lengths), N50, count, numpy.mean(GCs), numpy.std(GCs), numpy.median(GCs), numpy.max(GCs), numpy.min(GCs)]))
+		print '\t'.join(map(str,[filename, numpy.sum(lengths), len(lengths), numpy.mean(lengths), numpy.std(lengths), numpy.median(lengths), numpy.max(lengths), numpy.min(lengths), scipy.stats.skew(lengths), scipy.stats.kurtosis(lengths), N50, count, numpy.mean(GCs), numpy.std(GCs), numpy.median(GCs), numpy.max(GCs), numpy.min(GCs)]))
 	except StandardError:
 		print filename+"\tfailed"
 #	print "N50 =", N50
@@ -110,6 +110,7 @@ for filename in args:
 #	print "Median GC% =", numpy.mean(GCs)
 #	print "Maximum GC% =", numpy.max(GCs)
 #	print "Minimum GC% =", numpy.min(GCs)
+
 	
 	
 	
