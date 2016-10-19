@@ -14,7 +14,10 @@ idx.close()
 print "Index stats:"
 print len(index), "species"
 seqs=0
+lengths=[]
 for s in index:
 	seqs+=len(index[s])
+	#for a in index[s]:
+	#	lengths.append([index[s][a]["locations"][1]-index[s][a]["locations"][0], a, s])
 print seqs, "sequences"
 		

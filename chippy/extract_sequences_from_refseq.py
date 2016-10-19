@@ -18,8 +18,8 @@ if not my_species in index:
 	print "Could not find", my_species, "in index file"
 	sys.exit()
 for my_accession in index[my_species]:
-	f.seek(index[my_species][my_accession][0])
-	while f.tell()<index[my_species][my_accession][1]:
+	f.seek(index[my_species][my_accession]["locations"][0])
+	while f.tell()<index[my_species][my_accession]["locations"][1]:
 		line = f.readline()
 		print line.strip()
 
