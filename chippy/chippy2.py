@@ -97,8 +97,8 @@ outprefix=assembly
 tophit="hit"
 while tophit!="":
 
-	if not os.path.isfile(assembly+".msh"):
-		sketch_file(assembly, s=10000, k=16, i=False)
+	#if not os.path.isfile(assembly+".msh"):
+	sketch_file(assembly, s=10000, k=16, i=False)
 	
 	os.system("mash dist -d 0.5 "+assembly+".msh "+all_references+".msh | sort -gk3 > "+assembly+"_"+all_references+".dist.tab")
 	tophit=""
@@ -220,26 +220,28 @@ while tophit!="":
 		contig_sequences[contigs[name]["match"]].append([name,description,''.join(seq)])
 	
 	
-	cout=open(outprefix+".chippy."+topspecies.replace(" ","_")+".fasta", "w")
-	fout=open(outprefix+".chippy.fish.fasta", "w")
-	sout=open(outprefix+".chippy.small_fries.fasta", "w")
+	
+	
+	
 	if len(contig_sequences["yes"])>0:
+		cout=open(outprefix+".chippy."+topspecies.replace(" ","_")+".fasta", "w")
 		for seq in contig_sequences["yes"]:
 			print >> cout, ">"+seq[0]+" "+seq[1]
 			print >> cout, seq[2]
+		cout.close()
 	else:
 		tophit=""
 	if len(contig_sequences["no"])>0:
+		fout=open(outprefix+".chippy.fish.fasta", "w")
 		for seq in contig_sequences["no"]:
 			print >> fout, ">"+seq[0]+" "+seq[1]
 			print >> fout, seq[2]
 		fout.close()
 	if len(contig_sequences["uncertain"])>0:
+		sout=open(outprefix+".chippy.small_fries.fasta", "w")
 		for seq in contig_sequences["uncertain"]:
 			print >> sout, ">"+seq[0]+" "+seq[1]
 			print >> sout, seq[2]
 		sout.close()
-	cout.close()
-	fout.close()
-	sout.close()
+	
 	assembly=outprefix+".chippy.fish.fasta"
