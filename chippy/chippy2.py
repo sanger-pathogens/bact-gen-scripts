@@ -126,7 +126,9 @@ while tophit!="":
 	
 	print "Top hit is", topspecies, tophit, "at a distance of", distance, "and a p-value of", p
 	
-	os.system("/nfs/users/nfs_s/sh16/scripts/chippy/extract_sequences_from_refseq.py "+all_references+' "'+topspecies+'" > '+topspecies.replace(" ","_")+".chippy.fasta")
+	#os.system("/nfs/users/nfs_s/sh16/scripts/chippy/extract_sequences_from_refseq.py "+all_references+' "'+topspecies+'" > '+topspecies.replace(" ","_")+".chippy.fasta")
+	os.system('/nfs/users/nfs_s/sh16/scripts/chippy/extract_sequences_from_refseq.py  refseq_bacteria.fna "'+topspecies+'" > '+topspecies.replace(" ","_")+".chippy.fasta")
+	
 	
 	references=topspecies.replace(" ","_")+".chippy.fasta"
 	
@@ -186,10 +188,12 @@ while tophit!="":
 					contigs[words[1]]["match"]="yes"
 				else:
 					contigs[words[1]]["match"]="no"
+				
+				
 		
 		
 	
-	output = open(outprefix+".chippy.tsv", "w")
+	output = open(outprefix+".chippy."+topspecies.replace(" ","_")+".tsv", "w")
 	print >> output, "\t".join(["contig", "contig length", "ref length", "top hit", "hash matches", "p-value", "distance", "expected", "cutoff", "chip?"])
 		
 	

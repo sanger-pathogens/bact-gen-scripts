@@ -5595,8 +5595,13 @@ if __name__ == "__main__":
 			for i in [tree, tree2_tangled]:
 				tangled_trees[i.label]=i
 				tangled_tree_list.append(i)
-			print detangle_dendropyb.__file__
 			tree1, tree2=detangle_dendropyb.process_trees(tangled_tree_list, output_filename = "tangle_test", skip_first_tree = True, verbose=True)
+			output=open("tree_1_untangled.tre", "w")
+			print >> output, tree1.as_string(schema="newick")
+			output.close()
+			output=open("tree_2_untangled.tre", "w")
+			print >> output, tree2.as_string(schema="newick")
+			output.close()
 		elif untangle_type=="both":
 			print "Untangling both trees"
 			for i in [tree, tree2_tangled]:
