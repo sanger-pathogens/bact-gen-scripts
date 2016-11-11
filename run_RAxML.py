@@ -93,7 +93,7 @@ def main():
 	parser.add_option_group(group)
 	
 	group = OptionGroup(parser, "bootstrap options")
-	group.add_option("-b", "--bootstrap", action="store", dest="bootstrap", help="Number of bootstrap replicates [Default = %default]", default=100, type="int", metavar="INT")
+	group.add_option("-b", "--bootstrap", action="store", dest="bootstrap", help="Number of bootstrap replicates [Default = %default]", default=0, type="int", metavar="INT")
 	group.add_option("-f", "--fast", action="store_true", dest="fast", help="Use RAxML fast bootstrap method (this will all run on one node, and therefore may be slower)", default=False)
 	parser.add_option_group(group)
 	group = OptionGroup(parser, "LSF options")
@@ -102,7 +102,7 @@ def main():
 	group.add_option("-O", "--bsubout", action="store_true", dest="bsubout", help="Save bsub outputs", default=False)
 	group.add_option("-E", "--bsuberr", action="store_true", dest="bsuberr", help="Save bsub errors", default=False)
 	group.add_option("-n", "--threads", action="store", dest="threads", help="Number of threads to run - allows parallelisation of the analysis. Max=32. [Default= %default]", default=1, type="int")
-	group.add_option("-V", "--version", action="store", dest="version", help="Version of raxml to run. Choices are AVX or SSE3 on farm3. AVX is faster, but only half of the nodes support it. SSE3 is slightly slower, but supported on all nodes. On farm2 or pcs4 the orginal version will be used, so this option is irrelevant. [Default= %default]", default="SSE3", type="choice", choices=["AVX", "SSE3"])
+	group.add_option("-V", "--version", action="store", dest="version", help="Version of raxml to run. Choices are AVX or SSE3 on farm3. AVX is faster, but only half of the nodes support it. SSE3 is slightly slower, but supported on all nodes. On farm2 or pcs4 the orginal version will be used, so this option is irrelevant. [Default= %default]", default="AVX", type="choice", choices=["AVX", "SSE3"])
 	
 	parser.add_option_group(group)
 	
