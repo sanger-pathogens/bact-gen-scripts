@@ -448,6 +448,24 @@ def parsimony_reconstruction(treeObject, namecolours, colours, transformation="a
 		return treeObject
 		
 	
+	def print_count_of_changes_to_state(treeObject):
+		node=treeObject.root
+		changes={}
+		print "here"
+		def get_node_change(node):
+			for daughter in treeObject.node(node).get_succ():
+				if treeObject.node(node).get_data().comment["branch_colour"]!= treeObject.node(daughter).get_data().comment["branch_colour"]:
+					if not treeObject.node(daughter).get_data().comment["branch_colour"] in changes:
+						changes[treeObject.node(daughter).get_data().comment["branch_colour"]]=0
+					changes[treeObject.node(daughter).get_data().comment["branch_colour"]]+=1
+				get_node_change(daughter)
+		
+		print_node_sankoff(node)
+		for change in changes:
+			print change, changes[change]
+
+
+
 #	def print_sankoffs():
 #		node=treeObject.root
 #		
@@ -468,8 +486,7 @@ def parsimony_reconstruction(treeObject, namecolours, colours, transformation="a
 	
 	treeObject=sankoff(treeObject, treeObject.root)
 	treeObject=sankoff_second_traversal(treeObject, treeObject.root, transformation=transformation)
-
-			
+	print_count_of_changes_to_state(treeObject)
 	return treeObject
 
 
@@ -1040,10 +1057,10 @@ def deltran_parsimony_reconstruction(t, transformation="deltran"):
 
 	if t.seed_node.parent_node!= None and not hasattr(t.seed_node.parent_node,'edge_colours'):
 		t.seed_node.parent_node.edge_colours=t.seed_node.edge_colours
-	
 	dendropy.treecalc.fitch_up_pass(preorder_node_list, attr_name='edge_colours', taxa_to_state_set_map=None)
+	for node in t.preorder_node_iter():
+		print node.edge_colours
 
-	
 
 
 #############################
