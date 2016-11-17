@@ -1058,8 +1058,7 @@ def deltran_parsimony_reconstruction(t, transformation="deltran"):
 	if t.seed_node.parent_node!= None and not hasattr(t.seed_node.parent_node,'edge_colours'):
 		t.seed_node.parent_node.edge_colours=t.seed_node.edge_colours
 	dendropy.treecalc.fitch_up_pass(preorder_node_list, attr_name='edge_colours', taxa_to_state_set_map=None)
-	for node in t.preorder_node_iter():
-		print node.edge_colours
+	
 
 
 
