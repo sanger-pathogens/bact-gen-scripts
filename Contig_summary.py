@@ -32,7 +32,7 @@ def check_input_options(options, args):
 (options, args) = main()
 check_input_options(options, args)
 
-print '\t'.join(["File", "Total length", "No. contigs", "Mean length", "Stdev lengths", "Median length", "Max length", "Min length", "Skewness", "Kurtosis", "N50", "N50n", "MeanGC", "GC% stdev", "Median GC%", "Max GC%", "MinGC%"])
+print '\t'.join(["File", "Total length", "No. contigs", "Mean length", "Stdev lengths", "Median length", "Max length", "Min length", "Skewness", "Kurtosis", "N50", "N50n", "Mean GC%", "Stdev GC%", "Median GC%", "Max GC%", "MinGC%"])
 
 for filename in args:
 	try:
