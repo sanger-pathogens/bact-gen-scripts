@@ -92,7 +92,6 @@ def read_tree(treefile):
 	
 	#t.deroot()
 	
-	
 	return t
 
 
@@ -233,7 +232,7 @@ if __name__ == "__main__":
 		
 		tree.deroot()
 		
-		for node in tree.leaf_iter():
+		for node in tree.leaf_node_iter():
 			taxa.add(node.taxon.label)
 		
 		if len(taxa)<3:
@@ -246,7 +245,7 @@ if __name__ == "__main__":
 			node_count+=1
 			if node.edge_length!=None:
 				blengths.append(node.edge_length)
-				if node.edge_length==0:
+				if node.edge_length<0.00000000001:
 					node.edge_length=0.00000000001
 				if node.edge_length<min_length:
 					min_length=node.edge_length
