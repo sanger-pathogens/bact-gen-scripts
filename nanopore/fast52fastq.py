@@ -6,7 +6,9 @@
 import h5py
 import os, sys
 from optparse import OptionParser, OptionGroup
+import tarfile
 
+tmppath="/tmp"
 
 
 ################################
@@ -60,7 +62,18 @@ if __name__ == "__main__":
 	hopen=False
 	for arg in args:
 		if os.path.isfile(arg):
-			fast5s.append(arg)
+			if tarfile.is_tarfile(arg)==True:
+				tar=tarfile.open(arg)
+				foundtarfile=False
+				for f in tar.getmembers():
+					if f.isfile():
+						fast5s.append(tmppath+"/"+f.name)
+						foundtarfile=True
+				if foundtarfile==True:
+					tar.extractall(tmppath)
+				
+			else:
+				fast5s.append(arg)
 		elif os.path.isdir(arg):
 			for file in os.listdir(arg):
 			    if file.endswith(".fast5"):
@@ -110,7 +123,7 @@ if __name__ == "__main__":
 				except StandardError:
 					#print "Error: Cannot find dataset:", options.dataset, "within fast5 file:", fast5
 					print "Skipping", fast5
-					print hdf["Analyses/"].keys()
+					#print hdf["Analyses/"].keys()
 					nods1D+=1
 					if hopen:
 						hdf.close()
