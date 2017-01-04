@@ -830,6 +830,7 @@ def read_dendropy_tree(treefile):
 		
 		
 		for node in t.postorder_node_iter():
+			
 			for x, a in enumerate(node.annotations):
 				if isinstance(a.value, str):
 					a.value=a.value.replace('"','')
@@ -985,6 +986,7 @@ def read_dendropy_tree(treefile):
 					for a in node.annotations:
 						if a.name==options.colour_by_annotation and a.value in colour_dictionary:
 							node.edge_colour=colour_dictionary[a.value]
+			
 		
 
 		
