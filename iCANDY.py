@@ -1274,7 +1274,7 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 		
 
 	def get_min_95HPD_value(hsf, mbd):
-		print hsf
+		#print hsf
 		max_HPD_height=0
 		for node in treeObject.preorder_node_iter():
 			if node.distance_from_root()==0:
@@ -1286,14 +1286,14 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 					if a.value[1]>max_HPD_height:
 						max_HPD_height=a.value[1]
 					# HPDmax=((max_branch_depth-a.value[0])*horizontal_scaling_factor)+xoffset-branchlength+(-1*min_branch_depth*horizontal_scaling_factor)
-		print root_height, max_HPD_height
+		#print root_height, max_HPD_height
 		hsf=(hsf*root_height)/max_HPD_height
 		HPD_offset=(max_HPD_height-root_height)*(root_height/mbd)
 
 
 
 		#*horizontal_scaling_factor
-		print hsf, HPD_offset
+		#print hsf, HPD_offset
 		return hsf, HPD_offset
 
 

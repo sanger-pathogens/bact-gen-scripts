@@ -160,15 +160,28 @@ if __name__ == "__main__":
 	for p in phenotype:
 		print(str(phenotype[p])+": "+p)
 		
-	os.system("treeBreaker "+treeBreakerOptionString+" "+output_prefix+".nwk "+output_prefix+".tab "+output_prefix+".out")
+	#os.system("treeBreaker "+treeBreakerOptionString+" "+output_prefix+".nwk "+output_prefix+".tab "+output_prefix+".out")
 	
 	lines = open(output_prefix+".out","rU").readlines()
 	treeBreaker_tree = lines[-1]
 	
 	treeBreaker=dendropy.Tree.get_from_string(treeBreaker_tree.replace("{", "[&").replace("}", "]").replace("|", ","), schema="newick")
 	
-	treeBreaker.write(path=output_prefix+".tre", schema="nexus", unquoted_underscores=True)
+	for node in treeBreaker.postorder_node_iter():
+		for a in node.annotations:
+			if a.name=="posterior":
+				leaves=[]
+				for l in node.leaf_iter():
+					leaves.append(l.taxon.label)
+				if float(a.value)>0.95:
+					print(a.value, len(leaves))
+
 	
-	os.system("~sh16/scripts/iCANDY.py -t "+output_prefix+".tre -s posterior -J posterior -O portrait -p A0 -z circle -m "+phenotypefile+" -C "+str(column+1)+" -a 2 -o "+output_prefix+".pdf")
+	treeBreaker.write(path=output_prefix+".nexus", schema="nexus", unquoted_underscores=True)
 	
 	
+	os.system("~sh16/scripts/iCANDY.py -t "+output_prefix+".nexus -s posterior -J posterior -O portrait -p A0 -z circle -m "+phenotypefile+" -C "+str(column+1)+" -a 2 -o "+output_prefix+".pdf")
+	
+	
+	
+	sys.exit()
