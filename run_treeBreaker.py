@@ -159,24 +159,28 @@ if __name__ == "__main__":
 	print("Phenotype key:")
 	for p in phenotype:
 		print(str(phenotype[p])+": "+p)
-		
-	#os.system("treeBreaker "+treeBreakerOptionString+" "+output_prefix+".nwk "+output_prefix+".tab "+output_prefix+".out")
+	
+	print("Running treeBreaker")
+	os.system("treeBreaker "+treeBreakerOptionString+" "+output_prefix+".nwk "+output_prefix+".tab "+output_prefix+".out")
 	
 	lines = open(output_prefix+".out","rU").readlines()
 	treeBreaker_tree = lines[-1]
 	
 	treeBreaker=dendropy.Tree.get_from_string(treeBreaker_tree.replace("{", "[&").replace("}", "]").replace("|", ","), schema="newick")
 	
+	
+
 	for node in treeBreaker.postorder_node_iter():
+		if node==treeBreaker.seed_node:
+			continue
 		for a in node.annotations:
 			if a.name=="posterior":
 				leaves=[]
 				for l in node.leaf_iter():
 					leaves.append(l.taxon.label)
-				if float(a.value)>0.95:
+				if float(a.value)>0.5:
 					print(a.value, len(leaves))
 
-	
 	treeBreaker.write(path=output_prefix+".nexus", schema="nexus", unquoted_underscores=True)
 	
 	

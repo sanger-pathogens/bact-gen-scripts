@@ -830,7 +830,6 @@ def read_dendropy_tree(treefile):
 		
 		
 		for node in t.postorder_node_iter():
-			
 			for x, a in enumerate(node.annotations):
 				if isinstance(a.value, str):
 					a.value=a.value.replace('"','')
