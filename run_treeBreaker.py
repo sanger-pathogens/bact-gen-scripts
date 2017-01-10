@@ -9,6 +9,9 @@ import dendropy
 from optparse import OptionParser, OptionGroup
 from random import randrange
 
+
+clade_colours=["#9e0142", "#5e4fa2", "#fee08b", "#d53e4f", "#3288bd", "#e6f598", "#f46d43", "#fdae61", "#ffffbf", "#abdda4", "#66c2a5"]
+
 ##########################################
 # Function to Get command line arguments #
 ##########################################
@@ -145,7 +148,7 @@ if __name__ == "__main__":
 	for x, p in enumerate(phenotypes):
 		phenotype[p]=x
 	
-	print("Found", len(missing_phenotypes), "taxa without phenotypes")
+	print(len(taxon_phenotypes), "taxa have phenotypes")
 	
 	pruned_tree=tree.extract_tree_without_taxa_labels(labels=missing_phenotypes)
 	
@@ -161,7 +164,7 @@ if __name__ == "__main__":
 		print(str(phenotype[p])+": "+p)
 	
 	print("Running treeBreaker")
-	os.system("treeBreaker "+treeBreakerOptionString+" "+output_prefix+".nwk "+output_prefix+".tab "+output_prefix+".out")
+	#os.system("treeBreaker "+treeBreakerOptionString+" "+output_prefix+".nwk "+output_prefix+".tab "+output_prefix+".out")
 	
 	lines = open(output_prefix+".out","rU").readlines()
 	treeBreaker_tree = lines[-1]
@@ -169,7 +172,7 @@ if __name__ == "__main__":
 	treeBreaker=dendropy.Tree.get_from_string(treeBreaker_tree.replace("{", "[&").replace("}", "]").replace("|", ","), schema="newick")
 	
 	
-
+	x=0
 	for node in treeBreaker.postorder_node_iter():
 		if node==treeBreaker.seed_node:
 			continue
@@ -179,12 +182,19 @@ if __name__ == "__main__":
 				for l in node.leaf_iter():
 					leaves.append(l.taxon.label)
 				if float(a.value)>0.5:
-					print(a.value, len(leaves))
+					print(a.value, len(leaves), int(((65536*255)*float(a.value))+(255*(1.0-float(a.value)))))
+					node.annotations.add_new(name="!hilight", value="{1,1,"+clade_colours[x]+"}")
+					x+=1
+					if x>=len(clade_colours):
+						x=0
+				node.annotations.add_new(name="!color", value="#"+str(int(((65536*255)*float(a.value)))+int((255*(1.0-float(a.value))))))
+				node.annotations.add_new(name="!color", value="#"+str( (int(float(a.value)*255)*65536) + int((1.0-float(a.value))*255) ) )
+				print(int(float(a.value)*255), int((1.0-float(a.value))*255), (int(float(a.value)*255)*65536) + int((1.0-float(a.value))*255))
 
 	treeBreaker.write(path=output_prefix+".nexus", schema="nexus", unquoted_underscores=True)
 	
-	
-	os.system("~sh16/scripts/iCANDY.py -t "+output_prefix+".nexus -s posterior -J posterior -O portrait -p A0 -z circle -m "+phenotypefile+" -C "+str(column+1)+" -a 2 -o "+output_prefix+".pdf")
+	#os.system("~sh16/scripts/iCANDY.py -t "+output_prefix+".nexus -s posterior -J posterior -O portrait -p A0 -z circle -m "+phenotypefile+" -C "+str(column+1)+" -a 2 -o "+output_prefix+".pdf")
+	os.system("~sh16/scripts/iCANDY.py -t "+output_prefix+".nexus -s posterior -j -O portrait -p A0 -m "+phenotypefile+" -C ,"+str(column+1)+" -a 2 -o "+output_prefix+".pdf")
 	
 	
 	
