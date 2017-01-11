@@ -858,7 +858,7 @@ def read_dendropy_tree(treefile):
 									print a.value[1:]
 									break
 							node.annotations[x].name="Figtree_hilight"
-							node.annotations[x].value=colors.Color(float(r)/255,float(g)/255,float(b)/255)
+							node.annotations[x].value=colors.Color(float(r)/255,float(g)/255,float(b)/255, 0.5)
 				
 				
 				if isinstance(a.value, str):
@@ -866,7 +866,8 @@ def read_dendropy_tree(treefile):
 						try:
 							rgbint=int(a.value[1:])
 							r,g,b=rgbint2rgbtuple(rgbint)
-							#print r,g,b
+							if g!=0:
+								print r,g,b, a.value[1:]
 						except:
 							try:
 								r,g,b=hex_to_rgb(a.value)
