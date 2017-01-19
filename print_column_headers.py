@@ -27,7 +27,7 @@ if __name__ == "__main__":
 		print("Cannot find file", infile)
 		sys.exit()
 	
-	for line in open(infile, "rU"):
+	for line in open(infile, "rU", encoding='ISO-8859-1'):
 		words=line.strip().split(options.separator)
 		for x, word in enumerate(words):
 			print(x+1, word)
