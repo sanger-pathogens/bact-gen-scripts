@@ -38,6 +38,7 @@ def main():
 	group.add_option("-y", "--burnin", action="store", dest="burnin", help="Number of burnin iterations [default= %default]", default=500000, type="int")
 	group.add_option("-z", "--sample_iters", action="store", dest="sample_iters", help="Number of iterations between samples [default= %default]", default=1000, type="int")
 	group.add_option("-S", "--seed", action="store", dest="seed", help="Starting seed for random number generator [default= %default]", default=-1, type="int")
+	group.add_option("-m", "--missing", action="store_true", dest="include_missing", help="Include missing data as phenotype [default= %default]", default=False)
 	
 	parser.add_option_group(group)
 	group = OptionGroup(parser, "General options")
@@ -146,20 +147,23 @@ if __name__ == "__main__":
 	taxon_phenotypes={}
 	missing_phenotypes=[]
 	not_in_tree=[]
-	for line in open(phenotypefile, "rU"):
+	for line in open(phenotypefile, "rU", encoding='ISO-8859-1'):
 		words=line.strip().split(separator)
 		if len(words)<column:
 			if options.verbose:
 				print("Invalid line in phenotype file (Too few columns):", line.strip())
-		if words[column]=="":
-			if options.verbose:
-				print(words[0], "has missing phenotype")
-			missing_phenotypes.append(words[0])
-			continue
 		if not words[0] in tree_taxa:
 			if options.verbose:
 				print(words[0], "not in tree. Skipping")
 			not_in_tree.append(words[0])
+			continue
+		if words[column]=="":
+			if options.verbose:
+				print(words[0], "has missing phenotype")
+			missing_phenotypes.append(words[0])
+			if options.include_missing:
+				taxon_phenotypes[words[0]]="missing"
+				phenotypes.add("missing")
 			continue
 		taxon_phenotypes[words[0]]=words[column]
 		phenotypes.add(words[column])
@@ -169,9 +173,10 @@ if __name__ == "__main__":
 		phenotype[p]=x
 	
 	print(len(taxon_phenotypes), "taxa have phenotypes")
-	
-	pruned_tree=tree.extract_tree_without_taxa_labels(labels=missing_phenotypes)
-	
+	if options.include_missing:
+		pruned_tree=tree
+	else:
+		pruned_tree=tree.extract_tree_without_taxa_labels(labels=missing_phenotypes)
 	pruned_tree.write(path=output_prefix+".nwk", schema="newick", unquoted_underscores=True)
 	
 	output=open(output_prefix+".tab", "w")
@@ -254,7 +259,9 @@ if __name__ == "__main__":
 		label=l.taxon.label
 		clusters[cluster]["members"].append([label, taxon_phenotypes[label]])
 		clusters[cluster]["phenotype_counts"][taxon_phenotypes[label]]+=1
+	cluster_output=open(output_prefix+".clusters", "w")
 	for cluster in clusters:
+		print("cluster_"+str(cluster)+"="+','.join([x[0] for x in clusters[cluster]["members"]]), sep=",", file=cluster_output)
 		if clusters[cluster]["parent"] in clusters:
 			obs=[]
 			exp=[]
@@ -266,7 +273,6 @@ if __name__ == "__main__":
 
 	
 	treeBreaker.write(path=output_prefix+".nexus", schema="nexus", unquoted_underscores=True)
-	
 	
 	#os.system("~sh16/scripts/iCANDY.py -t "+output_prefix+".nexus -s posterior -J posterior -O portrait -p A0 -z circle -m "+phenotypefile+" -C "+str(column+1)+" -a 2 -o "+output_prefix+".pdf")
 	os.system("~sh16/scripts/iCANDY.py -t "+output_prefix+".nexus -s posterior -j -O portrait -p A0 -m "+phenotypefile+" -C ,"+str(column+1)+" -a 2 -o "+output_prefix+".pdf")
