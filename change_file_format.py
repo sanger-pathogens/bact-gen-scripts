@@ -41,7 +41,7 @@ def check_input_validity(options, args):
 	elif not os.path.isfile(options.infile):
 		DoError('Cannot find file '+options.infile+'!')
 	if options.outfile=="":
-		options.outfile='.'.join(options.infile.split(".")[-1])+"."+options.outputtype
+		options.outfile='.'.join(options.infile.split(".")[:-1])+"."+options.outputtype
 	while os.path.isfile(options.outfile) and options.force==False:
 		outopt=""
 		outopt=raw_input('\nA file with the chosen output file name already exists.\n\nWould you like to overwrite (o), choose a new output file name (n) or quit (Q): ')
