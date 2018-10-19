@@ -4,7 +4,7 @@ import string
 import os, sys
 from Bio import Seq
 from Bio import AlignIO
-from Bio.Align import Generic
+#from Bio.Align import Generic
 from Bio.Alphabet import IUPAC, Gapped
 from optparse import OptionParser, OptionGroup
 import glob

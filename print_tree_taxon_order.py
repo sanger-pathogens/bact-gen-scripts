@@ -114,7 +114,7 @@ def read_tree(treefile):
 			self.update_splits(delete_outdegree_one=False)
 		return self.seed_node
 	
-	dendropy.dataobject.Tree.reroot_at_midpoint=reroot_at_midpoint
+#	dendropy.dataobject.Tree.reroot_at_midpoint=reroot_at_midpoint
 
 	#Try opening the tree using various schemas
 	opened=False

@@ -98,7 +98,7 @@ def get_user_options():
 	group.add_option("-z", "--nomapid", action="store", dest="nomapid", help="Minimum identity threshold to report a mapping Specified as a positive integer or proportion of read length (smalt only) [default= %default]", default=0, type="float", metavar="float")
 	group.add_option("-G", "--GATK", action="store_false", dest="GATK", help="Turn off GATK indel realignment (it is highly recommended you use GATK indel realignment). [Default= run GATK indelRealigner]", default=True)
 	group.add_option("-u", "--MarkDuplicates", action="store_false", dest="markdup", help="Turn off Mark duplicates. [Default= run Pcikard MarkDuplicates]", default=True)
-	group.add_option("-2", "--detect-overlaps", action="store_true", dest="detectOverlaps", help="enable read-pair overlap detection in mpileup. [Default= use -x option in samtools-1.2 mpileup]", default=False)
+	group.add_option("-2", "--detect-overlaps", action="store_true", dest="detectOverlaps", help="enable read-pair overlap detection in mpileup. [Default= use -x option in samtools-1.6 mpileup]", default=False)
 	
 	parser.add_option_group(group)
 	
@@ -433,7 +433,7 @@ class SNPanalysis:
 				else:
 					print >> bashfile, BWA_DIR+"bwa mem -v 1 -M -a -t 1 ", options.ref, self.fastqdir+self.name+".fastq >", self.runname+"/tmp.sam"
 					
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -b -S",self.runname+"/tmp.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 view -b -S",self.runname+"/tmp.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
 			print >> bashfile, "rm -f", self.runname+"/tmp.sam"
 		else:
 			print >> bashfile, "cp ", self.bam, self.runname+"/tmp1.bam"
@@ -477,7 +477,7 @@ class SNPanalysis:
 					print >> bashfile, SMALT_DIR+" map -y "+str(options.nomapid)+rbit+" -x -f "+smaltoutput+" -o "+self.runname+"/tmp1."+smaltoutputsuffix, tmpname+".index", self.fastqdir+self.name+".fastq"
 					cmdline="map -y "+str(options.nomapid)+rbit+" -x -f "+smaltoutput+" -o "+self.runname+"/tmp1."+smaltoutputsuffix, tmpname+".index", self.fastqdir+self.name+".fastq"
 			if not newsmalt:
-				print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -b -S",self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
+				print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 view -b -S",self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
 				print >> bashfile, "rm", self.runname+"/tmp1.sam"
 		else:
 			print >> bashfile, "cp ", self.bam, self.runname+"/tmp1.bam"
@@ -491,16 +491,16 @@ class SNPanalysis:
 		
 		#Sort and mark duplicates
 		if options.markdup:
-			print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 sort', self.runname+"/tmp1.bam", self.runname+"/tmpsort"
+			print >> bashfile, SAMTOOLS_DIR+'samtools-1.6 sort', self.runname+"/tmp1.bam >", self.runname+"/tmpsort.bam"
 			print >> bashfile, PICKARD_DIR+" MarkDuplicates INPUT="+self.runname+"/tmpsort.bam OUTPUT="+self.runname+"/tmp1.bam METRICS_FILE="+self.runname+"/"+self.name+"_metrics.txt"
 			print >> bashfile, "rm", self.runname+"/tmpsort.bam"
 			
-		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 sort', self.runname+"/tmp1.bam", self.runname+"/"+self.name
-		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 index', self.runname+"/"+self.name+".bam"
+		print >> bashfile, SAMTOOLS_DIR+'samtools-1.6 sort', self.runname+"/tmp1.bam >", self.runname+"/"+self.name+".bam"
+		print >> bashfile, SAMTOOLS_DIR+'samtools-1.6 index', self.runname+"/"+self.name+".bam"
 		print >> bashfile, "rm", self.runname+"/tmp1.bam"
 		
 		#Add read groups and fix smalt header
-		print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -H", self.runname+"/"+self.name+".bam | sed 's/SO:unknown/SO:coordinate/g' | sed 's/\\x00//g'  >", self.runname+"/tmphead.sam"
+		print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 view -H", self.runname+"/"+self.name+".bam | sed 's/SO:unknown/SO:coordinate/g' | sed 's/\\x00//g'  >", self.runname+"/tmphead.sam"
 		now = datetime.datetime.now()
 		now = now.replace(microsecond=0)
 		if options.program in ["smalt", "SMALT"]:
@@ -511,18 +511,18 @@ class SNPanalysis:
 		elif options.program in ["bwa", "BWA"]:
 			print >> bashfile, 'echo "@RG\tID:'+self.name+'\tCN:Sanger\tDT:'+now.isoformat()+'\tPG:BWA MEM\tPL:ILLUMINA\tSM:'+self.name+'" >>', self.runname+"/tmphead.sam"
 		
-		print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -b -o", self.runname+'/tmphead.bam' ,"-H", self.runname+"/"+self.name+".bam"
-		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 merge -c -p -f -r -h ', self.runname+'/tmphead.sam', self.runname+"/tmp.bam", self.runname+"/"+self.name+".bam", self.runname+'/tmphead.bam'
+		print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 view -b -o", self.runname+'/tmphead.bam' ,"-H", self.runname+"/"+self.name+".bam"
+		print >> bashfile, SAMTOOLS_DIR+'samtools-1.6 merge -c -p -f -r -h ', self.runname+'/tmphead.sam', self.runname+"/tmp.bam", self.runname+"/"+self.name+".bam", self.runname+'/tmphead.bam'
 		
-		#print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 reheader ", self.runname+'/tmphead.sam', self.runname+"/tmp1.bam >", self.runname+"/tmp.bam"
+		#print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 reheader ", self.runname+'/tmphead.sam', self.runname+"/tmp1.bam >", self.runname+"/tmp.bam"
 		print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/tmp1.bam"
 		print >> bashfile, "rm", self.runname+"/"+self.name+".bam"
 		
 		#run GATK indel realignment if selected
 		if options.GATK:
-			print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 index', self.runname+"/tmp1.bam"
+			print >> bashfile, SAMTOOLS_DIR+'samtools-1.6 index', self.runname+"/tmp1.bam"
 			print >> bashfile, "cp", ref, self.runname+'/tmpref.fa'
-			print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 faidx', self.runname+"/tmpref.fa"
+			print >> bashfile, SAMTOOLS_DIR+'samtools-1.6 faidx', self.runname+"/tmpref.fa"
 			print >> bashfile, PICKARD_DIR, 'CreateSequenceDictionary R=', self.runname+'/tmpref.fa O=', self.runname+'/tmpref.dict'
 			if options.mem>0:
 				javamem=options.mem
@@ -534,26 +534,26 @@ class SNPanalysis:
 			print >> bashfile, "rm", self.runname+"/tmp1.bam.bai",  self.runname+"/tmpref.*", self.runname+"/tmp.intervals", self.runname+"/tmphead.*"
 		
 		
-		print >> bashfile, SAMTOOLS_DIR+'samtools-1.2 sort', self.runname+"/tmp1.bam", self.runname+"/tmp"
+		print >> bashfile, SAMTOOLS_DIR+'samtools-1.6 sort', self.runname+"/tmp1.bam >", self.runname+"/tmp.bam"
 		print >> bashfile, "rm", self.runname+"/tmp1.bam"
 		
 		#filter the bam file if requested
 		if options.filter=="1":
 			print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/"+self.name+".bam"
 		elif options.filter=="2":
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -F 4 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 view -F 4 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
 		elif options.filter=="3":
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -f 2 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 view -f 2 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
 		elif options.filter=="4":
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -F 4 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -f 4 -b -o", self.runname+"/"+self.name+"_unmapped.bam", self.runname+"/tmp.bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 view -F 4 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 view -f 4 -b -o", self.runname+"/"+self.name+"_unmapped.bam", self.runname+"/tmp.bam"
 		elif options.filter=="5":
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -f 2 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 view -F 2 -b -o", self.runname+"/"+self.name+"_unpaired.bam", self.runname+"/tmp.bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 view -f 2 -b -o", self.runname+"/"+self.name+".bam", self.runname+"/tmp.bam"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 view -F 2 -b -o", self.runname+"/"+self.name+"_unpaired.bam", self.runname+"/tmp.bam"
 		
 		
 		#index the bam file, to get the bai file.
-		print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 index",  self.runname+"/"+self.name+".bam"
+		print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 index",  self.runname+"/"+self.name+".bam"
 		 
 		
 		#produce the pileup file
@@ -579,7 +579,7 @@ class SNPanalysis:
 			else:
 				overlaps="-x"
 			
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -C 50 -L 1000 -d 1000 -m", options.depth, anomolous, BAQ, overlaps, " -ugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 mpileup -t DP,DP4 -C 50 -L 1000 -d 1000 -m", options.depth, anomolous, BAQ, overlaps, " -ugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 		else:
 			if options.BAQ:
 				BAQ=""
@@ -589,18 +589,18 @@ class SNPanalysis:
 				overlaps="-x"
 			else:
 				overlaps=""
-			print >> bashfile, SAMTOOLS_DIR+"samtools-1.2 mpileup -t DP,DP4 -L 1000 -d 1000 -m", options.depth, anomolous, BAQ, overlaps, " -ugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
+			print >> bashfile, SAMTOOLS_DIR+"samtools-1.6 mpileup -t DP,DP4 -L 1000 -d 1000 -m", options.depth, anomolous, BAQ, overlaps, " -ugf ", ref, self.runname+"/"+self.name+".bam >", self.runname+"/tmp.mpileup"
 			
 		
-		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 call -P "+str(options.prior)+" -O b -A -M -S", self.runname+"/"+self.name+".ploidy -"+options.call, self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"
+		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.5 call -P "+str(options.prior)+" -O b -A -M -S", self.runname+"/"+self.name+".ploidy -"+options.call, self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"
 		
 		#print >> bashfile, BCFTOOLS_DIR+"bcftools view -bcg", self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+".bcf"
 		
-		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 index", self.runname+"/"+self.name+".bcf"
+		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.5 index", self.runname+"/"+self.name+".bcf"
 		
-		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 call -P "+str(options.prior)+" -O b -A -M -v -S", self.runname+"/"+self.name+".ploidy -"+options.call, self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+"_variant.bcf"
+		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.5 call -P "+str(options.prior)+" -O b -A -M -v -S", self.runname+"/"+self.name+".ploidy -"+options.call, self.runname+"/tmp.mpileup >", self.runname+"/"+self.name+"_variant.bcf"
 		
-		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.2 index", self.runname+"/"+self.name+"_variant.bcf"
+		print >> bashfile, BCFTOOLS_DIR+"bcftools-1.5 index", self.runname+"/"+self.name+"_variant.bcf"
 				
 		# clean up:
 		if not options.dirty:
@@ -609,9 +609,9 @@ class SNPanalysis:
 		#produce pseudosequence if requested
 		if options.pseudosequence:
 			if options.call=="m":
-				print >> bashfile, MY_SCRIPTS_DIR+"bcf_2_pseudosequence-1.2.py -A -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
+				print >> bashfile, MY_SCRIPTS_DIR+"bcf_2_pseudosequence-1.6.py -A -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
 			elif options.call=="c":
-				print >> bashfile, MY_SCRIPTS_DIR+"bcf_2_pseudosequence-1.2.py -A -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
+				print >> bashfile, MY_SCRIPTS_DIR+"bcf_2_pseudosequence-1.6.py -A -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
 			
 			
 		#if not options.LSF:

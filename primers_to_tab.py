@@ -13,7 +13,7 @@ import os, sys
 from optparse import OptionParser
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 from Si_general import *
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/bin/lib/pkgconfig']))
+sys.path.extend(map(os.path.abspath, ['/software/pathogen/external/lib/python2.7/site-packages/']))
 import tre
 
 
@@ -97,6 +97,9 @@ def revcomp(sequence):
 
 
 if __name__ == "__main__":
+
+	print"WARNING: Please use in_silico_pcr.py instead. This script is no longer supported."
+
 	#Get command line arguments
 
 	(options, args) = main()

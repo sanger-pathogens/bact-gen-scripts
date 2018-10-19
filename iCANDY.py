@@ -1,6 +1,5 @@
-#!/software/python-2.7.6/bin/python
-##!/usr/bin/env python
-
+#!/usr/bin/env python
+##!/software/python-2.7.6/bin/python
 #################################
 # Import some necessary modules #
 #################################
@@ -514,7 +513,7 @@ def round_to_n(x, n):
 ##############################################################################################################
 
 def iterate_subfeatures(feature, locations):
-	if len(feature.sub_features)>0:
+	if hasattr(feature, "sub_features") and len(feature.sub_features)>0:
 		for subfeature in feature.sub_features:
 			locations=iterate_subfeatures(subfeature, locations)
 	else:
@@ -922,7 +921,7 @@ def read_dendropy_tree(treefile):
 		t.is_BEAST=False
 		if hasattr(root, "annotations"):
 			for a in root.annotations:
-				if a.name=="height":
+				if a.name=="height" or a.name=="CI":
 					t.is_BEAST=True
 					break
 		

@@ -19,7 +19,7 @@ def main():
 	parser = OptionParser(usage=usage)
 
 	parser.add_option("-i", "--inputfile", action="store", dest="infile", help="Name of input file", default="", metavar="FILE")
-	parser.add_option("-t", "--type", action="store", dest="outputtype", help="Output file type. (choices= %choices) [default= %default]", type="choice", choices=["phylip", "fasta", "clustal", "nexus", "emboss", "stockholm", "fasta-m10", "ig"], default="fasta")
+	parser.add_option("-t", "--type", action="store", dest="outputtype", help="Output file type. (choices= phylip, fasta, clustal, nexus, emboss, stockholm, fasta-m10, ig) [default= %default]", type="choice", choices=["phylip", "fasta", "clustal", "nexus", "emboss", "stockholm", "fasta-m10", "ig"], default="fasta")
 	parser.add_option("-o", "--outputfilename", action="store", dest="outfile", help="Output file name. [default= change suffix to new file format name]", default="", metavar="FILE")
 	
 	

@@ -94,11 +94,11 @@ if __name__ == "__main__":
 			if base in unknowns:
 				if ininsertion:
 					ininsertion=False
-					outlist.append("\t".join(map(str,[ref, insertionstart[0], "99", refseq[insertionstart[1]], sequence[insertionstart[1]]+''.join(insertion), ".", "PASS", "INDEL", "GT", "1/1"])))
+					outlist.append("\t".join(map(str,[ref, insertionstart[0], "99", refseq[insertionstart[1]], sequence[insertionstart[1]]+''.join(insertion), "NS=1", "PASS", "INDEL", "GT", "1"])))
 					#print insertion
 				elif indeletion:
 					indeletion=False
-					outlist.append("\t".join(map(str,[ref, deletionstart[0], "99", refseq[deletionstart[1]]+''.join(deletion), sequence[deletionstart[1]], ".", "PASS", "INDEL", "GT", "1/1"])))
+					outlist.append("\t".join(map(str,[ref, deletionstart[0], "99", refseq[deletionstart[1]]+''.join(deletion), sequence[deletionstart[1]], ".", "PASS", "INDEL", "GT", "1"])))
 					
 				if inmissing:
 					missing.append(refbase)
@@ -111,39 +111,38 @@ if __name__ == "__main__":
 			elif base==refbase and base not in unknowns:
 				if ininsertion:
 					ininsertion=False
-					outlist.append("\t".join(map(str,[ref, insertionstart[0], "99", refseq[insertionstart[1]], sequence[insertionstart[1]]+''.join(insertion), ".", "PASS", "INDEL", "GT", "1/1"])))
+					outlist.append("\t".join(map(str,[ref, insertionstart[0], "99", refseq[insertionstart[1]], sequence[insertionstart[1]]+''.join(insertion), ".", "PASS", "INDEL", "1"])))
 					#print insertion
 				elif indeletion:
 					indeletion=False
-					outlist.append("\t".join(map(str,[ref, deletionstart[0], "99", refseq[deletionstart[1]]+''.join(deletion), sequence[deletionstart[1]], ".", "PASS", "INDEL", "GT",  "1/1"])))
+					outlist.append("\t".join(map(str,[ref, deletionstart[0], "99", refseq[deletionstart[1]]+''.join(deletion), sequence[deletionstart[1]], ".", "PASS", "INDEL", "GT",  "1"])))
 					#print deletion
 				elif inmissing:
 					inmissing=False
-					outlist.append("\t".join(map(str,[ref, missingstart[0], "0", refseq[missingstart[1]]+''.join(missing), sequence[missingstart[1]], ".", "u", "INDEL", "GT", "1/1"])))
-				elif base not in gaps:
-					outlist.append("\t".join(map(str,[ref, refx, ".", refbase, '.', "99", "PASS", ".", "GT", '0/0'])))				
+					outlist.append("\t".join(map(str,[ref, missingstart[0], "0", refseq[missingstart[1]]+''.join(missing), sequence[missingstart[1]], ".", "u", "INDEL", "GT", "1"])))
+				
 			
 			elif base not in gaps and refbase not in gaps:
 				if ininsertion:
 					ininsertion=False
-					outlist.append("\t".join(map(str,[ref, insertionstart[0], "99", refseq[insertionstart[1]], sequence[insertionstart[1]]+''.join(insertion), ".", "PASS", "INDEL", "GT", "1/1"])))
+					outlist.append("\t".join(map(str,[ref, insertionstart[0], "99", refseq[insertionstart[1]], sequence[insertionstart[1]]+''.join(insertion), ".", "PASS", "INDEL", "GT", "1"])))
 					#print insertion
 				elif indeletion:
 					indeletion=False
-					outlist.append("\t".join(map(str,[ref, deletionstart[0], "99", refseq[deletionstart[1]]+''.join(deletion), sequence[deletionstart[1]], ".", "PASS", "INDEL", "GT", "1/1"])))
+					outlist.append("\t".join(map(str,[ref, deletionstart[0], "99", refseq[deletionstart[1]]+''.join(deletion), sequence[deletionstart[1]], ".", "PASS", "INDEL", "GT", "1"])))
 					#print deletion
 				elif inmissing:
 					inmissing=False
-					outlist.append("\t".join(map(str,[ref, missingstart[0], "0", refseq[missingstart[1]]+''.join(missing), sequence[missingstart[1]], ".", "u", "INDEL", "GT", "1/1"])))
-				outlist.append("\t".join(map(str,[ref, refx, ".", refbase, base, "99", "PASS", ".", "GT", '1/1'])))
+					outlist.append("\t".join(map(str,[ref, missingstart[0], "0", refseq[missingstart[1]]+''.join(missing), sequence[missingstart[1]], ".", "u", "INDEL", "GT", "1"])))
+				outlist.append("\t".join(map(str,[ref, refx, ".", refbase, base, "99", "PASS", ".", "GT", '1'])))
 			
 			elif base in gaps and refbase not in gaps:
 				if ininsertion:
 					ininsertion=False
-					outlist.append("\t".join(map(str,[ref, insertionstart[0], ".", refseq[insertionstart[1]], sequence[insertionstart[1]]+''.join(insertion), "99", "PASS", "INDEL", "GT", "1/1"])))
+					outlist.append("\t".join(map(str,[ref, insertionstart[0], ".", refseq[insertionstart[1]], sequence[insertionstart[1]]+''.join(insertion), "99", "PASS", "INDEL", "GT", "1"])))
 				elif inmissing:
 					inmissing=False
-					outlist.append("\t".join(map(str,[ref, missingstart[0], "0", refseq[missingstart[1]]+''.join(missing), sequence[missingstart[1]], ".", "u", "INDEL", "GT", "1/1"])))
+					outlist.append("\t".join(map(str,[ref, missingstart[0], "0", refseq[missingstart[1]]+''.join(missing), sequence[missingstart[1]], ".", "u", "INDEL", "GT", "1"])))
 					#print insertion
 				if indeletion:
 					deletion.append(refbase)

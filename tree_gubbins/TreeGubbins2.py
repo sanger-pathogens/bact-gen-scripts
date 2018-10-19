@@ -266,6 +266,13 @@ if __name__ == "__main__":
 			print "Too few taxa to cluster"
 			break
 		
+		logbrlens=True
+		if logbrlens:
+			for node in tree.postorder_node_iter():
+				if node.edge_length>0:
+					node.edge_length
+		
+		
 		blengths=[]
 		min_nonzero_length=float("Inf")
 		
@@ -273,18 +280,26 @@ if __name__ == "__main__":
 			if node.edge_length!=None:
 				if node.edge_length<min_nonzero_length and node.edge_length>0:
 					min_nonzero_length=node.edge_length
-		
+				#node.edge_length+=1
+				
+		logbrlens=True
+		if logbrlens:
+			for node in tree.postorder_node_iter():
+				if node.edge_length>0:
+					node.edge_length=math.log(node.edge_length*(1/min_nonzero_length))
+					
+			min_nonzero_length=1.0
 		min_length=float("Inf")
-		
 		node_count=0.0
 		for node in tree.postorder_node_iter():
 			node_count+=1
 			if node.edge_length!=None:
 				blengths.append(node.edge_length)
 				if node.edge_length<min_nonzero_length:
-					node.edge_length=min_nonzero_length
+					node.edge_length=min_nonzero_length/10
 				if node.edge_length<min_length:
 					min_length=node.edge_length
+		
 		multiplier=node_count/min_length
 		treelength=float(tree.length())
 		

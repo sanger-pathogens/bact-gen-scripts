@@ -9,7 +9,7 @@ import os, sys
 from optparse import OptionParser
 #sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
 #from Si_general import *
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/bin/lib/pkgconfig']))
+sys.path.extend(map(os.path.abspath, ['/software/pathogen/external/lib/python2.7/site-packages/']))
 import tre
 
 

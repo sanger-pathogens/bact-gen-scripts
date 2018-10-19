@@ -1,5 +1,5 @@
-#!/software/python-2.7.6/bin/python
-##!/usr/bin/env python
+#!/usr/bin/env python
+##!/software/python-2.7.6/bin/python
 
 #################################
 # Import some necessary modules #
@@ -106,7 +106,7 @@ def main():
 	
 	group.add_option("-t", "--tree", action="store", dest="tree", help="tree file to align tab files to", default="")
 	group.add_option("-9", "--tree2", action="store", dest="tree2", help="second tree to create tanglegram on right side", default="")
-	group.add_option("--untangle_type", action="store", choices=['none', 'tree1', 'tree2', 'both'], dest="untangle_type", help="Untangle type (choose from none, tree1, tree2 or both) [default= %default]", type="choice", default="tree2")
+	group.add_option("--untangle_type", action="store", choices=['none', 'tree1', 'tree2', 'both', 'none'], dest="untangle_type", help="Untangle type (choose from none, tree1, tree2, both or none) [default= %default]", type="choice", default="tree2")
 	group.add_option("-2", "--proportion", action="store", dest="treeproportion", help="Proportion of page to take up with the tree", default=0.3, type='float')
 	group.add_option("-s", "--support", action="store", dest="tree_support", help="Scale tree branch widths by value. For newick trees this can be any value stored in the tree. Otherwise, use 'support' to scale by branch support values (if present)", default="")
 	group.add_option("-7", "--height_HPD", action="store_true", dest="show_height_HPD", help="show branch 95% HPD heights (if present in tree) [default= %default]", default=False)
@@ -1393,18 +1393,17 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 			else:
 				namewidth=0.0
 			
-			if direction=="forward":
-				for x in xrange(colpos,len(name_colours)):
-					gubbins_length += block_length
-					if vertical_scaling_factor>2:
-						spacer=2
-					else:
-						spacer=vertical_scaling_factor
-					if x!=1:
-						gubbins_length += spacer
+			for x in xrange(colpos,len(name_colours)):
+				gubbins_length += block_length
+				if vertical_scaling_factor>2:
+					spacer=2
+				else:
+					spacer=vertical_scaling_factor
+				if x!=1:
+					gubbins_length += spacer
 			
 			#Add the taxon names if present
-			if options.taxon_names:
+			if options.taxon_names and name_colours[0]!=colors.white:
 				if options.aligntaxa==2:
 					if direction=="forward":
 						d.add(String(treewidth+xoffset+(max_name_width-gubbins_length)+(fontsize/2), vertpos-(fontsize/3), str(node.taxon), textAnchor='start', fontSize=fontsize, fillColor=name_colours[0], fontName='Helvetica'))
@@ -1433,21 +1432,21 @@ def draw_dendropy_tree(treeObject, treeheight, treewidth, xoffset, yoffset, name
 				
 			
 			# draw dashed lines
-			
-			if options.aligntaxa==1:
-				if direction=="forward":
-					d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
-				elif direction=="reverse":
-					d.add(Line(xmax-(horizontalpos+branchlength), vertpos, xmax-(treewidth+xoffset), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
-			elif options.aligntaxa==2:
-				if direction=="forward":
-					d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-gubbins_length), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
-				elif direction=="reverse":
-					d.add(Line(xmax-(horizontalpos+branchlength), vertpos, xmax-(treewidth+xoffset+(max_name_width-gubbins_length)), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
-			
-			
-			if direction=="reverse" and hasattr(node, "matching_node"):
-				d.add(Line(left_tree_proportion+margin+gubbins_length-namewidth, node.matching_node.vertpos, xmax-(treewidth+xoffset+max_name_width+(fontsize/2)), node.vertpos, strokeWidth=linewidth, strokeColor=name_colours[0]))
+			if name_colours[0]!=colors.white:
+				if options.aligntaxa==1:
+					if direction=="forward":
+						d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset, vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+					elif direction=="reverse":
+						d.add(Line(xmax-(horizontalpos+branchlength), vertpos, xmax-(treewidth+xoffset), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+				elif options.aligntaxa==2:
+					if direction=="forward":
+						d.add(Line(horizontalpos+branchlength, vertpos, treewidth+xoffset+(max_name_width-gubbins_length), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+					elif direction=="reverse":
+						d.add(Line(xmax-(horizontalpos+branchlength), vertpos, xmax-(treewidth+xoffset+(max_name_width-gubbins_length)), vertpos, strokeDashArray=[1, 2], strokeWidth=linewidth/2, strokeColor=name_colours[0]))
+				
+				
+				if direction=="reverse" and hasattr(node, "matching_node"):
+					d.add(Line(left_tree_proportion+margin, node.matching_node.vertpos, xmax-(treewidth+xoffset+max_name_width+(fontsize/2)), node.vertpos, strokeWidth=linewidth, strokeColor=name_colours[0]))
 			
 			
 			#if direction=="forward":

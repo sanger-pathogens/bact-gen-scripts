@@ -420,7 +420,11 @@ def find_best_root(fixed_tree, query_tree):
 #	print downstream
 	new_root_node, diff_score=find_best_root_node(query_tree, downstream, upstream)
 	
-	query_tree.reroot_at_edge(new_root_node.edge, update_splits=True)
+	try:
+		query_tree.reroot_at_edge(new_root_node.edge, update_splits=True)
+	except:
+		print "Rerooting failed"
+		pass
 #	print query_tree.seed_node, new_root_node, get_downstream_taxa(new_root_node), upstream, diff_score
 #	sys.exit()
 	return query_tree

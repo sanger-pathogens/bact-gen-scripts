@@ -16,6 +16,7 @@ def main():
 	parser = OptionParser(usage=usage)
 
 	parser.add_option("-m", "--min_contig_len", action="store", dest="minlength", help="Minimum contig length to include in stats", default=0, type="int")
+	parser.add_option("-s", "--split_contigs", action="store_true", dest="split", help="Print stats for each contig as well as each file", default=False)
 	
 	
 	return parser.parse_args()
@@ -32,7 +33,7 @@ def check_input_options(options, args):
 (options, args) = main()
 check_input_options(options, args)
 
-print '\t'.join(["File", "Total length", "No. contigs", "Mean length", "Stdev lengths", "Median length", "Max length", "Min length", "Skewness", "Kurtosis", "N50", "N50n", "Mean GC%", "Stdev GC%", "Median GC%", "Max GC%", "MinGC%"])
+print '\t'.join(["File", "Total length", "No. contigs", "Mean length", "Stdev lengths", "Median length", "Max length", "Min length", "Skewness", "Kurtosis", "N50", "N50n", "Mean GC%", "Stdev GC%", "Median GC%", "Max GC%", "MinGC%", "N count", "gap count", "Length without Ns and gaps"])
 
 for filename in args:
 	try:
@@ -48,29 +49,37 @@ for filename in args:
 	lengths=[]
 	GCs=[]
 	test=[]
+	gaps=[]
+	Ns=[]
+	lenacgt=[]
 	
 	for contig in contigs:
-	
-		
 		seq=str(contig.seq)
 		length=len(seq)
-		
-		#if length>100000:
-			#print seq
 		
 		if length<options.minlength:
 			continue
 		
 		lengths.append(length)
-		#test.append([length, contig.name])
 		
 		lengthnons=len(seq.upper().replace("N",""))
+		lengthnogaps=len(seq.upper().replace("-",""))
+		lengthnogapnons=len(seq.upper().replace("-","").replace("N",""))
 		if lengthnons==0:
 			GC=0
 		else:
-			GC=(float(len(seq.upper().replace("N","").replace("A","").replace("T","")))/lengthnons)*100
+			GC=(float(len(seq.upper().replace("N","").replace("A","").replace("T","")))/lengthnogapnons)*100
 		
+		Ns.append(length-lengthnons)
+		gaps.append(length-lengthnogaps)
+		lenacgt.append(lengthnogapnons)
 		GCs.append(GC)
+		
+		if options.split:
+			try:
+				print '\t'.join(map(str,[contig.name, length, "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", GC, "-", "-", "-", "-", Ns[-1], gaps[-1], lenacgt[-1]]))
+			except StandardError:
+				print filename+"\tfailed"
 	
 	
 	#test.sort()
@@ -78,7 +87,7 @@ for filename in args:
 	#print test[0]
 		
 	if len(lengths)==0:
-		print '\t'.join([filename, '0', '0', '0', '0', '0', '0', '0', '0', '0', '-', '-', "-", "-", "-", "-", "-"])
+		print '\t'.join([filename, '0', '0', '0', '0', '0', '0', '0', '0', '0', '-', '-', "-", "-", "-", "-", "-", "-", "-", "-"])
 		continue
 		
 	
@@ -92,15 +101,15 @@ for filename in args:
 	lengths.reverse()
 	fifty=float(numpy.sum(lengths))/2
 	count=0
-	sum=0
+	suml=0
 	#print lengths[0]
 	
-	while sum<fifty:
+	while suml<fifty:
 		N50=lengths[count]
-		sum+=lengths[count]
+		suml+=lengths[count]
 		count+=1
 	try:
-		print '\t'.join(map(str,[filename, numpy.sum(lengths), len(lengths), numpy.mean(lengths), numpy.std(lengths), numpy.median(lengths), numpy.max(lengths), numpy.min(lengths), scipy.stats.skew(lengths), scipy.stats.kurtosis(lengths), N50, count, numpy.mean(GCs), numpy.std(GCs), numpy.median(GCs), numpy.max(GCs), numpy.min(GCs)]))
+		print '\t'.join(map(str,[filename, numpy.sum(lengths), len(lengths), numpy.mean(lengths), numpy.std(lengths), numpy.median(lengths), numpy.max(lengths), numpy.min(lengths), scipy.stats.skew(lengths), scipy.stats.kurtosis(lengths), N50, count, numpy.mean(GCs), numpy.std(GCs), numpy.median(GCs), numpy.max(GCs), numpy.min(GCs), sum(Ns), sum(gaps), sum(lenacgt)]))
 	except StandardError:
 		print filename+"\tfailed"
 #	print "N50 =", N50

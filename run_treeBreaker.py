@@ -275,7 +275,7 @@ if __name__ == "__main__":
 	treeBreaker.write(path=output_prefix+".nexus", schema="nexus", unquoted_underscores=True)
 	
 	#os.system("~sh16/scripts/iCANDY.py -t "+output_prefix+".nexus -s posterior -J posterior -O portrait -p A0 -z circle -m "+phenotypefile+" -C "+str(column+1)+" -a 2 -o "+output_prefix+".pdf")
-	os.system("~sh16/scripts/iCANDY.py -t "+output_prefix+".nexus -s posterior -j -O portrait -p A0 -m "+phenotypefile+" -C ,"+str(column+1)+" -a 2 -o "+output_prefix+".pdf")
+	os.system("~sh16/scripts/iCANDY.py -t "+output_prefix+".nexus -s posterior -j -O portrait -p A0 -m "+phenotypefile+" -C ,"+str(column+1)+" -N -a 2 -o "+output_prefix+".pdf")
 	
 	
 	

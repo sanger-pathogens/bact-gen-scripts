@@ -44,7 +44,7 @@ def getOptions(arg):
 			ref=arg
 		elif opt in ("-x", "--xmfa"):
 			align=arg
-		elif opt in ("-x", "--xmfa"):
+		elif opt in ("-s", "--numseq"):
 			noseq=int(arg)
 	
 	contigs=args
@@ -78,14 +78,21 @@ if __name__ == "__main__":
 	#os.system('progressiveMauve --collinear --output='+ref+'.mauvealn '+ref+' '+alnfiles)
 	alines=open(align, 'rU').read().split('=')
 	sequfragments={}
+	refcontig=0
 	print "Reading Mauve output..."
-	for aline in alines[:-1]:
+	for i, aline in enumerate(alines[:-1]):
+		
+		print "block", i
+		sys.stdout.flush()
+	
 		posn=-1
 		
 		lines=aline.split('>')
 		
-		for line in lines[0]:
-			if line[0]=="#" and len(line.split())>1 and line[1]!='F':
+		for line in lines[0].split("\n"):
+			if len(line)>0 and line[0]=="#" and len(line.split())>1 and line.split()[0]=='##SequenceFile':
+				if line.split()[1]==ref:
+					refcontig=len(contigs)
 				contigs.append(line.split()[1])
 		
 		
@@ -104,9 +111,8 @@ if __name__ == "__main__":
 				posn=int(line.strip().split(':')[1].split('-')[0])
 				sequfragments[posn]=[]
 				dirn=line.strip().split()[1]
-				for i in range(len(contigs)+1):
+				for i in xrange(len(contigs)):
 						sequfragments[posn].append('')
-			
 			if dirn=='+':
 				sequfragments[posn][number]=sequfragments[posn][number]+''.join(line.strip().split('\n')[1:])
 			elif dirn=='-':
@@ -129,7 +135,7 @@ if __name__ == "__main__":
 		fraglen=0
 		for x, fragment in enumerate(sequfragments[key]):
 			if x==0:
-				sequences[ref.split('.')[0]]=sequences[ref.split('.')[0]]+fragment
+				sequences[contigs[x-1]]=sequences[contigs[x-1]]+fragment
 				fraglen=len(fragment)
 			elif len(fragment)==fraglen:
 				sequences[contigs[x-1]]=sequences[contigs[x-1]]+fragment

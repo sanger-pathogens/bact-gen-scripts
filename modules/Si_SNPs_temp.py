@@ -1,5 +1,5 @@
 from Bio.Align import AlignInfo
-from Bio.Align.Generic import Alignment
+from Bio.Align import MultipleSeqAlignment
 import sys, os
 from Bio.Data import CodonTable
 import math
@@ -307,7 +307,7 @@ def Create_SNP_alignment(alignment, SNPlocations):
 	
 	alphabet = Gapped(IUPAC.unambiguous_dna)
 
-	SNPalignment = Alignment(alphabet)
+	SNPalignment = MultipleSeqAlignment(alphabet)
 
 	
 	for record in alignment:

@@ -104,7 +104,7 @@ if __name__ == "__main__":
 			if values[4]!=0:
 				print >> sys.stderr, "Theta has not reached zero in", file
 				print >> sys.stderr, "Skipping", file
-				continue
+				#continue
 		       	prefix=filename.rstrip(options.suffix)
 			if options.split:
 				if len(prefix.split(options.separator))<2:
