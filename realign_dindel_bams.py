@@ -213,7 +213,7 @@ def trim_read_end(origread, newread):
     
 
 if len(sys.argv)!=5 or "-h" in sys.argv:
-	print "~sh16/scripts/realign_dindel_bams.py <dindel bam> <dindel vcf> <original bam> <output bamfile>"
+	print "/nfs/pathogen/sh16_scripts/realign_dindel_bams.py <dindel bam> <dindel vcf> <original bam> <output bamfile>"
 	sys.exit()
 
 

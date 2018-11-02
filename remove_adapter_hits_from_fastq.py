@@ -2,7 +2,7 @@
 
 import os, sys
 from optparse import OptionParser
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_general import *
 
 ##########################################
@@ -99,7 +99,7 @@ if __name__ == "__main__":
 		#Create fasta from fastq
 		print "Converting fastq to fasta"
 		sys.stdout.flush()
-		os.system("/nfs/users/nfs_s/sh16/scripts/fastq2fasta.pl "+fastq+" "+fastq+".fasta")
+		os.system("/nfs/pathogen/sh16_scripts/fastq2fasta.pl "+fastq+" "+fastq+".fasta")
 	
 		#Run blast
 		print "Running blast on "+fastq+" (this may take a while)"

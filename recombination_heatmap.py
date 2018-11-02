@@ -2,7 +2,7 @@
 import string, re, numpy
 import os, sys
 from Bio.Nexus import Trees, Nodes
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_nexus import *
 
 #node_order=["UW-3", "5", "SOTOND6_270710", "4", "J6276", "3", "G11222", "9", "G11074", "11", "G9301", "13", "G9768", "2", "JALI", "16", "CTA", "18", "CTB", "20", "CTR", "1", "F70", "23", "Bour_250310", "26", "E11023", "25", "SOTOND1_280710", "31", "Ds2923", "30", "SW4_210709", "34", "SW5_210709", "36", "SOTONF3_280710", "38", "SWFP-_140410", "29", "EC599_280710", "41", "E150", "43", "SW3_160410", "45", "SOTONE8_280710", "47", "SW2_Carma", "0", "RS2_160410", "56", "D4_140410", "58", "RS5_200410", "61", "L2b_SW_190410", "63", "Fr4_080410", "60", "RS1_160410", "55", "D10_140410", "54", "Fr1_2707101", "69", "Fr2_270710", "68", "RS6_190410", "73", "D7_140410", "72", "D6_140410", "76", "D8_140410", "53", "SA16_270710", "52", "RS4_160410", "80", "RS3_200410", "51", "L2", "83", "L2P-_080410", "50", "RS7_190410", "86", "RS8_160410"]

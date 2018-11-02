@@ -17,7 +17,7 @@ import math
 #from scipy.stats import chi2
 #from scipy import factorial
 #from ghmm import *
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_SeqIO import *
 from Si_nexus import draw_ascii_tree, tree_to_string, midpoint_root
 from random import randrange
@@ -1765,14 +1765,14 @@ if __name__ == "__main__":
 
 	os.system("mv "+prefix+"_iteration"+str(iteration)+".tre "+prefix+"_Final.tre")
 	if options.reference=="":
-		os.system("~sh16/scripts/Genome_Diagram.py -q taxa -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+prefix+"_rec.tab")
+		os.system("/nfs/pathogen/sh16_scripts/Genome_Diagram.py -q taxa -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+prefix+"_rec.tab")
 	else:
-		os.system("~sh16/scripts/Genome_Diagram.py -q taxa -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+options.reference+" "+prefix+"_rec.tab")
+		os.system("/nfs/pathogen/sh16_scripts/Genome_Diagram.py -q taxa -t "+prefix+"_Final.tre -o "+prefix+"_Final_recomb "+options.reference+" "+prefix+"_rec.tab")
 	
 	os.system("rm "+prefix+"temp.tmp baseml.ctl rst rst1 2base.t mlb lnf rub rstnew rstnew2 RAxML_*.SNPS_"+prefix+" "+prefix+".tre SNPS_"+prefix+".phy")
 	
 	
 	if options.bootstrap:
-		os.system("~sh16/scripts/run_RAxML.py -a "+prefix+"_iteration"+str(iteration)+".aln -o "+prefix+" -M 5 -q long -w")
+		os.system("/nfs/pathogen/sh16_scripts/run_RAxML.py -a "+prefix+"_iteration"+str(iteration)+".aln -o "+prefix+" -M 5 -q long -w")
 	
 	

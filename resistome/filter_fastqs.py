@@ -123,7 +123,7 @@ if __name__ == "__main__":
 	
 	print "Extracting fastq files to fasta"
 
-	#returnval=os.system(' '.join(["/nfs/users/nfs_s/sh16/scripts/resistome/fastool --to-fasta", options.ffastq, options.rfastq, ">", fastaname]))
+	#returnval=os.system(' '.join(["/nfs/pathogen/sh16_scripts/resistome/fastool --to-fasta", options.ffastq, options.rfastq, ">", fastaname]))
 
 	returnval=os.system(' '.join(["seqtk seq", "-l 0",  "-A", options.ffastq, ">", fastaname]))
 
@@ -229,7 +229,7 @@ if __name__ == "__main__":
 		print "Error: samtools sorting failed."
 		sys.exit()
 	
-#	returnval=os.system("~sh16/scripts/resistome/filter_doubleclipped_reads.py -b tmp_sort.bam -o "+options.output+"_filtered.bam")
+#	returnval=os.system("/nfs/pathogen/sh16_scripts/resistome/filter_doubleclipped_reads.py -b tmp_sort.bam -o "+options.output+"_filtered.bam")
 #
 #	print "filter_doubleclipped_reads.py return value:", returnval
 #	
@@ -251,7 +251,7 @@ if __name__ == "__main__":
 		
 		returnval=os.system('grep -A 1 ">'+proposed+'" '+options.db+' > '+proposed+'_ref.fasta')
 		
-		returnval=os.system('~sh16/scripts/resistome/bam_filter.py -f pairedfastq -t contigsonemapped -c '+proposed+' -b '+options.output+'.bam -o tmp_proposed')
+		returnval=os.system('/nfs/pathogen/sh16_scripts/resistome/bam_filter.py -f pairedfastq -t contigsonemapped -c '+proposed+' -b '+options.output+'.bam -o tmp_proposed')
 		returnval=os.system('smalt index index '+proposed+'_ref.fasta')
 		if returnval!=0:
 			continue
@@ -267,10 +267,10 @@ if __name__ == "__main__":
 		returnval=os.system('samtools index '+proposed+'.bam')
 		if returnval!=0:
 			continue
-		returnval=os.system('~sh16/scripts/resistome/extract_clipping_info.py -b '+proposed+'.bam')
+		returnval=os.system('/nfs/pathogen/sh16_scripts/resistome/extract_clipping_info.py -b '+proposed+'.bam')
 		if returnval!=0:
 			continue
-		returnval=os.system('~sh16/scripts/iCANDY.py '+proposed+'.bam starts.plot '+proposed+'_ref.fasta -d area -l 1 -g 0 -w -Y 0 -o '+proposed+'_coverage.pdf')
+		returnval=os.system('/nfs/pathogen/sh16_scripts/iCANDY.py '+proposed+'.bam starts.plot '+proposed+'_ref.fasta -d area -l 1 -g 0 -w -Y 0 -o '+proposed+'_coverage.pdf')
 		if returnval!=0:
 			continue
 			

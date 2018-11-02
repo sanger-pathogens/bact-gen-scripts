@@ -221,7 +221,7 @@ if __name__ == "__main__":
 	sys.exit()
 
 	if options.mapping:
-		os.system("~sh16/scripts/multiple_mappings_to_bam.py -M 2 -z 0.9 -p smalt -v latest -X -r "+core_file+" "+' '.join(args)+' > '+tmpname+'jobstring')
+		os.system("/nfs/pathogen/sh16_scripts/multiple_mappings_to_bam.py -M 2 -z 0.9 -p smalt -v latest -X -r "+core_file+" "+' '.join(args)+' > '+tmpname+'jobstring')
 		
 		jobnum=open(tmpname+'jobstring', "rU").readlines()[-4].split(">")[0].split("<")[1]
 		
@@ -264,9 +264,9 @@ if __name__ == "__main__":
 		if options.mapping or (not os.path.isfile(folder+"_SMALT/"+folder+"_unmapped_1.fastq") and not os.path.isfile(folder+"_SMALT/"+folder+"_unmapped_1.fastq.gz")) or (not os.path.isfile(folder+"_SMALT/"+folder+"_unmapped_2.fastq") and not os.path.isfile(folder+"_SMALT/"+folder+"_unmapped_2.fastq.gz")):
 			print "Identifying reads not in proper pairs for", folder
 			sys.stdout.flush()
-			os.system("~sh16/scripts/Aga/bam_filter.py -t atleastoneunmapped -b "+folder+"_SMALT/"+folder+".bam -o "+folder+"_SMALT/"+folder+"_unmapped")
+			os.system("/nfs/pathogen/sh16_scripts/Aga/bam_filter.py -t atleastoneunmapped -b "+folder+"_SMALT/"+folder+".bam -o "+folder+"_SMALT/"+folder+"_unmapped")
 
-		contigdepths=os.popen("~sh16/scripts/Aga/contig_stats.py -b "+folder+"_SMALT/"+folder+".bam -H" )#.readlines()
+		contigdepths=os.popen("/nfs/pathogen/sh16_scripts/Aga/contig_stats.py -b "+folder+"_SMALT/"+folder+".bam -H" )#.readlines()
 		totlen=0.0
 		totdepth=0.0
 		for contigdepth in contigdepths:
@@ -315,7 +315,7 @@ if __name__ == "__main__":
 			sys.exit()
 
 		
-		#os.system("~sh16/scripts/multiple_mappings_to_bam.py -r "+acc_file+" -f -X -y -p smalt -L "+tmpname+"_[12].fastq")# >  /dev/null 2>&1")
+		#os.system("/nfs/pathogen/sh16_scripts/multiple_mappings_to_bam.py -r "+acc_file+" -f -X -y -p smalt -L "+tmpname+"_[12].fastq")# >  /dev/null 2>&1")
 
 		os.system("samtools faidx "+acc_file)
 		os.system("smalt index -k 13 -s 1 "+acc_file+".index "+acc_file)
@@ -326,7 +326,7 @@ if __name__ == "__main__":
 		os.system("rm -f "+tmpname+".1.bam "+tmpname+".sam "+acc_file+".fai "+acc_file+".index.*")
 		
 		
-		contigstats=os.popen("~sh16/scripts/Aga/contig_stats.py -b "+tmpname+".bam -H" )#.readlines()
+		contigstats=os.popen("/nfs/pathogen/sh16_scripts/Aga/contig_stats.py -b "+tmpname+".bam -H" )#.readlines()
 		contiglist=[]
 		
 		for contigstat in contigstats:
@@ -342,19 +342,19 @@ if __name__ == "__main__":
 		if len(contiglist)>0:
 			contigstring=','.join(contiglist)
 			print contigstring
-			os.system("~sh16/scripts/Aga/bam_filter.py -t aga -c "+contigstring+" -b "+tmpname+".bam -o "+tmpname+"_unmapped")
+			os.system("/nfs/pathogen/sh16_scripts/Aga/bam_filter.py -t aga -c "+contigstring+" -b "+tmpname+".bam -o "+tmpname+"_unmapped")
 		else:
-			os.system("~sh16/scripts/Aga/bam_filter.py -t atleastoneunmapped -b "+tmpname+".bam -o "+tmpname+"_unmapped")
+			os.system("/nfs/pathogen/sh16_scripts/Aga/bam_filter.py -t atleastoneunmapped -b "+tmpname+".bam -o "+tmpname+"_unmapped")
 			
 		
 		
-		#os.system('~sh16/scripts/iterative_assembler.py -L 500 -n 0 -f '+tmpname+"_unmapped_1.fastq -r "+tmpname+"_unmapped_2.fastq -o "+folder+"_contigs.mfa")
-		os.system('~sh16/scripts/velvet_assembly.sh -p -n -i 300 -e '+str(exp)+' -f '+tmpname+"_unmapped_1.fastq -r "+tmpname+"_unmapped_2.fastq -s "+folder+".fastq")
+		#os.system('/nfs/pathogen/sh16_scripts/iterative_assembler.py -L 500 -n 0 -f '+tmpname+"_unmapped_1.fastq -r "+tmpname+"_unmapped_2.fastq -o "+folder+"_contigs.mfa")
+		os.system('/nfs/pathogen/sh16_scripts/velvet_assembly.sh -p -n -i 300 -e '+str(exp)+' -f '+tmpname+"_unmapped_1.fastq -r "+tmpname+"_unmapped_2.fastq -s "+folder+".fastq")
 		os.system("rm -rf "+tmpname+".fasta "+folder+"_contigs.mfa")
 		os.system("cp "+folder+"_velvet/contigs.fa "+folder+"_contigs.mfa")
 		os.system("rm -rf "+folder+"_velvet")
 		os.system("cat "+core_file+" "+acc_file+" > "+tmpname+".fasta")
-		os.system("~sh16/scripts/fasta2fastq_shredder.py "+tmpname+".fasta "+tmpname+" 76 3 l 250")
+		os.system("/nfs/pathogen/sh16_scripts/fasta2fastq_shredder.py "+tmpname+".fasta "+tmpname+" 76 3 l 250")
 		os.system("rm -rf "+tmpname+".fasta")
 		os.system("smalt index -k 13 -s 1 "+folder+"_contigs.mfa.index "+folder+"_contigs.mfa")
 		os.system("smalt map -r "+str(randrange(1,99999))+" -f samsoft -o "+tmpname+".sam "+folder+"_contigs.mfa.index "+tmpname+"_1.fastq "+tmpname+"_2.fastq")
@@ -362,10 +362,10 @@ if __name__ == "__main__":
 		os.system("samtools sort "+tmpname+".bam "+tmpname+"_sort")
 		os.system("samtools index "+tmpname+"_sort.bam")
 		
-		os.system("~sh16/scripts/Contig_summary.py "+folder+"_contigs.mfa")
-		os.system("~sh16/scripts/Contig_summary.py "+acc_file)
+		os.system("/nfs/pathogen/sh16_scripts/Contig_summary.py "+folder+"_contigs.mfa")
+		os.system("/nfs/pathogen/sh16_scripts/Contig_summary.py "+acc_file)
 		
-		contigstats=os.popen("~sh16/scripts/Aga/contig_stats.py -b "+tmpname+"_sort.bam -H" )#.readlines()
+		contigstats=os.popen("/nfs/pathogen/sh16_scripts/Aga/contig_stats.py -b "+tmpname+"_sort.bam -H" )#.readlines()
 		os.system("rm -rf "+tmpname+".[sb]am")
 		contiglist=[]
 		
@@ -386,9 +386,9 @@ if __name__ == "__main__":
 				print >> output, ''.join(line.split("\n")[1:])
 		output.close()
 		os.system("cat "+tmpname+".fasta >> "+acc_file)
-#		os.system("~sh16/scripts/Contig_summary.py "+folder+"_contigs.mfa "+acc_file)
+#		os.system("/nfs/pathogen/sh16_scripts/Contig_summary.py "+folder+"_contigs.mfa "+acc_file)
 #		filter_repeats(acc_file, tmpname)
-		os.system("~sh16/scripts/Contig_summary.py "+acc_file)
+		os.system("/nfs/pathogen/sh16_scripts/Contig_summary.py "+acc_file)
 	
 	
 	os.system("mv "+acc_file+" "+options.prefix+"_accessory_genome.fasta")	
@@ -402,13 +402,13 @@ if __name__ == "__main__":
 	else:
 		refname=tmpname
 	
-	os.system("~sh16/scripts/fasta2fastq_shredder.py "+options.ref+" "+refname+" 76 3 c 250")
+	os.system("/nfs/pathogen/sh16_scripts/fasta2fastq_shredder.py "+options.ref+" "+refname+" 76 3 c 250")
 		
 	#final mapping of all isolates against ref+accessory
 	if options.embl!="":
-		os.system("~sh16/scripts/multiple_mappings_to_bam.py -p smalt -v latest -G -O "+options.prefix+" -E -f -x -r "+options.prefix+"_pan_genome.fasta -e "+options.embl+" "+' '.join(args)+' '+refname+'_[12].fastq')
+		os.system("/nfs/pathogen/sh16_scripts/multiple_mappings_to_bam.py -p smalt -v latest -G -O "+options.prefix+" -E -f -x -r "+options.prefix+"_pan_genome.fasta -e "+options.embl+" "+' '.join(args)+' '+refname+'_[12].fastq')
 	else:
-		os.system("~sh16/scripts/multiple_mappings_to_bam.py -p smalt -v latest -G -O "+options.prefix+" -E -f -x -r "+options.prefix+"_pan_genome.fasta "+' '.join(args)+' '+refname+'_[12].fastq')
+		os.system("/nfs/pathogen/sh16_scripts/multiple_mappings_to_bam.py -p smalt -v latest -G -O "+options.prefix+" -E -f -x -r "+options.prefix+"_pan_genome.fasta "+' '.join(args)+' '+refname+'_[12].fastq')
 	
 	
 	

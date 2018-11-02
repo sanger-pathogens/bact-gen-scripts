@@ -5,7 +5,7 @@ import os, sys
 import pysam
 from optparse import OptionParser
 from numpy import mean, std, max
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_general import *
 from Si_SeqIO import *
 

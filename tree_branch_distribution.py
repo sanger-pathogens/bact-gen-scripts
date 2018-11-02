@@ -3,7 +3,7 @@ import string, re, gzip
 import os, sys
 from Bio.SeqRecord import SeqRecord
 from Bio.Nexus import Trees, Nodes
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_nexus import draw_ascii_tree, tree_to_string, midpoint_root
 from optparse import OptionParser
 

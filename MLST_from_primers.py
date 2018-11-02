@@ -11,7 +11,7 @@
 import string, re
 import os, sys
 from optparse import OptionParser
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_general import *
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/bin/lib/pkgconfig']))
 import tre

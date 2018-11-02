@@ -140,7 +140,7 @@ else:
 		sys.exit()
 	
 
-os.system("~sh16/scripts/reportlabtest.py -d area -f 3 -l 1 "+options.output+"_mapping.bam "+options.serotypes+" -o "+options.output+"_serotype_mapping.pdf")
+os.system("/nfs/pathogen/sh16_scripts/reportlabtest.py -d area -f 3 -l 1 "+options.output+"_mapping.bam "+options.serotypes+" -o "+options.output+"_serotype_mapping.pdf")
 
 #
 #try:

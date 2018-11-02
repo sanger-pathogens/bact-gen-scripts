@@ -19,7 +19,7 @@ import pysam
 SAMTOOLS_DIR=""
 BCFTOOLS_DIR=""
 SMALT_DIR=""
-MY_SCRIPTS_DIR="/nfs/users/nfs_s/sh16/scripts/"
+MY_SCRIPTS_DIR="/nfs/pathogen/sh16_scripts/"
 BREAKDANCER_DIR="/nfs/users/nfs_s/sh16/breakdancer-1.1_2011_02_21/"
 #PINDEL_DIR="/nfs/users/nfs_s/sh16/pindel/trunk/"
 PINDEL_DIR="/nfs/users/nfs_s/sh16/pindel024t/"

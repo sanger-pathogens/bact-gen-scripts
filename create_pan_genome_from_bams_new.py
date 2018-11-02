@@ -111,20 +111,20 @@ if __name__ == "__main__":
 		
 			for fastqfile in fastqprefixlist:
 				
-				os.system("~sh16/scripts/iterative_assembler.py -f "+fastqfile+"_1.fastq -r "+fastqfile+"_2.fastq -o "+tmpname+"_"+fastqfile+".fasta")
+				os.system("/nfs/pathogen/sh16_scripts/iterative_assembler.py -f "+fastqfile+"_1.fastq -r "+fastqfile+"_2.fastq -o "+tmpname+"_"+fastqfile+".fasta")
 				assemblies.append(tmpname+"_"+fastqfile+".fasta")
 				
 		else:
 			print "single end reads not available yet"
 			sys.exit()
 			for fastqfile in fastqprefixlist:
-				os.system("~sh16/scripts/iterative_assembler.py -f "+fastqfile)
+				os.system("/nfs/pathogen/sh16_scripts/iterative_assembler.py -f "+fastqfile)
 	
 	else:
 		assemblies=args
 	
 	#Make pseudofastq for reference
-	os.system("~sh16/scripts/fasta2fastq_shredder.py "+options.ref+" "+tmpname+" 76 3 c 200")
+	os.system("/nfs/pathogen/sh16_scripts/fasta2fastq_shredder.py "+options.ref+" "+tmpname+" 76 3 c 200")
 	
 	foldernames=[]
 	for assembly in assemblies:
@@ -137,7 +137,7 @@ if __name__ == "__main__":
 		os.system("mv "+assembly+" "+foldername)
 		os.chdir(pwd+"/"+foldername)
 	
-		os.system("~sh16/scripts/multiple_mappings_to_bam.py -r "+assembly+" -M -f -p bwa "+pwd+"/"+tmpname+"_[12].fastq >  /dev/null 2>&1")
+		os.system("/nfs/pathogen/sh16_scripts/multiple_mappings_to_bam.py -r "+assembly+" -M -f -p bwa "+pwd+"/"+tmpname+"_[12].fastq >  /dev/null 2>&1")
 	
 		os.chdir(pwd)
 	
@@ -214,7 +214,7 @@ if __name__ == "__main__":
 		exp=40
 	elif exp<30:
 		exp=30
-	os.system('~sh16/scripts/velvet_assembly.sh -n -e '+str(int(exp/2))+' -o "-min_contig_lgth 500" -p -f '+folder+"/"+folder.replace("_bwa","")+"_unmapped.fastq")
+	os.system('/nfs/pathogen/sh16_scripts/velvet_assembly.sh -n -e '+str(int(exp/2))+' -o "-min_contig_lgth 500" -p -f '+folder+"/"+folder.replace("_bwa","")+"_unmapped.fastq")
 	os.system("gzip "+folder+"/"+folder.replace("_bwa","")+"_unmapped.fastq")
 	os.system("mv "+folder+"/"+folder.replace("_bwa","")+"_unmapped_velvet "+tmpname+"_velvet")
 	os.system("cp "+tmpname+"_velvet/contigs.fa "+reffile)
@@ -277,13 +277,13 @@ if __name__ == "__main__":
 		#os.system('grep -v "^>" '+reffile+" >> "+tmpname+".dna")
 		
 		
-		os.system("~sh16/scripts/multiple_mappings_to_bam.py -r "+reffile+" -M -f -p bwa -L "+tmpname+"_[12].fastq >  /dev/null 2>&1")
-		os.system("~sh16/scripts/get_unmapped_fastq_from_bam.py "+tmpname+"_bwa/"+tmpname+".bam")
+		os.system("/nfs/pathogen/sh16_scripts/multiple_mappings_to_bam.py -r "+reffile+" -M -f -p bwa -L "+tmpname+"_[12].fastq >  /dev/null 2>&1")
+		os.system("/nfs/pathogen/sh16_scripts/get_unmapped_fastq_from_bam.py "+tmpname+"_bwa/"+tmpname+".bam")
 		#os.system("gunzip "+tmpname+"/"+tmpname+"_unmapped.fastq")
 		
 		
 		os.system('mv '+tmpname+"_bwa/"+tmpname+"_unmapped.fastq "+tmpname+"_bwa/"+folder.replace("_bwa","")+"_unmapped.fastq")
-		os.system('~sh16/scripts/velvet_assembly.sh -n -e '+str(int(exp/2))+' -o "-min_contig_lgth 500" -p -f '+tmpname+"_bwa/"+folder.replace("_bwa","")+"_unmapped.fastq")
+		os.system('/nfs/pathogen/sh16_scripts/velvet_assembly.sh -n -e '+str(int(exp/2))+' -o "-min_contig_lgth 500" -p -f '+tmpname+"_bwa/"+folder.replace("_bwa","")+"_unmapped.fastq")
 	#	if os.path.isfile(tmpname+"_bwa/"+tmpname+"_unmapped.fastq"):
 	#		os.system("gzip "+tmpname+"_bwa/"+tmpname+"_unmapped.fastq")
 		os.system("cat "+tmpname+"_bwa/"+folder.replace("_bwa","")+"_unmapped_velvet/contigs.fa >> "+reffile)

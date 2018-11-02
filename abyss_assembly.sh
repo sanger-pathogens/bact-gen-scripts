@@ -30,7 +30,7 @@ EOF
 }
 
 
-SCRIPT_DIR="/nfs/users/nfs_s/sh16/scripts/"
+SCRIPT_DIR="/nfs/pathogen/sh16_scripts/"
 ABYSS_DIR="/software/pathogen/external/applications/ABySS/ABySS/bin/"
 
 KMER=0

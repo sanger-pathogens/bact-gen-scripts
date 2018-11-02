@@ -28,7 +28,7 @@ if [ "$#" -gt "2" ]
 fi
 if [ "$#" -gt "3" ]
 	then echo Shuffling sequences...
-	/nfs/users/nfs_s/sh16/scripts/shufflefastqSequences.pl $2 $3 $1
+	/nfs/pathogen/sh16_scripts/shufflefastqSequences.pl $2 $3 $1
 fi
 
 echo Running velveth with kmer of $kmer
@@ -43,7 +43,7 @@ fi
 if [ "$#" -lt "3" ]
 	then velvetg ${1%.fastq}_velvet > ${1%.fastq}_velvet.log
 fi
-expcov=$(/nfs/users/nfs_s/sh16/scripts/velvet_stats_2_av_cov.py ${1%.fastq}_velvet/stats.txt $mincov)
+expcov=$(/nfs/pathogen/sh16_scripts/velvet_stats_2_av_cov.py ${1%.fastq}_velvet/stats.txt $mincov)
 
 echo Found expected coverage of $expcov
 echo kmer=$kmer expected coverage=$expcov  >> $logfile
@@ -65,7 +65,7 @@ if [ "$expcov" -gt $[$covlimit-1] ]
 		if [ "$#" -lt "3" ]
 			then velvetg ${1%.fastq}_velvet  > ${1%.fastq}_velvet.log
 		fi
-		expcov=$(/nfs/users/nfs_s/sh16/scripts/velvet_stats_2_av_cov.py ${1%.fastq}_velvet/stats.txt $mincov)
+		expcov=$(/nfs/pathogen/sh16_scripts/velvet_stats_2_av_cov.py ${1%.fastq}_velvet/stats.txt $mincov)
 		echo Found expected coverage of $expcov
 		echo kmer=$kmer expected coverage=$expcov  >> $logfile
 		grep "n50" ${1%.fastq}_velvet.log | head -n 1
@@ -95,7 +95,7 @@ else kmer=$[$kmer-2]
 		if [ "$#" -lt "3" ]
 			then velvetg ${1%.fastq}_velvet > ${1%.fastq}_velvet.log
 		fi
-		expcov=$(/nfs/users/nfs_s/sh16/scripts/velvet_stats_2_av_cov.py ${1%.fastq}_velvet/stats.txt $mincov)
+		expcov=$(/nfs/pathogen/sh16_scripts/velvet_stats_2_av_cov.py ${1%.fastq}_velvet/stats.txt $mincov)
 		echo Found expected coverage of $expcov
 		echo kmer=$kmer expected coverage=$expcov  >> $logfile
 		grep "n50" ${1%.fastq}_velvet.log | head -n 1

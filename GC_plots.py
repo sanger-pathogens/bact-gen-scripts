@@ -5,7 +5,7 @@ from Bio import SeqIO
 from Bio import AlignIO
 import pysam
 from Bio.SeqUtils import GC
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_SeqIO import *
 from Si_general import *
 #Read the alignment file

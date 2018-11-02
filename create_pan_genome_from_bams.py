@@ -156,7 +156,7 @@ if __name__ == "__main__":
 #		os.system("gunzip -f "+folder+"_bwa/"+folder+"_unmapped.fastq.gz")
 
 	if options.mapping:
-		os.system("~sh16/scripts/multiple_mappings_to_bam_test.py -U long -f -p bwa -X -g -r "+options.ref+" "+' '.join(args)+' > '+tmpname+'jobstring')
+		os.system("/nfs/pathogen/sh16_scripts/multiple_mappings_to_bam_test.py -U long -f -p bwa -X -g -r "+options.ref+" "+' '.join(args)+' > '+tmpname+'jobstring')
 		
 		jobnum=open(tmpname+'jobstring', "rU").readlines()[-3].split(">")[0].split("<")[1]
 		
@@ -218,7 +218,7 @@ if __name__ == "__main__":
 			continue
 		donefolders.append(folder)
 		#if not os.path.isfile(folder+"_bwa/"+folder+"_unmapped.fastq") and not os.path.isfile(folder+"_bwa/"+folder+"_unmapped.fastq.gz"):
-		os.system("~sh16/scripts/get_unmapped_fastq_from_bam.py "+folder+"_bwa/"+folder+".bam")
+		os.system("/nfs/pathogen/sh16_scripts/get_unmapped_fastq_from_bam.py "+folder+"_bwa/"+folder+".bam")
 		if os.path.isfile(folder+"_bwa/"+folder+"_Mapped.plot.gz"):
 			os.system("gunzip -f "+folder+"_bwa/"+folder+"_Mapped.plot.gz")
 			
@@ -252,7 +252,7 @@ if __name__ == "__main__":
 	if os.path.isfile(folder+"_bwa/"+folder+"_unmapped.fastq.gz"):
 		os.system("gunzip -f "+folder+"_bwa/"+folder+"_unmapped.fastq.gz")
 	if os.path.isfile(folder+"_bwa/"+folder+"_unmapped.fastq"):
-		os.system('~sh16/scripts/velvet_assembly.sh -n -e '+str(int(float(exp)/2))+' -o "-min_contig_lgth 500" -p -f '+folder+"_bwa/"+folder+"_unmapped.fastq")
+		os.system('/nfs/pathogen/sh16_scripts/velvet_assembly.sh -n -e '+str(int(float(exp)/2))+' -o "-min_contig_lgth 500" -p -f '+folder+"_bwa/"+folder+"_unmapped.fastq")
 	else:
 		print "Cannot find "+folder+"_bwa/"+folder+"_unmapped.fastq"
 		sys.exit()
@@ -320,14 +320,14 @@ if __name__ == "__main__":
 		#os.system('grep -v "^>" '+reffile+" >> "+tmpname+".dna")
 		
 		
-		os.system("~sh16/scripts/multiple_mappings_to_bam_test.py -r "+reffile+" -y -U long -f -X -p bwa -L "+tmpname+"_[12].fastq")# >  /dev/null 2>&1")
-		os.system("~sh16/scripts/get_unmapped_fastq_from_bam.py "+tmpname+"_bwa/"+tmpname+".bam")
+		os.system("/nfs/pathogen/sh16_scripts/multiple_mappings_to_bam_test.py -r "+reffile+" -y -U long -f -X -p bwa -L "+tmpname+"_[12].fastq")# >  /dev/null 2>&1")
+		os.system("/nfs/pathogen/sh16_scripts/get_unmapped_fastq_from_bam.py "+tmpname+"_bwa/"+tmpname+".bam")
 		sys.exit()
 		#os.system("gunzip "+tmpname+"/"+tmpname+"_unmapped.fastq")
 		
 		
 		os.system('mv '+tmpname+"_bwa/"+tmpname+"_unmapped.fastq "+tmpname+"_bwa/"+folder+"_unmapped.fastq")
-		os.system('~sh16/scripts/velvet_assembly.sh -n -e '+str(int(float(exp)/2))+' -o "-min_contig_lgth 500" -p -f '+tmpname+"_bwa/"+folder+"_unmapped.fastq")
+		os.system('/nfs/pathogen/sh16_scripts/velvet_assembly.sh -n -e '+str(int(float(exp)/2))+' -o "-min_contig_lgth 500" -p -f '+tmpname+"_bwa/"+folder+"_unmapped.fastq")
 	#	if os.path.isfile(tmpname+"_bwa/"+tmpname+"_unmapped.fastq"):
 	#		os.system("gzip "+tmpname+"_bwa/"+tmpname+"_unmapped.fastq")
 		os.system("cat "+tmpname+"_bwa/"+folder+"_unmapped_velvet/contigs.fa >> "+reffile)
@@ -344,13 +344,13 @@ if __name__ == "__main__":
 		refname='.'.join(options.ref.split('.')[:-1])
 	else:
 		refname=tmpname
-	os.system("~sh16/scripts/fasta2fastq_shredder.py "+options.ref+" "+refname+" 76 3 c 200")
+	os.system("/nfs/pathogen/sh16_scripts/fasta2fastq_shredder.py "+options.ref+" "+refname+" 76 3 c 200")
 		
 	#final mapping of all isolates against ref+accessory
 	if options.embl!="":
-		os.system("~sh16/scripts/multiple_mappings_to_bam.py -M -p ssaha -f -a -x -P -t -g -r "+options.prefix+"_pan_genome.mfa -e "+options.embl+" "+' '.join(args)+' '+refname+'_[12].fastq')
+		os.system("/nfs/pathogen/sh16_scripts/multiple_mappings_to_bam.py -M -p ssaha -f -a -x -P -t -g -r "+options.prefix+"_pan_genome.mfa -e "+options.embl+" "+' '.join(args)+' '+refname+'_[12].fastq')
 	else:
-		os.system("~sh16/scripts/multiple_mappings_to_bam.py -M -p ssaha -f -a -x -P -t -g -r "+options.prefix+"_pan_genome.mfa "+' '.join(args)+' '+refname+'_[12].fastq')
+		os.system("/nfs/pathogen/sh16_scripts/multiple_mappings_to_bam.py -M -p ssaha -f -a -x -P -t -g -r "+options.prefix+"_pan_genome.mfa "+' '.join(args)+' '+refname+'_[12].fastq')
 	
 	
 	

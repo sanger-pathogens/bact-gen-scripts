@@ -18,7 +18,7 @@ from Bio.Alphabet import IUPAC, Gapped
 from Bio.SeqRecord import SeqRecord
 from Bio import AlignIO
 from Bio.Align import Generic
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_nexus import *
 
 
@@ -302,7 +302,7 @@ if __name__ == "__main__":
 	print '\t\t</constantPatterns>'
 	print '\t</mergePatterns>'
 	
-	print '\nOr use ~sh16/scripts/BEAST/replace_BEAST_blocks.py and provide the file', options.outfile+".patterns", "with the -p flag"
+	print '\nOr use /nfs/pathogen/sh16_scripts/BEAST/replace_BEAST_blocks.py and provide the file', options.outfile+".patterns", "with the -p flag"
 	
 	output=open(options.outfile+".patterns","w")
 	print >> output, ' '.join(map(str,[constants['A'], constants['C'], constants['G'], constants['T']]))

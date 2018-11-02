@@ -35,7 +35,7 @@ EOF
 }
 
 
-script_dir="/nfs/users/nfs_s/sh16/scripts/"
+script_dir="/nfs/pathogen/sh16_scripts/"
 velvet_dir="/nfs/users/nfs_s/sh16/velvet-sc/"
 
 PAIRED=0

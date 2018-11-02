@@ -34,4 +34,4 @@ echo bash '~nc3/Scripts/bwa_wrapper.sh unindexed_sequence.dna < JobArray.${LSB_J
 
 echo "Strain		Cps locus	Coverage (%)" > serotypes.summary;
 
-#bsub -w "ended(BWAmap[$N])" ~sh16/scripts/serotyping_tidyup.sh;
+#bsub -w "ended(BWAmap[$N])" /nfs/pathogen/sh16_scripts/serotyping_tidyup.sh;

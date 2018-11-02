@@ -18,7 +18,7 @@ SAMTOOLS_DIR=""
 BCFTOOLS_DIR=""
 SSAHA_DIR="/nfs/users/nfs_s/sh16/ssaha2_v2.5.1_x86_64/"
 BWA_DIR=""
-MY_SCRIPTS_DIR="/nfs/users/nfs_s/sh16/scripts/"
+MY_SCRIPTS_DIR="/nfs/pathogen/sh16_scripts/"
 
 
 #################################

@@ -318,7 +318,7 @@ if __name__ == "__main__":
 	sys.exit()
 	for gene in genes_to_keep:
 		print gene
-		returnval=os.system("~sh16/scripts/resistome/bam_filter.py -t contigs -c "+gene+" -f pairedfastq -o tmp_"+gene+" -b "+options.bamfile)
+		returnval=os.system("/nfs/pathogen/sh16_scripts/resistome/bam_filter.py -t contigs -c "+gene+" -f pairedfastq -o tmp_"+gene+" -b "+options.bamfile)
 		print "bam_filter return value:", returnval
 		
 		returnval=os.system("velveth vdir 57 -shortPaired -fastq -separate  tmp_"+gene+"_1.fastq tmp_"+gene+"_2.fastq")

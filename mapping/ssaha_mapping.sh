@@ -117,12 +117,12 @@ then
 	grep "^cigar" ${RUNNAME}/cigar1.tmp > ${RUNNAME}/cigar2.tmp
 	mv ${RUNNAME}/cigar2.tmp ${RUNNAME}/cigar1.tmp
 			
-	perl /nfs/users/nfs_s/sh16/scripts/cigar00_2plot.pl ${RUNNAME}/cigar1.tmp ${RUNNAME}/allcoverage.plot $READLENGTH
+	perl /nfs/pathogen/sh16_scripts/cigar00_2plot.pl ${RUNNAME}/cigar1.tmp ${RUNNAME}/allcoverage.plot $READLENGTH
 	/nfs/users/nfs_t/tdo/bin/pileup_v0.4/ssaha_pileup/ssaha_pileup/ssaha_cigar ${RUNNAME}/cigar1.tmp ${RUNNAME}/cigar2.tmp
 	awk '{print $2}' ${RUNNAME}/cigar2.tmp > ${RUNNAME}/readnames.tmp
 	/nfs/users/nfs_t/tdo/bin/pileup_v0.4/ssaha_pileup/other_codes/get_seqreads/get_seqreads ${RUNNAME}/readnames.tmp ${FASTQDIR}${NAME}.fastq $	{RUNNAME}/fastq.tmp
 		
-	/nfs/users/nfs_s/sh16/scripts/exclude/get_excreads ${RUNNAME}/readnames.tmp ${FASTQDIR}${NAME}.fastq ${NAME}unmap.fastq"
+	/nfs/pathogen/sh16_scripts/exclude/get_excreads ${RUNNAME}/readnames.tmp ${FASTQDIR}${NAME}.fastq ${NAME}unmap.fastq"
 	mv ${NAME}unmap.fastq ${RUNNAME}/unmap.fastq"
 	if [ RTYPE eq "454" ]
 		then
@@ -146,11 +146,11 @@ else
 
 	grep "^cigar" ${RUNNAME}/cigar1.tmp > ${RUNNAME}/cigar2.tmp
 	mv ${RUNNAME}/cigar2.tmp ${RUNNAME}/cigar1.tmp
-	perl /nfs/users/nfs_s/sh16/scripts/cigar00_2plot.pl ${RUNNAME}/cigar1.tmp ${RUNNAME}/allcoverage.plot $READLENGTH#change 36 for different read lengths
+	perl /nfs/pathogen/sh16_scripts/cigar00_2plot.pl ${RUNNAME}/cigar1.tmp ${RUNNAME}/allcoverage.plot $READLENGTH#change 36 for different read lengths
 				
 	# -uniq 0 maps exactly identical repeat reads randomly
 	/nfs/users/nfs_t/tdo/bin/pileup_v0.4/ssaha_pileup/ssaha_pileup/ssaha_cigar -uniq 0 ${RUNNAME}/cigar1.tmp ${RUNNAME}/cigar2.tmp
-	perl /nfs/users/nfs_s/sh16/scripts/cigar00_2plot.pl ${RUNNAME}/cigar2.tmp ${RUNNAME}/random_exact_repeats_coverage.plot $READLENGTH
+	perl /nfs/pathogen/sh16_scripts/cigar00_2plot.pl ${RUNNAME}/cigar2.tmp ${RUNNAME}/random_exact_repeats_coverage.plot $READLENGTH
 				
 	/nfs/users/nfs_t/tdo/bin/pileup_v0.4/ssaha_pileup/ssaha_pileup/ssaha_pairs -insert $meaninsert ${RUNNAME}/cigar1.tmp ${RUNNAME}/cigar2unclean.tmp
 	/nfs/users/nfs_t/tdo/bin/pileup_v0.4/ssaha_pileup/ssaha_pileup/ssaha_clean -insert $meaninsert ${RUNNAME}/cigar2unclean.tmp ${RUNNAME}/cigar2.tmp
@@ -159,7 +159,7 @@ else
 	/nfs/users/nfs_t/tdo/bin/pileup_v0.4/ssaha_pileup/other_codes/get_seqreads/get_seqreads ${RUNNAME}/readnames.tmp ${RUNNAME}/shuffled.tmp ${RUNNAME}/fastq.tmp
 				
 				
-	/nfs/users/nfs_s/sh16/scripts/exclude/get_excreads ${RUNNAME}/readnames.tmp ${RUNNAME}/shuffled.tmp ${NAME}unmap.fastq"
+	/nfs/pathogen/sh16_scripts/exclude/get_excreads ${RUNNAME}/readnames.tmp ${RUNNAME}/shuffled.tmp ${NAME}unmap.fastq"
 	mv ${NAME}unmap.fastq ${RUNNAME}/unmap.fastq"
 			
 			

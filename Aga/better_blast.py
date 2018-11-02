@@ -2,7 +2,7 @@
 
 import os, sys
 from optparse import OptionParser, OptionGroup
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_SeqIO import *
 import subprocess
 import shlex
@@ -10,7 +10,7 @@ import gzip
 import shutil
 from random import *
 import math
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 import farm
 
 ##########################

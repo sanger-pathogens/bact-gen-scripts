@@ -6,7 +6,7 @@ from optparse import OptionParser, OptionGroup
 import subprocess
 import time
 from Bio.Seq import Seq
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_SeqIO import *
 
 ########################
@@ -145,7 +145,7 @@ if __name__ == "__main__":
 		readlength=get_read_length(forward)
 		nameprefix=forward.replace("_1.fastq", "")
 		print "Shuffling sequences"
-		os.system("~sh16/scripts/shufflefastqSequences.pl "+forward+" "+reverse+" "+tmpname+".fastq")
+		os.system("/nfs/pathogen/sh16_scripts/shufflefastqSequences.pl "+forward+" "+reverse+" "+tmpname+".fastq")
 		filename=tmpname+".fastq"
 	else:
 		nameprefix=shuffled.replace(".fastq", "")
@@ -259,7 +259,7 @@ if __name__ == "__main__":
 			mincov=float(options.ecov)/2
 			if mincov<3:
 				mincov=3
-			mediancov=int(os.popen("~sh16/scripts/velvet_stats_2_av_cov.py "+tmpname+"_"+str(kmer)+"/stats.txt"+" "+str(mincov)).read().strip())
+			mediancov=int(os.popen("/nfs/pathogen/sh16_scripts/velvet_stats_2_av_cov.py "+tmpname+"_"+str(kmer)+"/stats.txt"+" "+str(mincov)).read().strip())
 			mediff=options.ecov-mediancov
 			if mediff<0:
 				mediff=1-mediff
@@ -278,7 +278,7 @@ if __name__ == "__main__":
 	mincov=float(options.ecov)/2
 	if mincov<3:
 		mincov=3
-	mediancov=int(os.popen("~sh16/scripts/velvet_stats_2_av_cov.py "+tmpname+"_"+str(optimised[0][1])+"/stats.txt"+" "+str(mincov)).read().strip())
+	mediancov=int(os.popen("/nfs/pathogen/sh16_scripts/velvet_stats_2_av_cov.py "+tmpname+"_"+str(optimised[0][1])+"/stats.txt"+" "+str(mincov)).read().strip())
 	
 	print mediancov
 	if mediancov<6:

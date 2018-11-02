@@ -707,11 +707,11 @@ class SNPanalysis:
 		
 		#Running Velvet.
 		if pairedend=='n':
-			os.system("bsub /nfs/team81/sh16/scripts/velvet_assembly.sh "+self.runname+"/unmap.fastq "+meaninsertsize)
+			os.system("bsub /nfs/pathogen/sh16_scripts/velvet_assembly.sh "+self.runname+"/unmap.fastq "+meaninsertsize)
 			#os.system("velveth "+self.runname+"/velvet 21 -fastq -short "+self.runname+"/unmap.fastq")
 			#os.system("velvetg "+self.runname+"/velvet -cov_cutoff "+mindepth+" -min_contig_lgth 100")
 		else:
-			os.system("bsub /nfs/team81/sh16/scripts/velvet_assembly.sh "+self.runname+"/unmap.fastq "+meaninsertsize)
+			os.system("bsub /nfs/pathogen/sh16_scripts/velvet_assembly.sh "+self.runname+"/unmap.fastq "+meaninsertsize)
 			#os.system("velveth "+self.runname+"/velvet 21 -fastq -shortPaired "+self.runname+"/unmap.fastq")
 			#os.system("velvetg "+self.runname+"/velvet -ins_length "+meaninsertsize+" -cov_cutoff "+mindepth+" -min_contig_lgth 100")
 		

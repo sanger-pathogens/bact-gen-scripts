@@ -54,12 +54,12 @@ for line in lines:
 	print >> musclein, seqs2[words[1]]
 	musclein.close()
 	
-	os.system("~sh16/scripts/Nuc_to_aa.py -i temp.fna -o temp.faa")
+	os.system("/nfs/pathogen/sh16_scripts/Nuc_to_aa.py -i temp.fna -o temp.faa")
 	
 	
 	os.system("muscle -in temp.faa -out temp.muscleout")
 	
-	os.system("~sh16/scripts/Protein_align_to_nuc.py -n temp.fna -p temp.muscleout -o temp.nucaln")
+	os.system("/nfs/pathogen/sh16_scripts/Protein_align_to_nuc.py -n temp.fna -p temp.muscleout -o temp.nucaln")
 	
 	
 	data=open("temp.nucaln", "rU").read().split('>')[1:]

@@ -6,7 +6,7 @@ from Bio import AlignIO
 from Bio.Nexus import Trees, Nodes
 from optparse import OptionParser
 
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_nexus import *
 from Si_general import *
 from Si_SeqIO import *

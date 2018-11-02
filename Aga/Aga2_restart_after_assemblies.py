@@ -12,12 +12,12 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from shutil import copyfile
 import mimetypes
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 import farm
 
 SMALT_LOC="/software/pathogen/external/apps/usr/bin/smalt"
 SAMTOOLS_LOC="/software/pathogen/external/apps/usr/bin/samtools"
-AGA_DIR="/nfs/users/nfs_s/sh16/scripts/Aga/"
+AGA_DIR="/nfs/pathogen/sh16_scripts/Aga/"
 
 
 ##########################

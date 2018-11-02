@@ -14,7 +14,7 @@ import os, sys, getopt
 
 def Usage():
 	print '\nget_mauve_snps.py Usage:\n'
-	print '\t/nfs/team81/sh16/scripts/get_mauve_snps.py [options] input files\nOptions:\n\t-a\tAlignment output file\n\t-c\tReference sequence is circular\n\t-d\tDirty mode: Does not remove Mauve files created during the analysis\n\t-e\tEMBL file(s) for reference (comma seperated list)\n\t-i\tInclude indels\n\t-m\tUse previous MUMmer SNP analysis output files\n\t-o\tOutput file name\n\t-t\tArtemis tab output file name\n\t-r\tReference sequence fasta file\n\t-h\tPrint this help'
+	print '\t/nfs/pathogen/sh16_scripts/get_mauve_snps.py [options] input files\nOptions:\n\t-a\tAlignment output file\n\t-c\tReference sequence is circular\n\t-d\tDirty mode: Does not remove Mauve files created during the analysis\n\t-e\tEMBL file(s) for reference (comma seperated list)\n\t-i\tInclude indels\n\t-m\tUse previous MUMmer SNP analysis output files\n\t-o\tOutput file name\n\t-t\tArtemis tab output file name\n\t-r\tReference sequence fasta file\n\t-h\tPrint this help'
 	print '\nWritten by: Simon R Harris, Wellcome Trust Sanger Institute, UK. 2008\n'
 
 

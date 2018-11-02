@@ -10,11 +10,11 @@
 import string, re
 import os, sys
 import dendropy
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.7/site-packages/fisher-0.1.4-py2.7-linux-x86_64.egg/', '/nfs/users/nfs_s/sh16/lib/python2.5/site-packages/fisher-0.1.4-py2.7-linux-x86_64.egg/', '/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.7/site-packages/fisher-0.1.4-py2.7-linux-x86_64.egg/', '/nfs/users/nfs_s/sh16/lib/python2.5/site-packages/fisher-0.1.4-py2.7-linux-x86_64.egg/', '/nfs/pathogen/sh16_scripts/modules/']))
 from fisher import pvalue
 from optparse import OptionParser
 from Bio.Align import AlignInfo
-#sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+#sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_general import *
 from Si_SeqIO import *
 
@@ -584,7 +584,7 @@ if __name__ == "__main__":
 				
 			outfile.close()
 			print >> logout, taxon, float(maxnum)/(len(seqnames)-1)
-			os.system("/nfs/users/nfs_s/sh16/scripts/reportlabtest.py -t "+options.tree+" -m test.csv -C 2,3 -O portrait -M -L left -a 2 -o "+taxon+"_"+str(maxnum)+".pdf")
+			os.system("/nfs/pathogen/sh16_scripts/reportlabtest.py -t "+options.tree+" -m test.csv -C 2,3 -O portrait -M -L left -a 2 -o "+taxon+"_"+str(maxnum)+".pdf")
 			os.system("rm -f  test.csv")
 		else:
 			print >> logout, taxon, 0.0

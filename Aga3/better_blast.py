@@ -2,7 +2,7 @@
 
 import os, sys
 from optparse import OptionParser, OptionGroup
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_SeqIO import *
 import subprocess
 import shlex
@@ -282,7 +282,7 @@ if __name__ == "__main__":
 	else:
 		fs="False"
 	
-	job2 = farm.Bsub(options.prefix+"_bb_bsub.out", options.prefix+"_bb_bsub.err", tmpname+"_postprocess", "normal", 0.5, "/nfs/users/nfs_s/sh16/scripts/post_process_better_blast.py "+options.tmpdir+" "+tmpname+" "+options.prefix+" "+str(query_file_count)+" "+fs)
+	job2 = farm.Bsub(options.prefix+"_bb_bsub.out", options.prefix+"_bb_bsub.err", tmpname+"_postprocess", "normal", 0.5, "/nfs/pathogen/sh16_scripts/post_process_better_blast.py "+options.tmpdir+" "+tmpname+" "+options.prefix+" "+str(query_file_count)+" "+fs)
 	job2.add_dependency(job1_id) 
 	job2_id = job2.run()
 	print "Job ID =", job2_id

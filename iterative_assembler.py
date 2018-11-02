@@ -8,7 +8,7 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqUtils import GC
 import subprocess
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_SeqIO import *
 
 
@@ -430,13 +430,13 @@ if __name__ == "__main__":
 		#os.system(SAMTOOLS_DIR+"samtools view -b -S "+tmpname+".sam > "+tmpname+".bam")
 		print "Finding reads that do not map against", db
 		remove_unmapping_reads(tmpname+".sam")
-		#os.system("~sh16/scripts/get_unmapped_fastq_from_bam.py "+tmpname+".sam")
+		#os.system("/nfs/pathogen/sh16_scripts/get_unmapped_fastq_from_bam.py "+tmpname+".sam")
 #		os.system("cp "+tmpname+"_unmapped.fastq "+forward.replace("_1.fastq","")+".fastq")
 #		os.system("mv "+tmpname+"_unmapped.fastq "+tmpname+".fastq")
 		os.system("rm "+tmpname+".sam")
 		if not shuffled and options.assembler in ["velvetOptimiser","my_script","my_script-sc"]:
 			print "Shuffling sequences"
-			os.system("~sh16/scripts/shufflefastqSequences.pl "+tmpname+"_1_unmapped.fastq "+tmpname+"_2_unmapped.fastq "+tmpname+".fastq")
+			os.system("/nfs/pathogen/sh16_scripts/shufflefastqSequences.pl "+tmpname+"_1_unmapped.fastq "+tmpname+"_2_unmapped.fastq "+tmpname+".fastq")
 			os.system("rm "+tmpname+"_1_unmapped.fastq "+tmpname+"_2_unmapped.fastq")
 		else:
 			os.system("mv "+tmpname+"_1_unmapped.fastq "+tmpname+"_1.fastq")
@@ -450,7 +450,7 @@ if __name__ == "__main__":
 	elif not shuffled and options.assembler in ["velvetOptimiser","my_script","my_script-sc"]:
 		print "Shuffling sequences"
 		
-		os.system("~sh16/scripts/shufflefastqSequences.pl "+forward+" "+reverse+" "+tmpname+".fastq")
+		os.system("/nfs/pathogen/sh16_scripts/shufflefastqSequences.pl "+forward+" "+reverse+" "+tmpname+".fastq")
 	elif options.assembler in ["velvetOptimiser","my_script","my_script-sc"]:
 		if shuffled.split(".")[-1]=="gz":
 			os.system("zcat "+shuffled+" > "+tmpname+".fastq")
@@ -475,10 +475,10 @@ if __name__ == "__main__":
 #	if db!="" and os.path.isfile(db):
 #		print "Blasting vs contaminant database (this may take some time!)"
 #		os.system("formatdb -p F -i "+db)
-#		os.system("~sh16/scripts/fastq2fasta.pl "+tmpname+".fastq "+tmpname+".fasta")
+#		os.system("/nfs/pathogen/sh16_scripts/fastq2fasta.pl "+tmpname+".fastq "+tmpname+".fasta")
 #		os.system("blastall -p blastn -m 8 -b 1 -v 1 -e 1e-5 -i "+tmpname+".fasta -d "+db+" -o "+tmpname+".blast >  /dev/null 2>&1")
 #		print "removing contaminant blast hits"
-#		os.system("~sh16/scripts/remove_blast_hits_from_fastq.py "+tmpname+".fastq "+tmpname+".blast")
+#		os.system("/nfs/pathogen/sh16_scripts/remove_blast_hits_from_fastq.py "+tmpname+".fastq "+tmpname+".blast")
 #		os.system("rm "+tmpname+".fasta formatdb.log "+tmpname+".blast")
 #		os.system("mv "+tmpname+"_filtered.fastq "+tmpname+".fastq")
 	
@@ -698,15 +698,15 @@ if __name__ == "__main__":
 		
 		if numfiles>1:
 			if options.scaffold:
-				velvetstring="~sh16/scripts/velvet_assembly.sh -f "+tmpname+"_${LSB_JOBINDEX}.fastq "+wga+"  -p -e "+str(kmC)+" -i 250"
+				velvetstring="/nfs/pathogen/sh16_scripts/velvet_assembly.sh -f "+tmpname+"_${LSB_JOBINDEX}.fastq "+wga+"  -p -e "+str(kmC)+" -i 250"
 			else:
-				velvetstring="~sh16/scripts/velvet_assembly.sh -f "+tmpname+"_${LSB_JOBINDEX}.fastq "+wga+"  -n -p -e "+str(kmC)+" -i 250"
+				velvetstring="/nfs/pathogen/sh16_scripts/velvet_assembly.sh -f "+tmpname+"_${LSB_JOBINDEX}.fastq "+wga+"  -n -p -e "+str(kmC)+" -i 250"
 				
 		else:
 			if options.scaffold:
-				velvetstring="~sh16/scripts/velvet_assembly.sh -f "+tmpname+"_1.fastq "+wga+"  -p -e "+str(kmC)+" -i 250"
+				velvetstring="/nfs/pathogen/sh16_scripts/velvet_assembly.sh -f "+tmpname+"_1.fastq "+wga+"  -p -e "+str(kmC)+" -i 250"
 			else:
-				velvetstring="~sh16/scripts/velvet_assembly.sh -f "+tmpname+"_1.fastq "+wga+"  -n -p -e "+str(kmC)+" -i 250"
+				velvetstring="/nfs/pathogen/sh16_scripts/velvet_assembly.sh -f "+tmpname+"_1.fastq "+wga+"  -n -p -e "+str(kmC)+" -i 250"
 			
 	elif options.assembler=="SOAPdenovo":
 		if options.scaffold:

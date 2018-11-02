@@ -85,7 +85,7 @@ else:
 for x in range(0,len(filenames)):
 	if filenames[x][0]!='.':
 		print 'Converting '+filenames[x]
-		textcall = ("").join(['java -cp /nfs/users/nfs_s/sh16/scripts/readseq.jar run -a -f '+typeno+' '+filenames[x] ])
+		textcall = ("").join(['java -cp /nfs/pathogen/sh16_scripts/readseq.jar run -a -f '+typeno+' '+filenames[x] ])
 		os.system(textcall)
 		
 		#If converting to type 11, edit output file to remove I on first line

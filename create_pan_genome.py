@@ -52,7 +52,7 @@ outfile.close()
 os.system("gzip "+folder+"/unmap.fastq")
 
 
-os.system('~sh16/scripts/velvet_assembly.sh -n -e 15 -o "-min_contig_lgth 500" -p -f '+tmpname+".fastq")
+os.system('/nfs/pathogen/sh16_scripts/velvet_assembly.sh -n -e 15 -o "-min_contig_lgth 500" -p -f '+tmpname+".fastq")
 
 os.system("cp "+tmpname+"_velvet/contigs.fa "+reffile)
 
@@ -98,10 +98,10 @@ for folder in sys.argv[2:]:
 	os.system('grep -v "^>" '+reffile+" >> "+tmpname+".dna")
 	
 	
-	os.system("~sh16/scripts/run_multiple_mappings_auto.py -r "+tmpname+".dna -M -I -P ssaha -L -p "+tmpname+"_[12].fastq")
+	os.system("/nfs/pathogen/sh16_scripts/run_multiple_mappings_auto.py -r "+tmpname+".dna -M -I -P ssaha -L -p "+tmpname+"_[12].fastq")
 	
 	os.system("gunzip "+tmpname+"_ssaha/unmap.fastq.gz")
-	os.system('~sh16/scripts/velvet_assembly.sh -n -e 15 -o "-min_contig_lgth 500" -p -f '+tmpname+"_ssaha/unmap.fastq")
+	os.system('/nfs/pathogen/sh16_scripts/velvet_assembly.sh -n -e 15 -o "-min_contig_lgth 500" -p -f '+tmpname+"_ssaha/unmap.fastq")
 	os.system("gzip "+tmpname+"_ssaha/unmap.fastq")
 	os.system("cat "+tmpname+"_ssaha/unmap_velvet/contigs.fa >> "+reffile)
 	os.system("rm -rf "+tmpname+"_ssaha 1tmp*_sbs.sh")

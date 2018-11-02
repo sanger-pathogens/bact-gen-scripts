@@ -12,14 +12,14 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from shutil import copyfile
 import mimetypes
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 import farm
 import subprocess
 import gzip
 
 SMALT_LOC="/software/pathogen/external/apps/usr/bin/smalt"
 SAMTOOLS_LOC="/software/pathogen/external/apps/usr/bin/samtools"
-AGA_DIR="/nfs/users/nfs_s/sh16/scripts/Aga/"
+AGA_DIR="/nfs/pathogen/sh16_scripts/Aga/"
 
 
 ##########################
@@ -546,7 +546,7 @@ if __name__ == "__main__":
 	for i, assembly in enumerate(args):
 		name=assembly.split("/")[-1].split(".")[0]
 		mummer_file=open(tmpname+"/"+tmpname+"_mummer_"+str(i+1)+".sh", "w")
-		print >> mummer_file, "/nfs/users/nfs_s/sh16/scripts/Aga/align_contigs_with_mummer.py -q "+core_file+" -r "+assembly+" -o "+tmpname+"/"+name+' || error_exit "mummer script failed! Aborting"'
+		print >> mummer_file, "/nfs/pathogen/sh16_scripts/Aga/align_contigs_with_mummer.py -q "+core_file+" -r "+assembly+" -o "+tmpname+"/"+name+' || error_exit "mummer script failed! Aborting"'
 		assembly_list.append(tmpname+"/"+name+"_unmatched.fasta")
 
 		mummer_file.close()

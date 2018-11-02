@@ -26,7 +26,7 @@ SSAHA_DIR="/nfs/users/nfs_s/sh16/ssaha2_v2.5.1_x86_64/"
 BWA_DIR=""
 
 #SMALT_DIR="smalt"
-MY_SCRIPTS_DIR="/nfs/users/nfs_s/sh16/scripts/"
+MY_SCRIPTS_DIR="/nfs/pathogen/sh16_scripts/"
 GATK_LOC="/software/vertres/bin-external/GenomeAnalysisTK-1.5-9-ga05a7f2/GenomeAnalysisTK.jar"
 pcs4_JAVA_DIR="/software/jdk1.6.0_01/bin/"
 farm3_JAVA_DIR="/software/pathogen/external/apps/usr/local/jdk1.7.0_21/bin/"

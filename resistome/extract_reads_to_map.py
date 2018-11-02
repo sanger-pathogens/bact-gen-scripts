@@ -44,7 +44,7 @@ if __name__ == "__main__":
     blastname=options.ffastq.split(".")[0]+"_resistome.blast"
 
 
-    returnval=os.system(' '.join(["/nfs/users/nfs_s/sh16/scripts/resistome/fastool --to-fasta", options.ffastq, options.rfastq, ">", fastaname]))
+    returnval=os.system(' '.join(["/nfs/pathogen/sh16_scripts/resistome/fastool --to-fasta", options.ffastq, options.rfastq, ">", fastaname]))
 
     print "fastool returnvalue:", returnval
     

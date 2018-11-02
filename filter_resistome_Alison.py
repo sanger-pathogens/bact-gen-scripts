@@ -386,7 +386,7 @@ if len(genes_present)>0:
 						print >> tmpout, x+1, genedepths[gene][x], geneerrors[gene][x]
 				tmpout.close()
 				
-				os.system(SAMTOOLS_DIR+"~sh16/scripts/reportlabtest.py -H 6 -w -d area -4 "+str(len(genedepths[gene]))+"  -Y 0 -l 1 -o "+tmpname+str(filecount)+".pdf "+tmpname+".plot "+tmpname+".fasta")
+				os.system(SAMTOOLS_DIR+"/nfs/pathogen/sh16_scripts/reportlabtest.py -H 6 -w -d area -4 "+str(len(genedepths[gene]))+"  -Y 0 -l 1 -o "+tmpname+str(filecount)+".pdf "+tmpname+".plot "+tmpname+".fasta")
 				tmpfilelist.append(tmpname+str(filecount)+".pdf")
 				
 				os.system("rm -f "+tmpname+".plot "+tmpname+".fasta")
@@ -395,11 +395,11 @@ if len(genes_present)>0:
 			
 			
 			os.system("gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile="+options.output+"_per_gene_SNP_plot.pdf "+' '.join(tmpfilelist))
-			#os.system(SAMTOOLS_DIR+"~sh16/scripts/reportlabtest.py -H 4 -d area -4 "+str(maxseqlen)+" -O portrait -Y 0 -l 4 -o "+options.output+"_accessory_mapping_test.pdf "+' '.join(tmpfilelist[::-1]))
+			#os.system(SAMTOOLS_DIR+"/nfs/pathogen/sh16_scripts/reportlabtest.py -H 4 -d area -4 "+str(maxseqlen)+" -O portrait -Y 0 -l 4 -o "+options.output+"_accessory_mapping_test.pdf "+' '.join(tmpfilelist[::-1]))
 			
 			os.system("rm -f "+' '.join(tmpfilelist))
 			
-			os.system(SAMTOOLS_DIR+"~sh16/scripts/reportlabtest.py -H 8 -w -d area -Y 0 -l 1 -o "+options.output+"_coverage_plot.pdf "+options.output+"_coverage.plot "+options.output+"_hits.mfa")
+			os.system(SAMTOOLS_DIR+"/nfs/pathogen/sh16_scripts/reportlabtest.py -H 8 -w -d area -Y 0 -l 1 -o "+options.output+"_coverage_plot.pdf "+options.output+"_coverage.plot "+options.output+"_hits.mfa")
 			
 			count=0
 			output=open(options.output+"_presence.plot", "w")

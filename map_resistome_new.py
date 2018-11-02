@@ -162,4 +162,4 @@ if __name__ == "__main__":
 	os.system(SAMTOOLS_DIR+"samtools sort "+options.output+".1.bam "+options.output)
 	os.system(SAMTOOLS_DIR+"samtools index "+options.output+".bam")
 	os.system("rm -f "+options.output+".1.bam "+options.output+".sam "+options.output+"_no_Ns.fasta.fai "+options.output+"_no_Ns.fasta.index.sma "+options.output+"_no_Ns.fasta.index.smi ")#+options.output+"_no_Ns.fasta.fai "+options.output+"_no_Ns.fasta.index.*")
-	os.system("~sh16/scripts/filter_resistome_test.py -i "+str(options.id)+" -c "+options.output+"_no_Ns.fasta -b "+options.output+".bam -g "+options.genes+" -o "+options.output+" -f "+options.forward+" -r "+options.reverse)
+	os.system("/nfs/pathogen/sh16_scripts/filter_resistome_test.py -i "+str(options.id)+" -c "+options.output+"_no_Ns.fasta -b "+options.output+".bam -g "+options.genes+" -o "+options.output+" -f "+options.forward+" -r "+options.reverse)

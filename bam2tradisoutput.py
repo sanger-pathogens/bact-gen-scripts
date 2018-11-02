@@ -7,7 +7,7 @@ import pysam
 
 
 if len(sys.argv)!=2 or "-h" in sys.argv:
-	print "~sh16/scripts/bam2tradisoutput.py <input bam/sam file>"
+	print "/nfs/pathogen/sh16_scripts/bam2tradisoutput.py <input bam/sam file>"
 	sys.exit()
 
 

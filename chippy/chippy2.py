@@ -90,7 +90,7 @@ except:
 if not os.path.isfile(all_references+".msh"):
 	sketch_file(all_references, s=10000, k=16, i=True)
 if not os.path.isfile(all_references+".chippy.index"):
-	os.system("/nfs/users/nfs_s/sh16/scripts/chippy/index_refseq.py "+all_references)
+	os.system("/nfs/pathogen/sh16_scripts/chippy/index_refseq.py "+all_references)
 
 outprefix=assembly
 	
@@ -126,8 +126,8 @@ while tophit!="":
 	
 	print "Top hit is", topspecies, tophit, "at a distance of", distance, "and a p-value of", p
 	
-	#os.system("/nfs/users/nfs_s/sh16/scripts/chippy/extract_sequences_from_refseq.py "+all_references+' "'+topspecies+'" > '+topspecies.replace(" ","_")+".chippy.fasta")
-	os.system('/nfs/users/nfs_s/sh16/scripts/chippy/extract_sequences_from_refseq.py  refseq_bacteria.fna "'+topspecies+'" > '+topspecies.replace(" ","_")+".chippy.fasta")
+	#os.system("/nfs/pathogen/sh16_scripts/chippy/extract_sequences_from_refseq.py "+all_references+' "'+topspecies+'" > '+topspecies.replace(" ","_")+".chippy.fasta")
+	os.system('/nfs/pathogen/sh16_scripts/chippy/extract_sequences_from_refseq.py  refseq_bacteria.fna "'+topspecies+'" > '+topspecies.replace(" ","_")+".chippy.fasta")
 	
 	
 	references=topspecies.replace(" ","_")+".chippy.fasta"

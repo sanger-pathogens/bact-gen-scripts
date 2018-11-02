@@ -8,7 +8,7 @@ import os, sys
 sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/site-packages/reportlab-3.1.8-py2.7-linux-x86_64.egg')
 sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/site-packages/')
 sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/')
-sys.path.insert(1, '/nfs/users/nfs_s/sh16/scripts/modules/')
+sys.path.insert(1, '/nfs/pathogen/sh16_scripts/modules/')
 import dendropy
 import string, re
 import random
@@ -21,7 +21,7 @@ from colorsys import hsv_to_rgb
 #on my laptop
 #sys.path.extend(map(os.path.abspath, ['/Users/sh16/Documents/scripts/modules/']))
 #on pcs4
-#sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+#sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_general import *
 from Si_SeqIO import *
 #from Si_nexus import midpoint_root, tree_to_string

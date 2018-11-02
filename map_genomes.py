@@ -73,10 +73,10 @@ if __name__ == "__main__":
 	
 	os.system("samtools faidx "+options.ref)
 	os.system("smalt index -k 13 -s 1 "+options.ref+".index "+options.ref)
-	os.system("~sh16/scripts/fasta2fastq_shredder.py "+options.query+" "+options.output+" 1000 200 l 1000")
+	os.system("/nfs/pathogen/sh16_scripts/fasta2fastq_shredder.py "+options.query+" "+options.output+" 1000 200 l 1000")
 	os.system("smalt map -i 5000 -j 1000 -y 0.7 -r "+str(randrange(1,99999))+" -f samsoft -o "+options.output+".sam "+options.ref+".index "+options.output+"_1.fastq "+options.output+"_2.fastq ")
 	os.system("samtools view -b -S "+options.output+".sam -t "+options.ref+".fai > "+options.output+".1.bam")
 	os.system("samtools sort "+options.output+".1.bam "+options.output)
 	os.system("samtools index "+options.output+".bam")
 	os.system("rm -f "+options.output+".1.bam "+options.output+".sam "+options.ref+".fai "+options.ref+".index.*")
-	#os.system("~sh16/scripts/filter_MLST.py -c "+options.ref+" -b "+options.output+".bam -g "+options.genes+" -o "+options.output)
+	#os.system("/nfs/pathogen/sh16_scripts/filter_MLST.py -c "+options.ref+" -b "+options.output+".bam -g "+options.genes+" -o "+options.output)

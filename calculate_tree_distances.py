@@ -4,7 +4,7 @@
 # Import some necessary modules #
 #################################
 import os, sys
-sys.path.insert(1, '/nfs/users/nfs_s/sh16/scripts/modules/')
+sys.path.insert(1, '/nfs/pathogen/sh16_scripts/modules/')
 import dendropy
 import string, re
 
@@ -61,7 +61,7 @@ def read_dendropy_tree(treefile):
 		return treelist
 
 if len(sys.argv)!=2:
-	print "Usage: ~sh16/scripts/calculate_tree_distances.py <tree file>"
+	print "Usage: /nfs/pathogen/sh16_scripts/calculate_tree_distances.py <tree file>"
 	sys.exit()
 
 treelist=read_dendropy_tree(sys.argv[1])

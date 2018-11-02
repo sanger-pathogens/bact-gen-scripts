@@ -16,7 +16,7 @@ def Usage():
 	print '\nmauve2clonalframe.py\n'
 	print '\nConverts Mauve output to ClonalFrmae input in cases where not all blocks in the Mauve output are present in all sequences\n'
 	print '\nmauve2clonalframe.py Usage:\n'
-	print '\t/nfs/team81/sh16/scripts/mauve2clonalframe.py [options]\nOptions:\n\t-i\tInput file name [Mauve xmfa file]\n\t-o\tOutput file name\n\t-h\tPrint this help'
+	print '\t/nfs/pathogen/sh16_scripts/mauve2clonalframe.py [options]\nOptions:\n\t-i\tInput file name [Mauve xmfa file]\n\t-o\tOutput file name\n\t-h\tPrint this help'
 	print '\nWritten by: Simon R Harris, Wellcome Trust Sanger Institute, UK. 2009\n'
 
 

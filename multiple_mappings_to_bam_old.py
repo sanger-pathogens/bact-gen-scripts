@@ -26,7 +26,7 @@ BWA_DIR=""
 #SMALT_DIR="/software/pathogen/external/apps/usr/bin/smalt"
 SMALT_DIR="/nfs/users/nfs_s/sh16/smalt-0.5.8/smalt_x86_64"
 #SMALT_DIR="smalt"
-MY_SCRIPTS_DIR="/nfs/users/nfs_s/sh16/scripts/"
+MY_SCRIPTS_DIR="/nfs/pathogen/sh16_scripts/"
 
 
 ##########################

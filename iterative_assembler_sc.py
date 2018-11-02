@@ -8,7 +8,7 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqUtils import GC
 import subprocess
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_SeqIO import *
 
 
@@ -276,7 +276,7 @@ if __name__ == "__main__":
 	if not shuffled:
 		print "Shuffling sequences"
 		
-		os.system("~sh16/scripts/shufflefastqSequences.pl "+forward+" "+reverse+" "+tmpname+".fastq")
+		os.system("/nfs/pathogen/sh16_scripts/shufflefastqSequences.pl "+forward+" "+reverse+" "+tmpname+".fastq")
 	else:
 		if shuffled.split(".")[-1]=="gz":
 			os.system("zcat "+shuffled+" > "+tmpname+".fastq")
@@ -286,7 +286,7 @@ if __name__ == "__main__":
 
 	filetype="fastq"
 #	if options.filter:
-	os.system("~sh16/scripts/fastq2fasta.pl "+tmpname+".fastq "+tmpname+".fasta")
+	os.system("/nfs/pathogen/sh16_scripts/fastq2fasta.pl "+tmpname+".fastq "+tmpname+".fasta")
 #	os.system("export EUSRC=/nfs/users/nfs_s/sh16/euler-sr-ec-2.0.2")
 #	os.putenv("EUSRC", "/nfs/users/nfs_s/sh16/euler-sr-ec-2.0.2")
 #	os.system("~/euler-sr-ec-2.0.2/assembly/EulerEC.pl "+tmpname+".fasta 55 -minMult 10")

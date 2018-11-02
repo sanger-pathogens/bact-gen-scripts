@@ -81,4 +81,4 @@ if __name__ == "__main__":
 	os.system("samtools sort "+options.output+".1.bam "+options.output)
 	os.system("samtools index "+options.output+".bam")
 	os.system("rm -f "+options.output+".1.bam "+options.output+".sam "+options.contigs+".fai "+options.contigs+".index.*")
-	os.system("~sh16/scripts/filter_resistome.py -c "+options.contigs+" -b "+options.output+".bam -g "+options.genes+" -o "+options.output)
+	os.system("/nfs/pathogen/sh16_scripts/filter_resistome.py -c "+options.contigs+" -b "+options.output+".bam -g "+options.genes+" -o "+options.output)

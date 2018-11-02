@@ -436,8 +436,8 @@ if velvet=='y':
 for inputfile in snpfiles:
 	if runmaq=='y' or inputfile.runmaq=='m':
 		print "\nRunning Maq on "+inputfile.directory+'...'
-		#print "/nfs/team81/sh16/scripts/maq.pl easyrun -u -d "+inputfile.directory+" "+ref+" fastqs/"+inputfile.directory+".fastq"
-		#os.system("/nfs/team81/sh16/scripts/maq.pl easyrun -u "+inputfile.directory+"/unmap.fasta -d "+inputfile.directory+" "+ref+" fastqs/"+inputfile.directory+".fastq")
+		#print "/nfs/pathogen/sh16_scripts/maq.pl easyrun -u -d "+inputfile.directory+" "+ref+" fastqs/"+inputfile.directory+".fastq"
+		#os.system("/nfs/pathogen/sh16_scripts/maq.pl easyrun -u "+inputfile.directory+"/unmap.fasta -d "+inputfile.directory+" "+ref+" fastqs/"+inputfile.directory+".fastq")
 		print "maq.pl easyrun -e "+str(int(mindepth))+" -d "+inputfile.directory+"test "+ref+" fastqs/"+inputfile.directory+".fastq"
 		os.system("maq.pl easyrun -e "+str(int(mindepth))+" -d "+inputfile.directory+"test "+ref+" fastqs/"+inputfile.directory+".fastq")
 		

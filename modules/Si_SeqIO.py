@@ -4,7 +4,7 @@ from Bio.GenBank import Scanner
 #from Bio.SeqIO.InsdcIO import *
 import string, os, sys
 from random import *
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Si_general import *
 
 class SimonError(Exception):

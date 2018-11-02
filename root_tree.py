@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os, sys
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Bio.Nexus import Trees, Nodes
 import Si_nexus
 from Si_general import *

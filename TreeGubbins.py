@@ -390,9 +390,9 @@ if __name__ == "__main__":
 		else:
 			lad="-L "+options.ladderise
 		if options.iterative:
-			os.system("~sh16/scripts/iCANDY.py -t "+options.tree+" "+mid+" "+lad+" -m "+options.output+".csv -a 2 -C 2,2,3,6,7 -r deltran -O portrait -o "+options.output+".pdf")
+			os.system("/nfs/pathogen/sh16_scripts/iCANDY.py -t "+options.tree+" "+mid+" "+lad+" -m "+options.output+".csv -a 2 -C 2,2,3,6,7 -r deltran -O portrait -o "+options.output+".pdf")
 		else:
-			os.system("~sh16/scripts/iCANDY.py -t "+options.tree+" "+mid+" "+lad+" -m "+options.output+".csv -a 2 -C 2,2,4,3,6,7 -r deltran -O portrait -o "+options.output+".pdf")
+			os.system("/nfs/pathogen/sh16_scripts/iCANDY.py -t "+options.tree+" "+mid+" "+lad+" -m "+options.output+".csv -a 2 -C 2,2,4,3,6,7 -r deltran -O portrait -o "+options.output+".pdf")
 		print "Printing PLINK output file"
 		output=open(options.output+"_plink.txt", "w")
 		

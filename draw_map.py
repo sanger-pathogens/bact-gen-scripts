@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import os, sys
 import numpy as np
 import math
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 import shapefile
 from matplotlib.collections import LineCollection
 from matplotlib import cm

@@ -10,7 +10,7 @@ from Bio.Align.Generic import Alignment
 from Bio.Align.Applications import MuscleCommandline, ClustalwCommandline
 import subprocess
 from random import *
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/scripts/modules/']))
+sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 import Si_SeqIO
 
 

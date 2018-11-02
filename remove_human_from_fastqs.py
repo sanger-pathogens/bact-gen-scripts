@@ -2,7 +2,7 @@
 
 SMALT_DIR=""
 SAMTOOLS_DIR=""
-BAM_FILTER_LOCATION="~sh16/scripts/Aga/bam_filter.py"
+BAM_FILTER_LOCATION="/nfs/pathogen/sh16_scripts/Aga/bam_filter.py"
 HUMAN_GENOME_LOCATION="/lustre/scratch101/blastdb/Ensembl/Human/NCBI36/genome/softmasked_dusted.fa"
 
 ##################

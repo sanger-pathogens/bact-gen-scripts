@@ -3,7 +3,7 @@
 # 11/07/2008
 #
 
-set prog=/nfs/team81/sh16/scripts/ # set fuzzyProgramPath
+set prog=/nfs/pathogen/sh16_scripts/ # set fuzzyProgramPath
 
 set kmer=19
 set depth=1500

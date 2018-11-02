@@ -11,7 +11,7 @@ def main():
         
         
         parser.add_option("-o", "--output", action="store", dest="outputfile", help="output xml file name [default is to overwrite input xml]", type="string", metavar="FILE", default="")
-        parser.add_option("-p", "--patterns", action="store", dest="patternsfile", help="File containing constant site patterns (can be created with ~sh16/scripts/create_beast_alignment.py", type="string", metavar="FILE", default="")
+        parser.add_option("-p", "--patterns", action="store", dest="patternsfile", help="File containing constant site patterns (can be created with /nfs/pathogen/sh16_scripts/create_beast_alignment.py", type="string", metavar="FILE", default="")
         parser.add_option("-P", "--precision", action="store", dest="precisionfile", help="File containing precisions", type="string", metavar="FILE", default="")
         parser.add_option("-x", "--xml", action="store", dest="xmlfile", help="xml file to edit", default="", type="string", metavar="FILE")
 	parser.add_option("-m", "--noMLE", action="store_false", dest="mle", help="Do not add marginal likelihood estimation for model comparison to the end of the beast block [default is to add mle block]", default=True)
@@ -98,7 +98,7 @@ if __name__=="__main__":
 			patternsvalues=map(int,patternstext.split())
 		except StandardError:
 			print "Expecting first line of patterns file to be four integers separated by whitespace"
-			print "This file can be created by running ~sh16/scripts/BEAST/prepare_beast_alignment.py"
+			print "This file can be created by running /nfs/pathogen/sh16_scripts/BEAST/prepare_beast_alignment.py"
 			sys.exit()
 		
 		if len(patternsvalues)!=4:

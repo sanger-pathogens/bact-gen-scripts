@@ -451,7 +451,7 @@ class SNPanalysis:
 			print >> bashfile, 'grep "^cigar" '+self.runname+"/cigar1.tmp > "+self.runname+"/cigar2.tmp"
 			print >> bashfile, "mv "+self.runname+"/cigar2.tmp "+self.runname+"/cigar1.tmp"
 			
-			print >> bashfile, "perl /nfs/users/nfs_s/sh16/scripts/cigar00_2plot.pl "+self.runname+"/cigar1.tmp "+self.runname+"/allcoverage.plot "+ str(self.readlength)
+			print >> bashfile, "perl /nfs/pathogen/sh16_scripts/cigar00_2plot.pl "+self.runname+"/cigar1.tmp "+self.runname+"/allcoverage.plot "+ str(self.readlength)
 			print >> bashfile, "/nfs/users/nfs_s/sh16/ssaha_2.2/pileup_v0.5/ssaha_pileup/ssaha_pileup/ssaha_cigar "+self.runname+"/cigar1.tmp "+self.runname+"/cigar2.tmp"
 			print >> bashfile, "awk '{print $2}' "+self.runname+"/cigar2.tmp > "+self.runname+"/readnames.tmp"
 			
@@ -461,14 +461,14 @@ class SNPanalysis:
 			
 			if rtype=='454':
 				print >> bashfile, "/nfs/users/nfs_t/tdo/bin/pileup_v0.4/ssaha_pileup/other_codes/get_seqreads/get_seqreads "+self.runname+"/readnames.tmp "+self.runname+"/shuffled.tmp "+self.runname+"/fastq.tmp"
-				print >> bashfile, "/nfs/users/nfs_s/sh16/scripts/exclude/get_excreads "+self.runname+"/readnames.tmp "+self.runname+"/shuffled.tmp "+self.name+"unmap.fastq"
+				print >> bashfile, "/nfs/pathogen/sh16_scripts/exclude/get_excreads "+self.runname+"/readnames.tmp "+self.runname+"/shuffled.tmp "+self.name+"unmap.fastq"
 				print >> bashfile, "mv "+self.name+"unmap.fastq "+self.runname+"/unmap.fastq"
 				print >> bashfile, "/nfs/users/nfs_s/sh16/ssaha_2.2/pileup_v0.5/ssaha_pileup/ssaha_pileup/ssaha_pileup -solexa 0 -trans 0 "+self.runname+"/cigar2.tmp "+ref+" "+self.runname+"/fastq.tmp > "+self.runname+"/snp.tmp"
 				print >> bashfile, "/nfs/users/nfs_s/sh16/ssaha_2.2/pileup_v0.5/ssaha_pileup/ssaha_pileup/ssaha_pileup -cons 1 -solexa 0 -trans 0 "+self.runname+"/cigar2.tmp "+ref+" "+self.runname+"/fastq.tmp > "+self.runname+"/pileup.tmp"
 			elif rtype=='solexa':
 				print >> bashfile, "/nfs/users/nfs_t/tdo/bin/pileup_v0.4/ssaha_pileup/other_codes/get_seqreads/get_seqreads "+self.runname+"/readnames.tmp "+self.fastqdir+self.name+".fastq "+self.runname+"/fastq.tmp"
 				if velvet=='y':
-					print >> bashfile, "/nfs/users/nfs_s/sh16/scripts/exclude/get_excreads "+self.runname+"/readnames.tmp "+self.fastqdir+self.name+".fastq "+self.name+"unmap.fastq"
+					print >> bashfile, "/nfs/pathogen/sh16_scripts/exclude/get_excreads "+self.runname+"/readnames.tmp "+self.fastqdir+self.name+".fastq "+self.name+"unmap.fastq"
 					print >> bashfile, "mv "+self.name+"unmap.fastq "+self.runname+"/unmap.fastq"
 				print >> bashfile, "/nfs/users/nfs_s/sh16/ssaha_2.2/pileup_v0.5/ssaha_pileup/ssaha_pileup/ssaha_pileup -solexa 1 -trans 0 "+self.runname+"/cigar2.tmp "+ref+" "+self.runname+"/fastq.tmp > "+self.runname+"/snp.tmp"
 				print >> bashfile, "/nfs/users/nfs_s/sh16/ssaha_2.2/pileup_v0.5/ssaha_pileup/ssaha_pileup/ssaha_pileup -cons 1 -solexa 1 -trans 0 "+self.runname+"/cigar2.tmp "+ref+" "+self.runname+"/fastq.tmp > "+self.runname+"/pileup.tmp"
@@ -495,7 +495,7 @@ class SNPanalysis:
 				#
 				
 				print >> bashfile, "echo Extracting reads"
-				print >> bashfile, "~sh16/scripts/sff_extract_fastq_splitter.py "+self.runname+"/shuffled.tmp"
+				print >> bashfile, "/nfs/pathogen/sh16_scripts/sff_extract_fastq_splitter.py "+self.runname+"/shuffled.tmp"
 
 				#do I need to revcomp forward reads? yes...done
 				
@@ -537,13 +537,13 @@ class SNPanalysis:
 			print >> bashfile, 'grep "^cigar" '+self.runname+"/cigar1.tmp > "+self.runname+"/cigar2.tmp"
 			print >> bashfile, "mv "+self.runname+"/cigar2.tmp "+self.runname+"/cigar1.tmp"
 			
-			print >> bashfile, "/nfs/users/nfs_s/sh16/scripts/cigar2plot.py "+ref+" "+self.runname+"/cigar1.tmp allcoverage.plot"
+			print >> bashfile, "/nfs/pathogen/sh16_scripts/cigar2plot.py "+ref+" "+self.runname+"/cigar1.tmp allcoverage.plot"
 			
-			#print >> bashfile, "perl /nfs/users/nfs_s/sh16/scripts/cigar00_2plot.pl "+self.runname+"/cigar1.tmp "+self.runname+"/allcoverage.plot "+str(self.readlength)
+			#print >> bashfile, "perl /nfs/pathogen/sh16_scripts/cigar00_2plot.pl "+self.runname+"/cigar1.tmp "+self.runname+"/allcoverage.plot "+str(self.readlength)
 			
 			# -uniq 0 maps exactly identical repeat reads randomly
 			#print >> bashfile, "/nfs/users/nfs_s/sh16/ssaha_2.2/pileup_v0.5/ssaha_pileup/ssaha_pileup/ssaha_cigar -uniq 0 "+self.runname+"/cigar1.tmp "+self.runname+"/cigar2.tmp"
-			#print >> bashfile, "/nfs/users/nfs_s/sh16/scripts/cigar2plot.py "+ref+" "+self.runname+"/cigar2.tmp random_exact_repeats_coverage.plot"
+			#print >> bashfile, "/nfs/pathogen/sh16_scripts/cigar2plot.py "+ref+" "+self.runname+"/cigar2.tmp random_exact_repeats_coverage.plot"
 			
 			
 			print >> bashfile, "/nfs/users/nfs_s/sh16/ssaha_2.2/pileup_v0.5/ssaha_pileup/ssaha_pileup/ssaha_pairs -insert "+str(meaninsert)+" "+self.runname+"/cigar1.tmp "+self.runname+"/cigar2unclean.tmp"
@@ -553,7 +553,7 @@ class SNPanalysis:
 			print >> bashfile, "/nfs/users/nfs_t/tdo/bin/pileup_v0.4/ssaha_pileup/other_codes/get_seqreads/get_seqreads "+self.runname+"/readnames.tmp "+self.runname+"/shuffled.tmp "+self.runname+"/fastq.tmp"
 			
 			if velvet=='y':
-				print >> bashfile, "/nfs/users/nfs_s/sh16/scripts/exclude/get_excreads "+self.runname+"/readnames.tmp "+self.runname+"/shuffled.tmp "+self.name+"unmap.fastq"
+				print >> bashfile, "/nfs/pathogen/sh16_scripts/exclude/get_excreads "+self.runname+"/readnames.tmp "+self.runname+"/shuffled.tmp "+self.name+"unmap.fastq"
 				print >> bashfile, "mv "+self.name+"unmap.fastq "+self.runname+"/unmap.fastq"
 			
 			
@@ -570,8 +570,8 @@ class SNPanalysis:
 		
 		print >> bashfile, "mv "+self.runname+"/cigar1.tmp "+self.runname+"/all.cigar"	
 		print >> bashfile, "mv "+self.runname+"/cigar2.tmp "+self.runname+"/final.cigar"
-		print >> bashfile, "/nfs/users/nfs_s/sh16/scripts/cigar2plot.py "+ref+" "+self.runname+"/final.cigar finalcoverage.plot"
-		print >> bashfile, "/nfs/users/nfs_s/sh16/scripts/cigar2_fri_plot.py "+ref+" "+self.runname+"/final.cigar "+str(self.maxinsertsize)+" "+str(self.mininsertsize)+" fri_coverage.plot"
+		print >> bashfile, "/nfs/pathogen/sh16_scripts/cigar2plot.py "+ref+" "+self.runname+"/final.cigar finalcoverage.plot"
+		print >> bashfile, "/nfs/pathogen/sh16_scripts/cigar2_fri_plot.py "+ref+" "+self.runname+"/final.cigar "+str(self.maxinsertsize)+" "+str(self.mininsertsize)+" fri_coverage.plot"
 		print >> bashfile, "rm "+self.runname+"/*.tmp"
 		print >> bashfile, "gzip -f "+self.runname+"/*"
 			
@@ -731,11 +731,11 @@ if __name__ == "__main__":
 			for pool in pools:#For each pool run velvet if required, but wait for mapping to finish first
 				meaninsert=((pool.maxinsertsize-pool.mininsertsize)/2)+pool.mininsertsize
 				if pool.pairedend=='y':
-					os.system('bsub -w \'ended('+tmpname+'_ssaha)\' /nfs/users/nfs_s/sh16/scripts/velvet_assembly.sh -p -i '+str(meaninsert)+' -f '+pool.runname+'/unmap.fastq -n')
+					os.system('bsub -w \'ended('+tmpname+'_ssaha)\' /nfs/pathogen/sh16_scripts/velvet_assembly.sh -p -i '+str(meaninsert)+' -f '+pool.runname+'/unmap.fastq -n')
 				else:
-					os.system('bsub -w \'ended('+tmpname+'_ssaha)\' /nfs/users/nfs_s/sh16/scripts/velvet_assembly.sh -f '+pool.runname+'/unmap.fastq -n')
+					os.system('bsub -w \'ended('+tmpname+'_ssaha)\' /nfs/pathogen/sh16_scripts/velvet_assembly.sh -f '+pool.runname+'/unmap.fastq -n')
 		#testing calling my snp caller. Needs options
-		#os.system('bsub -w \'ended('+ref+'_ssaha)\' /nfs/users/nfs_s/sh16/scripts/summarise_snps_from_ssahatest.py -o test -a -g -t -r '+ref+' -e '+ref.replace('.dna','.embl')+' -q 60 -d 5 '+' '.join(inputdirs))
+		#os.system('bsub -w \'ended('+ref+'_ssaha)\' /nfs/pathogen/sh16_scripts/summarise_snps_from_ssahatest.py -o test -a -g -t -r '+ref+' -e '+ref.replace('.dna','.embl')+' -q 60 -d 5 '+' '.join(inputdirs))
 
 	elif program=='maq':
 		for pool in pools:
@@ -749,10 +749,10 @@ if __name__ == "__main__":
 #			os.system('echo \'bash ${LSB_JOBINDEX}'+ref+'_velvetscript.sh\' | bsub -w \'ended('+ref+'_ssaha)\' -J'+ref+'_velvet"[1-'+str(count)+']%16" -o '+ref+'velvet-%I.out -e '+ref+'velvet-%I.err')
 #			for pool in pools:
 #				if pool.pairedend=='y':
-#					os.system('bsub -w \'ended('+ref+'_velvet)\' /nfs/users/nfs_s/sh16/scripts/velvet_assembly.sh -p -i '+str(meaninsert)+' -f '+pool.runname+'/unmap.fastq -n')
+#					os.system('bsub -w \'ended('+ref+'_velvet)\' /nfs/pathogen/sh16_scripts/velvet_assembly.sh -p -i '+str(meaninsert)+' -f '+pool.runname+'/unmap.fastq -n')
 #				else:
-#					os.system('bsub -w \'ended('+ref+'_velvet)\' /nfs/users/nfs_s/sh16/scripts/velvet_assembly.sh -f '+pool.runname+'/unmap.fastq -n')
-		#os.system('bsub -w \'ended('+tmpname+'_maq)\' /nfs/users/nfs_s/sh16/scripts/summarise_snps_from_maqtest2.py -o test -a -g -t -r '+tmpname+' -e '+ref.replace('.dna','.embl')+' -q 60 -d 5 '+' '.join(inputdirs))
+#					os.system('bsub -w \'ended('+ref+'_velvet)\' /nfs/pathogen/sh16_scripts/velvet_assembly.sh -f '+pool.runname+'/unmap.fastq -n')
+		#os.system('bsub -w \'ended('+tmpname+'_maq)\' /nfs/pathogen/sh16_scripts/summarise_snps_from_maqtest2.py -o test -a -g -t -r '+tmpname+' -e '+ref.replace('.dna','.embl')+' -q 60 -d 5 '+' '.join(inputdirs))
 			
 			
 

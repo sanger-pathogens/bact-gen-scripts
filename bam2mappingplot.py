@@ -25,7 +25,7 @@ def addcigarlisttoplotlist(cigarlist, contig, startingbase, plotlist):
 
 
 if len(sys.argv)!=3 or "-h" in sys.argv:
-	print "~sh16/scripts/bam2mappingplot.py <input bam/sam file> <output plot file name>"
+	print "/nfs/pathogen/sh16_scripts/bam2mappingplot.py <input bam/sam file> <output plot file name>"
 	sys.exit()
 
 
