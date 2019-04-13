@@ -25,7 +25,7 @@ MY_SCRIPTS_DIR="/nfs/pathogen/sh16_scripts/"
 #################################
 
 def DoError(ErrorString):
-	print "!!!Error:", ErrorString,"!!!"
+	print("!!!Error:", ErrorString,"!!!")
 	sys.exit()
 
 
@@ -38,7 +38,7 @@ def main():
 
 	usage = "usage: %prog [options]"
 	parser = OptionParser(usage=usage)
-	
+
 	group = OptionGroup(parser, "IO Options")
 	group.add_option("-b", "--bcf", action="store", dest="bcf", help="bcf/vcf file", default="", metavar="file")
 	group.add_option("-v", "--vcf", action="store_true", dest="vcf", help="variation input file is in vcf format [default is bcf]", default=False)
@@ -47,7 +47,7 @@ def main():
 	group.add_option("-o", "--output", action="store", dest="output", help="prefix for output files", default="", metavar="prefix")
 #	group.add_option("-p", "--pseudosequence", action="store", dest="pseudosequence", help="output pseudosequence including indels [default is to write a psedoalignment to the reference and separate indel text file]", default=False)
 	parser.add_option_group(group)
-	
+
 	group = OptionGroup(parser, "Filtering Options")
 	group.add_option("-d", "--depth", action="store", dest="depth", help="Minimum number of reads matching SNP [default= %default]", default=4, type="int", metavar="int")
 	group.add_option("-D", "--stranddepth", action="store", dest="stranddepth", help="Minimum number of reads matching SNP per strand [default= %default]", default=2, type="int", metavar="int")
@@ -62,18 +62,18 @@ def main():
 	group.add_option("-Q", "--baseqbias", action="store", dest="baseq_bias", help="p-value cutoff for base quality bias. [default= %default]", default=0.0, type="float", metavar="float")
 	group.add_option("-M", "--mappingbias", action="store", dest="mapping_bias", help="p-value cutoff for mapping bias. [default= %default]", default=0.001, type="float", metavar="float")
 	group.add_option("-T", "--taildistancebias", action="store", dest="tail_bias", help="p-value cutoff for tail distance bias. [default= %default]", default=0.001, type="float", metavar="float")
-	
+
 	parser.add_option_group(group)
-	
-	
-	
-	
+
+
+
+
 	return parser.parse_args()
 
 
 ################
 # Main program #
-################		
+################
 
 if __name__ == "__main__":
 
@@ -84,27 +84,27 @@ if __name__ == "__main__":
 
 
 	#Do some checking of the input files
-	
+
 	if options.bcf=="":
 		DoError("No input file specified")
 	elif not os.path.isfile(options.bcf):
 		DoError("Cannot find input file")
-	
+
 	if options.output=="":
 		DoError("No output prefix specified")
-		
+
 	if options.bam=="":
 		DoError("sam or bam file from which bcf was made must be specified")
 	elif options.sam:
 		header=os.popen(SAMTOOLS_DIR+"samtools-1.6 view -S -H "+options.bam).readlines()
 	else:
 		header=os.popen(SAMTOOLS_DIR+"samtools-1.6 view -H "+options.bam).readlines()
-	
+
 	if options.stranddepth<0:
-		print "Minimum number of reads matching SNP on each strand must be >=0. Resetting to 0"
+		print("Minimum number of reads matching SNP on each strand must be >=0. Resetting to 0")
 		options.stranddepth=0
 	if options.depth<(options.stranddepth*2):
-		print "Minimum number of reads matching SNP must be at least double that for each strand. Resetting to", options.stranddepth*2
+		print("Minimum number of reads matching SNP must be at least double that for each strand. Resetting to", options.stranddepth*2)
 		options.stranddepth=options.stranddepth*2
 	if options.ratio<0.5 or options.ratio>1:
 		DoError("Ratio of first to second base (-r) must be greater than 0.5 and less than or equal to 1")
@@ -124,13 +124,13 @@ if __name__ == "__main__":
 		DoError("p-value cutoff for mapping bias (-M) must be between 0 and 1")
 	if options.tail_bias<0 or options.tail_bias>1:
 		DoError("p-value cutoff for tail distance bias (-T) must be between 0 and 1")
-	
-	
-	
+
+
+
 	contigsizes={}
 	contigorder=[]
 	totallength=0
-	
+
 	for line in header:
 		words=line.split()
 		name=""
@@ -144,17 +144,17 @@ if __name__ == "__main__":
 			contigsizes[name]=length
 			contigorder.append(name)
 			totallength+=length
-				
-		
+
+
 	if len(contigsizes)==0:
 		DoError("No contigs found. Perhaps your sam/bam has no header?")
-		
-	
+
+
 	contigs={}
-	
+
 	for contig in contigorder:
 		contigs[contig]=["N"]*contigsizes[contig]
-	
+
 	if options.vcf:
 		try:
 			bcffile=open(options.bcf, "rU")
@@ -165,7 +165,7 @@ if __name__ == "__main__":
 			bcffile=os.popen(BCFTOOLS_DIR+"bcftools-1.5 view "+options.bcf)
 		except StandardError:
 			DoError("Cannot open bcf file")
-	
+
 	atleastoneread=0
 	mapped=0
 	snps=0
@@ -188,25 +188,25 @@ if __name__ == "__main__":
 	baseqbiasfail=0
 	mappingbiasfail=0
 	tailbiasfail=0
-	
+
 	count=0
 	total=0.0
 	hundredth=float(totallength)/100
-	
+
 	skip=0
 	addindel=[]
-		
+
 	mapplot=open(options.output+"_filtered_mapping.plot", "w")
 	#vcf=open(options.output+"_filtered.vcf", "w")
 
-	print >>mapplot, "#BASE Coverage SNP"
-	
+	print >> mapplot, "#BASE Coverage SNP"
+
 	for line in bcffile:
-		
-		
-	
+
+
+
 		words=line.split()
-			
+
 		if words[0][0]=="#":
 			if words[0][1]!="#":
 #				if options.QUAL>0:
@@ -234,35 +234,35 @@ if __name__ == "__main__":
 #					print >> vcf, "##FILTER=<ID=MQB"+str(options.mapping_bias)+', Description="Mapping bias above '+str(options.mapping_bias)+'"'
 #				if options.tail_bias>0:
 #					print >> vcf, "##FILTER=<ID=TB"+str(options.tail_bias)+', Description="Tail bias above '+str(options.tail_bias)+'"'
-			
+
 				headings=words
 				headings[0]=headings[0][1:]
 #			print >> vcf, line.strip()
 			continue
 
-		
+
 		if len(words)!=len(headings):
-			print "words not equal to headings"
-			print headings
-			print words
+			print("words not equal to headings")
+			print(headings)
+			print(words)
 			sys.exit()
-		
+
 		BASEINFO={}
-		
+
 		for x, heading in enumerate(headings):
-		
+
 			if heading=="INFO":
-				
+
 				BASEINFO[heading]={}
-				
+
 				try: info=words[x].split(";")
 				except StandardError:
-					print "Cannot split info string", words[x]
+					print("Cannot split info string", words[x])
 					sys.exit()
 				for i in info:
-					
+
 					infotype=i.split("=")[0]
-					
+
 					if len(i.split("="))<2:
 						if infotype=="INDEL":
 							BASEINFO[heading][infotype]=True
@@ -273,9 +273,9 @@ if __name__ == "__main__":
 							try: BASEINFO[heading][infotype]=map(float,infodata.split(","))
 							except StandardError:
 								BASEINFO[heading][infotype]=infodata
-				
-				
-					
+
+
+
 			else:
 				if heading=="CHROM":
 					BASEINFO[heading]=words[x]
@@ -283,16 +283,16 @@ if __name__ == "__main__":
 					try: BASEINFO[heading]=float(words[x])
 					except StandardError:
 						BASEINFO[heading]=words[x]
-		
+
 
 		count+=1
 		if count>=hundredth:
 			total=float(BASEINFO["POS"])
 			count=0
-			print "%.0f%% complete\r" % (100*(total/totallength)),
+			print("%.0f%% complete\r" % (100*(total/totallength)))
 			sys.stdout.flush()
 
-		
+
 		#for homopolymeric tracts with indels, fill in same as reference (see indels below)
 #		if skip>0:
 #			if not ((len(BASEINFO["ALT"].split(",")[0])>1 or len(BASEINFO["REF"].split(",")[0])>1) and BASEINFO['INFO']['INDEL']):
@@ -300,11 +300,11 @@ if __name__ == "__main__":
 #				contigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["REF"][0]
 #				mapped+=1
 #			continue
-		
-		
-		
+
+
+
 		#Calculate the ref/alt ratios
-		
+
 		BASEINFO["INFO"]["DP4ratios"]={}
 		if not "DP4" in BASEINFO["INFO"]:
 			BASEINFO["INFO"]["DP4"]=[0,0,0,0]
@@ -331,24 +331,24 @@ if __name__ == "__main__":
 			try: BASEINFO["INFO"]["DP4rratio"]=(float(BASEINFO["INFO"]["DP4"][0])+float(BASEINFO["INFO"]["DP4"][1]))/(BASEINFO["INFO"]["DP4"][0]+BASEINFO["INFO"]["DP4"][1]+BASEINFO["INFO"]["DP4"][2]+BASEINFO["INFO"]["DP4"][3])
 			except ZeroDivisionError:
 				BASEINFO["INFO"]["DP4rratio"]=1.0
-		
-		
+
+
 		atleastoneread+=1
-		
+
 		#filter the call
-		
+
 		keep=True
 		SNP=True
 		INDEL=False
 		failedfilters=[]
-		
+
 		if BASEINFO["ALT"]=="." or BASEINFO["INFO"]["DP4rratio"]>=0.5:
 			SNP=False
-		
+
 		if options.useAF1 and not "AF1" in BASEINFO["INFO"]:
 			SNP=False
-		
-		
+
+
 		if BASEINFO["QUAL"]<options.QUAL:
 			keep=False
 			basequalfail+=1
@@ -432,9 +432,9 @@ if __name__ == "__main__":
 				keep=False
 				tailbiasfail+=1
 				failedfilters.append("TB"+str(options.tail_bias))
-			
-		
-		
+
+
+
 		#find hetrozygous SNP calls and INDELS
 		if len(BASEINFO["ALT"].split(","))>1:
 			HETERO=True
@@ -450,11 +450,11 @@ if __name__ == "__main__":
 				if BASEINFO['INFO']["IMF"]<options.ratio:
 					keep=False
 #			print BASEINFO["POS"], BASEINFO['INFO']["IS"], keep
-			
+
 		elif "INDEL" in BASEINFO['INFO']:
 			keep=False
 
-		
+
 #		vcfline=[]
 #		for x, heading in enumerate(headings):
 #			if heading=="FILTER" and len(failedfilters)>0:
@@ -464,10 +464,10 @@ if __name__ == "__main__":
 #			else:
 #				vcfline.append(words[x])
 #		print >> vcf, '\t'.join(map(str,vcfline))
-		
+
 		#make the pseudosequence and indel files
 		if keep:
-			
+
 			if len(addindel)>0:#if the previous base was an indel, this base is mapped, so print the indel to the file
 				indels.append(addindel)
 				if addindel[2]=="-":
@@ -477,7 +477,7 @@ if __name__ == "__main__":
 					insertions+=1
 					insertion_lengths+=len(addindel[3])
 			addindel=[]
-			
+
 			if SNP:
 				snpline=int(BASEINFO["INFO"]["DP"])
 				snps+=1
@@ -492,7 +492,7 @@ if __name__ == "__main__":
 							deletion=BASEINFO["REF"][1:]
 						else:
 							deletion=BASEINFO["REF"][1:0-(len(BASEINFO["ALT"])-1)]
-						
+
 						addindel=[BASEINFO["CHROM"], int(BASEINFO["POS"]), "-", deletion]
 						#indels.append([BASEINFO["CHROM"], int(BASEINFO["POS"]), "-", deletion])
 					elif len(BASEINFO["ALT"])>len(BASEINFO["REF"]) and (len(BASEINFO["REF"])==1 or BASEINFO["ALT"][1:].endswith(BASEINFO["REF"][1:])):
@@ -500,30 +500,30 @@ if __name__ == "__main__":
 							insertion=BASEINFO["ALT"][1:]
 						else:
 							insertion=BASEINFO["ALT"][1:0-(len(BASEINFO["REF"])-1)]
-						
+
 						addindel=[BASEINFO["CHROM"], int(BASEINFO["POS"]), "+", insertion]
 						#indels.append([BASEINFO["CHROM"], int(BASEINFO["POS"]), "+", insertion])
-					
-					
-					
+
+
+
 				else:
 					contigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["ALT"][0]
 					mapped+=1
-				
+
 			elif not INDEL:
 				contigs[BASEINFO["CHROM"]][int(BASEINFO["POS"])-1]=BASEINFO["REF"][0]
 				mapped+=1
 				snpline=0
-				
+
 			print >> mapplot, int(BASEINFO["POS"]), int(BASEINFO["INFO"]["DP"]), snpline
-		
+
 #		else:
 #			if int(BASEINFO["POS"])>1000 and not SNP:
 #				print failedfilters
 #				print int(BASEINFO["POS"]), SNP
 #				print BASEINFO
 #				sys.exit()
-			
+
 #			if int(BASEINFO["POS"])>4500:
 #				out=open(options.output+".mfa","w")
 #				for contig in contigorder:
@@ -532,20 +532,20 @@ if __name__ == "__main__":
 #				out.close()
 #				sys.exit()
 
-	
+
 	mapplot.close()
 #	vcf.close()
 	os.system("gzip -f "+options.output+"_filtered_mapping.plot")
-	
+
 	out=open(options.output+".mfa","w")
-	
+
 	name=options.output.split("/")[-1].split('.')[0]
-	
+
 	for x, contig in enumerate(contigorder):
 		print >> out, ">"+name+"_"+''.join(contig)
 		print >> out, ''.join(contigs[contig])
 	out.close()
-	
+
 	out=open(options.output+"_SNP_filter.log","w")
 	print >> out,'Total bases in reference:', totallength
 	print >> out,'Mapped:%d (%.2f%%)' % (mapped, (float(mapped)/totallength)*100)
@@ -573,4 +573,3 @@ if __name__ == "__main__":
 	for indel in indels:
 		print >> out, "\t".join(map(str,indel))
 	out.close()
-
