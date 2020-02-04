@@ -18,24 +18,14 @@ from Bio.Alphabet import IUPAC, Gapped
 from Bio.SeqRecord import SeqRecord
 from Bio import AlignIO
 from Bio.Align import Generic
-sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
-from Si_nexus import *
-from Si_SeqIO import *
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.7/site-packages/fisher-0.1.4-py2.7-linux-x86_64.egg']))
+from modules.Si_nexus import *
+from modules.Si_SeqIO import *
 #from scipy import stats
 import fisher
 #from guppy import hpy
 
 
 from optparse import OptionParser, OptionGroup
-
-
-
-####################
-# Set some globals #
-####################
-
-RAXML_PATH=""
 
 
 ##########################
