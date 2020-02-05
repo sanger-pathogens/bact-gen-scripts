@@ -27,16 +27,6 @@ from Bio.SeqRecord import SeqRecord
 import subprocess
 
 
-
-####################
-# Set some globals #
-####################
-
-
-MY_SCRIPTS_DIR="/nfs/pathogen/sh16_scripts/"
-
-GATK_LOC="/software/vertres/bin-external/GenomeAnalysisTK-3.4-46/GenomeAnalysisTK.jar"
-
 ##########################
 # Error message function #
 ##########################
@@ -406,7 +396,7 @@ class SNPanalysis:
 		print >> bashfile, "samtools view -b -S",self.runname+"/tmp1.sam -t "+ref+".fai >", self.runname+"/tmp1.bam"
 		
 		if self.pairedend and options.circular:
-			print >> bashfile, MY_SCRIPTS_DIR+"fix_circular_bams.py -b", self.runname+"/tmp1.bam -o", self.runname+"/tmp"
+			print >> bashfile, "fix_circular_bams.py -b", self.runname+"/tmp1.bam -o", self.runname+"/tmp"
 			print >> bashfile, "rm", self.runname+"/tmp1.bam"
 		else:
 			print >> bashfile, "mv", self.runname+"/tmp1.bam", self.runname+"/tmp.bam"
@@ -526,12 +516,8 @@ class SNPanalysis:
 			print >> bashfile, "cp", ref, self.runname+'/tmpref.fa'
 			print >> bashfile, 'samtools faidx', self.runname+"/tmpref.fa"
 			print >> bashfile, 'picard CreateSequenceDictionary R=', self.runname+'/tmpref.fa O=', self.runname+'/tmpref.dict'
-			if options.mem>0:
-				javamem=options.mem
-			else:
-				javamem=2
-			print >> bashfile, "java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-et NO_ET -K /nfs/pathogen/sh16_scripts/GATK.key -I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T RealignerTargetCreator -o", self.runname+'/tmp.intervals'
-			print >> bashfile, "java -Xmx"+str(javamem)+"g -jar", GATK_LOC, "-et NO_ET -K /nfs/pathogen/sh16_scripts/GATK.key -I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T IndelRealigner --filter_bases_not_stored -targetIntervals", self.runname+'/tmp.intervals', "-o", self.runname+"/tmp.bam"
+			print >> bashfile, "gatk -I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T RealignerTargetCreator -o", self.runname+'/tmp.intervals'
+			print >> bashfile, "gatk -I", self.runname+"/tmp1.bam  -R", self.runname+"/tmpref.fa -T IndelRealigner --filter_bases_not_stored -targetIntervals", self.runname+'/tmp.intervals', "-o", self.runname+"/tmp.bam"
 			print >> bashfile, "mv", self.runname+"/tmp.bam", self.runname+"/tmp1.bam"
 			print >> bashfile, "rm", self.runname+"/tmp1.bam.bai",  self.runname+"/tmpref.*", self.runname+"/tmp.intervals", self.runname+"/tmphead.*"
 		
@@ -611,13 +597,13 @@ class SNPanalysis:
 		#produce pseudosequence if requested
 		if options.pseudosequence:
 			if options.call=="m":
-				print >> bashfile, MY_SCRIPTS_DIR+"bcf_2_pseudosequence-1.6.py -A -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
+				print >> bashfile, "bcf_2_pseudosequence-1.6.py -A -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
 			elif options.call=="c":
-				print >> bashfile, MY_SCRIPTS_DIR+"bcf_2_pseudosequence-1.6.py -A -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
+				print >> bashfile, "bcf_2_pseudosequence-1.6.py -A -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
 			
 			
 		#if not options.LSF:
-		#	print >> bashfile, MY_SCRIPTS_DIR+'heterozygosity_plot.py -b', self.runname+"/"+self.name+".bcf -o", self.runname+"/"+self.name+"_contamination_plot.pdf", "-r", options.ratio, "-d", options.depth, "-D", options.stranddepth, "-q", options.quality
+		#	print >> bashfile, 'heterozygosity_plot.py -b', self.runname+"/"+self.name+".bcf -o", self.runname+"/"+self.name+"_contamination_plot.pdf", "-r", options.ratio, "-d", options.depth, "-D", options.stranddepth, "-q", options.quality
 		
 	
 	
@@ -874,9 +860,9 @@ if __name__ == "__main__":
 			
 			elif pool.name in bamlist:
 				if options.pairedend:
-					print >> bashfile, MY_SCRIPTS_DIR+'bam_filter.py -t all -b '+bamlist[pool.name]+' -o '+pool.fastqdir+pool.name
+					print >> bashfile, 'bam_filter.py -t all -b '+bamlist[pool.name]+' -o '+pool.fastqdir+pool.name
 				else:
-					print >> bashfile, MY_SCRIPTS_DIR+'bam_filter.py -t all -f fastq -b '+bamlist[pool.name]+' -o '+pool.fastqdir+pool.name
+					print >> bashfile, 'bam_filter.py -t all -f fastq -b '+bamlist[pool.name]+' -o '+pool.fastqdir+pool.name
 			
 			if options.program=='BWA':
 				pool.runBWA(options.ref, bashfile)
@@ -905,14 +891,14 @@ if __name__ == "__main__":
 			print >> mfafile, pool.runname+"/"+pool.name+".mfa"
 		mfafile.close()
 		if options.indels:
-			joinstring=MY_SCRIPTS_DIR+"join_dna_files_with_indels.py -r "+options.ref+" -o "+options.output+".aln -t "+tmpname+"_mfas.txt" #*_ssaha/*_test.mfa
+			joinstring="join_dna_files_with_indels.py -r "+options.ref+" -o "+options.output+".aln -t "+tmpname+"_mfas.txt" #*_ssaha/*_test.mfa
 		else:
 			if not options.incref:
 				joinstring="'cat "+' '.join(argstring)+" > "+options.output+".aln'"
 			else:
 				joinstring="'cat "+options.ref+" "+' '.join(argstring)+" > "+options.output+".aln'"
 				
-		summarystring=MY_SCRIPTS_DIR+'summarise_snps.py -g -w -r '+options.ref.split("/")[-1].split(".")[0]+' -o '+options.output+' -i '+options.output+'.aln'
+		summarystring='summarise_snps.py -g -w -r '+options.ref.split("/")[-1].split(".")[0]+' -o '+options.output+' -i '+options.output+'.aln'
 	
 		#print summarystring, options.embl
 		
@@ -978,8 +964,3 @@ if __name__ == "__main__":
 	elif options.pseudosequence:
 		os.system(joinstring)
 		os.system(summarystring)
-
-		
-
-			
-			
