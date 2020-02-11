@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 
-
-# uses samtools 1.6 and bcftools 1.5, also ssaha, bwa mem
-
 # code dependencies:
-# fix_circular_bams.py -- ok
+# fix_circular_bams.py
 # bcf_2_pseudosequence-1.6.py
-# bam_filter.py -- ok
-# join_dna_files_with_indels.py -- ok
+# bam_filter.py
+# join_dna_files_with_indels.py
 # summarise_snps.py
 # run_RAxML.py
 

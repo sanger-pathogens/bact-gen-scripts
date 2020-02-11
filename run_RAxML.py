@@ -11,29 +11,12 @@ import glob
 from random import *
 from math import ceil
 
-sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
-from Si_general import *
-from Si_SeqIO import *
-from Si_SNPs_temp import *
+from modules.Si_general import *
+from modules.Si_SeqIO import *
+from modules.Si_SNPs_temp import *
 
 import subprocess
 
-
-
-import time
-
-
-
-####################
-# Set some globals #
-####################
-
-
-RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-8.2.8"
-AVX_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-AVX-8.2.8"
-SSE3_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-SSE3-8.2.8"
-AVX_PARALLEL_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-PTHREADS-AVX-8.2.8"
-SSE3_PARALLEL_RAxML_DIR="/software/pathogen/external/apps/usr/bin/raxmlHPC-PTHREADS-SSE3-8.2.8"
 
 
 gap_and_missing=set(["-", "N", "?"])
@@ -412,7 +395,7 @@ if __name__ == "__main__":
 			automem=((n-2) * m * (20 * 8))/1073741824
 			print "Memory calculation suggests maximum memory usage would be "+str(round(automem, 4))+"Gb"
 		else:
-			automem==1
+			automem=1
 	elif options.analysistype=="DNA":
 		if options.asrv=="GAMMA":
 			automem=((n-2) * m * (16 * 8))/1073741824
@@ -454,20 +437,16 @@ if __name__ == "__main__":
 	
 	if options.threads>1:
 		if options.version=="AVX":
-			RAxML=AVX_PARALLEL_RAxML_DIR+" -T "+str(options.threads)
-			RAxML_DIR=AVX_RAxML_DIR
+			RAxML="raxmlHPC-PTHREADS-AVX -T "+str(options.threads)
 		elif options.version=="SSE3":
-			RAxML=SSE3_PARALLEL_RAxML_DIR+" -T "+str(options.threads)
-			RAxML_DIR=SSE3_RAxML_DIR
+			RAxML="raxmlHPC-PTHREADS-SSE3 -T "+str(options.threads)
 		else:
 			DoError("There shouldn't be any other options here")
 	else:
 		if options.version=="AVX":
-			RAxML=AVX_RAxML_DIR
-			RAxML_DIR=AVX_RAxML_DIR
+			RAxML="raxmlHPC-AVX"
 		elif options.version=="SSE3":
-			RAxML=SSE3_RAxML_DIR
-			RAxML_DIR=SSE3_RAxML_DIR
+			RAxML="raxmlHPC-SSE3"
 		else:
 			DoError("There shouldn't be any other options here")
 	print "Using "+options.version+" version of RAxML"
@@ -628,8 +607,8 @@ if __name__ == "__main__":
 				if options.bsuberr:
 					bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
 				
-				print bsub+' '+RAxML_DIR+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix
-				os.system(bsub+' '+RAxML_DIR+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
+				print bsub+' '+RAxML+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix
+				os.system(bsub+' '+RAxML+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
 				
 	
 			#Clean up all temporary files created	
