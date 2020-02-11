@@ -84,9 +84,9 @@ if __name__ == "__main__":
 	if options.bam=="":
 		DoError("sam or bam file from which bcf was made must be specified")
 	elif options.sam:
-		header=os.popen("samtools-1.6 view -S -H "+options.bam).readlines()
+		header=os.popen("samtools view -S -H "+options.bam).readlines()
 	else:
-		header=os.popen("samtools-1.6 view -H "+options.bam).readlines()
+		header=os.popen("samtools view -H "+options.bam).readlines()
 
 	if options.stranddepth<0:
 		print("Minimum number of reads matching SNP on each strand must be >=0. Resetting to 0")
@@ -150,7 +150,7 @@ if __name__ == "__main__":
 			DoError("Cannot open vcf file")
 	else:
 		try:
-			bcffile=os.popen("bcftools-1.5 view "+options.bcf)
+			bcffile=os.popen("bcftools view "+options.bcf)
 		except StandardError:
 			DoError("Cannot open bcf file")
 
