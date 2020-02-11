@@ -1,3 +1,3 @@
 numpy==1.12.1
 biopython==1.68
-fisher=0.1.4
+fisher==0.1.4
