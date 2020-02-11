@@ -2,7 +2,7 @@
 
 # code dependencies:
 # fix_circular_bams.py
-# bcf_2_pseudosequence-1.6.py
+# bcf_2_pseudosequence.py
 # bam_filter.py
 # join_dna_files_with_indels.py
 # summarise_snps.py
@@ -594,9 +594,9 @@ class SNPanalysis:
 		#produce pseudosequence if requested
 		if options.pseudosequence:
 			if options.call=="m":
-				print >> bashfile, "bcf_2_pseudosequence-1.6.py -A -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
+				print >> bashfile, "bcf_2_pseudosequence.py -A -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
 			elif options.call=="c":
-				print >> bashfile, "bcf_2_pseudosequence-1.6.py -A -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
+				print >> bashfile, "bcf_2_pseudosequence.py -A -b ", self.runname+"/"+self.name+".bcf", "-B ", self.runname+"/"+self.name+".bam", "-r ", options.ratio, "-d ", options.depth, "-D ", options.stranddepth, "-q ", options.quality, "-m ", options.mapq, "-o", self.runname+"/"+self.name
 			
 			
 		#if not options.LSF:
