@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 import os, sys
-sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
 from Bio.Nexus import Trees, Nodes
-import Si_nexus
-from Si_general import *
 from optparse import OptionParser
+import modules.Si_nexus as Si_nexus
+from modules.Si_general import *
 
 
 ##########################################
