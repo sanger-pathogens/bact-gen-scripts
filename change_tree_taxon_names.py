@@ -2,8 +2,7 @@
 import string, re
 import os, sys, getopt, random, math
 from optparse import OptionParser, OptionGroup
-sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
-from Si_general import *
+from modules.Si_general import *
 
 	
 ##########################################
