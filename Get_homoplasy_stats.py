@@ -4,10 +4,11 @@ import os, sys
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules']))
-from Si_nexus import *
-from Si_general import *
-from Si_SeqIO import *
+
+from modules.Si_nexus import *
+from modules.Si_general import *
+from modules.Si_SeqIO import *
+
 import numpy as np
 import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
