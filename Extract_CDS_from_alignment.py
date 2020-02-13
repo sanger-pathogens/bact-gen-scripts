@@ -14,12 +14,10 @@ from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import FeatureLocation, SeqFeature
 from optparse import OptionParser
 
-
-sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
-from Si_nexus import get_ref_to_alignment_translations
-from Si_general import DoError
-from Si_SeqIO import read_alignment, open_annotation
-from Si_SNPs_temp import revcomp
+from modules.Si_nexus import get_ref_to_alignment_translations
+from modules.Si_general import DoError
+from modules.Si_SeqIO import read_alignment, open_annotation
+from modules.Si_SNPs_temp import revcomp
 
 
 

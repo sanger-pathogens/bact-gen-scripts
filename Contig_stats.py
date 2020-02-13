@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 import os, sys, string, numpy
 from Bio.Seq import Seq
-sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
-from Si_SeqIO import *
+from modules.Si_SeqIO import *
 
 
 
