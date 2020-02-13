@@ -12,9 +12,8 @@ import string, re
 import os, sys
 from optparse import OptionParser
 from Bio.Align import AlignInfo
-sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
-from Si_general import *
-from Si_SeqIO import *
+from modules.Si_general import *
+from modules.Si_SeqIO import *
 
 ##########################################
 # Function to Get command line arguments #

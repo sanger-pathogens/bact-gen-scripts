@@ -13,16 +13,11 @@ from Bio.SeqFeature import SeqFeature, FeatureLocation
 from optparse import OptionParser
 from random import *
 from Bio.Alphabet import IUPAC
-#sys.path.extend(map(os.path.abspath, ['/usr/lib/python2.4/site-packages/']))
-#sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.5/site-packages/']))
-#from scipy.stats import chi2
-#from ghmm import *
 
-sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
-from Si_nexus import *
-from Si_general import *
-from Si_SeqIO import *
-import Si_SNPs_temp
+from modules.Si_nexus import *
+from modules.Si_general import *
+from modules.Si_SeqIO import *
+import modules.Si_SNPs_temp
 
 import time
 
