@@ -10,32 +10,20 @@
 import string, re
 import os, sys, getopt, math
 from random import *
-#sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.5/site-packages/']))
-#from scipy.stats import chi2
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC, Gapped
 from Bio.SeqRecord import SeqRecord
 from Bio import AlignIO
 from Bio.Align import Generic
-sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
-from Si_nexus import *
-from Si_SeqIO import *
-sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.7/site-packages/fisher-0.1.4-py2.7-linux-x86_64.egg']))
+from modules.Si_nexus import *
+from modules.Si_SeqIO import *
 #from scipy import stats
 import fisher
 #from guppy import hpy
 
 
 from optparse import OptionParser, OptionGroup
-
-
-
-####################
-# Set some globals #
-####################
-
-RAXML_PATH=""
 
 
 ##########################
@@ -1432,7 +1420,7 @@ if __name__ == "__main__":
 				print 'RAxML files with extension '+options.outfile.split('/')[-1]+' will be overwritten'
 				os.system('rm RAxML_*'+options.outfile.split('/')[-1])
 				
-		RAxMLcommand="/nfs/pathogen/sh16_scripts/run_RAxML.py -a "+options.outfile+"_snps.aln -t DNA -v "+options.asrv+" -w -o "+options.outfile.split('/')[-1]
+		RAxMLcommand="run_RAxML.py -a "+options.outfile+"_snps.aln -t DNA -v "+options.asrv+" -w -o "+options.outfile.split('/')[-1]
 		
 		if options.pinvar:
 			RAxMLcommand=RAxMLcommand+" -i"
@@ -1448,11 +1436,11 @@ if __name__ == "__main__":
 		os.system(RAxMLcommand)
 		
 #		if options.bootstrap>0:
-#			os.system("/nfs/pathogen/sh16_scripts/run_RAxML.py -a "+options.outfile+"_snps.aln -t DNA -v "+options.asrv+" -l -w -o "+options.outfile.split('/')[-1])
+#			os.system("run_RAxML.py -a "+options.outfile+"_snps.aln -t DNA -v "+options.asrv+" -l -w -o "+options.outfile.split('/')[-1])
 #			#print "Running RAxML phylogeny with "+options.model+" model of evolution and "+str(options.bootstrap)+" bootstrap replicates..."
 #			#os.system(RAXML_PATH+"RAxML -f a -x "+str(randrange(1,99999))+" -p "+str(randrange(1,99999))+" -# "+str(options.bootstrap)+" -m "+options.model+" -s "+options.outfile+"_snps.aln -n "+options.outfile.split('/')[-1])
 #		else:
-#			os.system("/nfs/pathogen/sh16_scripts/run_RAxML.py -a "+options.outfile+"_snps.aln -t DNA -v "+options.asrv+" -b 0 -w -o "+options.outfile.split('/')[-1])
+#			os.system("run_RAxML.py -a "+options.outfile+"_snps.aln -t DNA -v "+options.asrv+" -b 0 -w -o "+options.outfile.split('/')[-1])
 #			#print "Running RAxML phylogeny with "+options.model+" model of evolution"
 #			#os.system(RAXML_PATH+"RAxML -f d -m "+options.model+" -s "+options.outfile+"_snps.aln -n "+options.outfile.split('/')[-1])
 #		

@@ -1,0 +1,5 @@
+numpy==1.12.1
+reportlab==3.4.0
+biopython==1.68
+fisher==0.1.4
+pysam==0.12.0.1
