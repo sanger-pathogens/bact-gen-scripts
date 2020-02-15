@@ -3,9 +3,8 @@ import string, re, gzip
 import os, sys, getopt, random, math
 from Bio import SeqIO
 from Bio.Seq import Seq
-sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
-from Si_SeqIO import *
-from Si_general import *
+from modules.Si_SeqIO import *
+from modules.Si_general import *
 
 def revcomp(sequence):
 	rev=sequence[::-1]
