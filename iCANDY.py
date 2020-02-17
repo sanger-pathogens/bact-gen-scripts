@@ -1,14 +1,9 @@
 #!/usr/bin/env python
-##!/software/python-2.7.6/bin/python
 #################################
 # Import some necessary modules #
 #################################
 
 import os, sys
-sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/site-packages/reportlab-3.1.8-py2.7-linux-x86_64.egg')
-sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/site-packages/')
-sys.path.insert(1,'/software/python-2.7.6/lib/python2.7/')
-sys.path.insert(1, '/nfs/pathogen/sh16_scripts/modules/')
 import dendropy
 import string, re
 import random
@@ -18,12 +13,8 @@ from optparse import OptionParser, OptionGroup
 from Bio.Nexus import Trees, Nodes
 import shlex, subprocess
 from colorsys import hsv_to_rgb
-#on my laptop
-#sys.path.extend(map(os.path.abspath, ['/Users/sh16/Documents/scripts/modules/']))
-#on pcs4
-#sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
-from Si_general import *
-from Si_SeqIO import *
+from modules.Si_general import *
+from modules.Si_SeqIO import *
 #from Si_nexus import midpoint_root, tree_to_string
 from Bio import SeqIO
 from Bio.SeqFeature import SeqFeature, FeatureLocation
@@ -48,14 +39,6 @@ from reportlab.graphics import renderPDF
 import pysam
 from itertools import izip
 import datetime
-#on my laptop
-#SAMTOOLS_DIR="/Users/sh16/Applications/samtools-0.1.18/"
-#BCFTOOLS_DIR="/Users/sh16/Applications/samtools-0.1.18/bcftools/"
-#on pcs4
-OLD_SAMTOOLS_DIR="/nfs/users/nfs_s/sh16/samtools-0.1.17/"
-OLD_BCFTOOLS_DIR="/nfs/users/nfs_s/sh16/samtools-0.1.17/bcftools/"
-SAMTOOLS_DIR=""
-BCFTOOLS_DIR=""
 
 #################################
 # Set up some global converters #
@@ -445,7 +428,15 @@ def parsimony_reconstruction(treeObject, namecolours, colours, transformation="a
 
 	
 		return treeObject
-		
+
+
+	def print_node_sankoff(node):
+		for daughter in treeObject.node(node).get_succ():
+			print_node_sankoff(daughter)
+		if "branch_colour" in treeObject.node(node).get_data().comment:
+			print node, treeObject.node(node).get_data().comment["branch_colour"]
+		else:
+			print node, "unknown"
 	
 	def print_count_of_changes_to_state(treeObject):
 		node=treeObject.root
@@ -465,20 +456,7 @@ def parsimony_reconstruction(treeObject, namecolours, colours, transformation="a
 
 
 
-#	def print_sankoffs():
-#		node=treeObject.root
-#		
-#		def print_node_sankoff(node):
-#			for daughter in treeObject.node(node).get_succ():
-#				print_node_sankoff(daughter)
-#			if "branch_colour" in treeObject.node(node).get_data().comment:
-#				print node, treeObject.node(node).get_data().comment["branch_colour"]
-#			else:
-#				print node, "unknown"
-#		
-#		print_node_sankoff(node)
-	
-		
+
 	
 	transition_matrix={}
 	make_transistion_matrix()
@@ -2016,23 +1994,16 @@ def add_bcf_to_diagram(filename):
 	new_track = Track()
 	
 	features=[]
-	bcftoolssarg = shlex.split(BCFTOOLS_DIR+"bcftools view "+filename)
+	bcftoolssarg = shlex.split("bcftools view "+filename)
 
 	returnval = subprocess.Popen(bcftoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 	stdout, stderr  = returnval.communicate()
-	
+
 	if len(stderr)>0:
-		bcftoolssarg = shlex.split(OLD_BCFTOOLS_DIR+"bcftools view "+filename)
-		returnval = subprocess.Popen(bcftoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		print "Failed to open ", filename, "bcftools error:", stderr
+		sys.exit()
 
-		stdout, stderr  = returnval.communicate()
-
-		if len(stderr)>0:
-			print "Failed to open ", filename, "bcftools error:", stderr
-			sys.exit()
-	
-	
 	lines=stdout.split("\n")
 	
 	
@@ -2960,7 +2931,7 @@ class Track:
 		
 		print "Calculating coverage for", filename
 		sys.stdout.flush()
-#		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools view -H "+filename)
+#		samtoolssarg = shlex.split("samtools view -H "+filename)
 #		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 #	
 #		stdout, stderr  = returnval.communicate()
@@ -3049,7 +3020,7 @@ class Track:
 				zerocount+=1
 			#print len(depths)
 		
-#		samtoolssarg = shlex.split(SAMTOOLS_DIR+"samtools depth -q "+str(options.base_qual_filter)+" -Q "+str(options.mapping_qual_filter)+" "+filename)
+#		samtoolssarg = shlex.split("samtools depth -q "+str(options.base_qual_filter)+" -Q "+str(options.mapping_qual_filter)+" "+filename)
 #		returnval = subprocess.Popen(samtoolssarg, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 #	
 #		stdout, stderr  = returnval.communicate()
