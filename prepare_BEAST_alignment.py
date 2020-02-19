@@ -10,27 +10,16 @@
 import string, re
 import os, sys, getopt, math
 from random import *
-#sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.5/site-packages/']))
-#from scipy.stats import chi2
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.Alphabet import IUPAC, Gapped
 from Bio.SeqRecord import SeqRecord
 from Bio import AlignIO
 from Bio.Align import Generic
-sys.path.extend(map(os.path.abspath, ['/nfs/pathogen/sh16_scripts/modules/']))
-from Si_nexus import *
+from modules.Si_nexus import *
 
 
 from optparse import OptionParser, OptionGroup
-
-
-
-####################
-# Set some globals #
-####################
-
-RAXML_PATH=""
 
 
 ##########################
@@ -107,7 +96,7 @@ def read_metadata(filehandle, name_column=1, unit_column=2, value_column=3, head
 		line=line.strip()
 		if x==0 and header:
 			headings=line.split(split_value)
-			for colcount, colhead in enumearate(headings):
+			for colcount, colhead in enumerate(headings):
 				if unit_heading!="" and colhead==unit_heading:
 					unit_column=colcount+1
 				elif value_heading!="" and colhead==value_heading:
@@ -302,7 +291,7 @@ if __name__ == "__main__":
 	print '\t\t</constantPatterns>'
 	print '\t</mergePatterns>'
 	
-	print '\nOr use /nfs/pathogen/sh16_scripts/BEAST/replace_BEAST_blocks.py and provide the file', options.outfile+".patterns", "with the -p flag"
+	print '\nOr use replace_BEAST_blocks.py and provide the file', options.outfile+".patterns", "with the -p flag"
 	
 	output=open(options.outfile+".patterns","w")
 	print >> output, ' '.join(map(str,[constants['A'], constants['C'], constants['G'], constants['T']]))

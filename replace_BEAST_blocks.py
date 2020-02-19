@@ -6,14 +6,12 @@ from optparse import OptionParser
 
 
 def main():
-        usage = "usage: %prog [options]"
-        parser = OptionParser(usage=usage)
-        
-        
-        parser.add_option("-o", "--output", action="store", dest="outputfile", help="output xml file name [default is to overwrite input xml, but I take no responsibility if it destroys your lovely xml.]", type="string", metavar="FILE", default="")
-        parser.add_option("-p", "--patterns", action="store", dest="patternsfile", help="File containing constant site patterns (can be created with /nfs/pathogen/sh16_scripts/create_beast_alignment.py). Whitespace separated file containing on line with four columns for the number of A, C, G and T constant sites", type="string", metavar="FILE", default="")
-        parser.add_option("-P", "--precision", action="store", dest="precisionfile", help="File containing precisions. File must be whitespace delimited with two columns: 1) Name of taxon, 2) precision (in days or years after the date specified in the xml file). e.g. If your samples are dated in days since 1900, but for one sample, Bob, you only know the year of isolation is 1989, you would need to define the date for Bob to be 32509 (days since 1900 for 1/1/1989) in beauti and include the line 'Bob 365' (i.e. Bob may have been isolated any day up to 365 days after 32509) in your input precision file for this script.", type="string", metavar="FILE", default="")
-        parser.add_option("-x", "--xml", action="store", dest="xmlfile", help="xml file to edit", default="", type="string", metavar="FILE")
+	usage = "usage: %prog [options]"
+	parser = OptionParser(usage=usage)
+	parser.add_option("-o", "--output", action="store", dest="outputfile", help="output xml file name [default is to overwrite input xml, but I take no responsibility if it destroys your lovely xml.]", type="string", metavar="FILE", default="")
+	parser.add_option("-p", "--patterns", action="store", dest="patternsfile", help="File containing constant site patterns (can be created with prepare_beast_alignment.py). Whitespace separated file containing on line with four columns for the number of A, C, G and T constant sites", type="string", metavar="FILE", default="")
+	parser.add_option("-P", "--precision", action="store", dest="precisionfile", help="File containing precisions. File must be whitespace delimited with two columns: 1) Name of taxon, 2) precision (in days or years after the date specified in the xml file). e.g. If your samples are dated in days since 1900, but for one sample, Bob, you only know the year of isolation is 1989, you would need to define the date for Bob to be 32509 (days since 1900 for 1/1/1989) in beauti and include the line 'Bob 365' (i.e. Bob may have been isolated any day up to 365 days after 32509) in your input precision file for this script.", type="string", metavar="FILE", default="")
+	parser.add_option("-x", "--xml", action="store", dest="xmlfile", help="xml file to edit", default="", type="string", metavar="FILE")
 	parser.add_option("-m", "--noMLE", action="store_false", dest="mle", help="Do not add marginal likelihood estimation for model comparison to the end of the beast block [default is to add mle block]", default=True)
 
 	return parser.parse_args()
@@ -98,7 +96,7 @@ if __name__=="__main__":
 			patternsvalues=map(int,patternstext.split())
 		except StandardError:
 			print "Expecting first line of patterns file to be four integers separated by whitespace"
-			print "This file can be created by running /nfs/pathogen/sh16_scripts/BEAST/prepare_beast_alignment.py"
+			print "This file can be created by running prepare_beast_alignment.py"
 			sys.exit()
 		
 		if len(patternsvalues)!=4:
