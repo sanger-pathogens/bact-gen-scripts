@@ -925,8 +925,8 @@ if __name__ == "__main__":
 			jobid=open(tmpname+'jobid', "rU").read().split(">")[0].split("<")[1]
 			print "jobid <"+str(jobid)+"> submitted"
 			sys.stdout.flush()
-			os.system('bsub -w \'ended('+tmpname+'_'+options.program+')\' \"bacct -e -l '+jobid+' > '+options.output+"_mapping_job_bacct.txt \"")
-			os.system('bsub -w \'ended('+tmpname+'_'+options.program+')\' \"bhist -l '+jobid+' > '+options.output+"_mapping_job_bhist.txt \"")
+			os.system('bsub -o '+options.output+'_bacct.out -e '+options.output+'_bacct.err -w \'ended('+tmpname+'_'+options.program+')\' \"bacct -e -l '+jobid+' > '+options.output+"_mapping_job_bacct.txt \"")
+			os.system('bsub -o '+options.output+'_bhist.out -e '+options.output+'_bhist.err -w \'ended('+tmpname+'_'+options.program+')\' \"bhist -l '+jobid+' > '+options.output+"_mapping_job_bhist.txt \"")
 			
 			if not options.dirty:
 					os.system('bsub -w \'ended('+tmpname+'_'+options.program+')\' rm -rf *'+tmpname+'_sbs.sh '+tmpname+'*.out '+tmpname+'*.err '+options.ref+'.pac '+options.ref+'.ann '+options.ref+'.rpac '+options.ref+'.amb '+options.ref+'.rbwt '+options.ref+'.bwt '+options.ref+'.sa '+options.ref+'.rsa '+tmpname+'*.sma '+tmpname+'*.smi '+tmpname+'_unzipped '+tmpname+'_unbammed '+tmpname+'jobid')#when job array is all done delete
