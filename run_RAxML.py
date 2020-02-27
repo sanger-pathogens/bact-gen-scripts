@@ -82,8 +82,6 @@ def main():
 	group = OptionGroup(parser, "LSF options")
 	group.add_option("-q", "--queue", action="store", dest="queue", help="LSF queue [Choices = normal, long, basement, hugemem (farm only)] [Default = %default]", default="normal", type="choice", choices=["normal","long", "basement", "hugemem"])
 	group.add_option("-M", "--memory", action="store", dest="mem", help="Amount of memory required for analysis (Gb). e.g. 10 means ask for at least 10Gb. If memory is set to 0, it will be automatically (over)estimated as long as the model is AA+GAMMA, AA+CAT, DNA+GAMMA or DNA+CAT. For any other model it will be set back to the default of 1Gb. [Default= %default]", default=1, type="float")
-	group.add_option("-O", "--bsubout", action="store_true", dest="bsubout", help="Save bsub outputs", default=False)
-	group.add_option("-E", "--bsuberr", action="store_true", dest="bsuberr", help="Save bsub errors", default=False)
 	group.add_option("-n", "--threads", action="store", dest="threads", help="Number of threads to run - allows parallelisation of the analysis. Max=32. [Default= %default]", default=1, type="int")
 	group.add_option("-V", "--version", action="store", dest="version", help="Version of raxml to run. Choices are AVX or SSE3 on farm3. AVX is faster, but only half of the nodes support it. SSE3 is slightly slower, but supported on all nodes. On farm2 or pcs4 the orginal version will be used, so this option is irrelevant. [Default= %default]", default="AVX", type="choice", choices=["AVX", "SSE3"])
 	
@@ -454,11 +452,8 @@ if __name__ == "__main__":
 	
 	bsubcommand=["bsub"]
 	bsubcommand.append("-q "+options.queue)
-	
-	if options.bsubout:
-		bsubcommand.append("-o "+options.suffix+".bsub.o")
-	if options.bsuberr:
-		bsubcommand.append("-e "+options.suffix+".bsub.e")
+	bsubcommand.append("-o "+options.suffix+".bsub.o")
+	bsubcommand.append("-e "+options.suffix+".bsub.e")
 	
 	if options.version=="AVX":
 		bsubcommand.append("-R 'avx'")
@@ -516,19 +511,19 @@ if __name__ == "__main__":
 			print "Using parsimony tree"
 		
 		os.system(bsub+' -J "'+tmpname+'_dist" '+RAxML+' -f x -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
-		os.system('bsub -w \'ended('+tmpname+'_dist)\' rm -rf \'*'+tmpname+'*\'')
+		os.system('bsub -o /dev/null -e /dev/null -w \'ended('+tmpname+'_dist)\' rm -rf \'*'+tmpname+'*\'')
 	elif options.ancestral:
 		print "Running RAxML to calculate ancestral sequences using "+model+" model of evolution..."
 		print "Using user-specified tree:", options.tree
 		model=model+" -t "+options.tree
 		
 		os.system(bsub+' -J "'+tmpname+'_anc" '+RAxML+' -f A -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
-		os.system('bsub -w \'ended('+tmpname+'_anc)\' rm -rf \'*'+tmpname+'*\'')
+		os.system('bsub -o /dev/null -e /dev/null -w \'ended('+tmpname+'_anc)\' rm -rf \'*'+tmpname+'*\'')
 	elif options.optimise:
 		print "Running RAxML to optimise model and branch lengths on a user defined tree"
 		model=model+" -t "+options.tree
 		os.system(bsub+' -J "'+tmpname+'_opt" '+RAxML+' -f e -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
-		os.system('bsub -w \'ended('+tmpname+'_opt)\' rm -rf \'*'+tmpname+'*\'')
+		os.system('bsub -o /dev/null -e /dev/null -w \'ended('+tmpname+'_opt)\' rm -rf \'*'+tmpname+'*\'')
 	#If they want to make a tree rather than distances
 	else:
 		if options.fast:
@@ -582,10 +577,8 @@ if __name__ == "__main__":
 			os.system(bootstrapstring+' | '+bsub+' -J "'+tmpname+'_boot[1-'+str(numjobs)+']"')
 				
 			bsub='" | bsub -M 100 -R \'select[mem>100] rusage[mem=100]\' -w \'ended('+tmpname+'_boot)\' -J "'+tmpname+'_cat"'
-			if options.bsubout:
-				bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
-			if options.bsuberr:
-				bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
+			bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
+			bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
 			#When all bootstrap replicates are finished, cat them into a single file
 			os.system('echo "cat RAxML_bootstrap.boot_'+tmpname+'* > RAxML_bootstrap.boot_'+options.suffix+bsub)
 			
@@ -595,26 +588,22 @@ if __name__ == "__main__":
 				bsubcommand=RAxML+" -f b -t RAxML_bestTree.ml_"+options.suffix+" -z RAxML_bootstrap.boot_"+options.suffix+" -s "+tmpname+".phy -m "+model+" -n "+options.suffix+"'"
 				
 				bsub=' | bsub -M 100 -R \'select[mem>100] rusage[mem=100]\'  -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
-				if options.bsubout:
-					bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
-				if options.bsuberr:
-					bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
+				bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
+				bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
 				os.system(bsubcommand+bsub)
 			else:
 				bsub='bsub -M 2000 -R \'select[mem>2000] rusage[mem=2000]\' -J "'+tmpname+'_join" -w \'ended('+tmpname+'_ml) && ended('+tmpname+'_cat)\''
-				if options.bsubout:
-					bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
-				if options.bsuberr:
-					bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
+				bsub=bsub+" -o "+options.suffix+".bootstrap.bsub.o"
+				bsub=bsub+" -e "+options.suffix+".bootstrap.bsub.e"
 				
 				print bsub+' '+RAxML+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix
 				os.system(bsub+' '+RAxML+' -f b -t RAxML_bestTree.ml_'+options.suffix+' -z RAxML_bootstrap.boot_'+options.suffix+' -s '+tmpname+'.phy -m '+model+' -n '+options.suffix)
 				
 	
 			#Clean up all temporary files created	
-			os.system('bsub -M 100 -R \'select[mem>100] rusage[mem=100]\' -w \'ended('+tmpname+'_join)\' rm -rf \'*'+tmpname+'*\'')
+			os.system('bsub -o /dev/null -e /dev/null -M 100 -R \'select[mem>100] rusage[mem=100]\' -w \'ended('+tmpname+'_join)\' rm -rf \'*'+tmpname+'*\'')
 		elif not options.fast and options.bootstrap==0:
 			#Clean up all temporary files created	
-			os.system('bsub -M 100 -R \'select[mem>100] rusage[mem=100]\' -w \'ended('+tmpname+'_ml)\' rm -rf \'*'+tmpname+'*\'')
+			os.system('bsub -o /dev/null -e /dev/null -M 100 -R \'select[mem>100] rusage[mem=100]\' -w \'ended('+tmpname+'_ml)\' rm -rf \'*'+tmpname+'*\'')
 		
 
