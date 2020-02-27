@@ -511,19 +511,19 @@ if __name__ == "__main__":
 			print "Using parsimony tree"
 		
 		os.system(bsub+' -J "'+tmpname+'_dist" '+RAxML+' -f x -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
-		os.system('bsub -w \'ended('+tmpname+'_dist)\' rm -rf \'*'+tmpname+'*\'')
+		os.system('bsub -o rm_'+tmpname+'_dist.o -e rm_'+tmpname+'_dist.e -w \'ended('+tmpname+'_dist)\' rm -rf \'*'+tmpname+'*\'')
 	elif options.ancestral:
 		print "Running RAxML to calculate ancestral sequences using "+model+" model of evolution..."
 		print "Using user-specified tree:", options.tree
 		model=model+" -t "+options.tree
 		
 		os.system(bsub+' -J "'+tmpname+'_anc" '+RAxML+' -f A -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
-		os.system('bsub -w \'ended('+tmpname+'_anc)\' rm -rf \'*'+tmpname+'*\'')
+		os.system('bsub -o rm_'+tmpname+'_anc.o -e rm_'+tmpname+'_anc.e -w \'ended('+tmpname+'_anc)\' rm -rf \'*'+tmpname+'*\'')
 	elif options.optimise:
 		print "Running RAxML to optimise model and branch lengths on a user defined tree"
 		model=model+" -t "+options.tree
 		os.system(bsub+' -J "'+tmpname+'_opt" '+RAxML+' -f e -m '+model+' -s '+tmpname+'.phy -n '+options.suffix)
-		os.system('bsub -w \'ended('+tmpname+'_opt)\' rm -rf \'*'+tmpname+'*\'')
+		os.system('bsub -o rm_'+tmpname+'_opt.o -e rm_'+tmpname+'_opt.e -w \'ended('+tmpname+'_opt)\' rm -rf \'*'+tmpname+'*\'')
 	#If they want to make a tree rather than distances
 	else:
 		if options.fast:
@@ -601,9 +601,9 @@ if __name__ == "__main__":
 				
 	
 			#Clean up all temporary files created	
-			os.system('bsub -M 100 -R \'select[mem>100] rusage[mem=100]\' -w \'ended('+tmpname+'_join)\' rm -rf \'*'+tmpname+'*\'')
+			os.system('bsub -o rm_'+tmpname+'_join.o -e rm_'+tmpname+'_join.e -M 100 -R \'select[mem>100] rusage[mem=100]\' -w \'ended('+tmpname+'_join)\' rm -rf \'*'+tmpname+'*\'')
 		elif not options.fast and options.bootstrap==0:
 			#Clean up all temporary files created	
-			os.system('bsub -M 100 -R \'select[mem>100] rusage[mem=100]\' -w \'ended('+tmpname+'_ml)\' rm -rf \'*'+tmpname+'*\'')
+			os.system('bsub -o rm_'+tmpname+'_ml.o -e rm_'+tmpname+'_ml.e -M 100 -R \'select[mem>100] rusage[mem=100]\' -w \'ended('+tmpname+'_ml)\' rm -rf \'*'+tmpname+'*\'')
 		
 
