@@ -19,3 +19,35 @@ prepend-path PATH $sh16_base/scripts
 # Activate the virtual environment
 prepend-path PATH $sh16_base/venv/bin
 setenv VIRTUAL_ENV $sh16_base/venv
+
+# Help message
+proc ModulesHelp { } {
+  global version modroot
+
+  puts stderr "Executables:"
+  puts stderr "\tContig_stats.py"
+  puts stderr "\tContig_summary.py"
+  puts stderr "\tCount_homopolymer_lengths.py"
+  puts stderr "\tExtract_CDS_from_alignment.py"
+  puts stderr "\tGet_homoplasy_stats.py"
+  puts stderr "\tbam_filter.py"
+  puts stderr "\tbam_summary.py"
+  puts stderr "\tbam_to_coverage_plot.py"
+  puts stderr "\tbcf_2_pseudosequence.py"
+  puts stderr "\tchange_fasta_taxon_names.py"
+  puts stderr "\tchange_tree_taxon_names.py"
+  puts stderr "\tfix_circular_bams.py"
+  puts stderr "\tiCANDY.py"
+  puts stderr "\tjoin_dna_files_with_indels.py"
+  puts stderr "\tmultiple_mappings_to_bam.py"
+  puts stderr "\tpairwise_difference_count.py"
+  puts stderr "\tpairwise_distances_from_tree.py"
+  puts stderr "\tprepare_BEAST_alignment.py"
+  puts stderr "\treconstruct_snps_on_tree.py"
+  puts stderr "\tremove_taxa_from_aln.py"
+  puts stderr "\tremove_taxa_from_tree.py"
+  puts stderr "\treplace_BEAST_blocks.py"
+  puts stderr "\troot_tree.py"
+  puts stderr "\trun_RAxML.py"
+  puts stderr "\tsummarise_snps.py"
+}
