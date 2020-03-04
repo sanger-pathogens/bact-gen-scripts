@@ -475,16 +475,32 @@ class SNPanalysis:
 			print >> bashfile, "rm "+self.fastqdir+self.name+"_1.fastq "+self.fastqdir+self.name+"_2.fastq"
 		
 
-		
+	def get_samtools_version(self):
+		try:
+			samtools_version_text = subprocess.check_output(["samtools", "--version"])
+			samtools_version_lines = samtools_version_text.split("\n")
+			samtools_version_firstline = samtools_version_lines[0].split(" ")
+			samtools_version = samtools_version_firstline[1]
+			return float(samtools_version)
+		except:
+			return 0
+
 	def makepileup_from_sam(self, ref, bashfile):
-		
+
+		#Detect version of SAMTOOLS, as "samtools sort" differs in usage depending on the version
+		chevron = ""
+		suffix = ""
+		if self.get_samtools_version() > 1.2:
+			chevron = ">"
+			suffix = ".bam"
+
 		#Sort and mark duplicates
 		if options.markdup:
-			print >> bashfile, 'samtools sort', self.runname+"/tmp1.bam >", self.runname+"/tmpsort.bam"
+			print >> bashfile, 'samtools sort', self.runname+"/tmp1.bam", chevron, self.runname+"/tmpsort"+suffix
 			print >> bashfile, "picard MarkDuplicates INPUT="+self.runname+"/tmpsort.bam OUTPUT="+self.runname+"/tmp1.bam METRICS_FILE="+self.runname+"/"+self.name+"_metrics.txt"
 			print >> bashfile, "rm", self.runname+"/tmpsort.bam"
 			
-		print >> bashfile, 'samtools sort', self.runname+"/tmp1.bam >", self.runname+"/"+self.name+".bam"
+		print >> bashfile, 'samtools sort', self.runname+"/tmp1.bam", chevron, self.runname+"/"+self.name+suffix
 		print >> bashfile, 'samtools index', self.runname+"/"+self.name+".bam"
 		print >> bashfile, "rm", self.runname+"/tmp1.bam"
 		
@@ -519,7 +535,7 @@ class SNPanalysis:
 			print >> bashfile, "rm", self.runname+"/tmp1.bam.bai",  self.runname+"/tmpref.*", self.runname+"/tmp.intervals", self.runname+"/tmphead.*"
 		
 		
-		print >> bashfile, 'samtools sort', self.runname+"/tmp1.bam >", self.runname+"/tmp.bam"
+		print >> bashfile, 'samtools sort', self.runname+"/tmp1.bam", chevron, self.runname+"/tmp"+suffix
 		print >> bashfile, "rm", self.runname+"/tmp1.bam"
 		
 		#filter the bam file if requested
