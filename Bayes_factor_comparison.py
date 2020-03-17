@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-
-import string
 import os, sys
 from optparse import OptionParser
 import subprocess
@@ -29,28 +27,6 @@ def main():
 	
 	return parser.parse_args()
 
-
-####################
-# Get cluster name #
-####################
-
-def getclustername():
-	mycluster="unknown"
-	try:
-		lsid_output=subprocess.check_output(["lsid"])
-		
-		for line in lsid_output.split("\n"):
-			words=line.strip().split()
-			if len(words)>0:
-				if words[1]=="cluster":
-					mycluster=words[4]
-	
-		
-	except StandardError:
-		return mycluster
-	
-	return mycluster
-
 	
 ################
 # Main program #
@@ -61,14 +37,6 @@ if __name__ == "__main__":
 	#Get command line arguments
 
 	(options, args) = main()
-	
-	
-	cluster=getclustername()
-#	print "Running on cluster:", cluster
-	if cluster in ["farm3"]:
-		BEAST_LOC=""
-	elif cluster in ["farm2", "pcs4", "pcs5"]:
-		BEAST_LOC="/nfs/users/nfs_s/sh16/BEASTv1.7.4/bin/"
 	
 	if options.exclude!="":
 		if not os.path.isfile(options.exclude):
@@ -148,12 +116,9 @@ if __name__ == "__main__":
 		print '</beast>'
 		
 		try:
-			psbeast = subprocess.check_output([BEAST_LOC+"beast", tfname], stderr=subprocess.STDOUT)
+			psbeast = subprocess.check_output(["beast", tfname], stderr=subprocess.STDOUT)
 		except subprocess.CalledProcessError, e:
-			if cluster in ["farm3"]:
-				print "\n\n!!!BEAST failed to run. As you are on farm3, you will need to bsub the job!!!\n"
-			else:
-				print "\n\n!!!BEAST failed to run!!!\n"
+			print "\n\n!!!BEAST failed to run!!!\n"
 			print "Returncode =", e.returncode
 			print e.output
 			sys.exit()
@@ -180,12 +145,9 @@ if __name__ == "__main__":
 		tf.close()
 		
 		try:
-			ssbeast = subprocess.check_output([BEAST_LOC+"beast", tfname], stderr=subprocess.STDOUT)
+			ssbeast = subprocess.check_output(["beast", tfname], stderr=subprocess.STDOUT)
 		except subprocess.CalledProcessError:
-			if cluster in ["farm3", "pcs5"]:
-				print "\n\n!!!BEAST failed to run. As you are on farm3 or pcs5, you will need to bsub the job!!!\n"
-			else:
-				print "\n\n!!!BEAST failed to run!!!\n"
+			print "\n\n!!!BEAST failed to run!!!\n"
 			sys.exit()
 		
 		for line in ssbeast.split("\n"):
@@ -218,7 +180,8 @@ if __name__ == "__main__":
 			isfirst=True
 			
 		BF=firstvalue-PSvalue[0]
-		
+
+		comment=""
 		if BF>0 and BF<1:
 			comment="Not worth more than a bare mention"
 		elif BF<3:
@@ -253,7 +216,8 @@ if __name__ == "__main__":
 			isfirst=True
 		
 		BF=firstvalue-SSvalue[0]
-		
+
+		comment=""
 		if BF>0 and BF<1:
 			comment="Not worth more than a bare mention"
 		elif BF<3:
