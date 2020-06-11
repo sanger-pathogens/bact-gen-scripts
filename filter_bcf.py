@@ -13,11 +13,7 @@ from optparse import OptionParser, OptionGroup
 # Set some globals #
 ####################
 
-SAMTOOLS_DIR=""
-BCFTOOLS_DIR=""
-SSAHA_DIR="/nfs/users/nfs_s/sh16/ssaha2_v2.5.1_x86_64/"
-BWA_DIR=""
-MY_SCRIPTS_DIR="/nfs/pathogen/sh16_scripts/"
+
 
 
 #################################
@@ -95,9 +91,9 @@ if __name__ == "__main__":
 	if options.bam=="":
 		DoError("sam or bam file from which bcf was made must be specified")
 	elif options.sam:
-		header=os.popen(SAMTOOLS_DIR+"samtools view -S -H "+options.bam).readlines()
+		header=os.popen("samtools view -S -H "+options.bam).readlines()
 	else:
-		header=os.popen(SAMTOOLS_DIR+"samtools view -H "+options.bam).readlines()
+		header=os.popen("samtools view -H "+options.bam).readlines()
 	
 	if options.stranddepth<0:
 		print "Minimum number of reads matching SNP on each strand must be >=0. Resetting to 0"
@@ -161,7 +157,7 @@ if __name__ == "__main__":
 			DoError("Cannot open vcf file")
 	else:
 		try:
-			bcffile=os.popen(BCFTOOLS_DIR+"bcftools view "+options.bcf)
+			bcffile=os.popen("bcftools view "+options.bcf)
 		except StandardError:
 			DoError("Cannot open bcf file")
 	
