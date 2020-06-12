@@ -527,7 +527,7 @@ if __name__ == "__main__":
 
 	out=open(options.output+".mfa","w")
 
-	name=options.output.split("/")[-1].split('.')[0]
+	name=options.output.split("/")[-1]
 
 	for x, contig in enumerate(contigorder):
 		print >> out, ">"+name+"_"+''.join(contig)
