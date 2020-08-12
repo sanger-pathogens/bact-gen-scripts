@@ -6,7 +6,6 @@ kiwisolver==1.1.0
 matplotlib==2.2.5
 numpy==1.12.1
 Pillow==6.2.2
-pkg-resources==0.0.0
 pyparsing==2.4.6
 pysam==0.12.0.1
 python-dateutil==2.8.1
