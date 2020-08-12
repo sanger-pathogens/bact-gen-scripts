@@ -1,4 +1,0 @@
->1
-ABCDEFG
->2
-HIJKLM

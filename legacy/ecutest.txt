@@ -1,1 +1,0 @@
-['', '>1\nABCDEFG\n', '>1\nABCDEFG\n', '', '>2\nHIJKLM\n', '>2\nHIJKLM\n', '']
