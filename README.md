@@ -1,5 +1,8 @@
 # BactGenScripts
 
+[![License: GPL v3](https://img.shields.io/badge/license-GPL%20v3-brightgreen.svg)](https://github.com/sanger-pathogens/bact-gen-scripts/blob/master/LICENSE)   
+
+
 This repository contains a collection of scripts written by Simon Harris, formerly of the Bacterial Genomics team at the Wellcome Sanger Institute.
 
 This repository is provided primarily for citation of this software.  We do not offer ongoing support or documentation for these scripts.
