@@ -16,7 +16,7 @@ import time
 sys.path.extend(map(os.path.abspath, ['/nfs/users/nfs_s/sh16/lib/python2.7/site-packages/fisher-0.1.4-py2.7-linux-x86_64.egg']))
 #from scipy import stats
 import fisher
-RAXML_DIR="/software/pathogen/external/applications/RAxML/RAxML-7.0.4/"
+RAXML = "raxmlHPC"
 
 
 ambiguity_to_bases={"A":["A"], "C":["C"], "T":["T"], "G":["G"], "M":["A", "C"], "K":["G", "T"], "R":["A", "G"], "Y":["C", "T"], "S":["C", "G"], "W":["A", "T"], "B":["C", "G", "T"], "V":["A", "C", "G"], "H":["A", "C", "T"], "D":["A", "G", "T"], "?":["-", "A", "C", "G", "T"], "N":["-", "A", "C", "G", "T"], "X":["-", "A", "C", "G", "T"], "-":["-"], "a":["-", "A"], "c":["-","C"], "t":["-","T"], "g":["-","G"], "m":["-","A","C"], "k":["-", "G", "T"], "r":["-", "A","G"], "y":["-","C","T"], "s":["-","C","G"], "w":["-","A","T"], "b":["-","C","G","T",], "v":["-","A","C","G"], "h":["-","A","C","T"], "d":["-","A","G","T",], "n":["-","A","C","G","T"]}
@@ -2049,11 +2049,11 @@ def run_RAxML(alignmentObject, bootstrap=100, model="GTRGAMMA", cleanup=True):
 	if bootstrap==0:
 		print "Running RAxML phylogeny with "+model+" model of evolution..."
 		sys.stdout.flush()
-		os.system(RAXML_DIR+"raxmlHPC -f d -s "+tmpname+".phy -m "+model+" -n "+tmpname+" > /dev/null 2>&1")
+		os.system(RAXML+"-f d -s "+tmpname+".phy -m "+model+" -n "+tmpname+" > /dev/null")
 		outputname="RAxML_result."+tmpname
 	else:
 		print "Running RAxML phylogeny with "+model+" model of evolution and "+str(bootstrap)+" bootstrap replicates..."
-		os.system("RAxML -f a -x "+str(randrange(1,99999))+" -p "+str(randrange(1,99999))+" -# "+str(bootstrap)+" -m "+model+" -s "+tmpname+".phy -n "+tmpname+" > /dev/null 2>&1")
+		os.system(RAXML+"-f a -x "+str(randrange(1,99999))+" -p "+str(randrange(1,99999))+" -# "+str(bootstrap)+" -m "+model+" -s "+tmpname+".phy -n "+tmpname+" > /dev/null")
 		outputname="RAxML_bipartitions."+tmpname
 	
 	#extract stats from raxml output files
