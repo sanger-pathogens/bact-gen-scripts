@@ -1778,7 +1778,7 @@ def parsimonious_sequence_reconstruction(treeObject, alignmentObject, transforma
 		
 		#run paml
 		
-		os.system("/nfs/users/nfs_m/mh10/software/paml41/bin/baseml > "+tmpname+"temp.tmp")
+		os.system("baseml > "+tmpname+"temp.tmp")
 	
 		#remove spaces from rst alignment (necessary to allow easier reading of tree and ancestral sequences
 		
