@@ -2049,11 +2049,11 @@ def run_RAxML(alignmentObject, bootstrap=100, model="GTRGAMMA", cleanup=True):
 	if bootstrap==0:
 		print "Running RAxML phylogeny with "+model+" model of evolution..."
 		sys.stdout.flush()
-		os.system(RAXML+"-f d -s "+tmpname+".phy -m "+model+" -n "+tmpname+" > /dev/null")
+		os.system(RAXML+" -f d -s "+tmpname+".phy -m "+model+" -n "+tmpname+" > /dev/null")
 		outputname="RAxML_result."+tmpname
 	else:
 		print "Running RAxML phylogeny with "+model+" model of evolution and "+str(bootstrap)+" bootstrap replicates..."
-		os.system(RAXML+"-f a -x "+str(randrange(1,99999))+" -p "+str(randrange(1,99999))+" -# "+str(bootstrap)+" -m "+model+" -s "+tmpname+".phy -n "+tmpname+" > /dev/null")
+		os.system(RAXML+" -f a -x "+str(randrange(1,99999))+" -p "+str(randrange(1,99999))+" -# "+str(bootstrap)+" -m "+model+" -s "+tmpname+".phy -n "+tmpname+" > /dev/null")
 		outputname="RAxML_bipartitions."+tmpname
 	
 	#extract stats from raxml output files
