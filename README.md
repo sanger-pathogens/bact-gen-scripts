@@ -18,6 +18,7 @@ This repository is provided primarily for citation of this software.  We do not 
 - smalt  0.7.6
 - samtools (bcftools & htslib) 1.2 _or_ 1.6
 - ssaha2  2.5.5
+- paml  4.9
 
 
 ## Install
